@@ -1,0 +1,209 @@
+# User Constraints File for the Xilinx ML605 board, rev C
+
+CONFIG PART = xc6vlx240t-1ff1156;
+
+# 200MHz clock
+NET "sys_clk_p" LOC = "J9" | IOSTANDARD=LVDS_25; # Bank = 34, IO_L0P_GC_34 (GCLK)
+NET "sys_clk_n" LOC = "H9" | IOSTANDARD=LVDS_25; # Bank = 34, IO_L0N_GC_34 (GCLK)
+NET "sys_clk_p" TNM_NET = "sys_clk_pin";
+TIMESPEC "TS_sys_clk_pin" = PERIOD "sys_clk_pin" 200000 kHz;
+
+# Light Emitting Diodes
+NET "ledu"   LOC = "AH27" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 23, IO_L0P_23 (DS20)
+NET "ledl"   LOC = "AD21" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 22, IO_L0N_22 (DS17)
+NET "ledd"   LOC = "AH28" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 23, IO_L0N_23 (DS18)
+NET "ledr"   LOC = "AE21" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 22, IO_L0P_22 (DS19)
+NET "ledc"   LOC = "AP24" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 23, IO_L19N_23 (DS16)
+
+NET "led<0>" LOC = "AC22" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L19P_24 (DS12)
+NET "led<1>" LOC = "AC24" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L18N_24 (DS11)
+NET "led<2>" LOC = "AE22" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L17N_VRP_24 (DS9)
+NET "led<3>" LOC = "AE23" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L17P_VRN_24 (DS10)
+NET "led<4>" LOC = "AB23" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L16N_CSO_B_24 (DS15)
+NET "led<5>" LOC = "AG23" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L15N_RS1_24 (DS14)
+NET "led<6>" LOC = "AE24" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L11N_SRCC_24 (DS22)
+NET "led<7>" LOC = "AD24" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 24, IO_L11P_SRCC_24 (DS21)
+ 
+# Reset Button: I/O Bank 2
+NET "reset" LOC = "H10" | IOSTANDARD=LVCMOS15; # Bank = 35, IO_L6P_SM3P_35 (SW10)
+
+# Push Buttons: I/O Bank 3
+#NET "btnu" LOC = "A19" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L15N_26 (SW5)
+#NET "btnl" LOC = "H17" | IOSTANDARD=LVCMOS15; # Bank = 36, IO_L3P_36 (SW8)
+#NET "btnd" LOC = "A18" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L15P_26 (SW6)
+#NET "btnr" LOC = "G17" | IOSTANDARD=LVCMOS15; # Bank = 36, IO_L3N_36 (SW7)
+#NET "btnc" LOC = "G26" | IOSTANDARD=LVCMOS15; # Bank = 25, IO_L6P_25 (SW9)
+ 
+# Toggle Switches
+NET "sw<0>" LOC = "D22" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L19N_26 (SW1.1)
+NET "sw<1>" LOC = "C22" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L19P_26 (SW1.2)
+NET "sw<2>" LOC = "L21" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L18N_26 (SW1.3)
+NET "sw<3>" LOC = "L20" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L18P_26 (SW1.4)
+NET "sw<4>" LOC = "C18" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L17N_26 (SW1.5)
+NET "sw<5>" LOC = "B18" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L17P_26 (SW1.6)
+NET "sw<6>" LOC = "K22" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L16N_26 (SW1.7)
+NET "sw<7>" LOC = "K21" | IOSTANDARD=LVCMOS15; # Bank = 26, IO_L16P_26 (SW1.8)
+
+# Marvell M88E1111 Tri-Mode Ethernet PHY (1000BASE-T)
+# Interrupt, Reset, MDIO
+#NET "phy_int_n" LOC = "AH14" | IOSTANDARD=LVCMOS25; # (E-INT)
+NET "phy_reset_n" LOC = "AH13" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L18P_33 (E-RESET)
+#NET "phy_mdc" LOC = "AP14" | IOSTANDARD=LVCMOS25; # (E-MDC)
+#NET "phy_mdio" LOC = "AN14" | IOSTANDARD=LVCMOS25; # (E-MDIO)
+# GMII Transmit
+#NET "phy_gtx_clk" LOC = "AH12" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L16N_33 (E-GTXCLK)
+#NET "phy_tx_clk"  LOC = "AD12" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L10P_MRCC_33 (E-TXCLK)
+#NET "phy_txd<0>"  LOC = "AM11" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L7N_33 (E-TXD0)
+#NET "phy_txd<1>"  LOC = "AL11" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L7P_33 (E-TXD1)
+#NET "phy_txd<2>"  LOC = "AG10" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L6N_33 (E-TXD2)
+#NET "phy_txd<3>"  LOC = "AG11" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L6P_33 (E-TXD3)
+#NET "phy_txd<4>"  LOC = "AL10" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L5N_33 (E-TXD4)
+#NET "phy_txd<5>"  LOC = "AM10" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L5P_33 (E-TXD5)
+#NET "phy_txd<6>"  LOC = "AE11" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L4N_VREF_33 (E-TXD6)
+#NET "phy_txd<7>"  LOC = "AF11" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L4P_33 (E-TXD7)
+#NET "phy_tx_en"   LOC = "AJ10" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L8P_SRCC_33 (E-TXEN)
+#NET "phy_tx_er"   LOC = "AH10" | IOSTANDARD=LVCMOS25 | SLEW = FAST; # Bank = 33, IO_L8N_SRCC_33 (E-TXER)
+# GMII Receive
+#NET "phy_rx_clk"  LOC = "AP11" | IOSTANDARD=LVCMOS25 | TNM_NET = "clk_rx_local"; # (E-RXCLK)
+#NET "phy_rxd<0>"  LOC = "AN13" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L15P_33 (E-RXD0)
+#NET "phy_rxd<1>"  LOC = "AF14" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L14N_VREF_33 (E-RXD1)
+#NET "phy_rxd<2>"  LOC = "AE14" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L14P_33 (E-RXD2)
+#NET "phy_rxd<3>"  LOC = "AN12" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L13N_33 (E-RXD3)
+#NET "phy_rxd<4>"  LOC = "AM12" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L13P_33 (E-RXD4)
+#NET "phy_rxd<5>"  LOC = "AD11" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L10N_MRCC_33 (E-RXD5)
+#NET "phy_rxd<6>"  LOC = "AC12" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L9N_MRCC_33 (E-RXD6)
+#NET "phy_rxd<7>"  LOC = "AC13" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L9P_MRCC_33 (E-RXD7)
+#NET "phy_rx_dv"   LOC = "AM13" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L15N_33 (E-RXDV)
+#NET "phy_rx_er"   LOC = "AG12" | IOSTANDARD=LVCMOS25; # Bank = 33, IO_L16P_33 (E-RXER)
+
+
+# SGMII interface from SFP
+NET "phy_sgmii_rx_p" LOC = "E3"; #NET "phy_sgmii_rx_p" LOC = "B5";
+NET "phy_sgmii_rx_n" LOC = "E4"; #NET "phy_sgmii_rx_n" LOC = "B6";
+NET "phy_sgmii_tx_p" LOC = "C3"; #NET "phy_sgmii_tx_p" LOC = "A3";
+NET "phy_sgmii_tx_n" LOC = "C4"; #NET "phy_sgmii_tx_n" LOC = "A4";
+NET "phy_sgmii_clk_p" LOC = "H6" | TNM_NET = "sgmii_mgtrefclk";
+NET "phy_sgmii_clk_n" LOC = "H5";
+
+#NET "SFP_LOS" LOC = "V23"; ## 8 on P4
+#NET "SFP_RX_N" LOC = "E4"; ## 12 on P4
+#NET "SFP_RX_P" LOC = "E3"; ## 13 on P4
+#NET "SFP_TX_DISABLE_FPGA" LOC = "AP12"; ## 1 on Q22
+#NET "SFP_TX_N" LOC = "C4"; ## 19 on P4
+#NET "SFP_TX_P" LOC = "C3"; ## 18 on P4
+
+
+
+##################       
+#####   FMC  #####
+##################
+
+###### LED
+NET "FMC_LED[0]"                			LOC = "U30";    ## K20 on J64
+NET "FMC_LED[1]"                			LOC = "U26";    ## K22 on J64
+NET "FMC_LED[2]"               			LOC = "T33";    ## J18 on J64
+NET "FMC_LED[3]"                			LOC = "T34";    ## J19 on J64
+
+###### LEMO
+NET "FMC_LEMO[0]"             			LOC = "V30";    ## K16 on J64
+NET "FMC_LEMO[1]"             			LOC = "W30";    ## K17 on J64
+NET "FMC_LEMO[2]"                			LOC = "U31";    ## K19 on J64
+NET "FMC_LEMO[3]"                			LOC = "AM23";   ## H19 on J64
+NET "FMC_LEMO[4]"                			LOC = "AL23";   ## H20 on J64
+
+###### TPX3 Control
+NET "TPX3_1_PLLOut_N"             	LOC = "AF33";   ## F5  on J64
+NET "TPX3_1_PLLOut_P"             	LOC = "AE33";   ## F4  on J64
+NET "TPX3_1_ClkInRefPLL_N"          LOC = "AC29";   ## E3  on J64
+NET "TPX3_1_ClkInRefPLL_P"          LOC = "AD29";   ## E2  on J64
+NET "TPX3_1_ExtTPulse_N"            LOC = "V33";    ## E19 on J64
+NET "TPX3_1_ExtTPulse_P"            LOC = "V32";    ## E18 on J64
+NET "TPX3_1_T0_Sync_N"              LOC = "AP33";   ## F23 on J64
+NET "TPX3_1_T0_Sync_P"              LOC = "AP32";   ## F22 on J64
+NET "TPX3_1_EnableIn_N"             LOC = "AM31";   ## E22 on J64
+NET "TPX3_1_EnableIn_P"             LOC = "AL30";   ## E21 on J64
+NET "TPX3_1_DataIn_N"               LOC = "AN34";   ## E25 on J64
+NET "TPX3_1_DataIn_P"               LOC = "AN33";   ## E24 on J64
+NET "TPX3_1_ClkOut_N"             	LOC = "AE26";   ## K29 on J64
+NET "TPX3_1_ClkOut_P"             	LOC = "AF26";   ## K28 on J64
+NET "TPX3_1_ClkIn40_N"             	LOC = "AG30";   ## K26 on J64
+NET "TPX3_1_ClkIn40_P"             	LOC = "AF30";   ## K25 on J64
+NET "TPX3_1_Shutter_N"              LOC = "AK34";   ## E28 on J64
+NET "TPX3_1_Shutter_P"              LOC = "AL34";   ## E27 on J64
+NET "TPX3_1_Reset_N"               	LOC = "AK31";   ## E34 on J64
+NET "TPX3_1_Reset_P"        		LOC = "AL31";   ## E33 on J64
+NET "TPX3_1_ENPowerPulsing_N"       LOC = "AH32";   ## E31 on J64
+NET "TPX3_1_ENPowerPulsing_P"       LOC = "AH33";   ## E30 on J64
+
+
+###### Data Out
+#
+###### MUX Control
+NET "Data_MUX_select"            	LOC = "U28";    ## J21 on J64
+
+###### IF MUX is 0
+#NET "TPX3_1_DataOut[0]_N_MUX0"      LOC = "AC4";    ## C7  on J64
+#NET "TPX3_1_DataOut[0]_P_MUX0"      LOC = "AC3";    ## C6  on J64
+#NET "TPX3_1_DataOut[1]_N_MUX0"      LOC = "AE4";    ## A3  on J64
+#NET "TPX3_1_DataOut[1]_P_MUX0"      LOC = "AE3";    ## A2  on J64
+#NET "TPX3_1_DataOut[2]_N_MUX0"      LOC = "AF6";    ## A7  on J64
+#NET "TPX3_1_DataOut[2]_P_MUX0"      LOC = "AF5";    ## A6  on J64
+#NET "TPX3_1_DataOut[3]_N_MUX0"      LOC = "AG4";    ## A11 on J64
+#NET "TPX3_1_DataOut[3]_P_MUX0"      LOC = "AG3";    ## A10 on J64
+#NET "TPX3_1_DataOut[4]_N_MUX0"      LOC = "AJ4";    ## A15 on J64
+#NET "TPX3_1_DataOut[4]_P_MUX0"      LOC = "AJ3";    ## A14 on J64
+#NET "TPX3_1_DataOut[5]_N_MUX0"      LOC = "AL4";    ## A19 on J64
+#NET "TPX3_1_DataOut[5]_P_MUX0"      LOC = "AL3";    ## A18 on J64
+#NET "TPX3_1_DataOut[6]_N_MUX0"     	LOC = "AM6";    ## B17 on J64
+#NET "TPX3_1_DataOut[6]_P_MUX0"      LOC = "AM5";    ## B16 on J64
+#NET "TPX3_1_DataOut[7]_N_MUX0"      LOC = "AP6";    ## B13 on J64
+#NET "TPX3_1_DataOut[7]_P_MUX0"      LOC = "AP5";    ## B12 on J64
+
+###### IF MUX is 1
+#NET "TPX3_1_DataOut[0]_N_MUX1"      LOC = "AK32";   ## F29 on J64
+#NET "TPX3_1_DataOut[0]_P_MUX1"      LOC = "AK33";   ## F28 on J64
+#NET "TPX3_1_DataOut[1]_N_MUX1"      LOC = "AJ32";   ## F32 on J64
+#NET "TPX3_1_DataOut[1]_P_MUX1"      LOC = "AJ31";   ## F31 on J64
+#NET "TPX3_1_DataOut[2]_N_MUX1"      LOC = "AH30";   ## F35 on J64
+#NET "TPX3_1_DataOut[2]_P_MUX1"      LOC = "AH29";   ## F34 on J64
+#NET "TPX3_1_DataOut[3]_N_MUX1"     	LOC = "AM32";   ## J25 on J64
+#NET "TPX3_1_DataOut[3]_P_MUX1"      LOC = "AN32";   ## J24 on J64
+#NET "TPX3_1_DataOut[4]_N_MUX1"      LOC = "AH34";   ## J28 on J64
+#NET "TPX3_1_DataOut[4]_P_MUX1"      LOC = "AJ34";   ## J27 on J64
+#NET "TPX3_1_DataOut[5]_N_MUX1"      LOC = "AJ30";   ## J31 on J64
+#NET "TPX3_1_DataOut[5]_P_MUX1"      LOC = "AJ29";   ## J30 on J64
+#NET "TPX3_1_DataOut[6]_N_MUX1"      LOC = "AE29";   ## J34 on J64
+#NET "TPX3_1_DataOut[6]_P_MUX1"      LOC = "AE28";   ## J33 on J64
+#NET "TPX3_1_DataOut[7]_N_MUX1"      LOC = "AD26";   ## J37 on J64
+#NET "TPX3_1_DataOut[7]_P_MUX1"      LOC = "AD25";   ## J36 on J64
+
+####
+####
+####
+# Timing constraints for Ethernet PHY
+#TIMESPEC "TS_rx_clk_root" = PERIOD "clk_rx_local" 8000 ps HIGH 50 %;
+TIMESPEC "TS_mgtrefclk" = PERIOD "sgmii_mgtrefclk" 8 ns HIGH 50 %;
+
+#
+NET "phy_sgmii_txoutclk" TNM_NET = "txoutclk";
+TIMESPEC "TS_txoutclk" = PERIOD "txoutclk" 8 ns HIGH 50 %;
+
+NET "eth_pcspma/transceiver_inst/RXRECCLK" TNM_NET = "rxrecclk";
+TIMESPEC "ts_rxrecclk" = PERIOD "rxrecclk" 8 ns;
+
+# Identify clock domain crossing registers
+INST "eth_pcspma/transceiver_inst/rx_elastic_buffer_inst/wr_addr_gray*" TNM = "wr_graycode";
+INST "eth_pcspma/transceiver_inst/rx_elastic_buffer_inst/rd_addr_gray*" TNM = "rd_graycode";
+
+# Control Gray Code delay and skew across clock boundary
+TIMESPEC "ts_rx_skew_control1" = FROM "wr_graycode" TO "FFS" 14 ns DATAPATHONLY;
+TIMESPEC "ts_rx_skew_control2" = FROM "rd_graycode" TO "FFS" 14 ns DATAPATHONLY;
+
+# Constrain between Distributed Memory (output data) and the 1st set of flip-flops
+INST "eth_pcspma/transceiver_inst/rx_elastic_buffer_inst/*rd_data*"  TNM = "fifo_read";
+TIMESPEC "ts_ram_read_false_path" = FROM "RAMS" TO "fifo_read"  6 ns DATAPATHONLY; 
+
+#NET "clk_125mhz_int" TNM = "ffs_clk_125mhz_int";
+#NET "phy_sgmii_txoutclk" TNM = "ffs_sgmii_clk";
+#TIMESPEC "TS_clk_125mhz_int_to_sgmii_clk" = FROM "ffs_clk_125mhz_int" TO "ffs_sgmii_clk" 10 ns;
+#TIMESPEC "TS_sgmii_clk_to_clk_125mhz_int" = FROM "ffs_sgmii_clk" TO "ffs_clk_125mhz_int" 10 ns; 

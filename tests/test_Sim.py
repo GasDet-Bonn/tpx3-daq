@@ -1,0 +1,70 @@
+#
+# ------------------------------------------------------------
+# Copyright (c) All rights reserved
+# SiLab, Institute of Physics, University of Bonn
+# ------------------------------------------------------------
+#
+
+import unittest
+import os
+from basil.utils.sim.utils import cocotb_compile_and_run, cocotb_compile_clean
+import sys
+import yaml
+import time
+
+from tpx3.tpx3 import TPX3
+
+class TestSim(unittest.TestCase):
+
+    def setUp(self):
+    
+        extra_defines = []
+            
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) #../
+        print root_dir
+        cocotb_compile_and_run(
+            sim_files = [root_dir + '/tests/tpx3_tb.v'],
+            extra_defines = extra_defines,
+            #sim_bus = 'basil.utils.sim.SiLibUsbBusDriver',
+            include_dirs = (root_dir, root_dir + "/firmware/src")
+        )
+       
+        with open(root_dir + '/tpx3/tpx3.yaml', 'r') as f:
+            cnfg = yaml.load(f)
+
+        cnfg['transfer_layer'][0]['type'] = 'SiSim'
+        cnfg['transfer_layer'][0]['init']['port'] = 12345
+        cnfg['transfer_layer'][0]['init']['host'] = 'localhost'
+        
+        self.dut = TPX3(conf=cnfg)
+
+    def test(self):
+        self.dut.init()
+        
+        
+        self.dut['CONTROL']['ENABLE'] = 1
+        self.dut['CONTROL']['RESET'] = 1
+        self.dut['CONTROL'].write()
+        self.dut['CONTROL']['RESET'] = 0
+        self.dut['CONTROL'].write()
+        
+        self.dut['CONTROL']['ENABLE'] = 0
+        self.dut['CONTROL'].write()
+        
+        self.dut['SPI'].set_size(125) #in bits
+        
+        self.dut['SPI'].set_data(range(64))
+        self.dut['SPI'].start()
+        while(not self.dut['SPI'].is_ready):
+            pass
+        
+        self.dut['CONTROL']['ENABLE'] = 1
+        self.dut['CONTROL'].write()
+
+    def tearDown(self):
+        self.dut.close()
+        time.sleep(1)
+        cocotb_compile_clean()
+
+if __name__ == '__main__':
+    unittest.main()

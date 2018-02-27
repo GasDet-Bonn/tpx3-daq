@@ -1,0 +1,56 @@
+
+---
+name    : timepix3-daq
+version : 0.1.0
+
+transfer_layer:
+    - name  : intf
+      type  : SiUdp
+      init:
+        host: '192.168.1.128'
+        port: 1234
+
+hw_drivers:
+  - name      : gpio
+    type      : gpio
+    interface : intf
+    base_addr : 0x1000
+    size      : 16
+    
+  - name      : SPI
+    type      : spi
+    interface : intf
+    base_addr : 0x2000
+
+registers:
+  - name        : CONTROL
+    type        : StdRegister
+    hw_driver   : gpio
+    size        : 16
+    fields:
+      - name    : LED
+        size    : 8
+        offset  : 15    
+      - name    : DATA_MUX_SEL
+        size    : 1
+        offset  : 5    
+      - name    : EN_POWER_PULSING
+        size    : 1
+        offset  : 5
+      - name    : TO_SYNC
+        size    : 1
+        offset  : 4  
+      - name    : EXT_TPULSE
+        size    : 1
+        offset  : 3
+      - name    : SHUTTER
+        size    : 1
+        offset  : 2
+      - name    : ENABLE
+        size    : 1
+        offset  : 1
+      - name    : RESET
+        size    : 1
+        offset  : 0
+        
+        

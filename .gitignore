@@ -15,7 +15,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+
 lib64/
 parts/
 sdist/
@@ -99,3 +99,16 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+.project
+
+/firmware/ise/*
+!/firmware/ise/*.xise  
+
+/firmware/src/coregen/*
+!/firmware/src/coregen/*.xco  
+
+tests/results.xml
+
+test_si_udp.vvp
+test_si_udp.lxt
