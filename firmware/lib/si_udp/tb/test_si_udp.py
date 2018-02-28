@@ -241,7 +241,7 @@ def bench():
         test_frame.ip_dest_ip = 0xc0a80180
         test_frame.udp_source_port = 5678
         test_frame.udp_dest_port = 1234
-        test_frame.payload = bytearray(array('B', struct.pack('>BII', 0x01, 4, 0x1000)))
+        test_frame.payload = bytearray(array('B', struct.pack('>BII', 0x01, 1, 0x1000)))
         test_frame.build()
         
         gmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+test_frame.build_eth().build_axis_fcs().data)

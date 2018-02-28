@@ -80,7 +80,7 @@ module tpx3_core (
 	assign ExtTPulse = GPIO[3];
 	assign T0_Sync = GPIO[4]; 
 	assign ENPowerPulsing = GPIO[5];
-    assign Data_MUX_select = GPIO[6];
+   assign Data_MUX_select = GPIO[6];
 	assign LED = GPIO[15:8];
     
     wire SCLK, SDI, SDO, SEN, SLD;

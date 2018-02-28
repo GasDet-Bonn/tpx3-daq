@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 14.7
-# Date: Mon Feb 26 20:42:28 2018
+# Date: Tue Feb 27 10:42:30 2018
 #
 ##############################################################
 #
@@ -28,7 +28,7 @@ SET flowvendor = Other
 SET formalverification = false
 SET foundationsym = false
 SET implementationfiletype = Ngc
-SET package = ff784
+SET package = ff1156
 SET removerpms = false
 SET simulationfiles = Behavioral
 SET speedgrade = -1
@@ -54,4 +54,4 @@ CSET transceiver_tile=A
 MISC pkg_timestamp=2012-07-11T07:25:50Z
 # END Extra information
 GENERATE
-# CRC: 12b98304
+# CRC: f27a795e
