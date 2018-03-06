@@ -221,6 +221,9 @@ def bench():
 
         current_test.next = 1
 
+        RD_CMD = 0x01;
+        WR_CMD = 0x02;
+
         
         test_frame = udp_ep.UDPFrame()
         test_frame.eth_dest_mac = 0x020000000000
@@ -241,7 +244,7 @@ def bench():
         test_frame.ip_dest_ip = 0xc0a80180
         test_frame.udp_source_port = 5678
         test_frame.udp_dest_port = 1234
-        test_frame.payload = bytearray(array('B', struct.pack('>BII', 0x01, 1, 0x1000)))
+        test_frame.payload = bytearray(array('B', struct.pack('>BII', RD_CMD, 1, 0x1000)))
         test_frame.build()
         
         gmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+test_frame.build_eth().build_axis_fcs().data)
@@ -295,7 +298,7 @@ def bench():
         check_eth_frame.parse_axis_fcs(rx_frame.data[8:])
         check_frame = udp_ep.UDPFrame()
         check_frame.parse_eth(check_eth_frame)
-        print 'rec_size:', len(check_frame.payload.data), test_frame.payload
+        print '!Rec_size:', len(check_frame.payload.data), check_frame.payload
         
         # WR
         test_frame = udp_ep.UDPFrame()
@@ -317,7 +320,7 @@ def bench():
         test_frame.ip_dest_ip = 0xc0a80180
         test_frame.udp_source_port = 5678
         test_frame.udp_dest_port = 1234
-        test_frame.payload = bytearray(array('B', struct.pack('>BII', 0x02, 1, 0x1000))) + bytearray( [2] )
+        test_frame.payload = bytearray(array('B', struct.pack('>BII', WR_CMD, 1, 0x1000))) + bytearray( [2] )
         test_frame.build()
         gmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+test_frame.build_eth().build_axis_fcs().data)
         while gmii_sink.empty():
@@ -328,7 +331,41 @@ def bench():
         check_frame = udp_ep.UDPFrame()
         check_frame.parse_eth(check_eth_frame)
         
-        print 'rec_size:', len(check_frame.payload.data), test_frame.payload
+        print '!Rec_size:', len(check_frame.payload.data), check_frame.payload
+        
+        
+        #RD 32
+        test_frame = udp_ep.UDPFrame()
+        test_frame.eth_dest_mac = 0x020000000000
+        test_frame.eth_src_mac = 0xDAD1D2D3D4D5
+        test_frame.eth_type = 0x0800
+        test_frame.ip_version = 4
+        test_frame.ip_ihl = 5
+        test_frame.ip_dscp = 0
+        test_frame.ip_ecn = 0
+        test_frame.ip_length = None
+        test_frame.ip_identification = 0
+        test_frame.ip_flags = 2
+        test_frame.ip_fragment_offset = 0
+        test_frame.ip_ttl = 64
+        test_frame.ip_protocol = 0x11
+        test_frame.ip_header_checksum = None
+        test_frame.ip_source_ip = 0xc0a80182
+        test_frame.ip_dest_ip = 0xc0a80180
+        test_frame.udp_source_port = 5678
+        test_frame.udp_dest_port = 1234
+        test_frame.payload = bytearray(array('B', struct.pack('>BII', RD_CMD, 8, 0x80000000)))
+        test_frame.build()
+        gmii_source.send(b'\x55\x55\x55\x55\x55\x55\x55\xD5'+test_frame.build_eth().build_axis_fcs().data)
+        while gmii_sink.empty():
+            yield clk.posedge
+        rx_frame = gmii_sink.recv()
+        check_eth_frame = eth_ep.EthFrame()
+        check_eth_frame.parse_axis_fcs(rx_frame.data[8:])
+        check_frame = udp_ep.UDPFrame()
+        check_frame.parse_eth(check_eth_frame)
+        
+        print '!Rec_size:', len(check_frame.payload.data), check_frame.payload
         
         
         assert gmii_source.empty()

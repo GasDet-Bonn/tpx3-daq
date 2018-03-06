@@ -6,7 +6,7 @@ CONFIG PART = xc6vlx240t-1ff1156;
 NET "sys_clk_p" LOC = "J9" | IOSTANDARD=LVDS_25; # Bank = 34, IO_L0P_GC_34 (GCLK)
 NET "sys_clk_n" LOC = "H9" | IOSTANDARD=LVDS_25; # Bank = 34, IO_L0N_GC_34 (GCLK)
 NET "sys_clk_p" TNM_NET = "sys_clk_pin";
-TIMESPEC "TS_sys_clk_pin" = PERIOD "sys_clk_pin" 200000 kHz;
+TIMESPEC "TS_SYS_CLK200" = PERIOD "sys_clk_pin" 200000 kHz;
 
 # Light Emitting Diodes
 NET "ledu"   LOC = "AH27" | IOSTANDARD=LVCMOS25 | SLEW=QUIETIO | DRIVE=2; # Bank = 23, IO_L0P_23 (DS20)
@@ -99,21 +99,21 @@ NET "phy_sgmii_clk_n" LOC = "H5";
 ##################
 
 ###### LED
-NET "FMC_LED[0]"                			LOC = "U30";    ## K20 on J64
-NET "FMC_LED[1]"                			LOC = "U26";    ## K22 on J64
-NET "FMC_LED[2]"               			LOC = "T33";    ## J18 on J64
-NET "FMC_LED[3]"                			LOC = "T34";    ## J19 on J64
+NET "FMC_LED[0]"                           LOC = "U30";    ## K20 on J64
+NET "FMC_LED[1]"                           LOC = "U26";    ## K22 on J64
+NET "FMC_LED[2]"                           LOC = "T33";    ## J18 on J64
+NET "FMC_LED[3]"                           LOC = "T34";    ## J19 on J64
 
 ###### LEMO
-NET "FMC_LEMO[0]"             			LOC = "V30";    ## K16 on J64
-NET "FMC_LEMO[1]"             			LOC = "W30";    ## K17 on J64
-NET "FMC_LEMO[2]"                			LOC = "U31";    ## K19 on J64
-NET "FMC_LEMO[3]"                			LOC = "AM23";   ## H19 on J64
-NET "FMC_LEMO[4]"                			LOC = "AL23";   ## H20 on J64
+NET "FMC_LEMO[0]"                         LOC = "V30";    ## K16 on J64
+NET "FMC_LEMO[1]"                         LOC = "W30";    ## K17 on J64
+NET "FMC_LEMO[2]"                         LOC = "U31";    ## K19 on J64
+NET "FMC_LEMO[3]"                         LOC = "AM23";   ## H19 on J64
+NET "FMC_LEMO[4]"                         LOC = "AL23";   ## H20 on J64
 
 ###### TPX3 Control
-NET "TPX3_1_PLLOut_N"             	LOC = "AF33";   ## F5  on J64
-NET "TPX3_1_PLLOut_P"             	LOC = "AE33";   ## F4  on J64
+NET "TPX3_1_PLLOut_N"               LOC = "AF33";   ## F5  on J64
+NET "TPX3_1_PLLOut_P"               LOC = "AE33";   ## F4  on J64
 NET "TPX3_1_ClkInRefPLL_N"          LOC = "AC29";   ## E3  on J64
 NET "TPX3_1_ClkInRefPLL_P"          LOC = "AD29";   ## E2  on J64
 NET "TPX3_1_ExtTPulse_N"            LOC = "V33";    ## E19 on J64
@@ -124,14 +124,14 @@ NET "TPX3_1_EnableIn_N"             LOC = "AM31";   ## E22 on J64
 NET "TPX3_1_EnableIn_P"             LOC = "AL30";   ## E21 on J64
 NET "TPX3_1_DataIn_N"               LOC = "AN34";   ## E25 on J64
 NET "TPX3_1_DataIn_P"               LOC = "AN33";   ## E24 on J64
-NET "TPX3_1_ClkOut_N"             	LOC = "AE26";   ## K29 on J64
-NET "TPX3_1_ClkOut_P"             	LOC = "AF26";   ## K28 on J64
-NET "TPX3_1_ClkIn40_N"             	LOC = "AG30";   ## K26 on J64
-NET "TPX3_1_ClkIn40_P"             	LOC = "AF30";   ## K25 on J64
+NET "TPX3_1_ClkOut_N"               LOC = "AE26";   ## K29 on J64
+NET "TPX3_1_ClkOut_P"               LOC = "AF26";   ## K28 on J64
+NET "TPX3_1_ClkIn40_N"              LOC = "AG30";   ## K26 on J64
+NET "TPX3_1_ClkIn40_P"              LOC = "AF30";   ## K25 on J64
 NET "TPX3_1_Shutter_N"              LOC = "AK34";   ## E28 on J64
 NET "TPX3_1_Shutter_P"              LOC = "AL34";   ## E27 on J64
-NET "TPX3_1_Reset_N"               	LOC = "AK31";   ## E34 on J64
-NET "TPX3_1_Reset_P"        		LOC = "AL31";   ## E33 on J64
+NET "TPX3_1_Reset_N"                LOC = "AK31";   ## E34 on J64
+NET "TPX3_1_Reset_P"                LOC = "AL31";   ## E33 on J64
 NET "TPX3_1_ENPowerPulsing_N"       LOC = "AH32";   ## E31 on J64
 NET "TPX3_1_ENPowerPulsing_P"       LOC = "AH33";   ## E30 on J64
 
@@ -139,54 +139,63 @@ NET "TPX3_1_ENPowerPulsing_P"       LOC = "AH33";   ## E30 on J64
 ###### Data Out
 #
 ###### MUX Control
-NET "Data_MUX_select"            	LOC = "U28";    ## J21 on J64
+NET "Data_MUX_select"               LOC = "U28";    ## J21 on J64
 
 ###### IF MUX is 0
-#NET "TPX3_1_DataOut[0]_N_MUX0"      LOC = "AC4";    ## C7  on J64
-#NET "TPX3_1_DataOut[0]_P_MUX0"      LOC = "AC3";    ## C6  on J64
-#NET "TPX3_1_DataOut[1]_N_MUX0"      LOC = "AE4";    ## A3  on J64
-#NET "TPX3_1_DataOut[1]_P_MUX0"      LOC = "AE3";    ## A2  on J64
-#NET "TPX3_1_DataOut[2]_N_MUX0"      LOC = "AF6";    ## A7  on J64
-#NET "TPX3_1_DataOut[2]_P_MUX0"      LOC = "AF5";    ## A6  on J64
-#NET "TPX3_1_DataOut[3]_N_MUX0"      LOC = "AG4";    ## A11 on J64
-#NET "TPX3_1_DataOut[3]_P_MUX0"      LOC = "AG3";    ## A10 on J64
-#NET "TPX3_1_DataOut[4]_N_MUX0"      LOC = "AJ4";    ## A15 on J64
-#NET "TPX3_1_DataOut[4]_P_MUX0"      LOC = "AJ3";    ## A14 on J64
-#NET "TPX3_1_DataOut[5]_N_MUX0"      LOC = "AL4";    ## A19 on J64
-#NET "TPX3_1_DataOut[5]_P_MUX0"      LOC = "AL3";    ## A18 on J64
-#NET "TPX3_1_DataOut[6]_N_MUX0"     	LOC = "AM6";    ## B17 on J64
-#NET "TPX3_1_DataOut[6]_P_MUX0"      LOC = "AM5";    ## B16 on J64
-#NET "TPX3_1_DataOut[7]_N_MUX0"      LOC = "AP6";    ## B13 on J64
-#NET "TPX3_1_DataOut[7]_P_MUX0"      LOC = "AP5";    ## B12 on J64
+#NET "TPX3_1_DataOut_N[0]"      LOC = "AC4";    ## C7  on J64
+#NET "TPX3_1_DataOut_P[0]"      LOC = "AC3";    ## C6  on J64
+#NET "TPX3_1_DataOut_N[1]"      LOC = "AE4";    ## A3  on J64
+#NET "TPX3_1_DataOut_P[1]"      LOC = "AE3";    ## A2  on J64
+#NET "TPX3_1_DataOut_N[2]"      LOC = "AF6";    ## A7  on J64
+#NET "TPX3_1_DataOut_P[2]"      LOC = "AF5";    ## A6  on J64
+#NET "TPX3_1_DataOut_N[3]"      LOC = "AG4";    ## A11 on J64
+#NET "TPX3_1_DataOut_P[3]"      LOC = "AG3";    ## A10 on J64
+#NET "TPX3_1_DataOut_N[4]"      LOC = "AJ4";    ## A15 on J64
+#NET "TPX3_1_DataOut_P[4]"      LOC = "AJ3";    ## A14 on J64
+#NET "TPX3_1_DataOut_N[5]"      LOC = "AL4";    ## A19 on J64
+#NET "TPX3_1_DataOut_P[5]"      LOC = "AL3";    ## A18 on J64
+#NET "TPX3_1_DataOut_N[6]"      LOC = "AM6";    ## B17 on J64
+#NET "TPX3_1_DataOut_P[6]"      LOC = "AM5";    ## B16 on J64
+#NET "TPX3_1_DataOut_N[7]"      LOC = "AP6";    ## B13 on J64
+#NET "TPX3_1_DataOut_P[7]"      LOC = "AP5";    ## B12 on J64
 
 ###### IF MUX is 1
-#NET "TPX3_1_DataOut[0]_N_MUX1"      LOC = "AK32";   ## F29 on J64
-#NET "TPX3_1_DataOut[0]_P_MUX1"      LOC = "AK33";   ## F28 on J64
-#NET "TPX3_1_DataOut[1]_N_MUX1"      LOC = "AJ32";   ## F32 on J64
-#NET "TPX3_1_DataOut[1]_P_MUX1"      LOC = "AJ31";   ## F31 on J64
-#NET "TPX3_1_DataOut[2]_N_MUX1"      LOC = "AH30";   ## F35 on J64
-#NET "TPX3_1_DataOut[2]_P_MUX1"      LOC = "AH29";   ## F34 on J64
-#NET "TPX3_1_DataOut[3]_N_MUX1"     	LOC = "AM32";   ## J25 on J64
-#NET "TPX3_1_DataOut[3]_P_MUX1"      LOC = "AN32";   ## J24 on J64
-#NET "TPX3_1_DataOut[4]_N_MUX1"      LOC = "AH34";   ## J28 on J64
-#NET "TPX3_1_DataOut[4]_P_MUX1"      LOC = "AJ34";   ## J27 on J64
-#NET "TPX3_1_DataOut[5]_N_MUX1"      LOC = "AJ30";   ## J31 on J64
-#NET "TPX3_1_DataOut[5]_P_MUX1"      LOC = "AJ29";   ## J30 on J64
-#NET "TPX3_1_DataOut[6]_N_MUX1"      LOC = "AE29";   ## J34 on J64
-#NET "TPX3_1_DataOut[6]_P_MUX1"      LOC = "AE28";   ## J33 on J64
-#NET "TPX3_1_DataOut[7]_N_MUX1"      LOC = "AD26";   ## J37 on J64
-#NET "TPX3_1_DataOut[7]_P_MUX1"      LOC = "AD25";   ## J36 on J64
+NET "TPX3_1_DataOut_N[0]"      LOC = "AK32";   ## F29 on J64 
+NET "TPX3_1_DataOut_P[0]"      LOC = "AK33";   ## F28 on J64 
+NET "TPX3_1_DataOut_N[1]"      LOC = "AJ32";   ## F32 on J64
+NET "TPX3_1_DataOut_P[1]"      LOC = "AJ31";   ## F31 on J64
+NET "TPX3_1_DataOut_N[2]"      LOC = "AH30";   ## F35 on J64
+NET "TPX3_1_DataOut_P[2]"      LOC = "AH29";   ## F34 on J64
+NET "TPX3_1_DataOut_N[3]"      LOC = "AM32";   ## J25 on J64
+NET "TPX3_1_DataOut_P[3]"      LOC = "AN32";   ## J24 on J64
+NET "TPX3_1_DataOut_N[4]"      LOC = "AH34";   ## J28 on J64
+NET "TPX3_1_DataOut_P[4]"      LOC = "AJ34";   ## J27 on J64
+NET "TPX3_1_DataOut_N[5]"      LOC = "AJ30";   ## J31 on J64
+NET "TPX3_1_DataOut_P[5]"      LOC = "AJ29";   ## J30 on J64
+NET "TPX3_1_DataOut_N[6]"      LOC = "AE29";   ## J34 on J64
+NET "TPX3_1_DataOut_P[6]"      LOC = "AE28";   ## J33 on J64
+NET "TPX3_1_DataOut_N[7]"      LOC = "AD26";   ## J37 on J64
+NET "TPX3_1_DataOut_P[7]"      LOC = "AD25";   ## J36 on J64
 
 ####
 ####
 ####
 # Timing constraints for Ethernet PHY
 #TIMESPEC "TS_rx_clk_root" = PERIOD "clk_rx_local" 8000 ps HIGH 50 %;
-TIMESPEC "TS_mgtrefclk" = PERIOD "sgmii_mgtrefclk" 8 ns HIGH 50 %;
+#TIMESPEC "TS_mgtrefclk" = PERIOD "CLK125_MGT" 8 ns HIGH 50 %;
+
+#TIMESPEC "TS_CLK125" = PERIOD "CLK125" 8 ns HIGH 50 %;
+#TIMESPEC "TS_CLK125_PHY" = PERIOD "CLK125_PHY" 8 ns HIGH 50 %;
+
+#NET "CLK125_MGT" TNM_NET = "TMM_CLK125_MGT";
+#TIMESPEC "TS_CLK125_MGT" = PERIOD "TMM_CLK125_MGT" 8 ns HIGH 50 %;
+
+NET "CLK125_PHY" TNM_NET = "TMM_CLK125";
+TIMESPEC "TS_CLK125" = PERIOD "TMM_CLK125" 8 ns HIGH 50 %;
 
 #
-NET "phy_sgmii_txoutclk" TNM_NET = "txoutclk";
-TIMESPEC "TS_txoutclk" = PERIOD "txoutclk" 8 ns HIGH 50 %;
+#NET "CLK125_PHY" TNM_NET = "txoutclk";
+#TIMESPEC "TS_txoutclk" = PERIOD "txoutclk" 8 ns HIGH 50 %;
 
 NET "eth_pcspma/transceiver_inst/RXRECCLK" TNM_NET = "rxrecclk";
 TIMESPEC "ts_rxrecclk" = PERIOD "rxrecclk" 8 ns;
@@ -207,3 +216,12 @@ TIMESPEC "ts_ram_read_false_path" = FROM "RAMS" TO "fifo_read"  6 ns DATAPATHONL
 #NET "phy_sgmii_txoutclk" TNM = "ffs_sgmii_clk";
 #TIMESPEC "TS_clk_125mhz_int_to_sgmii_clk" = FROM "ffs_clk_125mhz_int" TO "ffs_sgmii_clk" 10 ns;
 #TIMESPEC "TS_sgmii_clk_to_clk_125mhz_int" = FROM "ffs_sgmii_clk" TO "ffs_clk_125mhz_int" 10 ns; 
+
+NET "CLK40" TNM_NET = "TNM_CLK40";
+NET "CLK32" TNM_NET = "TNM_CLK32";
+
+TIMESPEC TS_FALSE_40_BUS = FROM "TNM_CLK40" TO "TMM_CLK125" TIG;
+TIMESPEC TS_FALSE_BUS_40 = FROM "TMM_CLK125" TO "TNM_CLK40" TIG; 
+
+TIMESPEC TS_FALSE_64_BUS = FROM "TNM_CLK32" TO "TMM_CLK125" TIG;
+TIMESPEC TS_FALSE_BUS_64 = FROM "TMM_CLK125" TO "TNM_CLK32" TIG; 

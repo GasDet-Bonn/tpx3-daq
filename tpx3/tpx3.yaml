@@ -5,7 +5,7 @@ version : 0.1.0
 
 transfer_layer:
     - name  : intf
-      type  : SiUdp
+      type  : tpx3.SiUdp
       init:
         host: '192.168.1.128'
         port: 1234
@@ -21,7 +21,18 @@ hw_drivers:
     type      : spi
     interface : intf
     base_addr : 0x2000
+    
+  - name      : FIFO
+    type      : bram_fifo
+    interface : intf
+    base_addr : 0x8000
+    base_data_addr : 0x80000000
 
+  - name      : RX
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6000 
+    
 registers:
   - name        : CONTROL
     type        : StdRegister
@@ -30,10 +41,13 @@ registers:
     fields:
       - name    : LED
         size    : 8
-        offset  : 15    
+        offset  : 15  
+      - name    : CNT_FIFO_EN
+        size    : 1
+        offset  : 7     
       - name    : DATA_MUX_SEL
         size    : 1
-        offset  : 5    
+        offset  : 6    
       - name    : EN_POWER_PULSING
         size    : 1
         offset  : 5

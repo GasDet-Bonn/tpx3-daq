@@ -69,22 +69,4 @@ class TPX3(Dut):
         
 
 if __name__ == '__main__':
-    chip = TPX3()
-    chip.init()
-    
-    chip['SPI'].set_data(range(256)*4)
-    chip['SPI'].start()
-    while(not chip['SPI'].is_ready):
-            pass
-
-    print chip['SPI'].get_data()
-    
-    for i in range(8):     
-        chip['CONTROL']['LED'] = 0
-        chip['CONTROL']['LED'][i] = 1
-        
-        chip['CONTROL'].write()
-        time.sleep(0.2)
-    
-    print('Happy day!')
-    
+    pass

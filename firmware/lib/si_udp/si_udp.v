@@ -294,9 +294,11 @@ assign siudp_confirm_last = (state == WR_CONFIRM_STATE) & (siudp_confirm_cnt== 3
 
 assign siudp_req = (req_cnt == 8) & rx_udp_payload_tvalid;
 
+wire read_data = (state == DATA_RD_STATE) & tx_udp_payload_tready & !siudp_last;
+
 assign BUS_CLK = clk_125mhz;
 assign BUS_RST = rst_125mhz;
-assign BUS_RD = (state == DATA_RD_STATE) & tx_udp_payload_tready & !siudp_last;
+assign BUS_RD = BUS_BYTE_ACCESS ? read_data : read_data & BUS_ADD[1:0] == 0;
 assign BUS_WR = (state == DATA_WR_STATE) & rx_udp_payload_tvalid;
 assign BUS_DATA = BUS_WR ? rx_udp_payload_tdata : 32'bz;
 
@@ -305,10 +307,8 @@ always@(posedge clk_125mhz)
         BUS_ADD <= {siudp_addr[31:8], rx_udp_payload_tdata};
     else if(BUS_WR)
         BUS_ADD <= BUS_ADD +1;
-    else if(BUS_RD)
+    else if(read_data)
         BUS_ADD <= BUS_ADD +1;
-
-reg BUS_RD_DLY;
 
 always@(*) begin
     case (siudp_confirm_cnt)
@@ -319,8 +319,6 @@ always@(*) begin
     endcase 
 end
 
-always@(posedge clk_125mhz)
-    BUS_RD_DLY <= BUS_RD;
 
 always@(posedge clk_125mhz)
     if(state == NOP_STATE)
@@ -348,7 +346,7 @@ end
 always @(posedge clk_125mhz) begin
     if (state == NOP_STATE)
         siudp_data_rd_cnt <= 0;
-    else if(BUS_RD)
+    else if(read_data)
         siudp_data_rd_cnt <= siudp_data_rd_cnt +1;
 end
 
@@ -383,11 +381,37 @@ always@(posedge clk_125mhz)
     if(next_state == WAIT_FOR_HEADER_RD_STATE)
         siudp_left_size <= siudp_size - siudp_data_rd_cnt;
 
+reg bus_read_reg;
+always@(posedge clk_125mhz)
+    bus_read_reg <= BUS_RD;
+        
+reg [7:0] data_bus_reg [7:0];
+always@(posedge clk_125mhz)
+    if(bus_read_reg)
+        {data_bus_reg[3],data_bus_reg[2],data_bus_reg[1], data_bus_reg[0]} <= BUS_DATA;
+       
+reg [31:0] addr_bus_reg;
+always@(posedge clk_125mhz)
+    if(read_data)
+        addr_bus_reg <= BUS_ADD;
+       
+reg [7:0] data_to_read;
+always@(*) begin
+    if(BUS_BYTE_ACCESS==0) begin
+        if(addr_bus_reg[1:0] == 0)
+            data_to_read = BUS_DATA[7:0];
+        else
+            data_to_read = data_bus_reg[addr_bus_reg[1:0]];
+    end
+    else
+        data_to_read = BUS_DATA[7:0];
+end
+       
 assign tx_udp_payload_tlast = tx_udp_payload_tready & (siudp_pck_last | siudp_last | siudp_confirm_last);
 assign tx_udp_payload_tvalid = tx_udp_payload_tready & (siudp_data_rd_cnt > 0 | (state == WR_CONFIRM_STATE) ); 
 assign tx_udp_payload_tuser = 0;
 assign tx_udp_length = (siudp_cmd == SIUDP_RD_CMD) ? (siudp_left_size > 1476 ? 1476 : siudp_left_size) : 16'd4;
-assign tx_udp_payload_tdata = (state == WR_CONFIRM_STATE) ? siudp_confirm_data_out : BUS_DATA ; //siudp_size;//siudp_addr;
+assign tx_udp_payload_tdata = (state == WR_CONFIRM_STATE) ? siudp_confirm_data_out : data_to_read ; //siudp_size;//siudp_addr;
 
 assign rx_udp_payload_tready = rx_udp_payload_tvalid;
 assign rx_udp_payload_tuser = 0;

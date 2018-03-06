@@ -20,11 +20,11 @@
     </file>
     <file xil_pn:name="../src/tpx3.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="12"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="65"/>
     </file>
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5.xco" xil_pn:type="FILE_COREGEN">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="11"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="51"/>
     </file>
   </files>
 
@@ -371,6 +371,19 @@
     <file xil_pn:name="../../../basil/firmware/modules/spi/blk_mem_gen_8_to_1_2k.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/firmware/modules/utils/cdc_pulse_sync.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/firmware/modules/utils/CG_MOD_pos.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/utils/cdc_syncfifo.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/utils/generic_fifo.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/includes/log2func.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/utils/cdc_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/bram_fifo/bram_fifo_core.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/bram_fifo/bram_fifo.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/rrp_arbiter/rrp_arbiter.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_rx/tpx3_rx.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_rx/tpx3_rx_core.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_rx/receiver_logic.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_rx/rec_sync.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_rx/decode_8b10b.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/utils/flag_domain_crossing.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/si_udp/si_udp.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g_fifo.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g.v" xil_pn:type="FILE_VERILOG"/>

@@ -61,6 +61,24 @@ class TestSim(unittest.TestCase):
         self.dut['CONTROL']['ENABLE'] = 1
         self.dut['CONTROL'].write()
 
+        self.dut['CONTROL']['CNT_FIFO_EN'] = 1
+        self.dut['CONTROL'].write()
+        
+        self.dut['CONTROL']['CNT_FIFO_EN'] = 0
+        self.dut['CONTROL'].write()
+        
+        fdata = self.dut['FIFO'].get_data() 
+        assert len(fdata) != 0
+
+        self.dut['RX'].ENABLE = 1
+        
+        for i in range(20):
+            self.dut['RX'].READY
+        
+        fdata = self.dut['FIFO'].get_data()
+        for i in fdata:
+            print (i & 0x01000000)!=0, hex(i & 0xffffff)
+        
     def tearDown(self):
         self.dut.close()
         time.sleep(1)

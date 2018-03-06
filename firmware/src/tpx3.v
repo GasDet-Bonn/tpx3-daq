@@ -103,18 +103,21 @@ module tpx3 (
     output wire TPX3_1_ENPowerPulsing_N,
     output wire TPX3_1_ENPowerPulsing_P,
 
-    output wire Data_MUX_select
+    output wire Data_MUX_select,
+    
+    
+    input wire [7:0] TPX3_1_DataOut_N, TPX3_1_DataOut_P
 
 );
 
 // Clock and reset
 
-wire sys_clk_ibufg;
+wire CLK200_SYS;
 wire sys_clk_bufg;
 wire clk_125mhz_mmcm_out;
 
 // Internal 125 MHz clock
-wire clk_125mhz_int;
+wire CLK125;
 wire rst_125mhz_int;
 
 wire mmcm_rst = reset;
@@ -125,8 +128,12 @@ IBUFGDS
 clk_ibufgds_inst(
     .I(sys_clk_p),
     .IB(sys_clk_n),
-    .O(sys_clk_ibufg)
+    .O(CLK200_SYS)
 );
+
+wire CLK40_MMCM;
+wire CLK320_MMCM;
+wire CLK32_MMCM;
 
 // MMCM instance
 // 200 MHz in, 125 MHz out
@@ -136,13 +143,13 @@ clk_ibufgds_inst(
 // Divide by 8 to get output frequency of 125 MHz
 MMCM_BASE #(
     .BANDWIDTH("OPTIMIZED"),
-    .CLKOUT0_DIVIDE_F(25),
+    .CLKOUT0_DIVIDE_F(3),
     .CLKOUT0_DUTY_CYCLE(0.5),
     .CLKOUT0_PHASE(0),
-    .CLKOUT1_DIVIDE(1),
+    .CLKOUT1_DIVIDE(24),
     .CLKOUT1_DUTY_CYCLE(0.5),
     .CLKOUT1_PHASE(0),
-    .CLKOUT2_DIVIDE(1),
+    .CLKOUT2_DIVIDE(30),
     .CLKOUT2_DUTY_CYCLE(0.5),
     .CLKOUT2_PHASE(0),
     .CLKOUT3_DIVIDE(1),
@@ -157,24 +164,24 @@ MMCM_BASE #(
     .CLKOUT6_DIVIDE(1),
     .CLKOUT6_DUTY_CYCLE(0.5),
     .CLKOUT6_PHASE(0),
-    .CLKFBOUT_MULT_F(5),
+    .CLKFBOUT_MULT_F(24),
     .CLKFBOUT_PHASE(0),
-    .DIVCLK_DIVIDE(1),
+    .DIVCLK_DIVIDE(5),
     .REF_JITTER1(0.100),
     .CLKIN1_PERIOD(5.0),
     .STARTUP_WAIT("FALSE"),
     .CLKOUT4_CASCADE("FALSE")
 )
 clk_mmcm_inst (
-    .CLKIN1(sys_clk_ibufg),
+    .CLKIN1(CLK200_SYS),
     .CLKFBIN(mmcm_clkfb),
     .RST(mmcm_rst),
     .PWRDWN(1'b0),
-    .CLKOUT0(clk_40mhz_mmcm_out),
+    .CLKOUT0(CLK320_MMCM),
     .CLKOUT0B(),
-    .CLKOUT1(),
+    .CLKOUT1(CLK40_MMCM),
     .CLKOUT1B(),
-    .CLKOUT2(),
+    .CLKOUT2(CLK32_MMCM),
     .CLKOUT2B(),
     .CLKOUT3(),
     .CLKOUT3B(),
@@ -186,18 +193,30 @@ clk_mmcm_inst (
     .LOCKED(mmcm_locked)
 );
 
-wire CLK40;
+wire CLK40, CLK320, CLK32;
 BUFG
 clk_40mhz_bufg_inst (
-    .I(clk_40mhz_mmcm_out),
+    .I(CLK40_MMCM),
     .O(CLK40)
+);
+
+BUFG
+clk_320mhz_bufg_inst (
+    .I(CLK320_MMCM),
+    .O(CLK320)
+);
+
+BUFG
+clk_64mhz_bufg_inst (
+    .I(CLK32_MMCM),
+    .O(CLK32)
 );
 
 sync_reset #(
     .N(4)
 )
 sync_reset_125mhz_inst (
-    .clk(clk_125mhz_int),
+    .clk(CLK125),
     .rst(~mmcm_locked),
     .sync_reset_out(rst_125mhz_int)
 );
@@ -210,7 +229,6 @@ assign ledr = 0;
 assign ledc = 0;
 
 // SGMII interface to PHY
-wire phy_gmii_clk_int;
 wire phy_gmii_rst_int;
 wire phy_gmii_clk_en_int;
 wire [7:0] phy_gmii_txd_int;
@@ -220,34 +238,31 @@ wire [7:0] phy_gmii_rxd_int;
 wire phy_gmii_rx_dv_int;
 wire phy_gmii_rx_er_int;
 
-wire phy_sgmii_mgtrefclk;
-wire phy_sgmii_txoutclk;
-wire phy_sgmii_userclk2;
+wire CLK125_MGT;
+wire CLK125_PHY;
 
-assign clk_125mhz_int = phy_sgmii_userclk2;
+
 
 IBUFDS_GTXE1
 phy_sgmii_ibufds_mgtrefclk (
     .CEB   (1'b0),
     .I     (phy_sgmii_clk_p),
     .IB    (phy_sgmii_clk_n),
-    .O     (phy_sgmii_mgtrefclk),
+    .O     (CLK125_MGT),
     .ODIV2 ()
 );
 
 BUFG
 phy_sgmii_bufg_userclk2 (
-    .I     (phy_sgmii_txoutclk),
-    .O     (phy_sgmii_userclk2)
+    .I     (CLK125_PHY),
+    .O     (CLK125)
 );
-
-assign phy_gmii_clk_int = phy_sgmii_userclk2;
 
 sync_reset #(
     .N(4)
 )
 sync_reset_pcspma_inst (
-    .clk(phy_gmii_clk_int),
+    .clk(CLK125),
     .rst(rst_125mhz_int),
     .sync_reset_out(phy_gmii_rst_int)
 );
@@ -292,14 +307,14 @@ assign pcspma_an_config_vector[0]     = 1'b1;    // SGMII
 gig_eth_pcs_pma_v11_5_block
 eth_pcspma (
     // Transceiver Interface
-    .mgtrefclk             (phy_sgmii_mgtrefclk),
-    .gtx_reset_clk         (clk_125mhz_int),
+    .mgtrefclk             (CLK125_MGT),
+    .gtx_reset_clk         (CLK125),
     .txp                   (phy_sgmii_tx_p),
     .txn                   (phy_sgmii_tx_n),
     .rxp                   (phy_sgmii_rx_p),
     .rxn                   (phy_sgmii_rx_n),
-    .txoutclk              (phy_sgmii_txoutclk),
-    .userclk2              (phy_sgmii_userclk2),
+    .txoutclk              (CLK125_PHY),
+    .userclk2              (CLK125),
     .pma_reset             (rst_125mhz_int),
     // GMII Interface
     .sgmii_clk_r           (),
@@ -332,10 +347,10 @@ wire BUS_RD, BUS_WR, BUS_CLK, BUS_RST, BUS_BYTE_ACCESS;
 
 si_udp si_udp_inst (
     
-    .clk_125mhz(clk_125mhz_int),
+    .clk_125mhz(CLK125),
     .rst_125mhz(rst_125mhz_int),
 
-    .phy_gmii_clk(phy_gmii_clk_int),
+    .phy_gmii_clk(CLK125),
     .phy_gmii_rst(phy_gmii_rst_int),
     .phy_gmii_clk_en(phy_gmii_clk_en_int),
     .phy_gmii_rxd(phy_gmii_rxd_int),
@@ -376,6 +391,14 @@ generate
   end
 endgenerate
 
+wire [7:0] RX_DATA;
+genvar k;
+generate
+  for (k = 0; k < 8; k = k + 1) begin: in_buf_gen
+    IBUFDS #(.IOSTANDARD("DEFAULT")) IBUFDS_inst_rx ( .O(RX_DATA[k]), .I(TPX3_1_DataOut_P[k]), .IB(TPX3_1_DataOut_N[k])  );
+  end
+endgenerate
+
     
 tpx3_core tpx3_core_inst(
     .BUS_CLK(BUS_CLK),
@@ -386,22 +409,28 @@ tpx3_core tpx3_core_inst(
     .BUS_WR(BUS_WR),
     .BUS_BYTE_ACCESS(BUS_BYTE_ACCESS),
     
-	.CLK40(CLK40),
+    .CLK40(CLK40),
+    .CLK320(CLK320), 
+    .CLK32(CLK32),
+    
+    .RX_DATA(RX_DATA),
     .ExtTPulse(TPX3_1_ExtTPulse), 
-	.T0_Sync(TPX3_1_T0_Sync), 
-	.EnableIn(TPX3_1_EnableIn), 
-	.DataIn(TPX3_1_DataIn),  
-	.Shutter(TPX3_1_Shutter), 
-	.Reset(TPX3_1_Reset), 
-	.ENPowerPulsing(TPX3_1_ENPowerPulsing),
+    .T0_Sync(TPX3_1_T0_Sync), 
+    .EnableIn(TPX3_1_EnableIn), 
+    .DataIn(TPX3_1_DataIn),  
+    .Shutter(TPX3_1_Shutter), 
+    .Reset(TPX3_1_Reset), 
+    .ENPowerPulsing(TPX3_1_ENPowerPulsing),
     .Data_MUX_select(Data_MUX_select),
     
     .LED(led)
 
 );
 
+wire CLK40_OUT;
+ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_CLK40_OUT ( .Q(CLK40_OUT), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
 
-assign FMC_LEMO[4:0] = {TPX3_1_DataIn, TPX3_1_Shutter, TPX3_1_EnableIn, TPX3_1_Reset, CLK40};
+assign FMC_LEMO[4:0] = {RX_DATA[0], TPX3_1_DataIn, TPX3_1_EnableIn, TPX3_1_Reset, CLK40_OUT};
 assign FMC_LED = led[3:0];
-    
+
 endmodule

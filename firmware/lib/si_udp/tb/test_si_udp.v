@@ -110,6 +110,7 @@ end
 
 wire [31:0]  BUS_ADD, BUS_DATA;
 wire BUS_RD, BUS_WR, BUS_CLK, BUS_RST;
+wire BUS_BYTE_ACCESS;
 
 si_udp
 UUT (
@@ -132,7 +133,7 @@ UUT (
     .BUS_DATA(BUS_DATA),
     .BUS_RD(BUS_RD),
     .BUS_WR(BUS_WR),
-    .BUS_BYTE_ACCESS(1'b0)
+    .BUS_BYTE_ACCESS(BUS_BYTE_ACCESS)
     
 );
 
@@ -142,5 +143,6 @@ always@(posedge BUS_CLK)
         addr_reg <= BUS_ADD;
     
 assign BUS_DATA = BUS_WR ?  32'bz : addr_reg; 
+assign BUS_BYTE_ACCESS = BUS_ADD < 32'h8000_0000 ? 1'b1 : 1'b0;
 
 endmodule

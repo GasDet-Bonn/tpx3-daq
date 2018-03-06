@@ -95,19 +95,21 @@ class SiUdp(SiTransferLayer):
         return array('B', ack)
 
     def read(self, addr, size):
-
+    
         ret = array('B')
-        with self._udp_lock:
-            if size > self.MAX_RD_SIZE:
-                new_addr = addr
-                next_size = self.MAX_RD_SIZE
-                while next_size < size:
-                    ret += self._read_single(new_addr, self.MAX_RD_SIZE)
-                    new_addr = addr + next_size
-                    next_size = next_size + self.MAX_RD_SIZE
-                ret += self._read_single(new_addr, size + self.MAX_RD_SIZE - next_size)
-            else:
-                ret += self._read_single(addr, size)
+        
+        if size > 0:
+            with self._udp_lock:
+                if size > self.MAX_RD_SIZE:
+                    new_addr = addr
+                    next_size = self.MAX_RD_SIZE
+                    while next_size < size:
+                        ret += self._read_single(new_addr, self.MAX_RD_SIZE)
+                        new_addr = addr + next_size
+                        next_size = next_size + self.MAX_RD_SIZE
+                    ret += self._read_single(new_addr, size + self.MAX_RD_SIZE - next_size)
+                else:
+                    ret += self._read_single(addr, size)
         return ret
     
     def close(self):
