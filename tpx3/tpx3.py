@@ -23,7 +23,7 @@ from basil.utils.BitLogic import BitLogic
 import pkg_resources
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
 
-loglevel = logging.INFO
+loglevel = logging.DEBUG
 
 ''' Set up main logger '''
 for handler in logging.root.handlers[:]:
@@ -67,6 +67,8 @@ class TPX3(Dut):
 
         #self['CONF_SR'].set_size(3924)
         
+        self['CONTROL']['DATA_MUX_SEL'] = 1
+        self['CONTROL'].write()
 
 if __name__ == '__main__':
     pass

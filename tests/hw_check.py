@@ -7,10 +7,10 @@ import array
 chip = TPX3()
 chip.init()
 
-chip['CONTROL']['DATA_MUX_SEL'] = 1
 
 chip['CONTROL']['RESET'] = 1
 chip['CONTROL'].write()
+
 chip['CONTROL']['RESET'] = 0
 chip['CONTROL'].write()
 
@@ -30,6 +30,7 @@ while(not chip['SPI'].is_ready):
     pass
 
 print 'RX ready:', chip['RX'].is_ready
+
 for i in range(32):
     chip['RX'].reset()
     chip['RX'].DATA_DELAY = i #i
