@@ -230,8 +230,8 @@ chipscope_icon ichipscope_icon
 chipscope_ila ichipscope_ila
 (
     .CONTROL(control_bus),
-    .CLK(FCLK),
-    .TRIG0({dec_k, dec_data, data_to_dec, rec_sync_ready, 1'b0, USEAOUT, USEBOUT, USECOUT, USEDOUT, RX_DATA_SYNC, RX_DATA})
+    .CLK(WCLK),
+    .TRIG0({code_err, disp_err, dec_k,dec_data, data_8b10b})
 );
 `endif
 

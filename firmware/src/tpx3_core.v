@@ -49,7 +49,9 @@ module tpx3_core (
     
     input wire [7:0] RX_DATA,
     
-    output wire [7:0] LED
+    output wire [7:0] LED,
+    output wire RX_READY
+    
     
 );
 
@@ -96,7 +98,7 @@ module tpx3_core (
     );
     
     assign Reset = GPIO[0];
-    assign EnableIn = GPIO[1];
+    //assign EnableIn = GPIO[1];
     assign Shutter = GPIO[2];
     assign ExtTPulse = GPIO[3];
     assign T0_Sync = GPIO[4]; 
@@ -134,6 +136,7 @@ module tpx3_core (
     );
     assign DataIn = SDI;
     assign SDO = SDI;
+    assign EnableIn = ~SEN;
     
     wire TPX_0_FIFO_READ;
     wire TPX_0_FIFO_EMPTY;
@@ -150,7 +153,7 @@ module tpx3_core (
         .RX_CLKW(CLK32),
         .RX_DATA(RX_DATA[0]),
 
-        .RX_READY(),
+        .RX_READY(RX_READY),
         .RX_8B10B_DECODER_ERR(),
         .RX_FIFO_OVERFLOW_ERR(),
 

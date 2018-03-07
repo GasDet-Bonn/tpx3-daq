@@ -112,3 +112,6 @@ tests/results.xml
 
 test_si_udp.vvp
 test_si_udp.lxt
+
+*irun.history
+

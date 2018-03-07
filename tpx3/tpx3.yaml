@@ -60,9 +60,6 @@ registers:
       - name    : SHUTTER
         size    : 1
         offset  : 2
-      - name    : ENABLE
-        size    : 1
-        offset  : 1
       - name    : RESET
         size    : 1
         offset  : 0

@@ -5,6 +5,7 @@
 
 `include "utils/RAMB16_S1_S9_sim.v"
 `include "utils/clock_divider.v"
+`include "utils/IDDR_sim.v"
 
 module tb (
     input wire          BUS_CLK,
@@ -41,17 +42,17 @@ tpx3_core dut (
     .BUS_WR(BUS_WR),
     .BUS_BYTE_ACCESS(BUS_BYTE_ACCESS),
     
-	.CLK40(CLK40),
+    .CLK40(CLK40),
     .CLK320(CLK320),
     .CLK32(CLK32),
     
     .ExtTPulse(TPX3_1_ExtTPulse), 
-	.T0_Sync(TPX3_1_T0_Sync), 
-	.EnableIn(TPX3_1_EnableIn), 
-	.DataIn(TPX3_1_DataIn),  
-	.Shutter(TPX3_1_Shutter), 
-	.Reset(TPX3_1_Reset), 
-	.ENPowerPulsing(TPX3_1_ENPowerPulsing),
+    .T0_Sync(TPX3_1_T0_Sync), 
+    .EnableIn(TPX3_1_EnableIn), 
+    .DataIn(TPX3_1_DataIn),  
+    .Shutter(TPX3_1_Shutter), 
+    .Reset(TPX3_1_Reset), 
+    .ENPowerPulsing(TPX3_1_ENPowerPulsing),
     .Data_MUX_select(Data_MUX_select),
     .RX_DATA(RX_DATA)
 
@@ -85,6 +86,7 @@ localparam D127P = 10'b0111101100;
 localparam DSIZE = 66*10;
 
 reg [DSIZE-1:0] enc_data;
+//initial enc_data = { {33{K285P,K285N}}};
 initial enc_data = { {30{K285P,K285N}}, {D020P, D010P,D020P, D010P,D020P, D010P}};
 
 always@(posedge CLK320)

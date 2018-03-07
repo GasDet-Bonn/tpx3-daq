@@ -42,14 +42,11 @@ class TestSim(unittest.TestCase):
         self.dut.init()
         
         
-        self.dut['CONTROL']['ENABLE'] = 1
         self.dut['CONTROL']['RESET'] = 1
         self.dut['CONTROL'].write()
         self.dut['CONTROL']['RESET'] = 0
         self.dut['CONTROL'].write()
         
-        self.dut['CONTROL']['ENABLE'] = 0
-        self.dut['CONTROL'].write()
         
         self.dut['SPI'].set_size(125) #in bits
         
@@ -58,9 +55,7 @@ class TestSim(unittest.TestCase):
         while(not self.dut['SPI'].is_ready):
             pass
         
-        self.dut['CONTROL']['ENABLE'] = 1
-        self.dut['CONTROL'].write()
-
+        
         self.dut['CONTROL']['CNT_FIFO_EN'] = 1
         self.dut['CONTROL'].write()
         
@@ -70,7 +65,6 @@ class TestSim(unittest.TestCase):
         fdata = self.dut['FIFO'].get_data() 
         assert len(fdata) != 0
 
-        self.dut['RX'].ENABLE = 1
         
         for i in range(20):
             self.dut['RX'].READY

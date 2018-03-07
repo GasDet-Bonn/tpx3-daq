@@ -21,7 +21,9 @@ class tpx3_rx(RegisterHardwareLayer):
                   'ENABLE': {'descr': {'addr': 2, 'size': 1, 'offset': 2}},
                   'FIFO_SIZE': {'default': 0, 'descr': {'addr': 3, 'size': 16, 'properties': ['ro']}},
                   'DECODER_ERROR_COUNTER': {'descr': {'addr': 5, 'size': 8, 'properties': ['ro']}},
-                  'LOST_DATA_COUNTER': {'descr': {'addr': 6, 'size': 8, 'properties': ['ro']}}}
+                  'DATA_DELAY': {'descr': {'addr': 7, 'size': 5}},
+                  'SAMPLING_EDGE': {'descr': {'addr': 7, 'size': 1, 'offset': 5}},
+                  'DECODER_ERROR_COUNTER': {'descr': {'addr': 5, 'size': 8, 'properties': ['ro']}}}
     _require_version = "==1"
 
     def __init__(self, intf, conf):

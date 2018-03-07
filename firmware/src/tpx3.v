@@ -104,7 +104,7 @@ module tpx3 (
     output wire TPX3_1_ENPowerPulsing_P,
 
     output wire Data_MUX_select,
-    
+    output wire [0:0] LINKUP,
     
     input wire [7:0] TPX3_1_DataOut_N, TPX3_1_DataOut_P
 
@@ -371,8 +371,9 @@ si_udp si_udp_inst (
 );
 
 wire  TPX3_1_ClkInRefPLL_reg, TPX3_1_ClkIn40_reg;
-ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkInRefPLL ( .Q(TPX3_1_ClkInRefPLL_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0)); //ENABLE?
+ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkInRefPLL ( .Q(TPX3_1_ClkInRefPLL_reg), .C(CLK320), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0)); //ENABLE?
 OBUFDS #(.IOSTANDARD("DEFAULT")) OBUFDS_inst_TPX3_1_ClkInRefPLL ( .O(TPX3_1_ClkInRefPLL_P), .OB(TPX3_1_ClkInRefPLL_N), .I(TPX3_1_ClkInRefPLL_reg)  );
+
 ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0)); //ENABLE?
 OBUFDS #(.IOSTANDARD("DEFAULT")) OBUFDS_inst_TPX3_1_ClkIn40 ( .O(TPX3_1_ClkIn40_P), .OB(TPX3_1_ClkIn40_N), .I(TPX3_1_ClkIn40_reg)  );
  
@@ -399,7 +400,13 @@ generate
   end
 endgenerate
 
-    
+IDELAYCTRL IDELAYCTRL_inst (
+  .RDY(),       // 1-bit Ready output
+  .REFCLK(CLK200_SYS), // 1-bit Reference clock input
+  .RST(~mmcm_locked)        // 1-bit Reset input
+);
+   
+wire RX_READY;
 tpx3_core tpx3_core_inst(
     .BUS_CLK(BUS_CLK),
     .BUS_RST(BUS_RST),
@@ -423,7 +430,8 @@ tpx3_core tpx3_core_inst(
     .ENPowerPulsing(TPX3_1_ENPowerPulsing),
     .Data_MUX_select(Data_MUX_select),
     
-    .LED(led)
+    .LED(led),
+    .RX_READY(RX_READY)
 
 );
 
@@ -432,5 +440,5 @@ ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_
 
 assign FMC_LEMO[4:0] = {RX_DATA[0], TPX3_1_DataIn, TPX3_1_EnableIn, TPX3_1_Reset, CLK40_OUT};
 assign FMC_LED = led[3:0];
-
+assign LINKUP[0] = RX_READY; 
 endmodule

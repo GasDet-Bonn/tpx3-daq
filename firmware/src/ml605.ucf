@@ -177,6 +177,8 @@ NET "TPX3_1_DataOut_P[6]"      LOC = "AE28";   ## J33 on J64
 NET "TPX3_1_DataOut_N[7]"      LOC = "AD26";   ## J37 on J64
 NET "TPX3_1_DataOut_P[7]"      LOC = "AD25";   ## J36 on J64
 
+NET "LINKUP[0]"      LOC = "AC20";   ## H7 on J64
+
 ####
 ####
 ####
