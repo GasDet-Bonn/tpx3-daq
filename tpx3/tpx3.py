@@ -18,6 +18,10 @@ import basil
 
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
+from utils import toByteList
+
+# add toByteList() method to BitLogic
+BitLogic.toByteList = toByteList
 
 
 import pkg_resources
