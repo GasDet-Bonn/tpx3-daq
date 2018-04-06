@@ -204,5 +204,125 @@ class TPX3(Dut):
         """
         # 0x4E == local sync header
         return [0x4E] + self.chipId
+
+    def setDac(self, dac, value, chip = None, write = True):
+        """
+        Sets the DAC given by the name `dac` to value `value`.
+        If `write` is `True`, we perform the write of the data immediately,
+        else we return a string of the command.
+        If `chip` is `None`, we send a global command, else a local command for
+        the chip given by `chip`. Type yet undecided...
+
+        Manual:
+        SyncHeader[63:24] + {SetDAC_Code == 0x02}[23:16] + 0x00 + {DAC Value}[13:5] + {DAC Code}[4:0]
+
+        Inputs:
+            dac: string = name of the DAC
+            value: int = value to set for the DAC
+            chip: ? = determines whether local or global header used (individual or all chips)
+            write: bool = if True, we write immediately, else we return the data array to perform
+                the write with
+
+        Outputs:
+            list of 8 ints (64 bit) of the command, if `write` == False, else ack?
+        """
+        data = []
+        # first header, first 40 bits [63:24]
+        if chip == None:
+            data = self.getGlobalSyncHeader()
+        else:
+            data = self.getLocalSyncHeader()
+
+        # bit logic for final 24 bits
+        bits = BitLogic(24)            
+        # append the code for the SetDAC command header: bits 23:16
+        bits[23:16] = self.periphery_header_map["SetDAC"]
+
+        # get number of bits for values in this DAC 
+        dac_value_size = self.dac_valsize_map[dac]        
+        if value >= (2 ** dac_value_size):
+            # value for the DAC, check whether in allowed range
+            raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
+        # safely set the data for the values
+        
+        # set the given value at positions indicated in manual
+        bits[13:5] = value
+        # final bits [4:0], DAC code
+        bits[4:0] = self.dac_map[dac]
+        # append bits as list of bytes
+        data += bits.toByteList()
+
+        if write == True:
+            raise NotImplementedError("Immediate write upon call of Tpx3.setDAC() not implemented yet.")
+        else:
+            return data
+
+    def readDac(self, dac, write = True):
+        """
+        Reads the DAC of name `dac` and returns a tuple of the read value and the 
+        name.
+
+        Manual:
+        SyncHeader[63:24] + {readDAC_Code == 0x03}[23:16] + {0}[15:5] + {DAC Code}[4:0]        
+
+        Inputs:
+            dac: string = name of the DAC
+            write: bool = if True, we write immediately, else we return the data array to perform
+                the write with
+
+        Outputs:
+            If `write` == True, tuple of (DAC value, DAC name)
+            Else: command to perform read
+        """
+        # TODO: change to local sync header later
+        data = self.getGlobalSyncHeader()
+
+        data += [self.periphery_header_map["ReadDAC"]]
+
+        # add DAC code to last 4 bit of final 16 bit
+        bits = BitLogic(16)
+        bits[4:0] = self.dac_map[dac]
+        # add 16 bits as list of byte to result
+        data += bits.toByteList()
+
+        data += [0x00]
+
+        if write == True:
+            raise NotImplementedError("Immediate write upon call of Tpx3.readDAC() not implemented yet.")
+        else:
+            return data
+
+    def readDacExp(self, dac, value):
+        """
+        Debugging function. Returns the expected value of the DataOut after reading a DAC
+        given some DAC `dac`, which should contain `value`
+        NOTE: in fact the read data comes in w/ LSB first, so we need to reverse this (I guess?)!
+
+        Manual:
+        {readDAC_Code == 0x03}[47:40] + {0}[39:14] + {DAC Value}[13:5] + {DAC Code}[4:0]        
+        """
+        # add read DAC command header [47:40]
+        data = [self.periphery_header_map["ReadDAC"]]
+
+        # get size of DAC value
+        dac_value_size = self.dac_valsize_map[dac]        
+        if value >= (2 ** dac_value_size):
+            # value for the DAC, check whether in allowed range
+            raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
+        
+        # create final 40 bit, most empty
+        bits = BitLogic(40)
+        
+        # determine starting position in bits array, 13 starting pos
+        bits_start = 13 - (self.DAC_VALUE_BITS - dac_value_size)
+        bits[bits_start:5] = value
+
+        bits[4:0] = self.dac_map[dac]
+        # add 40 bits as list of bytes to result
+        data += bits.toByteList()
+
+        data += [0x00]
+        return data
+        
 if __name__ == '__main__':
     pass
