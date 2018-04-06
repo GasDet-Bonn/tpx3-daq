@@ -175,5 +175,30 @@ class TPX3(Dut):
         self['CONTROL']['DATA_MUX_SEL'] = 1
         self['CONTROL'].write()
 
+        # dummy Chip ID, which will be replaced by some value read from a YAML file
+        # for a specific Timepix3
+        self.chipId = [0x00 for _ in range(4)]
+
+    def getGlobalSyncHeader(self):
+        """
+        Returns the global sync header, which is used to address all available
+        Timepix3 chips
+        
+        Outputs:
+            list of 5 bytes corresponding to 40 bits
+        """
+        # 0xAA = global sync header
+        return [0xAA] + [0x00 for _ in range(4)]
+
+    def getLocalSyncHeader(self):
+        """
+        Returns the local sync header, which is used to address a specific Timepix3 
+        chip
+
+        Outputs:
+            list of 5 bytes corresponding to 40 bits
+        """
+        # 0x4E == local sync header
+        return [0x4E] + self.chipId
 if __name__ == '__main__':
     pass
