@@ -234,23 +234,25 @@ class TPX3(Dut):
             data = self.getLocalSyncHeader()
 
         # bit logic for final 24 bits
-        bits = BitLogic(24)            
+        bits = BitLogic(24)
         # append the code for the SetDAC command header: bits 23:16
         bits[23:16] = self.periphery_header_map["SetDAC"]
 
-        # get number of bits for values in this DAC 
-        dac_value_size = self.dac_valsize_map[dac]        
+        # get number of bits for values in this DAC
+        dac_value_size = self.dac_valsize_map[dac]
         if value >= (2 ** dac_value_size):
             # value for the DAC, check whether in allowed range
             raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
         # safely set the data for the values
-        
+
         # set the given value at positions indicated in manual
         bits[13:5] = value
         # final bits [4:0], DAC code
         bits[4:0] = self.dac_map[dac]
         # append bits as list of bytes
         data += bits.toByteList()
+
+        data += [0x00]
 
         if write == True:
             raise NotImplementedError("Immediate write upon call of Tpx3.setDAC() not implemented yet.")
@@ -305,14 +307,14 @@ class TPX3(Dut):
         data = [self.periphery_header_map["ReadDAC"]]
 
         # get size of DAC value
-        dac_value_size = self.dac_valsize_map[dac]        
+        dac_value_size = self.dac_valsize_map[dac]
         if value >= (2 ** dac_value_size):
             # value for the DAC, check whether in allowed range
             raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
-        
+
         # create final 40 bit, most empty
         bits = BitLogic(40)
-        
+
         # determine starting position in bits array, 13 starting pos
         bits_start = 13 - (self.DAC_VALUE_BITS - dac_value_size)
         bits[bits_start:5] = value
