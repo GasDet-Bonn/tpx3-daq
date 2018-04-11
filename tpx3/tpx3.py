@@ -35,13 +35,13 @@ for handler in logging.root.handlers[:]:
 #logging.getLogger('basil.HL.RegisterHardwareLayer').setLevel(logging.WARNING)
 
 logging.basicConfig(format="%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s")
-    
+
 logger = logging.getLogger('tpx3')
 logger.setLevel(loglevel)
 
 
 class TPX3(Dut):
-    
+
     #'' Map hardware IDs for board identification '''
     #hw_map = {
     #    0: 'SIMULATION',
@@ -52,9 +52,9 @@ class TPX3(Dut):
     ### Some maps defining mappings of string names to binary / hex values #########
     ################################################################################
     # TODO: move to a YAML file, similar to e.g. basil/register_lookup.yaml ?
-    
+
     # map defining the header values needed for different periphery operation commands
-    periphery_header_map = {"SenseDACsel" : 0x00, 
+    periphery_header_map = {"SenseDACsel" : 0x00,
                             "ExtDACsel" : 0x01,
                             "SetDAC" : 0x02,
                             "ReadDAC" : 0x03,
@@ -121,7 +121,7 @@ class TPX3(Dut):
                "Ibias_CP_PLL" : 0b10001,
                "PLL_Vcntrl" : 0b10010}
 
-    # number of bits a value for a DAC can have maximally 
+    # number of bits a value for a DAC can have maximally
     DAC_VALUE_BITS = 9
 
     # DAC value size in bits
@@ -154,7 +154,7 @@ class TPX3(Dut):
 
 
     def __init__(self, conf=None, **kwargs):
-        
+
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
         if not conf:
@@ -175,7 +175,7 @@ class TPX3(Dut):
         #    raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
 
         #self['CONF_SR'].set_size(3924)
-        
+
         self['CONTROL']['DATA_MUX_SEL'] = 1
         self['CONTROL'].write()
 
@@ -187,7 +187,7 @@ class TPX3(Dut):
         """
         Returns the global sync header, which is used to address all available
         Timepix3 chips
-        
+
         Outputs:
             list of 5 bytes corresponding to 40 bits
         """
@@ -196,7 +196,7 @@ class TPX3(Dut):
 
     def getLocalSyncHeader(self):
         """
-        Returns the local sync header, which is used to address a specific Timepix3 
+        Returns the local sync header, which is used to address a specific Timepix3
         chip
 
         Outputs:
@@ -205,7 +205,7 @@ class TPX3(Dut):
         # 0x4E == local sync header
         return [0x4E] + self.chipId
 
-    def setDac(self, dac, value, chip = None, write = True):
+    def set_dac(self, dac, value, chip = None, write = True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -257,13 +257,13 @@ class TPX3(Dut):
         else:
             return data
 
-    def readDac(self, dac, write = True):
+    def read_dac(self, dac, write = True):
         """
-        Reads the DAC of name `dac` and returns a tuple of the read value and the 
+        Reads the DAC of name `dac` and returns a tuple of the read value and the
         name.
 
         Manual:
-        SyncHeader[63:24] + {readDAC_Code == 0x03}[23:16] + {0}[15:5] + {DAC Code}[4:0]        
+        SyncHeader[63:24] + {readDAC_Code == 0x03}[23:16] + {0}[15:5] + {DAC Code}[4:0]
 
         Inputs:
             dac: string = name of the DAC
@@ -292,14 +292,14 @@ class TPX3(Dut):
         else:
             return data
 
-    def readDacExp(self, dac, value):
+    def read_dac_exp(self, dac, value):
         """
         Debugging function. Returns the expected value of the DataOut after reading a DAC
         given some DAC `dac`, which should contain `value`
         NOTE: in fact the read data comes in w/ LSB first, so we need to reverse this (I guess?)!
 
         Manual:
-        {readDAC_Code == 0x03}[47:40] + {0}[39:14] + {DAC Value}[13:5] + {DAC Code}[4:0]        
+        {readDAC_Code == 0x03}[47:40] + {0}[39:14] + {DAC Value}[13:5] + {DAC Code}[4:0]
         """
         # add read DAC command header [47:40]
         data = [self.periphery_header_map["ReadDAC"]]

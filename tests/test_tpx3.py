@@ -16,7 +16,7 @@ def run_tests():
     # "assertraises"
     try:
         # check if ValueError is correctly raised
-        chip.setDac(dac, val_large, write = False)
+        chip.set_dac(dac, val_large, write = False)
         raise Exception
     except ValueError:
         pass
@@ -46,14 +46,12 @@ def run_tests():
     dac_read += [0x00]
     # add DAC code of Vfkb, which is 0x05
     dac_read += [0x05]
-    print "Return value of readDac ".ljust(30), chip.readDac(dac, write = False)
+    print "Return value of read_dac ".ljust(30), chip.read_dac(dac, write = False)
     print "Value we expect?!".ljust(30), dac_read
-    print "Value we officially expect".ljust(30), chip.readDacExp(dac, val_allowed)
-    assert(chip.readDac(dac, write = False) == dac_read)
+    print "Value we officially expect".ljust(30), chip.read_dac_exp(dac, val_allowed)
+    assert(chip.read_dac(dac, write = False) == dac_read)
 
     print("All tests done")
 
 if __name__=="__main__":
     run_tests()
-
-
