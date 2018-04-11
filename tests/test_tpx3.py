@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from tpx3.tpx3 import TPX3
 
 
@@ -35,9 +36,9 @@ def run_tests():
     # Vfkb has DAC code 0x05
     #dac_set += [0x05]
     dac_set += bits.toByteList()
-    print "Return value of setDac ".ljust(30), chip.setDac(dac, val_allowed, write = False)
+    print "Return value of set_dac ".ljust(30), chip.set_dac(dac, val_allowed, write = False)
     print "Value we expect?! ".ljust(30), dac_set
-    assert(chip.setDac(dac, val_allowed, write = False) == dac_set)
+    assert(chip.set_dac(dac, val_allowed, write = False) == dac_set)
 
     dac_read = chip.getGlobalSyncHeader()
     # read DAC is command 0x03
