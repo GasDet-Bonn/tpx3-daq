@@ -255,7 +255,7 @@ class TPX3(Dut):
         data += [0x00]
 
         if write == True:
-            raise NotImplementedError("Immediate write upon call of Tpx3.setDAC() not implemented yet.")
+            self.write(data)
         else:
             return data
 
@@ -290,7 +290,7 @@ class TPX3(Dut):
         data += [0x00]
 
         if write == True:
-            raise NotImplementedError("Immediate write upon call of Tpx3.readDAC() not implemented yet.")
+            self.write(data)
         else:
             return data
 
@@ -325,6 +325,24 @@ class TPX3(Dut):
 
         data += [0x00]
         return data
-        
+
+    def write(self, data):
+        """
+        Performs a write of `data` on the SPI interface to the Tpx3.
+        Note: this function is blocking until the write is complete.
+        Inputs:
+            data: list of bytes to write. MSB is first element of list
+
+        """
+        # total size in bits
+        self['SPI'].set_size(len(data)*8)
+        self['SPI'].set_data(data)
+        self['SPI'].start()
+
+        while(not self['SPI'].is_ready):
+            # wait until SPI is done
+            pass
+
+
 if __name__ == '__main__':
     pass
