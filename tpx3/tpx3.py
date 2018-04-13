@@ -18,7 +18,7 @@ import basil
 
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
-from utils import toByteList
+from utils import toByteList, bitword_to_byte_list
 
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
@@ -343,6 +343,39 @@ class TPX3(Dut):
             # wait until SPI is done
             pass
 
+    def decode(self, data, string = False):
+        """
+        Performs a decoding of a raw 48 bit word received from the FPGA in decoded
+        2 * 32bit form. Output is interpreted, i.e. split into different components
+        Note:
+        By default the Tpx3 uses 8b10b mode (8 bit values represented by 10 bit
+        values to keep number of 0's and 1's even). In that mode it sends 60 bit
+        packets (manual v1.9 wrongly states 64 bit!) ~= 6 byte of data. The
+        firmware performs the decoding of the 60bit -> 48bit.
+        Data is repackaged into 2 * 32bit words, consisting of
+          [32 bit] == [header: 8bit | data: 24bit].
+        The 48bits are packaged as follows:
+          [48 bit] == [a: 24bit | b: 24bit] transforms as:
+            -> d1 = [h: 1 | reversedBytes(b)]
+            -> d2 = [h: 0 | reversedBytes(a)]
+        i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
+          [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
+        For periphery commands d2[3] contains the hex code of which function was called,
+        the rest is the 40bit DataOut (see manual v1.9 p.32)
+        """
+
+        # determine number of 48bit words
+        assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
+        nwords = len(data) / 2
+        result = []
+        for i in range(nwords):
+            d1 = bitword_to_byte_list(int(data[i]), string)
+            d2 = bitword_to_byte_list(int(data[i+1]), string)
+            dataout = [d2[2], d2[1], d1[3], d1[2], d1[1]]
+
+            result.append( (d2[3], dataout) )
+
+        return result
 
 if __name__ == '__main__':
     pass

@@ -1,3 +1,4 @@
+from basil.utils.BitLogic import BitLogic
 
 # this should really be a class method of BitLogic, but to stay compatible with
 # the current basil version, we add it at runtime
@@ -22,3 +23,12 @@ def toByteList(obj, bitwise = False):
             byteList += [obj[i+7:i].__str__()]
 
     return byteList
+
+def bitword_to_byte_list(data, string = False):
+    """
+    Given a 32 bit word, convert it to a list of bytes using BitLogic
+    """
+    result = BitLogic(32)
+    result[31:0] = int(data)
+    result = toByteList(result, string)
+    return result
