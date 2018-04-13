@@ -104,7 +104,7 @@ def main(args_dict):
     # chip['FIFO'].reset()
     # chip.write(data)
 
-    data = chip.set_dac("Vfbk", 0b01101011, write = False)
+    data = chip.set_dac("Vfbk", 0b10101011, write = False)
     chip['FIFO'].reset()
     time.sleep(0.01)
     chip.write(data)
@@ -116,8 +116,12 @@ def main(args_dict):
     chip.write(data)
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
-    for d in fdata:
+    dout = chip.decode(fdata, True)
+    for i, d in enumerate(fdata):
+        print i, hex(d), (d & 0x01000000)!=0, bin(d & 0xffffff), hex(d & 0xffffff)
         pretty_print(d)
+    for el in dout:
+        print "Decoded: ", el
 
 
     # data = chip.set_dac("Ibias_Preamp_ON", 0b1101, write = False)
@@ -144,7 +148,6 @@ def main(args_dict):
 
             chip['CONTROL'].write()
             time.sleep(0.1)
-
 
     if benchmark == True:
         chip['CONTROL']['CNT_FIFO_EN'] = 1
