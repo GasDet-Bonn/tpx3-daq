@@ -100,6 +100,16 @@ class TPX3(Dut):
                             "OtherChipCommand" : 0x72,
                             "WrongCommand" : 0x73}
 
+    # map defining the header values needed for different matrix operation commands
+    matrix_header_map = {"LoadConfigMatrix" : 0x80,
+                         "ReadConfigMatrix" : 0x90,
+                         "ReadMatrixSequential" : 0xA0,
+                         "ReadMatrixDataDriven" : 0xB0,
+                         "LoadCTPR" : 0xC0,
+                         "ReadCTPR" : 0xD0,
+                         "ResetSequential" : 0xE0,
+                         "StopMatrixCommand" : 0xF0}
+
     # DAC names
     # will have to be careful when using these, due to 5 bit value
     dac_map = {"Ibias_Preamp_ON" : 0b00001,
