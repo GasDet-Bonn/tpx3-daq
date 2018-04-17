@@ -377,5 +377,88 @@ class TPX3(Dut):
 
         return result
 
+    def xy_pixel_to_timepix3_pixel_address(self, x_pos, y_pos):
+        """
+        Converts the pixel positions from x/y coordinates to EoC, Superpixel and Pixel
+        (see manual v1.9 p.25) and returns it as 16bit list:
+        EoC_address[15:9] + SP_address[8:3] + Pixel_address[2:0]
+        """
+        if x_pos > 255:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for x position exceeds the maximum size of a {} bit value!".format(x_pos, 8))
+        if y_pos > 255:
+            # value for the y position, check whether in allowed range
+            raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
+
+        # create the variables for EoC, Superpixel and Pixel with their defined lenghts
+        EoC = BitLogic(7)
+        Superpixel = BitLogic(6)
+        Pixel = BitLogic(3)
+
+        # calculate EoC, Superpixel and Pixel with the x and y position of the pixel
+        EoC = (x_pos - x_pos % 2) / 2
+        Superpixel = (y_pos - y_pos % 4) / 4
+        Pixel = (x_pos % 2) * 4 + (y_pos % 4)
+
+        # create a 16 bit variable for the address
+        timepix_pixel_address = BitLogic(16)
+
+        # fill the address with the calculated values of EoC, Superpixel and Pixel
+        timepix_pixel_address[15:9] = EoC
+        timepix_pixel_address[8:3] = Superpixel
+        timepix_pixel_address[2:0] = Pixel
+
+        return timepix_pixel_address
+
+    def timepix3_pixel_address_to_x_pixel(self, timepix_pixel_address):
+        """
+        Converts the Timepix3 pixel address which contains EoC, Superpixel and Pixel
+        (see manual v1.9 p.25) and returns the x position of the pixel.
+        The Timepix3 pixel address is:
+        EoC_address[15:9] + SP_address[8:3] + Pixel_address[2:0]
+        """
+        if len(timepix_pixel_address) != 16:
+            # check if the timepix_pixel_address has a valid length
+            raise ValueError("The timepix pixel address must be a 16 bit value!")
+
+        # get EoC, Superpixel and Pixel from the address
+        EoC = timepix_pixel_address[15:9]
+        Superpixel = timepix_pixel_address[8:3]
+        Pixel = timepix_pixel_address[2:0]
+
+        # calculate the x position of the pixel based on EoC
+        # <= 3: left column of a superpixel; > 3: right side of a superpixel
+        if Pixel.tovalue() <= 3:
+            x_pos = (EoC.tovalue() * 2)
+        else:
+            x_pos = (EoC.tovalue() * 2) + 1
+
+        return x_pos
+
+    def timepix3_pixel_address_to_y_pixel(self, timepix_pixel_address):
+        """
+        Converts the Timepix3 pixel address which contains EoC, Superpixel and Pixel
+        (see manual v1.9 p.25) and returns the x position of the pixel.
+        The Timepix3 pixel address is:
+        EoC_address[15:9] + SP_address[8:3] + Pixel_address[2:0]
+        """
+        if len(timepix_pixel_address) != 16:
+            # check if the timepix_pixel_address has a valid length
+            raise ValueError("The timepix pixel address must be a 16 bit value!")
+
+        # get EoC, Superpixel and Pixel from the address
+        EoC = timepix_pixel_address[15:9]
+        Superpixel = timepix_pixel_address[8:3]
+        Pixel = timepix_pixel_address[2:0]
+
+        # calculate the x position of the pixel based on EoC
+        # <= 3: left column of a superpixel; > 3: right side of a superpixel
+        if Pixel.tovalue() <= 3:
+            y_pos = (Superpixel.tovalue() * 4) + Pixel.tovalue()
+        else:
+            y_pos = (Superpixel.tovalue() * 4) + (Pixel.tovalue() - 4)
+
+        return y_pos
+
 if __name__ == '__main__':
     pass
