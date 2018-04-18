@@ -485,5 +485,61 @@ class TPX3(Dut):
         if mask:
             self.mask_matrix = np.zeros((256,256), dtype=int)
 
+    def set_pixel_pcr(self, x_pos, y_pos, test, thr, mask):
+        """
+        sets test (1 bit), thr (4 bits) and mask (1 bit) for a selected pixel to new values
+        """
+        if x_pos > 255:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for x position exceeds the maximum size of a {} bit value!".format(x_pos, 8))
+        if y_pos > 255:
+            # value for the y position, check whether in allowed range
+            raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
+        if test > 1:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for test exceeds the maximum size of a {} bit value!".format(test, 1))
+        if thr > 15:
+            # value for the y position, check whether in allowed range
+            raise ValueError("Value {} for thr exceeds the maximum size of a {} bit value!".format(y_pos, 4))
+        if mask > 1:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for mask exceeds the maximum size of a {} bit value!".format(mask, 1))
+        
+        # set the new values for test, thr and mask
+        self.test_matrix[x_pos, y_pos] = test
+        self.thr_matrix[x_pos, y_pos] = thr
+        self.mask_matrix[x_pos, y_pos] = mask
+
+    def matrices_to_pcr(self, x_pos, y_pos):
+        """
+        returns the 6 bit PCR (see manual v1.9 p.44) of a selected pixel
+        """
+        if x_pos > 255:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for x position exceeds the maximum size of a {} bit value!".format(x_pos, 8))
+        if y_pos > 255:
+            # value for the y position, check whether in allowed range
+            raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
+        
+        # create a 6 bit variable for the pcr
+        pcr = BitLogic(6)
+
+        # create the variables for test, thr and mask with their defined lenghts
+        test = BitLogic(1)
+        thr = BitLogic(4)
+        mask = BitLogic(1)
+
+        # get test, thr and matrix from the corresponding matrices
+        test = self.test_matrix[x_pos, y_pos]
+        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos],4)
+        mask = self.mask_matrix[x_pos, y_pos]
+
+        # fill the pcr with test, thr and mask
+        pcr[5] = test
+        pcr[4:1] = thr
+        pcr[0] = mask
+        
+        return pcr
+
 if __name__ == '__main__':
     pass
