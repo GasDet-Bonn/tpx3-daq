@@ -172,6 +172,7 @@ class TPX3(Dut):
 
         logger.info("Loading configuration file from %s" % conf)
 
+        self.reset_matrices()
         super(TPX3, self).__init__(conf)
 
 
@@ -469,6 +470,20 @@ class TPX3(Dut):
             y_pos = (Superpixel.tovalue() * 4) + (Pixel.tovalue() - 4)
 
         return y_pos
+
+    def reset_matrices(self, test=True, thr=True, mask=True):
+        """
+        resets all matrices to default
+        """
+        # set the test matrix with zeros for all pixels
+        if test:
+            self.test_matrix = np.zeros((256,256), dtype=int)
+        # set the thr matrix with zeros for all pixels
+        if thr:
+            self.thr_matrix = np.zeros((256,256), dtype=int)
+        # set the mask matrix with zeros for all pixels
+        if mask:
+            self.mask_matrix = np.zeros((256,256), dtype=int)
 
 if __name__ == '__main__':
     pass
