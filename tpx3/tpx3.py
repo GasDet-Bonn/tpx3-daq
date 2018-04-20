@@ -172,6 +172,7 @@ class TPX3(Dut):
 
         logger.info("Loading configuration file from %s" % conf)
 
+        self.reset_matrices()
         super(TPX3, self).__init__(conf)
 
 
@@ -469,6 +470,134 @@ class TPX3(Dut):
             y_pos = (Superpixel.tovalue() * 4) + (Pixel.tovalue() - 4)
 
         return y_pos
+
+    def reset_matrices(self, test=True, thr=True, mask=True):
+        """
+        resets all matrices to default
+        """
+        # set the test matrix with zeros for all pixels
+        if test:
+            self.test_matrix = np.zeros((256,256), dtype=int)
+        # set the thr matrix with zeros for all pixels
+        if thr:
+            self.thr_matrix = np.zeros((256,256), dtype=int)
+        # set the mask matrix with zeros for all pixels
+        if mask:
+            self.mask_matrix = np.zeros((256,256), dtype=int)
+
+    def set_pixel_pcr(self, x_pos, y_pos, test, thr, mask):
+        """
+        sets test (1 bit), thr (4 bits) and mask (1 bit) for a selected pixel to new values
+        """
+        if x_pos > 255:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for x position exceeds the maximum size of a {} bit value!".format(x_pos, 8))
+        if y_pos > 255:
+            # value for the y position, check whether in allowed range
+            raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
+        if test > 1:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for test exceeds the maximum size of a {} bit value!".format(test, 1))
+        if thr > 15:
+            # value for the y position, check whether in allowed range
+            raise ValueError("Value {} for thr exceeds the maximum size of a {} bit value!".format(y_pos, 4))
+        if mask > 1:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for mask exceeds the maximum size of a {} bit value!".format(mask, 1))
+        
+        # set the new values for test, thr and mask
+        self.test_matrix[x_pos, y_pos] = test
+        self.thr_matrix[x_pos, y_pos] = thr
+        self.mask_matrix[x_pos, y_pos] = mask
+
+    def matrices_to_pcr(self, x_pos, y_pos):
+        """
+        returns the 6 bit PCR (see manual v1.9 p.44) of a selected pixel
+        """
+        if x_pos > 255:
+            # value for the x position, check whether in allowed range
+            raise ValueError("Value {} for x position exceeds the maximum size of a {} bit value!".format(x_pos, 8))
+        if y_pos > 255:
+            # value for the y position, check whether in allowed range
+            raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
+        
+        # create a 6 bit variable for the pcr
+        pcr = BitLogic(6)
+
+        # create the variables for test, thr and mask with their defined lenghts
+        test = BitLogic(1)
+        thr = BitLogic(4)
+        mask = BitLogic(1)
+
+        # get test, thr and matrix from the corresponding matrices
+        test = self.test_matrix[x_pos, y_pos]
+        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos],4)
+        mask = self.mask_matrix[x_pos, y_pos]
+
+        # fill the pcr with test, thr and mask
+        pcr[5] = test
+        pcr[4:1] = thr
+        pcr[0] = mask
+        
+        return pcr
+
+    def produce_columnMask(self, columns=range(256)):
+        """
+        returns the 256 bit column mask (see manual v1.9 p.44) based on a list of selected columns
+        """
+        if len(columns) > 256:
+            #  check if the columns list has a valid length
+            raise ValueError("The columns list must not contain more than 256 entries!".format(x_pos, 8))
+        
+        # create a 256 bit variable for the column mask
+        columnMask = BitLogic(256)
+
+        # set the bits for all except the selected columns to 1
+        for column in range(256):
+            columnMask[255-column] = 1
+        for column in columns:
+            columnMask[255-column] = 0
+
+        data = []
+
+        data += columnMask.toByteList()
+        return data
+
+    def write_pcr(self, columns=range(256), write=True):
+        """
+        writes the pcr for all pixels in selected columns (see manual v1.9 p.44) and returns also
+        the data
+        """
+        if len(columns) > 256:
+            #  check if the columns list has a valid length
+            raise ValueError("The columns list must not contain more than 256 entries!".format(x_pos, 8))
+        
+        data = []
+
+        # create a 1536 bit variable for the PCRs of all pixels of one column
+        pixeldata = BitLogic(1536)
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the LoadConfigMatrix command header: 8 bits
+        data += [self.matrix_header_map["LoadConfigMatrix"]]
+
+        # append the columnMask for the column selection: 256 bits
+        data += self.produce_columnMask(columns)
+
+        # append the pcr for the pixels in the selected columns: 1535*columns bits
+        for column in columns:
+            for row in range(256):
+                pixeldata[(5+6*row):(0+6*row)] = self.matrices_to_pcr(column, row)
+            data += pixeldata.toByteList()
+
+        data += [0x00]
+
+        if write == True:
+            self.write(data)
+        return data
+            
 
 if __name__ == '__main__':
     pass
