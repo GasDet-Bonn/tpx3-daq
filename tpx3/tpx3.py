@@ -541,5 +541,63 @@ class TPX3(Dut):
         
         return pcr
 
+    def produce_columnMask(self, columns=range(256)):
+        """
+        returns the 256 bit column mask (see manual v1.9 p.44) based on a list of selected columns
+        """
+        if len(columns) > 256:
+            #  check if the columns list has a valid length
+            raise ValueError("The columns list must not contain more than 256 entries!".format(x_pos, 8))
+        
+        # create a 256 bit variable for the column mask
+        columnMask = BitLogic(256)
+
+        # set the bits for all except the selected columns to 1
+        for column in range(256):
+            columnMask[255-column] = 1
+        for column in columns:
+            columnMask[255-column] = 0
+
+        data = []
+
+        data += columnMask.toByteList()
+        return data
+
+    def write_pcr(self, columns=range(256), write=True):
+        """
+        writes the pcr for all pixels in selected columns (see manual v1.9 p.44) and returns also
+        the data
+        """
+        if len(columns) > 256:
+            #  check if the columns list has a valid length
+            raise ValueError("The columns list must not contain more than 256 entries!".format(x_pos, 8))
+        
+        data = []
+
+        # create a 1536 bit variable for the PCRs of all pixels of one column
+        pixeldata = BitLogic(1536)
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the LoadConfigMatrix command header: 8 bits
+        data += [self.matrix_header_map["LoadConfigMatrix"]]
+
+        # append the columnMask for the column selection: 256 bits
+        data += self.produce_columnMask(columns)
+
+        # append the pcr for the pixels in the selected columns: 1535*columns bits
+        for column in columns:
+            for row in range(256):
+                pixeldata[(5+6*row):(0+6*row)] = self.matrices_to_pcr(column, row)
+            data += pixeldata.toByteList()
+
+        data += [0x00]
+
+        if write == True:
+            self.write(data)
+        return data
+            
+
 if __name__ == '__main__':
     pass
