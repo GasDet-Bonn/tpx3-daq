@@ -554,9 +554,9 @@ class TPX3(Dut):
 
         # set the bits for all except the selected columns to 1
         for column in range(256):
-            columnMask[255-column] = 1
+            columnMask[column] = 1
         for column in columns:
-            columnMask[255-column] = 0
+            columnMask[column] = 0
 
         data = []
 
