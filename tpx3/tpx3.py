@@ -597,7 +597,65 @@ class TPX3(Dut):
         if write == True:
             self.write(data)
         return data
-            
+
+    def write_generalConfiguration(self, write=True):
+        """
+        reads the values for the GeneralConfig registers (see manual v1.9 p.40) from a yaml file
+        and writes them to the chip. Furthermore the sended data is returned.
+        """
+        data = []
+
+        # create a 12 bit variable for the values of the GlobalConfig registers
+        configuration_bits = BitLogic(12)
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig command header: 8 bits
+        data += [self.periphery_header_map["GeneralConfig"]]
+
+        # get the configuration bits from the GeneralConfiguration file
+        config = yaml.load(open('tpx3/GeneralConfiguration.yml', 'r'))
+        for register in config['registers']:
+            address = register['address']
+            size = register['size']
+            mode = register['mode']
+            # fill the varialbe for the register values with the values from the yaml file
+            # see see manual v1.9 p.40 for the registers
+            configuration_bits[address+size-1:address] = mode
+
+        # append the the GeneralConfiguration register with 4 additional bits to get the 16 bit DataIn
+        data += (configuration_bits + BitLogic(4)).toByteList()
+
+        data += [0x00]
+
+        if write == True:
+            self.write(data)
+        return data                
+
+    def read_generalConfiguration(self, write=True):
+        """
+        Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sended bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["GeneralConfig_Read"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write == True:
+            self.write(data)            
+        return data 
 
 if __name__ == '__main__':
     pass

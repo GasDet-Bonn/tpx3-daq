@@ -1,0 +1,61 @@
+registers:
+- name: Polarity
+  description: Selects the polarity of collection
+  address: 0
+  size: 1
+  default: 1
+  mode: 1 
+- name: Op_mode
+  description: Sets pixel operation mode
+  address: 1
+  size: 2
+  default: 0
+  mode: 0  
+- name: Gray_count_en
+  description: Enables/Diables EoC Gray counter  
+  address: 3
+  size: 1
+  default: 0
+  mode: 0
+- name: AckCommand_en
+  description: Enables/Diables the AckCommand data packet
+  address: 4
+  size: 1
+  default: 0
+  mode: 0 
+- name: TP_en
+  description: Enables/Diables Test Pulses
+  address: 5
+  size: 1
+  default: 0
+  mode: 0
+- name: Fast_Io_en
+  description: Enables/Diables Super-Pixel-Oscillator
+  address: 6
+  size: 1
+  default: 0
+  mode: 0
+- name: TimerOverflowControl
+  description: Selects the overflow control mode for the 48bit timer
+  address: 7
+  size: 1
+  default: 0
+  mode: 0
+- name: SelectTP_Dig_Analog
+  description: Selects if test pulses are sent to the input of the Front-End or the discriminator input
+  address: 9
+  size: 1
+  default: 0
+  mode: 0
+- name: SelectTP_Ext_Int
+  description: Selects if test pulses are generated internally or externally
+  address: 10
+  size: 1
+  default: 0
+  mode: 0
+- name: SelectTP_ToA_Clk
+  description: Selects if the clock is phase shifted in EOC Gray counters 
+  address: 11
+  size: 1
+  default: 0
+  mode: 0
