@@ -655,7 +655,99 @@ class TPX3(Dut):
 
         if write == True:
             self.write(data)            
-        return data 
+        return data
+
+    def write_TP_PulseNumber(self, number, write=True):
+        """
+        Writes the number of testpulses to the TP_number test pulse register (see manual v1.9 p.35)
+        and returns the written data. The number if test pulses is a 16-bit value.
+        """
+        if number > 65535:
+            #  check if the number of test pulses is allowed
+            raise ValueError("The number of test pulses must not be bigger than 65535!".format(number, 16))
+
+        data = []
+
+        # create a 16 bit variable for the number of testpulses
+        number_bits = BitLogic(16)
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["TP_PulseNumber"]]
+
+        # fill the 16-bit variable for the number of test pulses
+        number_bits[15:0] = number
+
+        # append the number of test pulses to the data
+        data += number_bits.toByteList()
+
+        data += [0x00]
+
+        if write == True:
+            self.write(data)
+        return data
+    
+    def write_TP_Period(self, period, phase, write=True):
+        """
+        Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
+        and returns the written data. The period is a 8-bit value and the phase is a 4-bit value.
+        """
+        if period > 255:
+            #  check if the period is allowed
+            raise ValueError("The period must not be bigger than 255!".format(period, 8))
+        if phase > 15:
+            #  check if the phase is allowed
+            raise ValueError("The phase must not be bigger than 15!".format(period, 4))
+
+        data = []
+
+        # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
+        bits = BitLogic(12)
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["TP_Period"]]
+
+        # fill the 12-bit variable with the period and the phase
+        bits[7:0] = period
+        bits[11:8] = phase
+
+        # append the period/phase variable to the data
+        data += (bits + BitLogic(4)).toByteList()
+
+        data += [0x00]
+
+        if write == True:
+            self.write(data)
+        return data
+
+    def read_TPConfig(self, write=True):
+        """
+        Sends the TPConfig_Read command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the test pulse
+        registers (see manual v1.9 p.35). The sended bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["TPConfig_Read"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write == True:
+            self.write(data)
+        return data
 
 if __name__ == '__main__':
     pass
