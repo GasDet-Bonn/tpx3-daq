@@ -115,3 +115,6 @@ test_si_udp.lxt
 
 *irun.history
 
+# IDE settings
+.vscode/
+
