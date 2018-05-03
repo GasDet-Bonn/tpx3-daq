@@ -745,5 +745,34 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def write_ctpr(self, columns=range(256), write=True):
+        """
+        Writes the column test pulse register to the chip (see manual v1.9 p.50) and returns
+        the written data. The masked columns can be selected with the `columns` variable.
+        """
+        if len(columns) > 256:
+            #  check if the columns list has a valid length
+            raise ValueError("The columns list must not contain more than 256 entries!")
+
+        data = []
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the LoadConfigMatrix command header: 8 bits
+        data += [self.matrix_header_map["LoadCTPR"]]
+
+        # append the column mask based on the selected columns
+        # TODO: The manual (v1.9) does not state if columns are masked with 1 or 0
+        # so in the current implementation the column mask is used (see manual v1.9 p.46)
+        # with 0 for load and 1 for skip. This needs a check.
+        data += self.produce_column_mask(columns)
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
 if __name__ == '__main__':
     pass
