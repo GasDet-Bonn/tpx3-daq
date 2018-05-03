@@ -24,7 +24,7 @@ class tpx3_rx(RegisterHardwareLayer):
                   'DATA_DELAY': {'descr': {'addr': 7, 'size': 5}},
                   'SAMPLING_EDGE': {'descr': {'addr': 7, 'size': 1, 'offset': 5}},
                   'LOST_DATA_COUNTER': {'descr': {'addr': 6, 'size': 8, 'properties': ['ro']}}}
-                  
+
     _require_version = "==1"
 
     def __init__(self, intf, conf):

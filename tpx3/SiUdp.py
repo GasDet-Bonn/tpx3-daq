@@ -4,7 +4,7 @@
 # SiLab, Institute of Physics, University of Bonn
 # ------------------------------------------------------------
 #
-# A transfer layer for SUdp Ethernet. 
+# A transfer layer for SUdp Ethernet.
 #
 
 import logging
@@ -17,16 +17,17 @@ from basil.TL.SiTransferLayer import SiTransferLayer
 
 logger = logging.getLogger(__name__)
 
+
 class SiUdp(SiTransferLayer):
     '''SiUdp transport layer.
     '''
 
-    VERSION = 0x01 #TODO
-    
+    VERSION = 0x01  # TODO
+
     CMD_WR = 0x02
     CMD_RD = 0x01
-    
-    MAX_RD_SIZE = 32*1476
+
+    MAX_RD_SIZE = 32 * 1476
     MAX_WR_SIZE = 1024
 
     UDP_TIMEOUT = 0.1
@@ -36,35 +37,32 @@ class SiUdp(SiTransferLayer):
         super(SiUdp, self).__init__(conf)
         self._sock_udp = None
         self._udp_lock = Lock()
-  
+
     def init(self):
         super(SiUdp, self).init()
         self._sock_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock_udp.settimeout(self.UDP_TIMEOUT)
-        
+
     def _write_single(self, addr, data):
-        
+
         request = array('B', struct.pack('>BII', self.CMD_WR, len(data), addr))
         request += data
-        
-         
+
         self._sock_udp.sendto(request, (self._init['host'], self._init['port']))
-        
+
         try:
             ack = self._sock_udp.recv(2048)
         except socket.timeout:
             raise IOError('SiUdp:_write_single - Timeout')
-            
-         
+
         if len(ack) != 4:
             raise IOError('SiUdp:_write_single - Packet is wrong size')
-            
+
         if struct.unpack('>I', ack)[0] != len(data):
             raise IOError('SiUdp:_write_single - Data error')
-        
-        
+
     def write(self, addr, data):
-        
+
         def chunks(array, max_len):
             index = 0
             while index < len(array):
@@ -79,25 +77,25 @@ class SiUdp(SiTransferLayer):
                 new_addr += len(req)
 
     def _read_single(self, addr, size):
-        request = array('B', struct.pack('>BII',  self.CMD_RD, size, addr))
+        request = array('B', struct.pack('>BII', self.CMD_RD, size, addr))
         self._sock_udp.sendto(request, (self._init['host'], self._init['port']))
-        
+
         ack = ''
         try:
             while len(ack) != size:
                 ack += self._sock_udp.recv(2048)
         except socket.timeout:
             raise IOError('SiUdp:_write_single - Timeout')
-        
+
         if len(ack) != size:
             raise IOError('SiUdp:_read_single - Wrong packet size')
-        
+
         return array('B', ack)
 
     def read(self, addr, size):
-    
+
         ret = array('B')
-        
+
         if size > 0:
             with self._udp_lock:
                 if size > self.MAX_RD_SIZE:
@@ -111,8 +109,7 @@ class SiUdp(SiTransferLayer):
                 else:
                     ret += self._read_single(addr, size)
         return ret
-    
+
     def close(self):
         super(SiUdp, self).close()
         self._sock_udp.close()
-       

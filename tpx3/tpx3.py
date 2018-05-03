@@ -5,7 +5,7 @@
 # ------------------------------------------------------------
 #
 
-import zlib # workaround
+import zlib  # workaround
 import yaml
 import logging
 import os
@@ -32,7 +32,7 @@ loglevel = logging.DEBUG
 ''' Set up main logger '''
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
-#logging.getLogger('basil.HL.RegisterHardwareLayer').setLevel(logging.WARNING)
+# logging.getLogger('basil.HL.RegisterHardwareLayer').setLevel(logging.WARNING)
 
 logging.basicConfig(format="%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s")
 
@@ -42,11 +42,11 @@ logger.setLevel(loglevel)
 
 class TPX3(Dut):
 
-    #'' Map hardware IDs for board identification '''
-    #hw_map = {
+    # '' Map hardware IDs for board identification '''
+    # hw_map = {
     #    0: 'SIMULATION',
     #    1: 'MIO2',
-    #}
+    # }
 
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########
@@ -54,114 +54,113 @@ class TPX3(Dut):
     # TODO: move to a YAML file, similar to e.g. basil/register_lookup.yaml ?
 
     # map defining the header values needed for different periphery operation commands
-    periphery_header_map = {"SenseDACsel" : 0x00,
-                            "ExtDACsel" : 0x01,
-                            "SetDAC" : 0x02,
-                            "ReadDAC" : 0x03,
+    periphery_header_map = {"SenseDACsel": 0x00,
+                            "ExtDACsel": 0x01,
+                            "SetDAC": 0x02,
+                            "ReadDAC": 0x03,
                             # ^ DACs
                             # Fuse
-                            "EFuse_Burn" : 0x08,
-                            "EFuse_Read" : 0x09,
-                            "EfuseRead_BurnConfig" : 0x0A,
+                            "EFuse_Burn": 0x08,
+                            "EFuse_Read": 0x09,
+                            "EfuseRead_BurnConfig": 0x0A,
                             # Timepix
-                            "TP_Period" : 0x0C,
-                            "TP_PulseNumber" : 0x0D,
-                            "TPConfig_Read" : 0x0E,
-                            "TP_internalfinished" : 0x0F,
+                            "TP_Period": 0x0C,
+                            "TP_PulseNumber": 0x0D,
+                            "TPConfig_Read": 0x0E,
+                            "TP_internalfinished": 0x0F,
                             # Output block
-                            "OutBlockConfig" : 0x10,
-                            "OutBlockConfig_Read" : 0x11,
+                            "OutBlockConfig": 0x10,
+                            "OutBlockConfig_Read": 0x11,
                             # PLL Config
-                            "PLLConfig" : 0x20,
-                            "PLLConfig_Read" : 0x21,
+                            "PLLConfig": 0x20,
+                            "PLLConfig_Read": 0x21,
                             # General config
-                            "GeneralConfig" : 0x30,
-                            "GeneralConfig_Read" : 0x31,
-                            "SLVSConfig" : 0x34,
-                            "SLVSConfig_Read" : 0x35,
-                            "PowerPulsingPattern" : 0x3C,
-                            "PowerPulsingConfig_Read" : 0x3D,
-                            "PowerPulsingON_finished" : 0x3F,
+                            "GeneralConfig": 0x30,
+                            "GeneralConfig_Read": 0x31,
+                            "SLVSConfig": 0x34,
+                            "SLVSConfig_Read": 0x35,
+                            "PowerPulsingPattern": 0x3C,
+                            "PowerPulsingConfig_Read": 0x3D,
+                            "PowerPulsingON_finished": 0x3F,
                             # Timer
-                            "ResetTimer" : 0x40,
-                            "SetTimer_15_0" : 0x41,
-                            "SetTimer_31_16" : 0x42,
-                            "SetTimer_47_32" : 0x43,
-                            "RequestTimeLow" : 0x44,
-                            "RequestTimeHigh" : 0x45,
-                            "TimeRisingShutterLow" : 0x46,
-                            "TimeRisingShutterHigh" : 0x47,
-                            "TimeFallingShutterLow" : 0x48,
-                            "TimeFallingShutterHigh" : 0x49,
-                            "T0_Sync_Command" : 0x4A,
+                            "ResetTimer": 0x40,
+                            "SetTimer_15_0": 0x41,
+                            "SetTimer_31_16": 0x42,
+                            "SetTimer_47_32": 0x43,
+                            "RequestTimeLow": 0x44,
+                            "RequestTimeHigh": 0x45,
+                            "TimeRisingShutterLow": 0x46,
+                            "TimeRisingShutterHigh": 0x47,
+                            "TimeFallingShutterLow": 0x48,
+                            "TimeFallingShutterHigh": 0x49,
+                            "T0_Sync_Command": 0x4A,
                             # Control operation
-                            "Acknlowledge" : 0x70,
-                            "EndOfCommand" : 0x71,
-                            "OtherChipCommand" : 0x72,
-                            "WrongCommand" : 0x73}
+                            "Acknlowledge": 0x70,
+                            "EndOfCommand": 0x71,
+                            "OtherChipCommand": 0x72,
+                            "WrongCommand": 0x73}
 
     # map defining the header values needed for different matrix operation commands
-    matrix_header_map = {"LoadConfigMatrix" : 0x80,
-                         "ReadConfigMatrix" : 0x90,
-                         "ReadMatrixSequential" : 0xA0,
-                         "ReadMatrixDataDriven" : 0xB0,
-                         "LoadCTPR" : 0xC0,
-                         "ReadCTPR" : 0xD0,
-                         "ResetSequential" : 0xE0,
-                         "StopMatrixCommand" : 0xF0}
+    matrix_header_map = {"LoadConfigMatrix": 0x80,
+                         "ReadConfigMatrix": 0x90,
+                         "ReadMatrixSequential": 0xA0,
+                         "ReadMatrixDataDriven": 0xB0,
+                         "LoadCTPR": 0xC0,
+                         "ReadCTPR": 0xD0,
+                         "ResetSequential": 0xE0,
+                         "StopMatrixCommand": 0xF0}
 
     # DAC names
     # will have to be careful when using these, due to 5 bit value
-    dac_map = {"Ibias_Preamp_ON" : 0b00001,
-               "Ibias_Preamp_OFF" : 0b00010,
-               "VPreamp_NCAS" : 0b00011,
-               "Ibias_Ikrum" : 0b00100,
-               "Vfbk" : 0b00101,
-               "Vthreshold_fine" : 0b00110,
-               "Vthreshold_coarse" : 0b00111,
-               "Ibias_DiscS1_ON" : 0b01000,
-               "Ibias_DiscS1_OFF" : 0b01001,
-               "Ibias_DiscS2_ON" : 0b01010,
-               "Ibias_DiscS2_OFF" : 0b01011,
-               "Ibias_PixelDAC" : 0b01100,
-               "Ibias_TPbufferIn" : 0b01101,
-               "Ibias_TPbufferOut" : 0b01110,
-               "VTP_coarse" : 0b01111,
-               "VTP_fine" : 0b10000,
-               "Ibias_CP_PLL" : 0b10001,
-               "PLL_Vcntrl" : 0b10010}
+    dac_map = {"Ibias_Preamp_ON": 0b00001,
+               "Ibias_Preamp_OFF": 0b00010,
+               "VPreamp_NCAS": 0b00011,
+               "Ibias_Ikrum": 0b00100,
+               "Vfbk": 0b00101,
+               "Vthreshold_fine": 0b00110,
+               "Vthreshold_coarse": 0b00111,
+               "Ibias_DiscS1_ON": 0b01000,
+               "Ibias_DiscS1_OFF": 0b01001,
+               "Ibias_DiscS2_ON": 0b01010,
+               "Ibias_DiscS2_OFF": 0b01011,
+               "Ibias_PixelDAC": 0b01100,
+               "Ibias_TPbufferIn": 0b01101,
+               "Ibias_TPbufferOut": 0b01110,
+               "VTP_coarse": 0b01111,
+               "VTP_fine": 0b10000,
+               "Ibias_CP_PLL": 0b10001,
+               "PLL_Vcntrl": 0b10010}
 
     # number of bits a value for a DAC can have maximally
     DAC_VALUE_BITS = 9
 
     # DAC value size in bits
-    dac_valsize_map = {"Ibias_Preamp_ON" :   8,
-                       "Ibias_Preamp_OFF" :  4,
-                       "VPreamp_NCAS" :      8,
-                       "Ibias_Ikrum" :       8,
-                       "Vfbk" :              8,
-                       "Vthreshold_fine" :   9,
-                       "Vthreshold_coarse" : 4,
-                       "Ibias_DiscS1_ON" :   8,
-                       "Ibias_DiscS1_OFF" :  4,
-                       "Ibias_DiscS2_ON" :   8,
-                       "Ibias_DiscS2_OFF" :  4,
-                       "Ibias_PixelDAC" :    8,
-                       "Ibias_TPbufferIn" :  8,
-                       "Ibias_TPbufferOut" : 8,
-                       "VTP_coarse" :        8,
-                       "VTP_fine" :          9,
-                       "Ibias_CP_PLL" :      8,
-                       "PLL_Vcntrl" :        8}
+    dac_valsize_map = {"Ibias_Preamp_ON":   8,
+                       "Ibias_Preamp_OFF":  4,
+                       "VPreamp_NCAS":      8,
+                       "Ibias_Ikrum":       8,
+                       "Vfbk":              8,
+                       "Vthreshold_fine":   9,
+                       "Vthreshold_coarse": 4,
+                       "Ibias_DiscS1_ON":   8,
+                       "Ibias_DiscS1_OFF":  4,
+                       "Ibias_DiscS2_ON":   8,
+                       "Ibias_DiscS2_OFF":  4,
+                       "Ibias_PixelDAC":    8,
+                       "Ibias_TPbufferIn":  8,
+                       "Ibias_TPbufferOut": 8,
+                       "VTP_coarse":        8,
+                       "VTP_fine":          9,
+                       "Ibias_CP_PLL":      8,
+                       "PLL_Vcntrl":        8}
 
     # monitoring voltage maps
-    monitoring_map = {"PLL_Vcntrl" : 0b10010,
-                      "BandGap output" : 0b11100,
-                      "BandGap_Temp" : 0b11101,
-                      "Ibias_dac" : 0b11110,
-                      "Ibias_dac_cas" : 0b11111,
-                      "SenseOFF" : 0b00000}
-
+    monitoring_map = {"PLL_Vcntrl": 0b10010,
+                      "BandGap output": 0b11100,
+                      "BandGap_Temp": 0b11101,
+                      "Ibias_dac": 0b11110,
+                      "Ibias_dac_cas": 0b11111,
+                      "SenseOFF": 0b00000}
 
     def __init__(self, conf=None, **kwargs):
 
@@ -175,17 +174,16 @@ class TPX3(Dut):
         self.reset_matrices()
         super(TPX3, self).__init__(conf)
 
-
     def init(self):
         super(TPX3, self).init()
 
-        #self.fw_version, self.board_version = self.get_daq_version()
-        #logger.info('Found board %s running firmware version %s' % (self.hw_map[self.board_version], self.fw_version))
+        # self.fw_version, self.board_version = self.get_daq_version()
+        # logger.info('Found board %s running firmware version %s' % (self.hw_map[self.board_version], self.fw_version))
         #
-        #if self.fw_version != VERSION[:3]:     #Compare only the first two digits
+        # if self.fw_version != VERSION[:3]:     #Compare only the first two digits
         #    raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
 
-        #self['CONF_SR'].set_size(3924)
+        # self['CONF_SR'].set_size(3924)
 
         self['CONTROL']['DATA_MUX_SEL'] = 1
         self['CONTROL'].write()
@@ -216,7 +214,7 @@ class TPX3(Dut):
         # 0x4E == local sync header
         return [0x4E] + self.chipId
 
-    def set_dac(self, dac, value, chip = None, write = True):
+    def set_dac(self, dac, value, chip=None, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -239,7 +237,7 @@ class TPX3(Dut):
         """
         data = []
         # first header, first 40 bits [63:24]
-        if chip == None:
+        if chip is None:
             data = self.getGlobalSyncHeader()
         else:
             data = self.getLocalSyncHeader()
@@ -265,12 +263,12 @@ class TPX3(Dut):
 
         data += [0x00]
 
-        if write == True:
+        if write is True:
             self.write(data)
         else:
             return data
 
-    def read_dac(self, dac, write = True):
+    def read_dac(self, dac, write=True):
         """
         Reads the DAC of name `dac` and returns a tuple of the read value and the
         name.
@@ -300,7 +298,7 @@ class TPX3(Dut):
 
         data += [0x00]
 
-        if write == True:
+        if write is True:
             self.write(data)
         else:
             return data
@@ -346,7 +344,7 @@ class TPX3(Dut):
 
         """
         # total size in bits
-        self['SPI'].set_size(len(data)*8)
+        self['SPI'].set_size(len(data) * 8)
         self['SPI'].set_data(data)
         self['SPI'].start()
 
@@ -354,7 +352,7 @@ class TPX3(Dut):
             # wait until SPI is done
             pass
 
-    def decode(self, data, string = False):
+    def decode(self, data, string=False):
         """
         Performs a decoding of a raw 48 bit word received from the FPGA in decoded
         2 * 32bit form. Output is interpreted, i.e. split into different components
@@ -381,14 +379,14 @@ class TPX3(Dut):
         result = []
         for i in range(nwords):
             d1 = bitword_to_byte_list(int(data[i]), string)
-            d2 = bitword_to_byte_list(int(data[i+1]), string)
+            d2 = bitword_to_byte_list(int(data[i + 1]), string)
             dataout = [d2[2], d2[1], d1[3], d1[2], d1[1]]
 
-            result.append( (d2[3], dataout) )
+            result.append((d2[3], dataout))
 
         return result
 
-    def xy_pixel_to_timepix3_pixel_address(self, x_pos, y_pos):
+    def xy_to_pixel_address(self, x_pos, y_pos):
         """
         Converts the pixel positions from x/y coordinates to EoC, Superpixel and Pixel
         (see manual v1.9 p.25) and returns it as 16bit list:
@@ -421,7 +419,7 @@ class TPX3(Dut):
 
         return timepix_pixel_address
 
-    def timepix3_pixel_address_to_x_pixel(self, timepix_pixel_address):
+    def pixel_address_to_x(self, timepix_pixel_address):
         """
         Converts the Timepix3 pixel address which contains EoC, Superpixel and Pixel
         (see manual v1.9 p.25) and returns the x position of the pixel.
@@ -432,9 +430,8 @@ class TPX3(Dut):
             # check if the timepix_pixel_address has a valid length
             raise ValueError("The timepix pixel address must be a 16 bit value!")
 
-        # get EoC, Superpixel and Pixel from the address
+        # get EoC and Pixel from the address, Superpixel is not needed for x
         EoC = timepix_pixel_address[15:9]
-        Superpixel = timepix_pixel_address[8:3]
         Pixel = timepix_pixel_address[2:0]
 
         # calculate the x position of the pixel based on EoC
@@ -446,7 +443,7 @@ class TPX3(Dut):
 
         return x_pos
 
-    def timepix3_pixel_address_to_y_pixel(self, timepix_pixel_address):
+    def pixel_address_to_y(self, timepix_pixel_address):
         """
         Converts the Timepix3 pixel address which contains EoC, Superpixel and Pixel
         (see manual v1.9 p.25) and returns the x position of the pixel.
@@ -457,8 +454,7 @@ class TPX3(Dut):
             # check if the timepix_pixel_address has a valid length
             raise ValueError("The timepix pixel address must be a 16 bit value!")
 
-        # get EoC, Superpixel and Pixel from the address
-        EoC = timepix_pixel_address[15:9]
+        # get Superpixel and Pixel from the address, EoC is not needed for y
         Superpixel = timepix_pixel_address[8:3]
         Pixel = timepix_pixel_address[2:0]
 
@@ -477,13 +473,13 @@ class TPX3(Dut):
         """
         # set the test matrix with zeros for all pixels
         if test:
-            self.test_matrix = np.zeros((256,256), dtype=int)
+            self.test_matrix = np.zeros((256, 256), dtype=int)
         # set the thr matrix with zeros for all pixels
         if thr:
-            self.thr_matrix = np.zeros((256,256), dtype=int)
+            self.thr_matrix = np.zeros((256, 256), dtype=int)
         # set the mask matrix with zeros for all pixels
         if mask:
-            self.mask_matrix = np.zeros((256,256), dtype=int)
+            self.mask_matrix = np.zeros((256, 256), dtype=int)
 
     def set_pixel_pcr(self, x_pos, y_pos, test, thr, mask):
         """
@@ -504,7 +500,7 @@ class TPX3(Dut):
         if mask > 1:
             # value for the x position, check whether in allowed range
             raise ValueError("Value {} for mask exceeds the maximum size of a {} bit value!".format(mask, 1))
-        
+
         # set the new values for test, thr and mask
         self.test_matrix[x_pos, y_pos] = test
         self.thr_matrix[x_pos, y_pos] = thr
@@ -520,7 +516,7 @@ class TPX3(Dut):
         if y_pos > 255:
             # value for the y position, check whether in allowed range
             raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
-        
+
         # create a 6 bit variable for the pcr
         pcr = BitLogic(6)
 
@@ -531,24 +527,24 @@ class TPX3(Dut):
 
         # get test, thr and matrix from the corresponding matrices
         test = self.test_matrix[x_pos, y_pos]
-        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos],4)
+        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos], 4)
         mask = self.mask_matrix[x_pos, y_pos]
 
         # fill the pcr with test, thr and mask
         pcr[5] = test
         pcr[4:1] = thr
         pcr[0] = mask
-        
+
         return pcr
 
-    def produce_columnMask(self, columns=range(256)):
+    def produce_column_mask(self, columns=range(256)):
         """
         returns the 256 bit column mask (see manual v1.9 p.44) based on a list of selected columns
         """
         if len(columns) > 256:
             #  check if the columns list has a valid length
-            raise ValueError("The columns list must not contain more than 256 entries!".format(x_pos, 8))
-        
+            raise ValueError("The columns list must not contain more than 256 entries!")
+
         # create a 256 bit variable for the column mask
         columnMask = BitLogic(256)
 
@@ -570,8 +566,8 @@ class TPX3(Dut):
         """
         if len(columns) > 256:
             #  check if the columns list has a valid length
-            raise ValueError("The columns list must not contain more than 256 entries!".format(x_pos, 8))
-        
+            raise ValueError("The columns list must not contain more than 256 entries!")
+
         data = []
 
         # create a 1536 bit variable for the PCRs of all pixels of one column
@@ -584,21 +580,21 @@ class TPX3(Dut):
         data += [self.matrix_header_map["LoadConfigMatrix"]]
 
         # append the columnMask for the column selection: 256 bits
-        data += self.produce_columnMask(columns)
+        data += self.produce_column_mask(columns)
 
         # append the pcr for the pixels in the selected columns: 1535*columns bits
         for column in columns:
             for row in range(256):
-                pixeldata[(5+6*row):(0+6*row)] = self.matrices_to_pcr(column, row)
+                pixeldata[(5 + 6 * row):(0 + 6 * row)] = self.matrices_to_pcr(column, row)
             data += pixeldata.toByteList()
 
         data += [0x00]
 
-        if write == True:
+        if write is True:
             self.write(data)
         return data
 
-    def write_generalConfiguration(self, write=True):
+    def write_general_config(self, write=True):
         """
         reads the values for the GeneralConfig registers (see manual v1.9 p.40) from a yaml file
         and writes them to the chip. Furthermore the sended data is returned.
@@ -620,20 +616,20 @@ class TPX3(Dut):
             address = register['address']
             size = register['size']
             mode = register['mode']
-            # fill the varialbe for the register values with the values from the yaml file
+            # fill the variable for the register values with the values from the yaml file
             # see see manual v1.9 p.40 for the registers
-            configuration_bits[address+size-1:address] = mode
+            configuration_bits[address + size - 1:address] = mode
 
         # append the the GeneralConfiguration register with 4 additional bits to get the 16 bit DataIn
         data += (configuration_bits + BitLogic(4)).toByteList()
 
         data += [0x00]
 
-        if write == True:
+        if write is True:
             self.write(data)
-        return data                
+        return data
 
-    def read_generalConfiguration(self, write=True):
+    def read_general_config(self, write=True):
         """
         Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
@@ -653,18 +649,18 @@ class TPX3(Dut):
 
         data += [0x00]
 
-        if write == True:
-            self.write(data)            
+        if write is True:
+            self.write(data)
         return data
 
-    def write_TP_PulseNumber(self, number, write=True):
+    def write_tp_pulsenumber(self, number, write=True):
         """
         Writes the number of testpulses to the TP_number test pulse register (see manual v1.9 p.35)
         and returns the written data. The number if test pulses is a 16-bit value.
         """
         if number > 65535:
             #  check if the number of test pulses is allowed
-            raise ValueError("The number of test pulses must not be bigger than 65535!".format(number, 16))
+            raise ValueError("The number of test pulses must not be bigger than 65535!")
 
         data = []
 
@@ -685,21 +681,21 @@ class TPX3(Dut):
 
         data += [0x00]
 
-        if write == True:
+        if write is True:
             self.write(data)
         return data
-    
-    def write_TP_Period(self, period, phase, write=True):
+
+    def write_tp_period(self, period, phase, write=True):
         """
         Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
         and returns the written data. The period is a 8-bit value and the phase is a 4-bit value.
         """
         if period > 255:
             #  check if the period is allowed
-            raise ValueError("The period must not be bigger than 255!".format(period, 8))
+            raise ValueError("The period must not be bigger than 255!")
         if phase > 15:
             #  check if the phase is allowed
-            raise ValueError("The phase must not be bigger than 15!".format(period, 4))
+            raise ValueError("The phase must not be bigger than 15!")
 
         data = []
 
@@ -721,11 +717,11 @@ class TPX3(Dut):
 
         data += [0x00]
 
-        if write == True:
+        if write is True:
             self.write(data)
         return data
 
-    def read_TPConfig(self, write=True):
+    def read_tp_config(self, write=True):
         """
         Sends the TPConfig_Read command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the test pulse
@@ -745,7 +741,7 @@ class TPX3(Dut):
 
         data += [0x00]
 
-        if write == True:
+        if write is True:
             self.write(data)
         return data
 
