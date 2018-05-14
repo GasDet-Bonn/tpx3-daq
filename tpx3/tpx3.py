@@ -541,9 +541,11 @@ class TPX3(Dut):
         """
         returns the 256 bit column mask (see manual v1.9 p.44) based on a list of selected columns
         """
-        if len(columns) > 256:
-            #  check if the columns list has a valid length
-            raise ValueError("The columns list must not contain more than 256 entries!")
+        if len(columns) > 256 and np.all(np.asarray(columns) < 256):
+            # check if the columns list has a valid length and no elements larger than
+            # number of columns
+            raise ValueError("""The columns list must not contain more than 256 entries and
+            no entry may be larger than 255!""")
 
         # create a 256 bit variable for the column mask
         columnMask = BitLogic(256)
@@ -564,9 +566,11 @@ class TPX3(Dut):
         writes the pcr for all pixels in selected columns (see manual v1.9 p.44) and returns also
         the data
         """
-        if len(columns) > 256:
-            #  check if the columns list has a valid length
-            raise ValueError("The columns list must not contain more than 256 entries!")
+        if len(columns) > 256 and np.all(np.asarray(columns) < 256):
+            # check if the columns list has a valid length and no elements larger than
+            # number of columns
+            raise ValueError("""The columns list must not contain more than 256 entries and
+            no entry may be larger than 255!""")
 
         data = []
 
@@ -750,9 +754,11 @@ class TPX3(Dut):
         Writes the column test pulse register to the chip (see manual v1.9 p.50) and returns
         the written data. The masked columns can be selected with the `columns` variable.
         """
-        if len(columns) > 256:
-            #  check if the columns list has a valid length
-            raise ValueError("The columns list must not contain more than 256 entries!")
+        if len(columns) > 256 and np.all(np.asarray(columns) < 256):
+            # check if the columns list has a valid length and no elements larger than
+            # number of columns
+            raise ValueError("""The columns list must not contain more than 256 entries and
+            no entry may be larger than 255!""")
 
         data = []
 
