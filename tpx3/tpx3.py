@@ -774,5 +774,27 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def read_matrix_data_driven(self, write=True):
+        """
+        Sends the "ReadMatrixDataDriven" command with the column mask. The column mask is
+        set such all columns are loaded.
+        """
+        data = []
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the LoadConfigMatrix command header: 8 bits
+        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
+
+        # append the 256 bit column mask; TODO: make the columns selectable
+        data += self.produce_column_mask(range(256))
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
 if __name__ == '__main__':
     pass
