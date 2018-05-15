@@ -601,7 +601,7 @@ class TPX3(Dut):
     def write_general_config(self, write=True):
         """
         reads the values for the GeneralConfig registers (see manual v1.9 p.40) from a yaml file
-        and writes them to the chip. Furthermore the sended data is returned.
+        and writes them to the chip. Furthermore the sent data is returned.
         """
         data = []
 
@@ -637,7 +637,7 @@ class TPX3(Dut):
         """
         Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
-        registers (see manual v1.9 p.40). The sended bytes are also returned.
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
         data = []
 
@@ -729,7 +729,7 @@ class TPX3(Dut):
         """
         Sends the TPConfig_Read command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the test pulse
-        registers (see manual v1.9 p.35). The sended bytes are also returned.
+        registers (see manual v1.9 p.35). The sent bytes are also returned.
         """
         data = []
 
