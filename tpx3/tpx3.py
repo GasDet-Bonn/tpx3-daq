@@ -691,8 +691,9 @@ class TPX3(Dut):
 
     def write_tp_period(self, period, phase, write=True):
         """
-        Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
-        and returns the written data. The period is a 8-bit value and the phase is a 4-bit value.
+        Writes the period and the phase to the TP_period and TP_phase test pulse registers
+        (see manual v1.9 p.35) and returns the written data.
+        The period is a 8-bit value and the phase is a 4-bit value.
         """
         if period > 255:
             #  check if the period is allowed
@@ -783,7 +784,8 @@ class TPX3(Dut):
 
     def read_pixel_config_reg(self, SColSelect=range(256), write=True):
 	    """
-	    Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+	    Sends the Read Pixel Configuration Register command (see manual v1.9 p.32 and  v1.9 p.49).
+        The sent bytes are also returned.
 	    """
 	    data = []
 
@@ -807,7 +809,7 @@ class TPX3(Dut):
 
     def read_ctpr(self, write=True):
         """
-       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
+        Sends a command to read the Column Test Pulse Register (Manual v 1.9 pg. 50)
         """
         data = []
 
@@ -817,18 +819,17 @@ class TPX3(Dut):
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ReadCTPR"]]
 
-    
         data += [0x00]
 
         if write is True:
             self.write(data)
         return data
 
-
     def reset_sequential(self, write=True):
         """
-       Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51). If any data is still present on the pixel
-       matrix (eoc_active is high) then an End of Readout packet is sent.
+        Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51).
+        If any data is still present on the pixel  matrix (eoc_active is high) then an
+        End of Readout packet is sent.
         """
         data = []
 
@@ -837,16 +838,18 @@ class TPX3(Dut):
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ResetSequential"]]
-        dummy= BitLogic(142)
+        dummy = BitLogic(142)
         data += dummy.toByteList()
         data += [0x00]
 
         if write is True:
             self.write(data)
-        return data     
+        return data
+
     def stop_readout(self, write=True):
         """
-       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
+        Sends the Stop Matrix Readout Command (header 0hF0), which stops / pauses a readout
+        process.
         """
         data = []
 
@@ -859,10 +862,12 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
-        return data        
+        return data
+
     def read_pixel_matrix_datadriven(self, write=True):
         """
-        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        Sends the Read Pixel Matrix Data Driven command (see manual v1.9 p.32 and  v1.9 p.50).
+        The sent bytes are also returned.
         """
         data = []
 
@@ -871,7 +876,7 @@ class TPX3(Dut):
 
         # append the code for the ReadMatrixSequential command header: 8 bits
         data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-        
+
         data += [0x00]
 
         if write is True:
@@ -880,8 +885,9 @@ class TPX3(Dut):
 
     def read_pixel_matrix_sequential(self, TokenSelect=range(128), write=True):
         """
-        Sends the Pixel Matrix Read Sequential command (see manual v1.9 p.32) together with the
-        SyncHeader, DColSelect and TokenSelect registers (see manual v1.9 p.46). The sended bytes are also returned.
+        Sends the Read Pixel Matrix Sequential command (see manual v1.9 p.32) together
+        with the SyncHeader, DColSelect and TokenSelect registers (see manual v1.9 p.46).
+        The sent bytes are also returned.
         """
         data = []
 
@@ -906,7 +912,6 @@ class TPX3(Dut):
 
         data += TokenSelectReg.toByteList()
 
-        
         data += [0x00]
 
         if write is True:
