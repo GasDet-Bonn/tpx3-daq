@@ -8,7 +8,7 @@ def read_pixel_config_reg(self, SColSelect=range(256), write=True):
     data = self.getGlobalSyncHeader()
 
     # append the code for the ReadMatrixSequential command header: 8 bits
-    data += [self.periphery_header_map["ReadConfigMatrix"]]
+    data += [self.matrix_header_map["ReadConfigMatrix"]]
     SColSelectReg= BitLogic(128)
     for index in range(256):
         if SColSelect[index] == 0:
