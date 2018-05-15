@@ -118,7 +118,7 @@ def main(args_dict):
     chip.write(data)
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
-    dout = chip.decode(fdata, True)
+    dout = chip.decode_fpga(fdata, True)
     for i, d in enumerate(fdata):
         print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
         pretty_print(d)
@@ -139,7 +139,7 @@ def main(args_dict):
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
     print fdata
-    dout = chip.decode(fdata, True)
+    dout = chip.decode_fpga(fdata, True)
     print dout
     for i, d in enumerate(fdata):
         print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
@@ -166,7 +166,7 @@ def main(args_dict):
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
     print fdata
-    dout = chip.decode(fdata, True)
+    dout = chip.decode_fpga(fdata, True)
     print dout
     for i, d in enumerate(fdata):
         print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)

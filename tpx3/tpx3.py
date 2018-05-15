@@ -352,7 +352,7 @@ class TPX3(Dut):
             # wait until SPI is done
             pass
 
-    def decode(self, data, string=False):
+    def decode_fpga(self, data, string=False):
         """
         Performs a decoding of a raw 48 bit word received from the FPGA in decoded
         2 * 32bit form. Output is interpreted, i.e. split into different components
@@ -370,7 +370,8 @@ class TPX3(Dut):
         i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
           [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
         For periphery commands d2[3] contains the hex code of which function was called,
-        the rest is the 40bit DataOut (see manual v1.9 p.32)
+        as the first byte of the returned list the rest is the 40bit DataOut
+        (see manual v1.9 p.32).
         """
 
         # determine number of 48bit words
@@ -380,11 +381,42 @@ class TPX3(Dut):
         for i in range(nwords):
             d1 = bitword_to_byte_list(int(data[i]), string)
             d2 = bitword_to_byte_list(int(data[i + 1]), string)
-            dataout = [d2[2], d2[1], d1[3], d1[2], d1[1]]
+            dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
 
-            result.append((d2[3], dataout))
+            result.append(dataout)
 
         return result
+
+    def decode(self, data):
+        """
+        Given a FPGA decoded 48 bit word (or a list of 48 bit words) given as a list of
+        bytes, perform a decoding based on the
+        - header of the 48 bit words (case machine based on manual v1.9 p.28
+        - based on that read data correctly.
+          This is done by checking a dictionary for the correct structure for each
+          command type in combination with a check for the current general chip
+          settings (which determine which kind of sub command is currently expected)
+        """
+        # for each byte in the list of bytes
+        for d in data:
+            d0 = BitLogic(8)
+            d0[:] = d[0]
+            if d0[0] == 0:
+                # this branch corresponds to (see manual v1.9 p.28)
+                # - Periphery Configuration
+                # - Control Commands
+                # here the first byte is actually the full header of the commands
+                header = d0
+            else:
+                # this branch corresponds to (see manual v1.9 p.28)
+                # - Acquisition
+                # - @ data readout
+                # - Pixel Matrix Configuration
+                # NOTE: In this branch the actual header is actually only 4 bit
+                # instead of the 8 bit, which are part of d0!
+                header = BitLogic(4)
+                header[:] = d0[7:4]
+
 
     def xy_to_pixel_address(self, x_pos, y_pos):
         """
