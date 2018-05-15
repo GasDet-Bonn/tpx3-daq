@@ -648,8 +648,7 @@ class TPX3(Dut):
         data += [self.periphery_header_map["GeneralConfig_Read"]]
 
         # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
+        data += [0x00, 0x00]
 
         data += [0x00]
 
@@ -741,8 +740,7 @@ class TPX3(Dut):
         data += [self.periphery_header_map["TPConfig_Read"]]
 
         # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
+        data += [0x00, 0x00]
 
         data += [0x00]
 
@@ -796,10 +794,8 @@ class TPX3(Dut):
 	    data += [self.matrix_header_map["ReadConfigMatrix"]]
 	    SColSelectReg= BitLogic(256)
 	    for index in range(256):
-	        if SColSelect[index]==0:
-	            SColSelectReg[index] = 0b0
-	        else: 
-	            SColSelectReg[index]=0b1
+            SColSelectReg[index] = 0b0 if SColSelect[index] == 0 else 0b1
+        # convert to bytes
 	    data += SColSelectReg.toByteList()
 	    data += [0x00]
 
@@ -904,11 +900,7 @@ class TPX3(Dut):
         data += DColSelect.toByteList()
         TokenSelectReg= BitLogic(128)
         for index in range(128):
-            if TokenSelect[index]==0:
-                TokenSelectReg[index] = 0
-            else: 
-                TokenSelectReg[index]=1
-            
+            TokenSelectReg[index] = 0 if TokenSelect[index] == 0 else 1
 
         data += TokenSelectReg.toByteList()
 
