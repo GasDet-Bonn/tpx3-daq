@@ -13,7 +13,7 @@ def read_pixel_config_reg(self, SColSelect=range(256), write=True):
     for index in range(256):
         if SColSelect[index]=0:
             SColSelectReg[index] = 0
-        else
+        else:
             SColSelectReg=1
     data += SColSelectReg.toByteList()
     data += [0x00]
@@ -118,9 +118,8 @@ def read_pixel_matrix_sequential(self, TokenSelect=range(128), write=True):
     for index in range(128):
         if TokenSelect[index]=0:
             TokenSelectReg[index] = 0
-        else
+        else:
             TokenSelectReg=1
-
 
     data += TokenSelectReg.toByteList()
 
