@@ -170,8 +170,6 @@ class TPX3(Dut):
             conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yaml')
 
         logger.info("Loading configuration file from %s" % conf)
-
-        self.reset_matrices()
         super(TPX3, self).__init__(conf)
 
     def init(self):
@@ -192,6 +190,41 @@ class TPX3(Dut):
         # for a specific Timepix3
         self.chipId = [0x00 for _ in range(4)]
 
+        # reset all matrices to empty defaults
+        self.reset_matrices()
+
+    def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
+                       toa=True, ftoa=True, hits=True):
+        """
+        resets all matrices to default
+        """
+        # set the test matrix with zeros for all pixels
+        if test:
+            self.test_matrix = np.zeros((256, 256), dtype=int)
+        # set the thr matrix with zeros for all pixels
+        if thr:
+            self.thr_matrix = np.zeros((256, 256), dtype=int)
+        # set the mask matrix with zeros for all pixels
+        if mask:
+            self.mask_matrix = np.zeros((256, 256), dtype=int)
+        # matrix storing ToT (= Time over Threshold) values of this Tpx3
+        # 8 bit values
+        if tot:
+            self.tot = np.zeros((256, 256), dtype = np.int8)
+        # matrix storing ToA (= Time of Arrival) values of this Tpx3
+        # 12 bit values
+        if toa:
+            self.toa = np.zeros((256, 256), dtype = np.int16)
+        # matrix storing fToA (= fast Time of Arrival; see manual v1.9 p.10) used if
+        # VCO is on
+        # 4 bit values
+        if ftoa:
+            self.ftoa = np.zeros((256, 256), dtype = np.int8)
+        # matrix storing hit counts of each pixel, if a hit happened without ToA and
+        # ToT being registered, i.e. two hits happenening too close to one another
+        # 4 bit values
+        if hits:
+            self.hits = np.zeros((256, 256), dtype = np.int8)
     def getGlobalSyncHeader(self):
         """
         Returns the global sync header, which is used to address all available
@@ -499,19 +532,6 @@ class TPX3(Dut):
 
         return y_pos
 
-    def reset_matrices(self, test=True, thr=True, mask=True):
-        """
-        resets all matrices to default
-        """
-        # set the test matrix with zeros for all pixels
-        if test:
-            self.test_matrix = np.zeros((256, 256), dtype=int)
-        # set the thr matrix with zeros for all pixels
-        if thr:
-            self.thr_matrix = np.zeros((256, 256), dtype=int)
-        # set the mask matrix with zeros for all pixels
-        if mask:
-            self.mask_matrix = np.zeros((256, 256), dtype=int)
 
     def set_pixel_pcr(self, x_pos, y_pos, test, thr, mask):
         """
