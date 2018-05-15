@@ -633,28 +633,6 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def read_general_config(self, write=True):
-        """
-        Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
-        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
-        registers (see manual v1.9 p.40). The sent bytes are also returned.
-        """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["GeneralConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00, 0x00]
-
-        data += [0x00]
-
-        if write is True:
-            self.write(data)
-        return data
 
     def write_tp_pulsenumber(self, number, write=True):
         """
@@ -690,9 +668,8 @@ class TPX3(Dut):
 
     def write_tp_period(self, period, phase, write=True):
         """
-        Writes the period and the phase to the TP_period and TP_phase test pulse registers
-        (see manual v1.9 p.35) and returns the written data.
-        The period is a 8-bit value and the phase is a 4-bit value.
+        Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
+        and returns the written data. The period is a 8-bit value and the phase is a 4-bit value.
         """
         if period > 255:
             #  check if the period is allowed
@@ -740,7 +717,8 @@ class TPX3(Dut):
         data += [self.periphery_header_map["TPConfig_Read"]]
 
         # fill with two dummy bytes for DataIN
-        data += [0x00, 0x00]
+        data += [0x00]
+        data += [0x00]
 
         data += [0x00]
 
@@ -780,32 +758,9 @@ class TPX3(Dut):
         return data
 
 
-    def read_pixel_config_reg(self, SColSelect=range(256), write=True):
-	    """
-	    Sends the Read Pixel Configuration Register command (see manual v1.9 p.32 and  v1.9 p.49).
-        The sent bytes are also returned.
-	    """
-	    data = []
-
-	    # presync header: 40 bits
-	    data = self.getGlobalSyncHeader()
-
-	    # append the code for the ReadMatrixSequential command header: 8 bits
-	    data += [self.matrix_header_map["ReadConfigMatrix"]]
-	    SColSelectReg= BitLogic(256)
-	    for index in range(256):
-            SColSelectReg[index] = 0b0 if SColSelect[index] == 0 else 0b1
-        # convert to bytes
-	    data += SColSelectReg.toByteList()
-	    data += [0x00]
-
-	    if write is True:
-	        self.write(data)
-	    return data
-
     def read_ctpr(self, write=True):
         """
-        Sends a command to read the Column Test Pulse Register (Manual v 1.9 pg. 50)
+       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
         """
         data = []
 
@@ -815,17 +770,18 @@ class TPX3(Dut):
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ReadCTPR"]]
 
+    
         data += [0x00]
 
         if write is True:
             self.write(data)
         return data
 
+
     def reset_sequential(self, write=True):
         """
-        Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51).
-        If any data is still present on the pixel  matrix (eoc_active is high) then an
-        End of Readout packet is sent.
+       Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51). If any data is still present on the pixel
+       matrix (eoc_active is high) then an End of Readout packet is sent.
         """
         data = []
 
@@ -834,18 +790,16 @@ class TPX3(Dut):
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ResetSequential"]]
-        dummy = BitLogic(142)
+        dummy= BitLogic(142)
         data += dummy.toByteList()
         data += [0x00]
 
         if write is True:
             self.write(data)
-        return data
-
+        return data     
     def stop_readout(self, write=True):
         """
-        Sends the Stop Matrix Readout Command (header 0hF0), which stops / pauses a readout
-        process.
+       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
         """
         data = []
 
@@ -858,12 +812,35 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
-        return data
+        return data        
 
+        
+
+    def read_pixel_config_reg(self, SColSelect, write=True):
+        """
+        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the ReadMatrixSequential command header: 8 bits
+        data += [self.matrix_header_map["ReadConfigMatrix"]]
+        
+        SColSelectReg= BitLogic(256)
+        SColSelectReg[255:0]=SColSelect
+
+        
+        data += SColSelectReg.toByteList()
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
     def read_pixel_matrix_datadriven(self, write=True):
         """
-        Sends the Read Pixel Matrix Data Driven command (see manual v1.9 p.32 and  v1.9 p.50).
-        The sent bytes are also returned.
+        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
         """
         data = []
 
@@ -872,18 +849,17 @@ class TPX3(Dut):
 
         # append the code for the ReadMatrixSequential command header: 8 bits
         data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-
+        
         data += [0x00]
 
         if write is True:
             self.write(data)
         return data
 
-    def read_pixel_matrix_sequential(self, TokenSelect=range(128), write=True):
+    def read_pixel_matrix_sequential(self, TokenSelect, write=True):
         """
-        Sends the Read Pixel Matrix Sequential command (see manual v1.9 p.32) together
-        with the SyncHeader, DColSelect and TokenSelect registers (see manual v1.9 p.46).
-        The sent bytes are also returned.
+        Sends the Pixel Matrix Read Sequential command (see manual v1.9 p.32) together with the
+        SyncHeader, DColSelect and TokenSelect registers (see manual v1.9 p.46). The sended bytes are also returned.
         """
         data = []
 
@@ -899,16 +875,52 @@ class TPX3(Dut):
 
         data += DColSelect.toByteList()
         TokenSelectReg= BitLogic(128)
-        for index in range(128):
-            TokenSelectReg[index] = 0 if TokenSelect[index] == 0 else 1
+        TokenSelectReg[127:0]=TokenSelect
 
         data += TokenSelectReg.toByteList()
 
+        
         data += [0x00]
 
         if write is True:
             self.write(data)
         return data
+
+
+    def decode_fpga(self, data, string=False):
+        """
+        Performs a decoding of a raw 48 bit word received from the FPGA in decoded
+        2 * 32bit form. Output is interpreted, i.e. split into different components
+        Note:
+        By default the Tpx3 uses 8b10b mode (8 bit values represented by 10 bit
+        values to keep number of 0's and 1's even). In that mode it sends 60 bit
+        packets (manual v1.9 wrongly states 64 bit!) ~= 6 byte of data. The
+        firmware performs the decoding of the 60bit -> 48bit.
+        Data is repackaged into 2 * 32bit words, consisting of
+          [32 bit] == [header: 8bit | data: 24bit].
+        The 48bits are packaged as follows:
+          [48 bit] == [a: 24bit | b: 24bit] transforms as:
+            -> d1 = [h: 1 | reversedBytes(b)]
+            -> d2 = [h: 0 | reversedBytes(a)]
+        i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
+          [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
+        For periphery commands d2[3] contains the hex code of which function was called,
+        as the first byte of the returned list the rest is the 40bit DataOut
+        (see manual v1.9 p.32).
+        """
+
+        # determine number of 48bit words
+        assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
+        nwords = len(data) / 2
+        result = []
+        for i in range(nwords):
+            d1 = bitword_to_byte_list(int(data[i]), string)
+            d2 = bitword_to_byte_list(int(data[i + 1]), string)
+            dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
+
+            result.append(dataout)
+
+        return result      
 
 if __name__ == '__main__':
     pass
