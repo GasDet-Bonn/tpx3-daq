@@ -88,7 +88,7 @@ def read_pixel_matrix_datadriven(self, write=True):
     data = self.getGlobalSyncHeader()
 
     # append the code for the ReadMatrixSequential command header: 8 bits
-    data += [self.periphery_header_map["ReadMatrixDataDriven"]]
+    data += [self.matrix_header_map["ReadMatrixDataDriven"]]
 
     data += [0x00]
 
@@ -107,7 +107,7 @@ def read_pixel_matrix_sequential(self, TokenSelect=range(128), write=True):
     data = self.getGlobalSyncHeader()
 
     # append the code for the ReadMatrixSequential command header: 8 bits
-    data += [self.periphery_header_map["ReadMatrixSequential"]]
+    data += [self.matrix_header_map["ReadMatrixSequential"]]
 
     DColSelect= BitLogic(128)
     for index in range(128):
