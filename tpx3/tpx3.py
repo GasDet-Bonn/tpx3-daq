@@ -509,20 +509,34 @@ class TPX3(Dut):
             -> d2 = [h: 0 | reversedBytes(a)]
         i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
           [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
-        For periphery commands d2[3] contains the hex code of which function was called,
-        as the first byte of the returned list the rest is the 40bit DataOut
-        (see manual v1.9 p.32).
+        Depending on the used command the first 4 bits or all bits of d2[3] contain the
+        command header (see manual v1.9 p.28)
+        A list of 48 bit bitarrays for each word is returned.
         """
 
         # determine number of 48bit words
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
         nwords = len(data) / 2
         result = []
+
         for i in range(nwords):
+            # create a 48 bit bitarrray for the current 48 bit word
+            dataout = BitLogic(48)
+
+            # tranform the header and data of the 32 bit words lists of bytes
             d1 = bitword_to_byte_list(int(data[2 * i]), string)
             d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
-            dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
 
+            # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
+            # contain the header which is not needed).
+            dataout[47:40] = d2[3]
+            dataout[39:32] = d2[2]
+            dataout[31:24] = d2[1]
+            dataout[23:16] = d1[3]
+            dataout[15:8] = d1[2]
+            dataout[7:0] = d1[1]
+
+            # add the bitarray for the current 48 bit word to the output list
             result.append(dataout)
 
         return result
