@@ -579,7 +579,7 @@ class TPX3(Dut):
             header[7:0] = data_payload[47:40]
 
         # Check if the expected and the received header are the same
-        if header.tovalue() is [command_header]:
+        if header.tovalue() is command_header:
             # If the header is a acquisition header dataout is the following list:
             # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
             if header[7:5].tovalue() is 0b101:
