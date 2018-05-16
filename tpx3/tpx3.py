@@ -509,54 +509,121 @@ class TPX3(Dut):
             -> d2 = [h: 0 | reversedBytes(a)]
         i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
           [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
-        For periphery commands d2[3] contains the hex code of which function was called,
-        as the first byte of the returned list the rest is the 40bit DataOut
-        (see manual v1.9 p.32).
+        Depending on the used command the first 4 bits or all bits of d2[3] contain the
+        command header (see manual v1.9 p.28)
+        A list of 48 bit bitarrays for each word is returned.
         """
 
         # determine number of 48bit words
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
         nwords = len(data) / 2
         result = []
+
         for i in range(nwords):
+            # create a 48 bit bitarrray for the current 48 bit word
+            dataout = BitLogic(48)
+
+            # tranform the header and data of the 32 bit words lists of bytes
             d1 = bitword_to_byte_list(int(data[2 * i]), string)
             d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
-            dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
 
+            # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
+            # contain the header which is not needed).
+            dataout[47:40] = d2[3]
+            dataout[39:32] = d2[2]
+            dataout[31:24] = d2[1]
+            dataout[23:16] = d1[3]
+            dataout[15:8] = d1[2]
+            dataout[7:0] = d1[1]
+
+            # add the bitarray for the current 48 bit word to the output list
             result.append(dataout)
 
         return result
 
-    def decode(self, data):
+    def decode(self, data, command_header):
         """
-        Given a FPGA decoded 48 bit word (or a list of 48 bit words) given as a list of
-        bytes, perform a decoding based on the
-        - header of the 48 bit words (case machine based on manual v1.9 p.28
-        - based on that read data correctly.
-          This is done by checking a dictionary for the correct structure for each
-          command type in combination with a check for the current general chip
-          settings (which determine which kind of sub command is currently expected)
-        """
-        # for each byte in the list of bytes
-        for d in data:
-            d0 = BitLogic(8)
-            d0[:] = d[0]
-            if d0[0] == 0:
-                # this branch corresponds to (see manual v1.9 p.28)
-                # - Periphery Configuration
-                # - Control Commands
-                # here the first byte is actually the full header of the commands
-                header = d0
-            else:
-                # this branch corresponds to (see manual v1.9 p.28)
-                # - Acquisition
-                # - @ data readout
-                # - Pixel Matrix Configuration
-                # NOTE: In this branch the actual header is actually only 4 bit
-                # instead of the 8 bit, which are part of d0!
-                header = BitLogic(4)
-                header[:] = d0[7:4]
+        Given a FPGA decoded 48 bit word given as a bitarray, perform a decoding based on
+        - the header of the 48 bit words (case machine based on manual v1.9 p.28
+        - that read data correctly.
+          This is done by first comparing the expected command header with the
+          header which is part of the data. In a second step the data is split
+          into a list of bitarrays based on the formation of the different packets
+          (see manual v1.9 p.28).
 
+        The following lists are used:
+
+                                    dataout[0]      dataout[1]      dataout[2]      dataout[3]
+         - Acquisition*:            Address[15:0]   TOA[13:0]       TOT[9:0]        FTOA[3:0]
+         - @ data readout:          Dummy[43:0]         -               -               -
+         - CTPR configuration:      Address[6:0]    EoC[17:0]       CTPR[1:0]           -
+         - Pixel configuration:     Address[15:0]   Config[5:0]         -               -
+         - Periphery command:       DataOut[39:0]       -               -               -
+         - Control command:         H1,H2,H3[7:0]   ChipID[31:0]        -               -
+
+         * Note that for acquisition the meaning of dataout[1] to dataout[3] depends on the
+           settings of the general config registers 'Op_mode' and 'Fast_Io_en' (see manual
+           v1.9 p.40). The composition of the list is independent of this, only the
+           interpretation must change accordingly.
+        """
+        if len(data) is not 48:
+            raise ValueError("The data must contain 48 bits and not {}!".format(len(data)))
+
+        # create a bitarray for the the header (8 bit)
+        header = BitLogic(8)
+
+        # The command header is always a byte but for pixel matrix operations only bits 7 to 4 are part of the
+        # data packets because bits 3 to 0 are all 0. Furthermore pixel matrix operation headers have always
+        # bit 7 as 1 while periphery and control commands have always bit 7 as 0 (see manual v1.9 p.32).
+        if data[47] is True:
+            # Pixel matrix operations: Only bits 7 to 4 are part of the data, bits 3 to 0 are 0
+            header[7:4] = data[47:44]
+        else:
+            # Periphery and control commands: Get full header from the data
+            header[7:0] = data[47:40]
+
+        # Check if the expected and the received header are the same
+        if header.tovalue() is command_header:
+            # If the header is a acquisition header dataout is the following list:
+            # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
+            if header[7:5].tovalue() is 0b101:
+                address = data[43:28]
+                TOA = data[27:14]
+                TOT = data[13:4]
+                HitCounter = data[3:0]
+                dataout = [address, TOA, TOT, HitCounter]
+            # If the header is a Stop matrix readout or a reset sequential header dataout is the following list:
+            # [dummy - 44 bit]
+            elif header[7:5].tovalue() is 0b111:
+                dataout = [data[43:0]]
+            # If the header is the CTPR configuration header dataout is the following list:
+            # [address - 7 bit, EoC - 18 bit, CTPR - 2 bit]
+            elif header[7:5].tovalue() is 0b110:
+                address = data[43:37]
+                EoC = data[27:10]
+                CTPR = data[1:0]
+                dataout = [address, EoC, CTPR]
+            # If the header is the pixel configuration header dataout is the following list:
+            # [address - 14 bit, Config - 6 bit]
+            elif header[7:5].tovalue() is 0b100:
+                address = data[43:28]
+                Config = data[19:14]
+                dataout = [address, Config]
+            # If the header is a control command header dataout is the following list:
+            # [H1H2H3 - 8 bit, ChipID - 32 bit]
+            elif header[7:5].tovalue() is 0b011:
+                ReturnedHeader = data[39:32]
+                ChipID = data[31:0]
+                dataout = [ReturnedHeader, ChipID]
+            # If the header is none of the previous headers its a periphery command header and dataout is the following list:
+            # [DataOutPeriphery - 40 bits]
+            else:
+                dataout = [data[39:0]]
+        else:
+            # If the expected and the received header doesn't match raise an error
+            raise ValueError("Received header {} does not match with expected header {}!".format(header.tovalue(), command_header))
+
+        return dataout
 
     def xy_to_pixel_address(self, x_pos, y_pos):
         """
