@@ -123,7 +123,15 @@ def main(args_dict):
         print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
         pretty_print(d)
     for el in dout:
-        print "Decoded: ", el
+        print "Decode_fpga: ", el
+    ddout = chip.decode(dout[0], 0x03)
+    print "Decoded 'Read DAC':"
+    for el in ddout:
+        print "\tDecode: ", el
+    ddout = chip.decode(dout[1], 0x71)
+    print "Decoded 'End of Command':"
+    for el in ddout:
+        print "\tDecode: ", el
 
     print "Test set general config"
     data = chip.write_general_config(write=False)
@@ -145,7 +153,15 @@ def main(args_dict):
         print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
         pretty_print(d)
     for el in dout:
-        print "Decoded: ", el
+        print "Decode_fpga: ", el
+    ddout = chip.decode(dout[0], 0x31)
+    print "Decoded 'Read GeneralConfig':"
+    for el in ddout:
+        print "\tDecode: ", el
+    ddout = chip.decode(dout[1], 0x71)
+    print "Decoded 'End of Command':"
+    for el in ddout:
+        print "\tDecode: ", el
 
     print "Test test pulse registers"
     data = chip.write_tp_period(100, 0, write=False)
@@ -172,7 +188,15 @@ def main(args_dict):
         print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
         pretty_print(d)
     for el in dout:
-        print "Decoded: ", el
+        print "Decode_fpga: ", el
+    ddout = chip.decode(dout[0], 0x0E)
+    print "Decoded 'Read TestPulse Config':"
+    for el in ddout:
+        print "\tDecode: ", el
+    ddout = chip.decode(dout[1], 0x71)
+    print "Decoded 'End of Command':"
+    for el in ddout:
+        print "\tDecode: ", el
 
     # data = chip.set_dac("Ibias_Preamp_ON", 0b1101, write = False)
     # chip['FIFO'].reset()
