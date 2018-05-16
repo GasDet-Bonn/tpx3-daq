@@ -519,8 +519,8 @@ class TPX3(Dut):
         nwords = len(data) / 2
         result = []
         for i in range(nwords):
-            d1 = bitword_to_byte_list(int(data[i]), string)
-            d2 = bitword_to_byte_list(int(data[i + 1]), string)
+            d1 = bitword_to_byte_list(int(data[2 * i]), string)
+            d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
             dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
 
             result.append(dataout)
