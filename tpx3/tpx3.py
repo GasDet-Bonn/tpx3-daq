@@ -615,6 +615,30 @@ class TPX3(Dut):
 
         data += columnMask.toByteList()
         return data
+    
+    def read_general_config(self, write=True):
+        """
+        Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["GeneralConfig_Read"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
 
     def write_pcr(self, columns=range(256), write=True):
         """
