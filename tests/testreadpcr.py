@@ -67,9 +67,7 @@ def read_pcr():
     chip.write(data)
     time.sleep(0.01)
 
-    #Step 6: Receive Data 
-    for i in range(4):   
-	    fdata = chip['FIFO'].get_data()
+    fdata = chip['FIFO'].get_data()
 	    print fdata
 	    dout = chip.decode_fpga(fdata, True)
 	    print dout
@@ -78,7 +76,32 @@ def read_pcr():
 	        pretty_print(d)
 	    for el in dout:
 	        print "Decoded: ", el
-	    ddout=chip.decode(dout,1001)
+	    ddout=chip.decode(dout,0x71)
 	    print ddout
 
+#     #Step 6: Receive Data 
+#     for i in range(4):   
+# 	    fdata = chip['FIFO'].get_data()
+# 	    print fdata
+# 	    dout = chip.decode_fpga(fdata, True)
+# 	    print dout
+# 	    for i, d in enumerate(fdata):
+# 	        print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
+# 	        pretty_print(d)
+# 	    for el in dout:
+# 	        print "Decoded: ", el
+# 	    ddout=chip.decode(dout,0x09)
+# 	    print ddout
+
+# 	fdata = chip['FIFO'].get_data()
+#     print fdata
+#     dout = chip.decode_fpga(fdata, True)
+#     print dout
+#     for i, d in enumerate(fdata):
+#         print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
+#         pretty_print(d)
+#     for el in dout:
+#         print "Decoded: ", el
+#     ddout=chip.decode(dout,0x71)
+#     print ddout
 
