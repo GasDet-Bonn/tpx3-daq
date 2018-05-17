@@ -16,7 +16,7 @@ def pretty_print(string_val, bits=32):
     print "Hex ", lst_hex
     print "Binary ", bits
 
-def main(args_dict):
+def read_pcr():
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
@@ -150,15 +150,4 @@ def main(args_dict):
  #    ddout=chip.decode(dout,0x71)
  #    print ddout
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Timepix3 hardware checking script')
-    parser.add_argument('--led_blink',
-                        action='store_true',
-                        help="Toggle this, if you want to blink the LEDs")
-    parser.add_argument('--benchmark',
-                        action='store_true',
-                        help="Toggle this, if you want to perform a benchmark")
-    parser.add_argument('--delay_scan',
-                        action='store_true',
-                        help="Toggle this, if you want to perform a delay scan")
-    args_dict = vars(parser.parse_args())
-    main(args_dict)
+    pass
