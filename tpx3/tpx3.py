@@ -779,7 +779,7 @@ class TPX3(Dut):
         # set the bits for all except the selected columns to 1
         for col in range(256):
             # all bits 0 which are elements of columns, else 1
-            columnMask[col] = 1 if col in columns else 0
+            columnMask[col] = 0 if col in columns else 1
 
         data = []
 
