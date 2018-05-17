@@ -26,69 +26,19 @@ def read_pcr():
     chip['CONTROL'].write()
     chip['CONTROL']['RESET'] = 0
     chip['CONTROL'].write()
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+   
+       # Step 3: Set PCR
+    # Step 3a: Produce needed PCR
+    for x in range(256):
+        for y in range(256):
+            chip.set_pixel_pcr(x, y, 1, 7, 1)
 
-    data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x0]
-    
-    chip.write(data)
-
-    print 'RX ready:', chip['RX'].is_ready
-
-    if delay_scan is True:
-        for i in range(32):
-            chip['RX'].reset()
-            chip['RX'].DATA_DELAY = i  # i
-            chip['RX'].ENABLE = 1
-            chip['FIFO'].reset()
-            time.sleep(0.01)
-            chip['FIFO'].get_data()
-            # print '-', i, chip['RX'].get_decoder_error_counter(), chip['RX'].is_ready
-
-            for _ in range(100):
-
-                data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)]  # [0b10101010, 0xFF] + [0x0]
-                chip.write(data)
-                #
-
-            fdata = chip['FIFO'].get_data()
-            print i, 'len', len(fdata), chip['RX'].get_decoder_error_counter(), chip['RX'].is_ready
-
-        print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
-        print 'RX ready:', chip['RX'].is_ready
-
-        for i in fdata[:10]:
-            print hex(i), (i & 0x01000000) != 0, hex(i & 0xffffff)
-            b = BitLogic(32)
-            b[:] = int(i)
-            print b[:]
-            pretty_print(i)
-
-    chip['RX'].reset()
-    chip['RX'].DATA_DELAY = 0
-    chip['RX'].ENABLE = 1
-    time.sleep(0.01)
-
-    while(not chip['RX'].is_ready):
-        pass
-    print(chip.get_configuration())
-
-    #Step 3: Check Matrix Configuration
-    data = chip.read_general_config(write=False)
-
+    # Step 3b: Write PCR to chip
+    data = chip.write_pcr(range(256), write=False)
     chip['FIFO'].reset()
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
-    fdata = chip['FIFO'].get_data()
-    print fdata
-    dout = chip.decode_fpga(fdata, True)
-    print dout
-    for i, d in enumerate(fdata):
-        print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
-        pretty_print(d)
-    for el in dout:
-        print "Decoded: ", el
 
 
     #Step 4: Send Read Pixel Configuration Register Command
