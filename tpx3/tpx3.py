@@ -192,6 +192,95 @@ class TPX3(Dut):
         # for a specific Timepix3
         self.chipId = [0x00 for _ in range(4)]
 
+    def reset_config_attributes(self):
+        """
+        Resets all configuration attributes to their default values
+        """
+                # flag to determine whether the configuration has been written to the chip already
+        self.config_written_to_chip = False
+        # general configuration settings are initialized with the default chip values
+        # for an explanation see manual v1.9 p.40 or the general config YAML file
+        # selects polarity (0 = positive, 1 = negative)
+        self.polarity = 1
+        # pixel operation mode (0b00 = ToA and ToT, 0b01 = ToA, 0b10 = Event and iToT)
+        self.op_mode = 0b00
+        # end of command Gray counter (for ToA measurements?) (0 = disabled, 1 = enabled)
+        self.gray_counter = 0
+        # AckCommand package (0 = disabled, 1 = enabled)
+        self.ack_command_enable = 0
+        # test pulse enable (0 = disabled, 1 = enabled)
+        self.tp_enable = 0
+        # super pixel oscillator enable (Fast_Io_en; 0 = disabled, 1 = enabled)
+        self.fast_io_enable = 0
+        # time overflow control for 48bit timer
+        # (0 = will cycle through, 1 = stops at 0hFFFF_FFFF_FFFF)
+        self.timer_overflow_control = 0
+        # select if test pulses are sent to the Front-End (analog domain) or
+        # the discriminator input (digital domain)
+        # (0 = Front-End, 1 = Discr. input)
+        self.select_tp_dig_analog = 0
+        # test pulse generation internal or external (0 = internal, 1 = external)
+        self.select_tp_ext_int = 0
+        # select if clock is phase shifted in the end of command Gray counters
+        # (0 = phase shifted, 1 = not shifted)
+        self.select_toa_clk = 0
+
+    def read_config_yaml(self, config_file):
+        """
+        Reads a configuration YAML file for the general Timepix3 configuration,
+        saves the content in the `self.config` field, assigns the chip attributes,
+        which store the settings correctly.
+        Note: It does not return the configuration ready to be written to the chip,
+        for that use the `get_configuration_register` method
+        """
+        # get the configuration bits from the GeneralConfiguration file
+        config = yaml.load(open(config_file, 'r'))
+
+        for register in config['registers']:
+            name = register['name']
+            address = register['address']
+            size = register['size']
+            mode = register['mode']
+            self.config[name] = {'address' : address,
+                                 'size': size,
+                                 'mode': mode}
+        # for an explanation on the different options see manual v1.9 p.40,
+        # the YAML file or the declaration of the fields at the beginning of the class
+        self.polarity = self.config['Polarity']['mode']
+        self.op_mode = self.config['Op_mode']['mode']
+        self.gray_counter = self.config['Gray_count_en']['mode']
+        self.ack_command_enable = self.config['AckCommand_en']['mode']
+        self.tp_enable = self.config['TP_en']['mode']
+        self.fast_io_enable = self.config['Fast_Io_en']['mode']
+        self.timer_overflow_control = self.config['TimerOverflowControl']['mode']
+        self.select_tp_dig_analog = self.config['SelectTP_Dig_Analog']['mode']
+        self.select_tp_ext_int = self.config['SelectTP_Ext_Int']['mode']
+        self.select_toa_clk = self.config['SelectTP_ToA_Clk']['mode']
+
+    def get_configuration_register(self):
+        """
+        Checks whether a YAML configuration file was already read and if so,
+        creates a configuration register from it and returns it.
+        """
+        if len(self.config) == 0 and self.config_file is not None:
+            read_config_yaml(self.config_file)
+        elif len(self.config) == 0 and self.config_file is None:
+            # in this case we don't know about a config file, nor have we read one,
+            # return None
+            return None
+        # create a 12 bit variable for the values of the GlobalConfig registers
+        configuration_bits = BitLogic(12)
+        # iterate over all values of the config dictionary, since each nested dict
+        # contains all necessary information, i.e. the key (=name) is not needed.
+        for reg in self.config.values():
+            address = reg['address']
+            size = reg['size']
+            mode = reg['mode']
+            # fill the variable for the register values with the values from the yaml file
+            # see see manual v1.9 p.40 for the registers
+            configuration_bits[address + size - 1:address] = mode
+        return configuration_bits
+
     def getGlobalSyncHeader(self):
         """
         Returns the global sync header, which is used to address all available
@@ -351,40 +440,6 @@ class TPX3(Dut):
         while(not self['SPI'].is_ready):
             # wait until SPI is done
             pass
-
-    def decode(self, data, string=False):
-        """
-        Performs a decoding of a raw 48 bit word received from the FPGA in decoded
-        2 * 32bit form. Output is interpreted, i.e. split into different components
-        Note:
-        By default the Tpx3 uses 8b10b mode (8 bit values represented by 10 bit
-        values to keep number of 0's and 1's even). In that mode it sends 60 bit
-        packets (manual v1.9 wrongly states 64 bit!) ~= 6 byte of data. The
-        firmware performs the decoding of the 60bit -> 48bit.
-        Data is repackaged into 2 * 32bit words, consisting of
-          [32 bit] == [header: 8bit | data: 24bit].
-        The 48bits are packaged as follows:
-          [48 bit] == [a: 24bit | b: 24bit] transforms as:
-            -> d1 = [h: 1 | reversedBytes(b)]
-            -> d2 = [h: 0 | reversedBytes(a)]
-        i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
-          [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
-        For periphery commands d2[3] contains the hex code of which function was called,
-        the rest is the 40bit DataOut (see manual v1.9 p.32)
-        """
-
-        # determine number of 48bit words
-        assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
-        nwords = len(data) / 2
-        result = []
-        for i in range(nwords):
-            d1 = bitword_to_byte_list(int(data[i]), string)
-            d2 = bitword_to_byte_list(int(data[i + 1]), string)
-            dataout = [d2[2], d2[1], d1[3], d1[2], d1[1]]
-
-            result.append((d2[3], dataout))
-
-        return result
 
     def xy_to_pixel_address(self, x_pos, y_pos):
         """
@@ -913,14 +968,127 @@ class TPX3(Dut):
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
         nwords = len(data) / 2
         result = []
-        for i in range(nwords):
-            d1 = bitword_to_byte_list(int(data[i]), string)
-            d2 = bitword_to_byte_list(int(data[i + 1]), string)
-            dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
+        # for i in range(nwords):
+        #     d1 = bitword_to_byte_list(int(data[2* i]), string)
+        #     d2 = bitword_to_byte_list(int(data[2* i + 1]), string)
+        #     dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
 
+        #     result.append(dataout)
+
+        # return result
+        for i in range(nwords):
+            # create a 48 bit bitarrray for the current 48 bit word
+            dataout = BitLogic(48)
+
+            # tranform the header and data of the 32 bit words lists of bytes
+            d1 = bitword_to_byte_list(int(data[2 * i]), string)
+            d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
+
+            # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
+            # contain the header which is not needed).
+            dataout[47:40] = d2[3]
+            dataout[39:32] = d2[2]
+            dataout[31:24] = d2[1]
+            dataout[23:16] = d1[3]
+            dataout[15:8] = d1[2]
+            dataout[7:0] = d1[1]
+            
+            # add the bitarray for the current 48 bit word to the output list
             result.append(dataout)
 
-        return result      
+        return result     
+         
+    def decode(self, data, command_header):
+        """
+        Given a FPGA decoded 48 bit word given as a list of
+        bytes, perform a decoding based on
+        - the header of the 48 bit words (case machine based on manual v1.9 p.28
+        - that read data correctly.
+          This is done by first comparing the expected command header with the
+          header which is part of the data. In a second step the data is split
+          into a list of bitarrays based on the formation of the different packets
+          (see manual v1.9 p.28).
+        The following lists are used:
+                                    dataout[0]      dataout[1]      dataout[2]      dataout[3]
+         - Acquisition*:            Address[15:0]   TOA[13:0]       TOT[9:0]        FTOA[3:0]
+         - @ data readout:          Dummy[43:0]         -               -               -
+         - CTPR configuration:      Address[6:0]    EoC[17:0]       CTPR[1:0]           -
+         - Pixel configuration:     Address[15:0]   Config[5:0]         -               -
+         - Periphery command:       DataOut[39:0]       -               -               -
+         - Control command:         H1,H2,H3[7:0]   ChipID[31:0]        -               -
+         * Note that for acquisition the meaning of dataout[1] to dataout[3] depends on the
+           settings of the general config registers 'Op_mode' and 'Fast_Io_en' (see manual
+           v1.9 p.40). The composition of the list is independent of this, only the
+           interpretation must change accordingly.
+        """
+        if len(data) is not 6:
+            raise ValueError("The data must contain 6 bytes and not {}!".format(len(data)))
+
+        # create bitarrays for the complete data (48 bits) and the header (8 bit)
+        data_payload = BitLogic(48)
+        header = BitLogic(8)
+
+        # combine the 6 bytes in the data list to one bitarray
+        i = 0
+        for d in data:
+            if len(d) is not 8:
+                raise ValueError("All bytes of the data must contain 8 bits and not {}!".format(len(d)))
+            data_payload[47 - (i * 8):40 - (i * 8)] = d
+            i += 1
+
+        # The command header is always a byte but for pixel matrix operations only bits 7 to 4 are part of the
+        # data packets because bits 3 to 0 are all 0. Furthermore pixel matrix operation headers have always
+        # bit 7 as 1 while periphery and control commands have always bit 7 as 0 (see manual v1.9 p.32).
+        if data_payload[47] is True:
+            # Pixel matrix operations: Only bits 7 to 4 are part of the data, bits 3 to 0 are 0
+            header[7:4] = data_payload[47:44]
+        else:
+            # Periphery and control commands: Get full header from the data
+            header[7:0] = data_payload[47:40]
+
+        # Check if the expected and the received header are the same
+        if header.tovalue() is command_header:
+            # If the header is a acquisition header dataout is the following list:
+            # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
+            if header[7:5].tovalue() is 0b101:
+                address = data_payload[43:28]
+                TOA = data_payload[27:14]
+                TOT = data_payload[13:4]
+                HitCounter = data_payload[3:0]
+                dataout = [address, TOA, TOT, HitCounter]
+            # If the header is a Stop matrix readout or a reset sequential header dataout is the following list:
+            # [dummy - 44 bit]
+            elif header[7:5].tovalue() is 0b111:
+                dataout = [data_payload[43:0]]
+            # If the header is the CTPR configuration header dataout is the following list:
+            # [address - 7 bit, EoC - 18 bit, CTPR - 2 bit]
+            elif header[7:5].tovalue() is 0b110:
+                address = data_payload[43:37]
+                EoC = data_payload[27:10]
+                CTPR = data_payload[1:0]
+                dataout = [address, EoC, CTPR]
+            # If the header is the pixel configuration header dataout is the following list:
+            # [address - 14 bit, Config - 6 bit]
+            elif header[7:5].tovalue() is 0b100:
+                address = data_payload[43:28]
+                Config = data_payload[19:14]
+                dataout = [address, Config]
+            # If the header is a control command header dataout is the following list:
+            # [H1H2H3 - 8 bit, ChipID - 32 bit]
+            elif header[7:5].tovalue() is 0b011:
+                ReturnedHeader = data_payload[39:32]
+                ChipID = data_payload[31:0]
+                dataout = [ReturnedHeader, ChipID]
+            # If the header is none of the previous headers its a periphery command header and dataout is the following list:
+            # [DataOutPeriphery - 40 bits]
+            else:
+                dataout = [data_payload[39:0]]
+        else:
+            # If the expected and the received header doesn't match raise an error
+            raise ValueError("Received header {} does not match with expected header {}!".format(header.tovalue(), command_header))
+
+        return dataout
+    
 
 if __name__ == '__main__':
     pass
