@@ -16,7 +16,7 @@ def pretty_print(string_val, bits=32):
     print "Hex ", lst_hex
     print "Binary ", bits
 
-def read_pcr():
+def main(args_dict):
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
