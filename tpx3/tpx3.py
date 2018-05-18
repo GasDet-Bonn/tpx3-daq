@@ -1016,6 +1016,25 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+    
+    def read_ctpr(self, write=True):
+        """
+       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
+        """
+        data = []
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the LoadConfigMatrix command header: 8 bits
+        data += [self.matrix_header_map["ReadCTPR"]]
+
+    
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
 
 if __name__ == '__main__':
     pass
