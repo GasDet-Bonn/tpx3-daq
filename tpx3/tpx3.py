@@ -208,7 +208,6 @@ class TPX3(Dut):
         # TODO: think about whether we should always read the YAML config file?
         self.read_config_yaml(self.config_file)
 
-
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
         """
@@ -226,27 +225,27 @@ class TPX3(Dut):
         # matrix storing ToT (= Time over Threshold) values of this Tpx3
         # 8 bit values
         if tot:
-            self.tot = np.zeros((256, 256), dtype = np.int8)
+            self.tot = np.zeros((256, 256), dtype=np.int8)
         # matrix storing ToA (= Time of Arrival) values of this Tpx3
         # 12 bit values
         if toa:
-            self.toa = np.zeros((256, 256), dtype = np.int16)
+            self.toa = np.zeros((256, 256), dtype=np.int16)
         # matrix storing fToA (= fast Time of Arrival; see manual v1.9 p.10) used if
         # VCO is on
         # 4 bit values
         if ftoa:
-            self.ftoa = np.zeros((256, 256), dtype = np.int8)
+            self.ftoa = np.zeros((256, 256), dtype=np.int8)
         # matrix storing hit counts of each pixel, if a hit happened without ToA and
         # ToT being registered, i.e. two hits happenening too close to one another
         # 4 bit values
         if hits:
-            self.hits = np.zeros((256, 256), dtype = np.int8)
+            self.hits = np.zeros((256, 256), dtype=np.int8)
 
     def reset_config_attributes(self):
         """
         Resets all configuration attributes to their default values
         """
-                # flag to determine whether the configuration has been written to the chip already
+        # flag to determine whether the configuration has been written to the chip already
         self.config_written_to_chip = False
         # general configuration settings are initialized with the default chip values
         # for an explanation see manual v1.9 p.40 or the general config YAML file
@@ -275,7 +274,6 @@ class TPX3(Dut):
         # (0 = phase shifted, 1 = not shifted)
         self.select_toa_clk = 0
 
-
     def read_config_yaml(self, config_file):
         """
         Reads a configuration YAML file for the general Timepix3 configuration,
@@ -292,7 +290,7 @@ class TPX3(Dut):
             address = register['address']
             size = register['size']
             mode = register['mode']
-            self.config[name] = {'address' : address,
+            self.config[name] = {'address': address,
                                  'size': size,
                                  'mode': mode}
         # for an explanation on the different options see manual v1.9 p.40,
@@ -706,7 +704,6 @@ class TPX3(Dut):
 
         return y_pos
 
-
     def set_pixel_pcr(self, x_pos, y_pos, test, thr, mask):
         """
         sets test (1 bit), thr (4 bits) and mask (1 bit) for a selected pixel to new values
@@ -1016,10 +1013,10 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
-    
+
     def read_ctpr(self, write=True):
         """
-       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
+        Sends a command to read the Column Test Pulse Register (Manual v 1.9 pg. 50)
         """
         data = []
 
@@ -1029,7 +1026,6 @@ class TPX3(Dut):
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ReadCTPR"]]
 
-    
         data += [0x00]
 
         if write is True:

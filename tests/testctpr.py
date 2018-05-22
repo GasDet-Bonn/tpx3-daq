@@ -20,7 +20,6 @@ def pretty_print(string_val, bits=32):
 
 def main(args_dict):
 
-
     chip = TPX3()
     chip.init()
 
@@ -30,15 +29,14 @@ def main(args_dict):
     chip['CONTROL']['RESET'] = 0
     chip['CONTROL'].write()
 
-   # print 'RX ready:', chip['RX'].is_ready
-   # print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    # print 'RX ready:', chip['RX'].is_ready
+    # print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
 
     data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x00]
-    
+
     chip.write(data)
 
     print 'RX ready:', chip['RX'].is_ready
-
 
     chip['RX'].reset()
     chip['RX'].DATA_DELAY = 0
@@ -47,7 +45,7 @@ def main(args_dict):
 
     while(not chip['RX'].is_ready):
         pass
-    #print(chip.get_configuration())
+    # print(chip.get_configuration())
 
     # data = chip.getGlobalSyncHeader() + [0x02] + [0b11111111, 0x00000001] + [0x0]
     # data = chip.set_dac("Ibias_Preamp_ON", 0x00, write = False)
@@ -66,7 +64,7 @@ def main(args_dict):
     print dout
     for el in dout:
         print "Decode_fpga: ", el
-    ddout=chip.decode(dout[0],0x71)
+    ddout = chip.decode(dout[0], 0x71)
     print ddout  
     print "Test Read CTPR"
     data = chip.read_ctpr(False)
@@ -82,23 +80,23 @@ def main(args_dict):
     for el in dout:
         print "Decode_fpga: ", el
     for i in range(128):
-        ddout=chip.decode(dout[i],0xD0)
-        print ddout     
-    
+        ddout = chip.decode(dout[i], 0xD0)
+        print ddout
+
     print "Shutter Enabled"
-    #chip['CONTROL']['SHUTTER'] = 1
-    #chip['CONTROL'].write()
+    # It seems that in contrast to the manual (v1.9) the shutter isn't needed.
+    # chip['CONTROL']['SHUTTER'] = 1
+    # chip['CONTROL'].write()
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print dout
     time.sleep(0.01)
-    #chip['CONTROL']['SHUTTER'] = 0
-    #chip['CONTROL'].write()
+    # chip['CONTROL']['SHUTTER'] = 0
+    # chip['CONTROL'].write()
     print "Shutter Disabled"
-    
-    
+
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
