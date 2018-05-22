@@ -45,12 +45,7 @@ def main(args_dict):
 
     while(not chip['RX'].is_ready):
         pass
-    # print(chip.get_configuration())
-
-    # data = chip.getGlobalSyncHeader() + [0x02] + [0b11111111, 0x00000001] + [0x0]
-    # data = chip.set_dac("Ibias_Preamp_ON", 0x00, write = False)
-    # chip['FIFO'].reset()
-    # chip.write(data)
+  
     print "Test write CTPR"
     data = chip.write_ctpr(range(128), False)
     chip['FIFO'].reset()
@@ -80,23 +75,18 @@ def main(args_dict):
     for el in dout:
         print "Decode_fpga: ", el
     for i in range(128):
-        ddout = chip.decode(dout[i], 0xD0)
-        print ddout
+        ddout=chip.decode(dout[i],0xD0)
+        print ddout     
+    
 
-    print "Shutter Enabled"
-    # It seems that in contrast to the manual (v1.9) the shutter isn't needed.
-    # chip['CONTROL']['SHUTTER'] = 1
-    # chip['CONTROL'].write()
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print dout
     time.sleep(0.01)
-    # chip['CONTROL']['SHUTTER'] = 0
-    # chip['CONTROL'].write()
-    print "Shutter Disabled"
-
+    
+    
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
