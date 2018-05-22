@@ -226,6 +226,29 @@ def run_test_pulses():
     print "\tReceived command header:", dout[0]
     print "\tChipID:", dout[1]
 
+    print "Read CTPR:"
+    data = chip.read_ctpr(write=False)
+    chip['FIFO'].reset()
+    time.sleep(0.01)
+    chip.write(data)
+    time.sleep(0.01)
+    dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
+    for el in dout[:-2]:
+        ddout = chip.decode(el, 0xD0)
+        print "\tRead CTPR for double Column", ddout[0].tovalue()
+        # print "\tEoC:", ddout[1]
+        print "\tCTPR:", ddout[2]
+    print "\tGet EoC:"
+    ddout = chip.decode(dout[-2], 0x71)
+    print "\tExpected command header: 11011111"
+    print "\tReceived command header:", ddout[0]
+    print "\tChipID:", ddout[1]
+    print "\tGet EoR"
+    ddout = chip.decode(dout[-1], 0x71)
+    print "\tExpected command header: 11010000"
+    print "\tReceived command header:", ddout[0]
+    print "\tChipID:", ddout[1]
+
     # Step 8: Send "read pixel matrix data driven" command
     print "Read pixel matrix data driven"
     data = chip.read_matrix_data_driven(write=False)
