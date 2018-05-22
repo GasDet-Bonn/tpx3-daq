@@ -170,11 +170,9 @@ class TPX3(Dut):
             conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yaml')
 
         logger.info("Loading configuration file from %s" % conf)
-
-        self.reset_matrices()
         super(TPX3, self).__init__(conf)
 
-    def init(self):
+    def init(self, config_file=None, dac_file=None):
         super(TPX3, self).init()
 
         # self.fw_version, self.board_version = self.get_daq_version()
@@ -191,6 +189,67 @@ class TPX3(Dut):
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
         self.chipId = [0x00 for _ in range(4)]
+
+        # reset all matrices to empty defaults
+        self.reset_matrices()
+
+        # set all configuration attributes to their default values, also sets
+        # the `config_written_to_chip` flag to False
+        self.reset_config_attributes()
+
+        # config dictionary will store the full yaml as a nested dict
+        self.config = {}
+        # configuration settings
+        if config_file is not None:
+            self.config_file = config_file
+        else:
+            # TODO: replace this by something more general!
+            self.config_file = 'tpx3/GeneralConfiguration.yml'
+        # TODO: think about whether we should always read the YAML config file?
+        self.read_config_yaml(self.config_file)
+        self.dac = {}
+        # configuration settings
+        if dac_file is not None:
+            self.dac_file = dac_file
+        else:
+            # TODO: replace this by something more general!
+            self.dac_file = 'tpx3/dacs.yml'
+        # TODO: think about whether we should always read the YAML config file?
+        self.read_dac_yaml(self.dac_file)
+
+
+    def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
+                       toa=True, ftoa=True, hits=True):
+        """
+        resets all matrices to default
+        """
+        # set the test matrix with zeros for all pixels
+        if test:
+            self.test_matrix = np.zeros((256, 256), dtype=int)
+        # set the thr matrix with zeros for all pixels
+        if thr:
+            self.thr_matrix = np.zeros((256, 256), dtype=int)
+        # set the mask matrix with zeros for all pixels
+        if mask:
+            self.mask_matrix = np.zeros((256, 256), dtype=int)
+        # matrix storing ToT (= Time over Threshold) values of this Tpx3
+        # 8 bit values
+        if tot:
+            self.tot = np.zeros((256, 256), dtype = np.int8)
+        # matrix storing ToA (= Time of Arrival) values of this Tpx3
+        # 12 bit values
+        if toa:
+            self.toa = np.zeros((256, 256), dtype = np.int16)
+        # matrix storing fToA (= fast Time of Arrival; see manual v1.9 p.10) used if
+        # VCO is on
+        # 4 bit values
+        if ftoa:
+            self.ftoa = np.zeros((256, 256), dtype = np.int8)
+        # matrix storing hit counts of each pixel, if a hit happened without ToA and
+        # ToT being registered, i.e. two hits happenening too close to one another
+        # 4 bit values
+        if hits:
+            self.hits = np.zeros((256, 256), dtype = np.int8)
 
     def reset_config_attributes(self):
         """
@@ -225,6 +284,7 @@ class TPX3(Dut):
         # (0 = phase shifted, 1 = not shifted)
         self.select_toa_clk = 0
 
+
     def read_config_yaml(self, config_file):
         """
         Reads a configuration YAML file for the general Timepix3 configuration,
@@ -256,6 +316,48 @@ class TPX3(Dut):
         self.select_tp_dig_analog = self.config['SelectTP_Dig_Analog']['mode']
         self.select_tp_ext_int = self.config['SelectTP_Ext_Int']['mode']
         self.select_toa_clk = self.config['SelectTP_ToA_Clk']['mode']
+
+    def read_dac_yaml(self, dac_file):
+        """
+        Reads a configuration YAML file for the general Timepix3 configuration,
+        saves the content in the `self.config` field, assigns the chip attributes,
+        which store the settings correctly.
+        Note: It does not return the configuration ready to be written to the chip,
+        for that use the `get_configuration_register` method
+        """
+        # get the configuration bits from the GeneralConfiguration file
+        dac = yaml.load(open(dac_file, 'r'))
+
+        for register in dac['registers']:
+            name = register['name']
+            code = register['code']
+            size = register['size']
+            default = register['default']
+            value = register['value']
+            self.dac[name] = {'code' : code,
+                                 'size': size,
+                                 'default': default,
+                                 'value': value}
+        # for an explanation on the different options see manual v1.9 p.40,
+        # the YAML file or the declaration of the fields at the beginning of the class
+        self.Ibias_Preamp_ON = self.dac['Ibias_Preamp_ON']['default']
+        self.Ibias_Preamp_OFF = self.dac['Ibias_Preamp_OFF']['default']
+        self.VPreamp_NCAS = self.dac['VPreamp_NCAS']['default']
+        self.Ibias_Ikrum = self.dac['Ibias_Ikrum']['default']
+        self.Vfbk = self.dac['Vfbk']['default']
+        self.Vthreshold_fine = self.dac['Vthreshold_fine']['default']
+        self.Vthreshold_coarse = self.dac['Vthreshold_coarse']['default']
+        self.Ibias_DiscS1_ON = self.dac['Ibias_DiscS1_ON']['default']
+        self.Ibias_DiscS1_OFF = self.dac['Ibias_DiscS1_OFF']['default']
+        self.Ibias_DiscS2_ON = self.dac['Ibias_DiscS2_ON']['default']
+        self.Ibias_DiscS2_OFF = self.dac['Ibias_DiscS2_OFF']['default']
+        self.Ibias_PixelDAC = self.dac['Ibias_PixelDAC']['default']
+        self.Ibias_TPbufferIn= self.dac['Ibias_TPbufferIn']['default']
+        self.Ibias_TPbufferOut = self.dac['Ibias_TPbufferOut']['default']
+        self.VTP_coarse = self.dac['VTP_coarse']['default']
+        self.VTP_fine= self.dac['VTP_fine']['default']
+        self.Ibias_CP_PLL = self.dac['Ibias_CP_PLL']['default']
+        self.PLL_Vcntrl = self.dac['PLL_Vcntrl']['default']
 
     def get_configuration_register(self):
         """
@@ -303,7 +405,7 @@ class TPX3(Dut):
         # 0x4E == local sync header
         return [0x4E] + self.chipId
 
-    def set_dac(self, dac, value, chip=None, write=True):
+    def set_dac(self, dac, chip=None, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -337,16 +439,16 @@ class TPX3(Dut):
         bits[23:16] = self.periphery_header_map["SetDAC"]
 
         # get number of bits for values in this DAC
-        dac_value_size = self.dac_valsize_map[dac]
-        if value >= (2 ** dac_value_size):
+        dac_value_size = self.dac[dac]['size']
+        if self.dac[dac]['value'] >= (2 ** dac_value_size):
             # value for the DAC, check whether in allowed range
             raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
         # safely set the data for the values
 
         # set the given value at positions indicated in manual
-        bits[13:5] = value
+        bits[13:5] = self.dac[dac]['value']
         # final bits [4:0], DAC code
-        bits[4:0] = self.dac_map[dac]
+        bits[4:0] = self.dac[dac]['code']
         # append bits as list of bytes
         data += bits.toByteList()
 
@@ -381,7 +483,7 @@ class TPX3(Dut):
 
         # add DAC code to last 4 bit of final 16 bit
         bits = BitLogic(16)
-        bits[4:0] = self.dac_map[dac]
+        bits[4:0] = self.dac[dac]['code']
         # add 16 bits as list of byte to result
         data += bits.toByteList()
 
@@ -405,7 +507,7 @@ class TPX3(Dut):
         data = [self.periphery_header_map["ReadDAC"]]
 
         # get size of DAC value
-        dac_value_size = self.dac_valsize_map[dac]
+        dac_value_size = self.dac[dac]['size']
         if value >= (2 ** dac_value_size):
             # value for the DAC, check whether in allowed range
             raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
@@ -417,7 +519,7 @@ class TPX3(Dut):
         bits_start = 13 - (self.DAC_VALUE_BITS - dac_value_size)
         bits[bits_start:5] = value
 
-        bits[4:0] = self.dac_map[dac]
+        bits[4:0] = self.dac[dac]['code']
         # add 40 bits as list of bytes to result
         data += bits.toByteList()
 
@@ -440,6 +542,139 @@ class TPX3(Dut):
         while(not self['SPI'].is_ready):
             # wait until SPI is done
             pass
+
+    def decode_fpga(self, data, string=False):
+        """
+        Performs a decoding of a raw 48 bit word received from the FPGA in decoded
+        2 * 32bit form. Output is interpreted, i.e. split into different components
+        Note:
+        By default the Tpx3 uses 8b10b mode (8 bit values represented by 10 bit
+        values to keep number of 0's and 1's even). In that mode it sends 60 bit
+        packets (manual v1.9 wrongly states 64 bit!) ~= 6 byte of data. The
+        firmware performs the decoding of the 60bit -> 48bit.
+        Data is repackaged into 2 * 32bit words, consisting of
+          [32 bit] == [header: 8bit | data: 24bit].
+        The 48bits are packaged as follows:
+          [48 bit] == [a: 24bit | b: 24bit] transforms as:
+            -> d1 = [h: 1 | reversedBytes(b)]
+            -> d2 = [h: 0 | reversedBytes(a)]
+        i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
+          [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
+        Depending on the used command the first 4 bits or all bits of d2[3] contain the
+        command header (see manual v1.9 p.28)
+        A list of 48 bit bitarrays for each word is returned.
+        """
+
+        # determine number of 48bit words
+        assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
+        nwords = len(data) / 2
+        result = []
+
+        for i in range(nwords):
+            # create a 48 bit bitarrray for the current 48 bit word
+            dataout = BitLogic(48)
+
+            # tranform the header and data of the 32 bit words lists of bytes
+            d1 = bitword_to_byte_list(int(data[2 * i]), string)
+            d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
+
+            # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
+            # contain the header which is not needed).
+            dataout[47:40] = d2[3]
+            dataout[39:32] = d2[2]
+            dataout[31:24] = d2[1]
+            dataout[23:16] = d1[3]
+            dataout[15:8] = d1[2]
+            dataout[7:0] = d1[1]
+
+            # add the bitarray for the current 48 bit word to the output list
+            result.append(dataout)
+
+        return result
+
+    def decode(self, data, command_header):
+        """
+        Given a FPGA decoded 48 bit word given as a bitarray, perform a decoding based on
+        - the header of the 48 bit words (case machine based on manual v1.9 p.28
+        - that read data correctly.
+          This is done by first comparing the expected command header with the
+          header which is part of the data. In a second step the data is split
+          into a list of bitarrays based on the formation of the different packets
+          (see manual v1.9 p.28).
+
+        The following lists are used:
+
+                                    dataout[0]      dataout[1]      dataout[2]      dataout[3]
+         - Acquisition*:            Address[15:0]   TOA[13:0]       TOT[9:0]        FTOA[3:0]
+         - @ data readout:          Dummy[43:0]         -               -               -
+         - CTPR configuration:      Address[6:0]    EoC[17:0]       CTPR[1:0]           -
+         - Pixel configuration:     Address[15:0]   Config[5:0]         -               -
+         - Periphery command:       DataOut[39:0]       -               -               -
+         - Control command:         H1,H2,H3[7:0]   ChipID[31:0]        -               -
+
+         * Note that for acquisition the meaning of dataout[1] to dataout[3] depends on the
+           settings of the general config registers 'Op_mode' and 'Fast_Io_en' (see manual
+           v1.9 p.40). The composition of the list is independent of this, only the
+           interpretation must change accordingly.
+        """
+        if len(data) is not 48:
+            raise ValueError("The data must contain 48 bits and not {}!".format(len(data)))
+
+        # create a bitarray for the the header (8 bit)
+        header = BitLogic(8)
+
+        # The command header is always a byte but for pixel matrix operations only bits 7 to 4 are part of the
+        # data packets because bits 3 to 0 are all 0. Furthermore pixel matrix operation headers have always
+        # bit 7 as 1 while periphery and control commands have always bit 7 as 0 (see manual v1.9 p.32).
+        if data[47] is True:
+            # Pixel matrix operations: Only bits 7 to 4 are part of the data, bits 3 to 0 are 0
+            header[7:4] = data[47:44]
+        else:
+            # Periphery and control commands: Get full header from the data
+            header[7:0] = data[47:40]
+
+        # Check if the expected and the received header are the same
+        if header.tovalue() is command_header:
+            # If the header is a acquisition header dataout is the following list:
+            # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
+            if header[7:5].tovalue() is 0b101:
+                address = data[43:28]
+                TOA = data[27:14]
+                TOT = data[13:4]
+                HitCounter = data[3:0]
+                dataout = [address, TOA, TOT, HitCounter]
+            # If the header is a Stop matrix readout or a reset sequential header dataout is the following list:
+            # [dummy - 44 bit]
+            elif header[7:5].tovalue() is 0b111:
+                dataout = [data[43:0]]
+            # If the header is the CTPR configuration header dataout is the following list:
+            # [address - 7 bit, EoC - 18 bit, CTPR - 2 bit]
+            elif header[7:5].tovalue() is 0b110:
+                address = data[43:37]
+                EoC = data[27:10]
+                CTPR = data[1:0]
+                dataout = [address, EoC, CTPR]
+            # If the header is the pixel configuration header dataout is the following list:
+            # [address - 14 bit, Config - 6 bit]
+            elif header[7:5].tovalue() is 0b100:
+                address = data[43:28]
+                Config = data[19:14]
+                dataout = [address, Config]
+            # If the header is a control command header dataout is the following list:
+            # [H1H2H3 - 8 bit, ChipID - 32 bit]
+            elif header[7:5].tovalue() is 0b011:
+                ReturnedHeader = data[39:32]
+                ChipID = data[31:0]
+                dataout = [ReturnedHeader, ChipID]
+            # If the header is none of the previous headers its a periphery command header and dataout is the following list:
+            # [DataOutPeriphery - 40 bits]
+            else:
+                dataout = [data[39:0]]
+        else:
+            # If the expected and the received header doesn't match raise an error
+            raise ValueError("Received header {} does not match with expected header {}!".format(header.tovalue(), command_header))
+
+        return dataout
 
     def xy_to_pixel_address(self, x_pos, y_pos):
         """
@@ -522,19 +757,6 @@ class TPX3(Dut):
 
         return y_pos
 
-    def reset_matrices(self, test=True, thr=True, mask=True):
-        """
-        resets all matrices to default
-        """
-        # set the test matrix with zeros for all pixels
-        if test:
-            self.test_matrix = np.zeros((256, 256), dtype=int)
-        # set the thr matrix with zeros for all pixels
-        if thr:
-            self.thr_matrix = np.zeros((256, 256), dtype=int)
-        # set the mask matrix with zeros for all pixels
-        if mask:
-            self.mask_matrix = np.zeros((256, 256), dtype=int)
 
     def set_pixel_pcr(self, x_pos, y_pos, test, thr, mask):
         """
@@ -606,38 +828,13 @@ class TPX3(Dut):
         columnMask = BitLogic(256)
 
         # set the bits for all except the selected columns to 1
-        for column in range(256):
-            columnMask[column] = 1
-        for column in columns:
-            columnMask[column] = 0
+        for col in range(256):
+            # all bits 0 which are elements of columns, else 1
+            columnMask[col] = 0 if col in columns else 1
 
         data = []
 
         data += columnMask.toByteList()
-        return data
-    
-    def read_general_config(self, write=True):
-        """
-        Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
-        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
-        registers (see manual v1.9 p.40). The sent bytes are also returned.
-        """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["GeneralConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
-
-        if write is True:
-            self.write(data)
         return data
 
     def write_pcr(self, columns=range(256), write=True):
@@ -664,7 +861,10 @@ class TPX3(Dut):
 
         # append the columnMask for the column selection: 256 bits
         data += self.produce_column_mask(columns)
-
+        #x=BitLogic(256)
+        #for i in range(256):
+         # x[i] = 1
+        #data += x.toByteList()  
         # append the pcr for the pixels in the selected columns: 1535*columns bits
         for column in columns:
             for row in range(256):
@@ -677,31 +877,21 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def write_general_config(self, write=True):
+    def write_general_config(self, dac_name, write=True):
         """
         reads the values for the GeneralConfig registers (see manual v1.9 p.40) from a yaml file
         and writes them to the chip. Furthermore the sent data is returned.
         """
         data = []
-
-        # create a 12 bit variable for the values of the GlobalConfig registers
-        configuration_bits = BitLogic(12)
-
         # presync header: 40 bits
         data = self.getGlobalSyncHeader()
 
         # append the code for the GeneralConfig command header: 8 bits
         data += [self.periphery_header_map["GeneralConfig"]]
 
-        # get the configuration bits from the GeneralConfiguration file
-        config = yaml.load(open('tpx3/GeneralConfiguration.yml', 'r'))
-        for register in config['registers']:
-            address = register['address']
-            size = register['size']
-            mode = register['mode']
-            # fill the variable for the register values with the values from the yaml file
-            # see see manual v1.9 p.40 for the registers
-            configuration_bits[address + size - 1:address] = mode
+        # create a 12 bit variable for the values of the GlobalConfig registers based
+        # on the read YAML file storing the chip configuration
+        configuration_bits = self.get_configuration_register()
 
         # append the the GeneralConfiguration register with 4 additional bits to get the 16 bit DataIn
         data += (configuration_bits + BitLogic(4)).toByteList()
@@ -712,6 +902,29 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def read_general_config(self, write=True):
+        """
+        Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["GeneralConfig_Read"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
 
     def write_tp_pulsenumber(self, number, write=True):
         """
@@ -835,8 +1048,58 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+    def read_pixel_config_reg(self, SColSelect, write=True):
+        """
+        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        """
+        data = []
+        data = self.getGlobalSyncHeader()
+        data += [self.matrix_header_map["ReadConfigMatrix"]]
+        SColSelectReg= BitLogic(256)
+        SColSelectReg[255:0]=SColSelect
+        #for index in range(256):
+         #   SColSelectReg[index] = 0
+        SColSelectReg.reverse()
+        data += SColSelectReg.toByteList()
+        data += [0x00]
 
+        if write is True:
+            self.write(data)
+        return data
 
+    def read_pixel_matrix_sequential(self, TokenSelect, write=True):
+        data = []
+        data = self.getGlobalSyncHeader()
+        data += [self.matrix_header_map["ReadMatrixSequential"]]
+        DColSelect= BitLogic(128)
+        for index in range(128):
+            DColSelect[index] = 0
+        data += DColSelect.toByteList()
+        TokenSelectReg= BitLogic(128)
+        TokenSelectReg[127:0]=TokenSelect
+        TokenSelectReg.reverse()
+        data += TokenSelectReg.toByteList()
+        data += [0x00]
+        if write is True:
+            self.write(data)
+        return data
+    def read_pixel_matrix_datadriven(self, write=True):
+        """
+        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the ReadMatrixSequential command header: 8 bits
+        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
+        
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
     def read_ctpr(self, write=True):
         """
        Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
@@ -891,228 +1154,73 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
-        return data        
-
-        
-
-    def read_pixel_config_reg(self, SColSelect, write=True):
+        return data       
+    def write_pll_config(self, bypass, reset, selectVctl, dualedge, clkphasediv, clkphasenum, PLLOutConfig, write=True):
         """
-        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
+        and returns the written data. The period is a 8-bit value and the phase is a 4-bit value.
+        """
+        if clkphasediv > 3:
+            #  check if the period is allowed
+            raise ValueError("The Clock Phase Shift Divider must not be bigger than 3!")
+        if clkphasenum > 4:
+            #  check if the phase is allowed
+            raise ValueError("The Clock Phase Shift Number must not be bigger than 4!")
+        if PLLOutConfig> 22:
+            #  check if the phase is allowed
+            raise ValueError("The PLL Output Configuration must not be bigger than 22!")    
+
+        data = []
+
+        # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
+        bits = BitLogic(14)
+
+        # presync header: 40 bits; TODO: header selection
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["PLLConfig"]]
+
+        # fill the 12-bit variable with the period and the phase
+        bits[0] = bypass
+        bits[1] = reset
+        bits[2] = selectVctl
+        bits[3] = dualedge
+        bits[5:4] = clkphasediv
+        bits[8:6] = clkphasenum 
+        bits[13:9] = PLLOutConfig
+
+        # append the period/phase variable to the data
+        data += (bits + BitLogic(2)).toByteList()
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data     
+    def read_pll_config(self, write=True):
+        """
+        Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
         data = []
 
         # presync header: 40 bits
         data = self.getGlobalSyncHeader()
 
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadConfigMatrix"]]
-        
-        SColSelectReg= BitLogic(256)
-        SColSelectReg[255:0]=SColSelect
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["PLLConfig_Read"]]
 
-        
-        data += SColSelectReg.toByteList()
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
         data += [0x00]
 
         if write is True:
             self.write(data)
         return data
-    def read_pixel_matrix_datadriven(self, write=True):
-        """
-        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
-        """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-        
-        data += [0x00]
-
-        if write is True:
-            self.write(data)
-        return data
-
-    def read_pixel_matrix_sequential(self, TokenSelect, write=True):
-        """
-        Sends the Pixel Matrix Read Sequential command (see manual v1.9 p.32) together with the
-        SyncHeader, DColSelect and TokenSelect registers (see manual v1.9 p.46). The sended bytes are also returned.
-        """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixSequential"]]
-
-        DColSelect= BitLogic(128)
-        for index in range(128):
-            DColSelect[index] = 0
-
-        data += DColSelect.toByteList()
-        TokenSelectReg= BitLogic(128)
-        TokenSelectReg[127:0]=TokenSelect
-
-        data += TokenSelectReg.toByteList()
-
-        
-        data += [0x00]
-
-        if write is True:
-            self.write(data)
-        return data
-
-
-    def decode_fpga(self, data, string=False):
-        """
-        Performs a decoding of a raw 48 bit word received from the FPGA in decoded
-        2 * 32bit form. Output is interpreted, i.e. split into different components
-        Note:
-        By default the Tpx3 uses 8b10b mode (8 bit values represented by 10 bit
-        values to keep number of 0's and 1's even). In that mode it sends 60 bit
-        packets (manual v1.9 wrongly states 64 bit!) ~= 6 byte of data. The
-        firmware performs the decoding of the 60bit -> 48bit.
-        Data is repackaged into 2 * 32bit words, consisting of
-          [32 bit] == [header: 8bit | data: 24bit].
-        The 48bits are packaged as follows:
-          [48 bit] == [a: 24bit | b: 24bit] transforms as:
-            -> d1 = [h: 1 | reversedBytes(b)]
-            -> d2 = [h: 0 | reversedBytes(a)]
-        i.e. reconstruction of 48 bits given the two 32 bit words, indexed in bytes as:
-          [48 bit] == d2[3] + d2[2] + d2[1] + d1[3] + d1[2] + d1[1]
-        For periphery commands d2[3] contains the hex code of which function was called,
-        as the first byte of the returned list the rest is the 40bit DataOut
-        (see manual v1.9 p.32).
-        """
-
-        # determine number of 48bit words
-        assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
-        nwords = len(data) / 2
-        result = []
-        # for i in range(nwords):
-        #     d1 = bitword_to_byte_list(int(data[2* i]), string)
-        #     d2 = bitword_to_byte_list(int(data[2* i + 1]), string)
-        #     dataout = [d2[3], d2[2], d2[1], d1[3], d1[2], d1[1]]
-
-        #     result.append(dataout)
-
-        # return result
-        for i in range(nwords):
-            # create a 48 bit bitarrray for the current 48 bit word
-            dataout = BitLogic(48)
-
-            # tranform the header and data of the 32 bit words lists of bytes
-            d1 = bitword_to_byte_list(int(data[2 * i]), string)
-            d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
-
-            # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
-            # contain the header which is not needed).
-            dataout[47:40] = d2[3]
-            dataout[39:32] = d2[2]
-            dataout[31:24] = d2[1]
-            dataout[23:16] = d1[3]
-            dataout[15:8] = d1[2]
-            dataout[7:0] = d1[1]
-            
-            # add the bitarray for the current 48 bit word to the output list
-            result.append(dataout)
-
-        return result     
-         
-    def decode(self, data, command_header):
-        """
-        Given a FPGA decoded 48 bit word given as a list of
-        bytes, perform a decoding based on
-        - the header of the 48 bit words (case machine based on manual v1.9 p.28
-        - that read data correctly.
-          This is done by first comparing the expected command header with the
-          header which is part of the data. In a second step the data is split
-          into a list of bitarrays based on the formation of the different packets
-          (see manual v1.9 p.28).
-        The following lists are used:
-                                    dataout[0]      dataout[1]      dataout[2]      dataout[3]
-         - Acquisition*:            Address[15:0]   TOA[13:0]       TOT[9:0]        FTOA[3:0]
-         - @ data readout:          Dummy[43:0]         -               -               -
-         - CTPR configuration:      Address[6:0]    EoC[17:0]       CTPR[1:0]           -
-         - Pixel configuration:     Address[15:0]   Config[5:0]         -               -
-         - Periphery command:       DataOut[39:0]       -               -               -
-         - Control command:         H1,H2,H3[7:0]   ChipID[31:0]        -               -
-         * Note that for acquisition the meaning of dataout[1] to dataout[3] depends on the
-           settings of the general config registers 'Op_mode' and 'Fast_Io_en' (see manual
-           v1.9 p.40). The composition of the list is independent of this, only the
-           interpretation must change accordingly.
-        """
-        if len(data) is not 6:
-            raise ValueError("The data must contain 6 bytes and not {}!".format(len(data)))
-
-        # create bitarrays for the complete data (48 bits) and the header (8 bit)
-        data_payload = BitLogic(48)
-        header = BitLogic(8)
-
-        # combine the 6 bytes in the data list to one bitarray
-        i = 0
-        for d in data:
-            if len(d) is not 8:
-                raise ValueError("All bytes of the data must contain 8 bits and not {}!".format(len(d)))
-            data_payload[47 - (i * 8):40 - (i * 8)] = d
-            i += 1
-
-        # The command header is always a byte but for pixel matrix operations only bits 7 to 4 are part of the
-        # data packets because bits 3 to 0 are all 0. Furthermore pixel matrix operation headers have always
-        # bit 7 as 1 while periphery and control commands have always bit 7 as 0 (see manual v1.9 p.32).
-        if data_payload[47] is True:
-            # Pixel matrix operations: Only bits 7 to 4 are part of the data, bits 3 to 0 are 0
-            header[7:4] = data_payload[47:44]
-        else:
-            # Periphery and control commands: Get full header from the data
-            header[7:0] = data_payload[47:40]
-
-        # Check if the expected and the received header are the same
-        if header.tovalue() is command_header:
-            # If the header is a acquisition header dataout is the following list:
-            # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
-            if header[7:5].tovalue() is 0b101:
-                address = data_payload[43:28]
-                TOA = data_payload[27:14]
-                TOT = data_payload[13:4]
-                HitCounter = data_payload[3:0]
-                dataout = [address, TOA, TOT, HitCounter]
-            # If the header is a Stop matrix readout or a reset sequential header dataout is the following list:
-            # [dummy - 44 bit]
-            elif header[7:5].tovalue() is 0b111:
-                dataout = [data_payload[43:0]]
-            # If the header is the CTPR configuration header dataout is the following list:
-            # [address - 7 bit, EoC - 18 bit, CTPR - 2 bit]
-            elif header[7:5].tovalue() is 0b110:
-                address = data_payload[43:37]
-                EoC = data_payload[27:10]
-                CTPR = data_payload[1:0]
-                dataout = [address, EoC, CTPR]
-            # If the header is the pixel configuration header dataout is the following list:
-            # [address - 14 bit, Config - 6 bit]
-            elif header[7:5].tovalue() is 0b100:
-                address = data_payload[43:28]
-                Config = data_payload[19:14]
-                dataout = [address, Config]
-            # If the header is a control command header dataout is the following list:
-            # [H1H2H3 - 8 bit, ChipID - 32 bit]
-            elif header[7:5].tovalue() is 0b011:
-                ReturnedHeader = data_payload[39:32]
-                ChipID = data_payload[31:0]
-                dataout = [ReturnedHeader, ChipID]
-            # If the header is none of the previous headers its a periphery command header and dataout is the following list:
-            # [DataOutPeriphery - 40 bits]
-            else:
-                dataout = [data_payload[39:0]]
-        else:
-            # If the expected and the received header doesn't match raise an error
-            raise ValueError("Received header {} does not match with expected header {}!".format(header.tovalue(), command_header))
-
-        return dataout
     
-
 if __name__ == '__main__':
     pass
