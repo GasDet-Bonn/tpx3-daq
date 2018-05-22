@@ -222,7 +222,7 @@ def run_test_pulses():
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 1100111"
+    print "\tExpected command header: 11001111"
     print "\tReceived command header:", dout[0]
     print "\tChipID:", dout[1]
 
@@ -248,6 +248,7 @@ def run_test_pulses():
     # Step 10: Receive data
     """ ??? """
     print "Acquisition"
+    time.sleep(5)
     # Get the data and do the FPGA decoding
     # dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     # for el in dout:
