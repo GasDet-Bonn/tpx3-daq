@@ -864,7 +864,7 @@ class TPX3(Dut):
         #x=BitLogic(256)
         #for i in range(256):
          # x[i] = 1
-        #data += x.toByteList()  
+        #data += x.toByteList()
         # append the pcr for the pixels in the selected columns: 1535*columns bits
         for column in columns:
             for row in range(256):
@@ -1058,8 +1058,8 @@ class TPX3(Dut):
         SColSelectReg= BitLogic(256)
         SColSelectReg[255:0]=SColSelect
         #for index in range(256):
-         #   SColSelectReg[index] = 0
-        SColSelectReg.reverse()
+        #   SColSelectReg[index] = 0
+        #SColSelectReg.reverse()
         data += SColSelectReg.toByteList()
         data += [0x00]
 
@@ -1076,13 +1076,14 @@ class TPX3(Dut):
             DColSelect[index] = 0
         data += DColSelect.toByteList()
         TokenSelectReg= BitLogic(128)
-        TokenSelectReg[127:0]=TokenSelect
+        TokenSelectReg[127:0] = TokenSelect
         TokenSelectReg.reverse()
         data += TokenSelectReg.toByteList()
         data += [0x00]
         if write is True:
             self.write(data)
         return data
+
     def read_pixel_matrix_datadriven(self, write=True):
         """
         Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
@@ -1094,7 +1095,7 @@ class TPX3(Dut):
 
         # append the code for the ReadMatrixSequential command header: 8 bits
         data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-        
+
         data += [0x00]
 
         if write is True:
@@ -1112,7 +1113,7 @@ class TPX3(Dut):
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ReadCTPR"]]
 
-    
+
         data += [0x00]
 
         if write is True:
@@ -1132,13 +1133,14 @@ class TPX3(Dut):
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ResetSequential"]]
-        dummy= BitLogic(142)
+        dummy = BitLogic(144)
         data += dummy.toByteList()
         data += [0x00]
 
         if write is True:
             self.write(data)
-        return data     
+        return data
+
     def stop_readout(self, write=True):
         """
        Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
@@ -1154,7 +1156,7 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
-        return data       
+        return data
     def write_pll_config(self, bypass, reset, selectVctl, dualedge, clkphasediv, clkphasenum, PLLOutConfig, write=True):
         """
         Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
@@ -1168,7 +1170,7 @@ class TPX3(Dut):
             raise ValueError("The Clock Phase Shift Number must not be bigger than 4!")
         if PLLOutConfig> 22:
             #  check if the phase is allowed
-            raise ValueError("The PLL Output Configuration must not be bigger than 22!")    
+            raise ValueError("The PLL Output Configuration must not be bigger than 22!")
 
         data = []
 
@@ -1187,7 +1189,7 @@ class TPX3(Dut):
         bits[2] = selectVctl
         bits[3] = dualedge
         bits[5:4] = clkphasediv
-        bits[8:6] = clkphasenum 
+        bits[8:6] = clkphasenum
         bits[13:9] = PLLOutConfig
         bits[15:14] = 0;
         # append the period/phase variable to the data
@@ -1197,7 +1199,7 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
-        return data     
+        return data
     def read_pll_config(self, write=True):
         """
         Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
@@ -1221,6 +1223,6 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
-    
+
 if __name__ == '__main__':
     pass
