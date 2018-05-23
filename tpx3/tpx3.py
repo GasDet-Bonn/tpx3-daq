@@ -405,7 +405,7 @@ class TPX3(Dut):
         # 0x4E == local sync header
         return [0x4E] + self.chipId
 
-    def set_dac(self, dac, chip=None, write=True):
+    def set_dac(self, dac, value, chip=None, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -440,13 +440,13 @@ class TPX3(Dut):
 
         # get number of bits for values in this DAC
         dac_value_size = self.dac[dac]['size']
-        if self.dac[dac]['value'] >= (2 ** dac_value_size):
+        if value >= (2 ** dac_value_size):
             # value for the DAC, check whether in allowed range
             raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
         # safely set the data for the values
 
         # set the given value at positions indicated in manual
-        bits[13:5] = self.dac[dac]['value']
+        bits[13:5] = value
         # final bits [4:0], DAC code
         bits[4:0] = self.dac[dac]['code']
         # append bits as list of bytes
