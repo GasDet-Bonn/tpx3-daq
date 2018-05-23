@@ -16,6 +16,30 @@ def pretty_print(string_val, bits=32):
     print "Hex ", lst_hex
     print "Binary ", bits
 
+def print_exp_recvd(name, exp_header, header, chipId = None):
+    print "\tExpected {}: {}".format(name, exp_header)
+    print "\tReceived {}: {}".format(name, header)
+    if chipId != None:
+        print "\tChipID:", chipId
+
+
+def print_cmp_commands(exp_header, header, chipId = None):
+    """
+    Convenience printing function to compare expected and receive command headers
+    """
+    print_exp_recvd("command header", exp_header, header, chipId)
+
+def print_cmp_dacvals(exp_val, val):
+    """
+    Convenience printing function to compare expected and receive DAC values
+    """
+    print_exp_recvd("DAC value", exp_val, val, None)
+
+def print_cmp_daccodes(exp_code, code):
+    """
+    Convenience printing function to compare expected and receive DAC codes
+    """
+    print_exp_recvd("DAC code", exp_code, code, None)
 
 def run_test_pulses():
     # Step 1: Initialize chip & hardware
@@ -43,6 +67,23 @@ def run_test_pulses():
 
     print(chip.get_configuration())
 
+    # Step 2a: reset sequential / resets pixels?!
+    # before setting PCR need to reset pixel matrix
+    data = chip.reset_sequential(False)
+    chip.write(data, True)
+    fdata = chip['FIFO'].get_data()
+    print fdata
+    dout = chip.decode_fpga(fdata, True)
+    print dout
+    ddout = chip.decode(dout[0], 0x71)
+    print ddout
+    try:
+        ddout = chip.decode(dout[1], 0x71)
+        print ddout
+    except IndexError:
+        print("no EoR found")
+
+
     # Step 3: Set PCR
     # Step 3a: Produce needed PCR
     for x in range(256):
@@ -52,186 +93,122 @@ def run_test_pulses():
     # Step 3b: Write PCR to chip
     for i in range(256):
         data = chip.write_pcr([i], write=False)
-        chip['FIFO'].reset()
-        time.sleep(0.01)
-        chip.write(data)
-        time.sleep(0.01)
+        chip.write(data, True)
         print "Write PCR for column ", i
         # Get the data, do the FPGA decode and do the decode ot the 0th element
         # which should be EoC (header: 0x71)
         print "\tGet EoC: "
         dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-        print "\tExpected command header: 10001111"
-        print "\tReceived command header:", dout[0]
-        print "\tChipID:", dout[1]
+        print_cmp_commands("10001111", dout[0], dout[1])
 
     # Step 4: Set TP DACs
     # Step 4a: Set VTP_coarse DAC (8-bit)
     print "Set VTP_coarse"
     data = chip.set_dac("VTP_coarse", 0b1000000, write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 00000010"
-    print "\tReceived command header:", dout[0]
-    print "\tChipID:", dout[1]
+    print_cmp_commands("00000010", dout[0], dout[1])
     print "Read VTP_coarse"
     data = chip.read_dac("VTP_coarse", write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     print "\tGet DAC value, DAC code and EoC:"
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     ddout = chip.decode(dout[0], 0x03)
-    print "\tExpected DAC value: 01000000"
-    print "\tReceived DAC value:", ddout[0][13:5]
-    print "\tExpected DAC code: 01111"
-    print "\tReceived DAC code:", ddout[0][4:0]
+    print_cmp_dacvals("01000000", ddout[0][13:5])
+    print_cmp_daccodes("01111", ddout[0][4:0])
     ddout = chip.decode(dout[1], 0x71)
-    print "\tExpected command header: 00000011"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("00000011", ddout[0], ddout[1])
 
     # Step 4b: Set VTP_fine DAC (9-bit)
     print "Set VTP_fine"
     data = chip.set_dac("VTP_fine", 0b100000000, write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 00000010"
-    print "\tReceived command header:", dout[0]
-    print "\tChipID:", dout[1]
+    print_cmp_commands("00000010", dout[0], dout[1])
     print "Read VTP_fine"
     data = chip.read_dac("VTP_fine", write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     print "\tGet DAC value, DAC code and EoC:"
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     ddout = chip.decode(dout[0], 0x03)
-    print "\tExpected DAC value: 100000000"
-    print "\tReceived DAC value:", ddout[0][13:5]
-    print "\tExpected DAC code: 10000"
-    print "\tReceived DAC code:", ddout[0][4:0]
+    print_cmp_dacvals("100000000", ddout[0][13:5])
+    print_cmp_daccodes("10000", ddout[0][4:0])
     ddout = chip.decode(dout[1], 0x71)
-    print "\tExpected command header: 00000011"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("00000011", ddout[0], ddout[1])
 
     # Step 5: Set general config
     print "Set general config"
     data = chip.write_general_config(write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 00110000"
-    print "\tReceived command header:", dout[0]
-    print "\tChipID:", dout[1]
+    print_cmp_commands("00110000", dout[0], dout[1])
     print "Read general config"
     data = chip.read_general_config(write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     print "\tGet General config and EoC:"
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     ddout = chip.decode(dout[0], 0x31)
-    print "\tExpected general config: 000000100001"
-    print "\tReceived general config:", ddout[0][11:0]
+    print_exp_recvd("general config", "000000100001", ddout[0][11:0])
     ddout = chip.decode(dout[1], 0x71)
-    print "\tExpected command header: 00110001"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("00110001", ddout[0], ddout[1])
 
     # Step 6: Write to the test pulse registers
     # Step 6a: Write to period and phase tp registers
     print "Write TP_period and TP_phase"
     data = chip.write_tp_period(10, 0, write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 00001100"
-    print "\tReceived command header:", dout[0]
-    print "\tChipID:", dout[1]
+    print_cmp_commands("00001100", dout[0], dout[1])
 
     # Step 6b: Write to pulse number tp register
     print "Write TP_number"
     data = chip.write_tp_pulsenumber(10, write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 00001101"
-    print "\tReceived command header:", dout[0]
-    print "\tChipID:", dout[1]
-    
+    print_cmp_commands("00001101", dout[0], dout[1])
+
     print "Read TP config"
     data = chip.read_tp_config(write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     print "\tGet TP config and EoC:"
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     ddout = chip.decode(dout[0], 0x0E)
-    print "\tExpected TP_number: 0000000000001010"
-    print "\tReceived TP_number:", ddout[0][15:0]
-    print "\tExpected TP_phase: 0000"
-    print "\tReceived TP_phase:", ddout[0][27:24]
-    print "\tExpected TP_period: 00001010"
-    print "\tReceived TP_period:", ddout[0][23:16]
+
+    print_exp_recvd("TP_number", "0000000000001010", ddout[0][15:0])
+    print_exp_recvd("TP_phase", "0000", ddout[0][27:24])
+    print_exp_recvd("TP_period", "00001010", ddout[0][23:16])
+
     ddout = chip.decode(dout[1], 0x71)
-    print "\tExpected command header: 00001110"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("00001110", ddout[0], ddout[1])
 
     # Step 7: Set CTPR
     print "Write CTPR"
     data = chip.write_ctpr(range(128), write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 11001111"
-    print "\tReceived command header:", dout[0]
-    print "\tChipID:", dout[1]
+    print_cmp_commands("11001111", dout[0], dout[1])
 
     print "Read CTPR:"
     data = chip.read_ctpr(write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    chip.write(data, True)
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     for el in dout[:-2]:
         ddout = chip.decode(el, 0xD0)
@@ -240,29 +217,20 @@ def run_test_pulses():
         print "\tCTPR:", ddout[2]
     print "\tGet EoC:"
     ddout = chip.decode(dout[-2], 0x71)
-    print "\tExpected command header: 11011111"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("11011111", ddout[0], ddout[1])
     print "\tGet EoR"
     ddout = chip.decode(dout[-1], 0x71)
-    print "\tExpected command header: 11010000"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("11010000", ddout[0], ddout[1])
 
     # Step 8: Send "read pixel matrix data driven" command
     print "Read pixel matrix data driven"
-    data = chip.read_matrix_data_driven(write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
+    data = chip.read_pixel_matrix_datadriven(write=False)
+    chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print "\tExpected command header: 10111111"
-    print "\tReceived command header:", dout[0]
-    print "\tChipID:", dout[1]
+    print_cmp_commands("10111111", dout[0], dout[1])
 
     # Step 9: Enable Shutter
     chip['CONTROL']['SHUTTER'] = 1
@@ -285,15 +253,12 @@ def run_test_pulses():
     # which should be EoR (header: 0x71)
     print "\tGet TP_internalfinished: "
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
+    print dout
     ddout = chip.decode(dout[0], 0x71)
-    print "\tExpected command header: 00001111"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("00001111", ddout[0], ddout[1])
     print "\tGet EoR: "
     ddout = chip.decode(dout[1], 0x71)
-    print "\tExpected command header: 10110000"
-    print "\tReceived command header:", ddout[0]
-    print "\tChipID:", ddout[1]
+    print_cmp_commands("10110000", ddout[0], ddout[1])
 
     print dout
 

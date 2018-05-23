@@ -23,6 +23,9 @@ from utils import toByteList, bitword_to_byte_list
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
 
+# some defaults...
+TPX3_SLEEP = 0.001
+
 
 import pkg_resources
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
@@ -316,6 +319,7 @@ class TPX3(Dut):
         self.select_toa_clk = self.config['SelectTP_ToA_Clk']['mode']
 
     def read_dac_yaml(self, dac_file):
+        # TODO: WRONG DOC!!!
         """
         Reads a configuration YAML file for the general Timepix3 configuration,
         saves the content in the `self.config` field, assigns the chip attributes,
@@ -338,6 +342,7 @@ class TPX3(Dut):
                                  'value': value}
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
+        # TODO: do we really need attributes for each DAC?
         self.Ibias_Preamp_ON = self.dac['Ibias_Preamp_ON']['default']
         self.Ibias_Preamp_OFF = self.dac['Ibias_Preamp_OFF']['default']
         self.VPreamp_NCAS = self.dac['VPreamp_NCAS']['default']
@@ -403,7 +408,7 @@ class TPX3(Dut):
         # 0x4E == local sync header
         return [0x4E] + self.chipId
 
-    def set_dac(self, dac, chip=None, write=True):
+    def set_dac(self, dac, value, chip=None, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -438,13 +443,13 @@ class TPX3(Dut):
 
         # get number of bits for values in this DAC
         dac_value_size = self.dac[dac]['size']
-        if self.dac[dac]['value'] >= (2 ** dac_value_size):
+        if value >= (2 ** dac_value_size):
             # value for the DAC, check whether in allowed range
             raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
         # safely set the data for the values
 
         # set the given value at positions indicated in manual
-        bits[13:5] = self.dac[dac]['value']
+        bits[13:5] = value
         # final bits [4:0], DAC code
         bits[4:0] = self.dac[dac]['code']
         # append bits as list of bytes
@@ -524,14 +529,19 @@ class TPX3(Dut):
         data += [0x00]
         return data
 
-    def write(self, data):
+    def write(self, data, clear_fifo=False):
         """
         Performs a write of `data` on the SPI interface to the Tpx3.
         Note: this function is blocking until the write is complete.
         Inputs:
             data: list of bytes to write. MSB is first element of list
-
+            clear_fifo: bool = if True, we clear the FIFO and wait before and
+                after writing to the chip
         """
+        if clear_fifo:
+            self['FIFO'].reset()
+            time.sleep(TPX3_SLEEP)
+
         # total size in bits
         self['SPI'].set_size(len(data) * 8)
         self['SPI'].set_data(data)
@@ -540,6 +550,10 @@ class TPX3(Dut):
         while(not self['SPI'].is_ready):
             # wait until SPI is done
             pass
+
+        if clear_fifo:
+            time.sleep(TPX3_SLEEP)
+
 
     def decode_fpga(self, data, string=False):
         """
@@ -661,6 +675,7 @@ class TPX3(Dut):
             # If the header is a control command header dataout is the following list:
             # [H1H2H3 - 8 bit, ChipID - 32 bit]
             elif header[7:5].tovalue() is 0b011:
+                print("5")
                 ReturnedHeader = data[39:32]
                 ChipID = data[31:0]
                 dataout = [ReturnedHeader, ChipID]
@@ -669,8 +684,12 @@ class TPX3(Dut):
             else:
                 dataout = [data[39:0]]
         else:
-            # If the expected and the received header doesn't match raise an error
-            raise ValueError("Received header {} does not match with expected header {}!".format(header.tovalue(), command_header))
+            if header.tovalue() == 0x71:
+                print("Got an EndOfCommand")
+                return ["EoC", data[39:0]]
+            else:
+                # If the expected and the received header doesn't match raise an error
+                raise ValueError("Received header {} does not match with expected header {}!".format(header.tovalue(), command_header))
 
         return dataout
 
@@ -874,7 +893,7 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def write_general_config(self, dac_name, write=True):
+    def write_general_config(self, write=True):
         """
         reads the values for the GeneralConfig registers (see manual v1.9 p.40) from a yaml file
         and writes them to the chip. Furthermore the sent data is returned.
@@ -1006,9 +1025,8 @@ class TPX3(Dut):
         data += [self.periphery_header_map["TPConfig_Read"]]
 
         # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
+        data += [0x00, 0x00]
+        # and the empty byte which seems necessary...
         data += [0x00]
 
         if write is True:
@@ -1045,7 +1063,9 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+
     def read_pixel_config_reg(self, SColSelect, write=True):
+        # TODO: WRONG DOC!!!
         """
         Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
         """
@@ -1065,6 +1085,7 @@ class TPX3(Dut):
         return data
 
     def read_pixel_matrix_sequential(self, TokenSelect, write=True):
+        # TODO: MISSING DOC!!!
         data = []
         data = self.getGlobalSyncHeader()
         data += [self.matrix_header_map["ReadMatrixSequential"]]
@@ -1081,47 +1102,11 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def read_pixel_matrix_datadriven(self, write=True):
-        """
-        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
-        """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-
-        data += [0x00]
-
-        if write is True:
-            self.write(data)
-        return data
-    def read_ctpr(self, write=True):
-        """
-       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
-        """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["ReadCTPR"]]
-
-
-        data += [0x00]
-
-        if write is True:
-            self.write(data)
-        return data
-
-
     def reset_sequential(self, write=True):
+        # TODO: WRONG DOC!!!
         """
-       Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51). If any data is still present on the pixel
-       matrix (eoc_active is high) then an End of Readout packet is sent.
+        Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51). If any data is still present on the pixel
+        matrix (eoc_active is high) then an End of Readout packet is sent.
         """
         data = []
 
@@ -1130,6 +1115,8 @@ class TPX3(Dut):
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ResetSequential"]]
+        # NOTE: manual states to send 142 bits, we need to send full bytes though, so we send 144 bits.
+        # manual also states that data to be dummy bytes anyways
         dummy = BitLogic(144)
         data += dummy.toByteList()
         data += [0x00]
@@ -1139,8 +1126,9 @@ class TPX3(Dut):
         return data
 
     def stop_readout(self, write=True):
+        # TODO: WRONG DOC!!!
         """
-       Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
+        Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
         """
         data = []
 
@@ -1154,7 +1142,9 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+
     def write_pll_config(self, bypass, reset, selectVctl, dualedge, clkphasediv, clkphasenum, PLLOutConfig, write=True):
+        # TODO: WRONG DOC!!!
         """
         Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
         and returns the written data. The period is a 8-bit value and the phase is a 4-bit value.
@@ -1188,7 +1178,7 @@ class TPX3(Dut):
         bits[5:4] = clkphasediv
         bits[8:6] = clkphasenum
         bits[13:9] = PLLOutConfig
-        bits[15:14] = 0;
+        bits[15:14] = 0
         # append the period/phase variable to the data
         data += bits.toByteList()
 
@@ -1197,7 +1187,9 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+
     def read_pll_config(self, write=True):
+        # TODO: WRONG DOC!!!
         """
         Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
@@ -1212,8 +1204,29 @@ class TPX3(Dut):
         data += [self.periphery_header_map["PLLConfig_Read"]]
 
         # fill with two dummy bytes for DataIN
+        data += [0x00, 0x00]
+        # empty needed byte...
         data += [0x00]
-        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+
+    # TODO: which data driven proc is correct? need column mask???
+    # table p. 32 states column mask needed
+    # schematic p. 50 states NOT needed...
+    def read_pixel_matrix_datadriven(self, write=True):
+        """
+        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the ReadMatrixSequential command header: 8 bits
+        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
 
         data += [0x00]
 
