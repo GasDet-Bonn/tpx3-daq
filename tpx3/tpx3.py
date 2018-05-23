@@ -1048,7 +1048,7 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
-    def read_pixel_config_reg(self, SColSelect, write=True):
+    def read_pixel_config_reg(self, columns, write=True):
         """
         Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
         """
@@ -1057,9 +1057,8 @@ class TPX3(Dut):
         data += [self.matrix_header_map["ReadConfigMatrix"]]
         SColSelectReg= BitLogic(256)
         SColSelectReg[255:0]=SColSelect
-        #for index in range(256):
-         #   SColSelectReg[index] = 0
-        SColSelectReg.reverse()
+        for col in range(256):
+           SColSelectReg[col] = 0 if col in columns else 1
         data += SColSelectReg.toByteList()
         data += [0x00]
 
