@@ -1055,8 +1055,7 @@ class TPX3(Dut):
         data = []
         data = self.getGlobalSyncHeader()
         data += [self.matrix_header_map["ReadConfigMatrix"]]
-        SColSelectReg= BitLogic(256)
-        SColSelectReg[255:0]=SColSelect
+        SColSelectReg= BitLogic(256
         for col in range(256):
            SColSelectReg[col] = 0 if col in columns else 1
         data += SColSelectReg.toByteList()
