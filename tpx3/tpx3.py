@@ -1132,7 +1132,7 @@ class TPX3(Dut):
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ResetSequential"]]
-        dummy= BitLogic(142)
+        dummy= BitLogic(144)
         data += dummy.toByteList()
         data += [0x00]
 
