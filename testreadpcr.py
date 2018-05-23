@@ -100,23 +100,65 @@ def main(args_dict):
     time.sleep(0.01)
     print "waiting for packets received"
     fdata = chip['FIFO'].get_data()
+    print type(fdata)
     print fdata
-<<<<<<< HEAD
-    print len(fdata)
     dout = chip.decode_fpga(fdata, True)
-   # print dout 
-    for i in range (3):
-      ddout = chip.decode(dout[i], 0x90)
-      print ddout
-    
-=======
-    dout = chip.decode_fpga(fdata, True)
-    print dout 
-    #ddout = chip.decode(dout[0], 0x71)
-    #print ddout
-    #ddout = chip.decode(dout[1], 0x71)
-    #print ddout
->>>>>>> b8bc9bb19bc341a01eacc24288f9bd7907dbb573
+    print len(dout)
+    counts = []
+    count = 0
+    xs = []
+    ys = []
+    for i in range(len(dout)):
+        print("decoding now ", dout[i])
+        try:
+            ddout = chip.decode(dout[i], 0x90)
+            count += 1
+            if ddout[0] == "EoC":
+                continue
+        except ValueError:
+            try:
+                ddout = chip.decode(dout[i], 0xF0)
+                print("Found a stop matrix readout?")
+                counts.append(count)
+                count = 0
+                continue
+            except ValueError:
+                print("Got value error in decode for data ", dout[i])
+                raise
+        x = chip.pixel_address_to_x(ddout[0])
+        y = chip.pixel_address_to_y(ddout[0])
+        print("X pos {}".format(x))
+        print("Y pos {}".format(y))
+        xs.append(x)
+        ys.append(y)
+        print(ddout[0].tovalue())
+
+
+    print("Read {} packages".format(len(dout)))
+    print("Read x: {} \nRead y: {}".format(xs, ys))
+    print("#x: {}\n#y: {}".format(len(xs), len(ys)))
+    print("{} / {}".format(xs[183], ys[183]))
+    print("{} / {}".format(xs[184], ys[184]))
+    print("{} / {}".format(xs[185], ys[185]))
+    ddout = chip.decode(dout[-1], 0x90)
+    print ddout
+
+
+    print("Found the following counts: ", counts)
+
+    # # Step 2a: reset sequential / resets pixels?!
+    # data = chip.reset_sequential(False)
+    # chip.write(data, True)
+    # fdata = chip['FIFO'].get_data()
+    # print fdata
+    # dout = chip.decode_fpga(fdata, True)
+    # print dout
+    # ddout = chip.decode(dout[0],0x71)
+    # try:
+    #     ddout = chip.decode(dout[1],0x71)
+    #     print ddout
+    # except IndexError:
+    #     print("no EoR found"
    
      
     
