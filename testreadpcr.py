@@ -45,26 +45,69 @@ def main(args_dict):
 
     while(not chip['RX'].is_ready):
         pass
+    data = chip.reset_sequential(write=False)
+    chip['FIFO'].reset()
+    time.sleep(0.01)
+    chip.write(data)
+    time.sleep(0.01)
+    print "reset sequential command sent" 
+    fdata = chip['FIFO'].get_data()
+    print fdata
+    dout = chip.decode_fpga(fdata, True)
+    print dout
+    ddout=chip.decode(dout[0],0x71)
+    print ddout    
   
-    print "Test write PLL Config"
-    data = chip.write_pll_config(0, 1, 1, 0, 0, 0, 0, False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
-    chip.write(data)
-    time.sleep(0.01)
-    print "write PLL Config command sent"
-    fdata = chip['FIFO'].get_data()
-    print fdata
+       # Step 3: Set PCR
+    #Step 3a: Produce needed PCR
+    for x in range(256):
+        for y in range(256):
+            chip.set_pixel_pcr(x, y, 1, 7, 1)
 
-    print "Test Read PLL Config"
-    data = chip.read_pll_config(False)
+    # Step 3b: Write PCR to chip
+    for i in range(256):  
+      data = chip.write_pcr([i], write=False)
+      chip['FIFO'].reset()
+      time.sleep(0.01)
+      chip.write(data)
+      time.sleep(0.01)
+    print "pixel config sent"
+    fdata = chip['FIFO'].get_data()
+    print fdata
+    dout = chip.decode_fpga(fdata, True)
+    print dout
+    ddout=chip.decode(dout[0],0x71)
+    print ddout 
+    
+    data = chip.read_pixel_config_reg(0x02,write=False)
     chip['FIFO'].reset()
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
-    print "read pll config command sent"
+    print "read pixel config command sent"
     fdata = chip['FIFO'].get_data()
     print fdata
+    dout = chip.decode_fpga(fdata, True)
+    print dout
+    ddout = chip.decode(dout[0], 0x71)
+    print ddout
+    
+    data = chip.read_pixel_matrix_sequential(0x02,False)
+    print "read matrix sequential command sent"
+    chip['FIFO'].reset()
+    time.sleep(0.01)
+    chip.write(data)
+    time.sleep(0.01)
+    print "waiting for packets received"
+    fdata = chip['FIFO'].get_data()
+    print fdata
+    print len(fdata)
+    dout = chip.decode_fpga(fdata, True)
+   # print dout 
+    for i in range (3):
+      ddout = chip.decode(dout[i], 0x90)
+      print ddout
+    
    
      
     
