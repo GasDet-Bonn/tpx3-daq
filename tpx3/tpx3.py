@@ -1064,19 +1064,24 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def read_pixel_config_reg(self, SColSelect, write=True):
+    def read_pixel_config_reg(self, columns, write=True):
         # TODO: WRONG DOC!!!
         """
-        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        Sends the Read Pixel Configuration Register command h = 0x90 (see manual
+        v1.9 p.32 and  v1.9 p.49).
+        The sent bytes are also returned.
+        inputs:
+            columns: list = columns given in this list will be read back
+            write: bool = if True will immediately call the self.write function
+        outputs:
+            if write == False: will return the command to send to the chip
         """
         data = []
         data = self.getGlobalSyncHeader()
         data += [self.matrix_header_map["ReadConfigMatrix"]]
         SColSelectReg= BitLogic(256)
-        SColSelectReg[255:0]=SColSelect
-        #for index in range(256):
-        #   SColSelectReg[index] = 0
-        #SColSelectReg.reverse()
+        for col in range(256):
+            SColSelectReg[col] = 0 if col in columns else 1
         data += SColSelectReg.toByteList()
         data += [0x00]
 
