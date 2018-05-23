@@ -45,45 +45,44 @@ def main(args_dict):
 
     while(not chip['RX'].is_ready):
         pass
-    data = chip.reset_sequential(write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
+
+
+    # Step 2a: reset sequential / resets pixels?!
+    data = chip.reset_sequential(False)
     chip.write(data)
-    time.sleep(0.01)
-    print "reset sequential command sent" 
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print dout
-    ddout=chip.decode(dout[0],0x71)
-    print ddout    
-  
-       # Step 3: Set PCR
+    ddout = chip.decode(dout[0],0x71)
+    print ddout
+    try:
+        ddout = chip.decode(dout[1],0x71)
+        print ddout
+    except IndexError:
+        print("no EoR found")
+
+    # Step 3: Set PCR
     #Step 3a: Produce needed PCR
     for x in range(256):
         for y in range(256):
             chip.set_pixel_pcr(x, y, 1, 7, 1)
 
     # Step 3b: Write PCR to chip
-    for i in range(256):  
+    for i in range(256):
       data = chip.write_pcr([i], write=False)
-      chip['FIFO'].reset()
-      time.sleep(0.01)
       chip.write(data)
-      time.sleep(0.01)
     print "pixel config sent"
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print dout
     ddout=chip.decode(dout[0],0x71)
-    print ddout 
-    
-    data = chip.read_pixel_config_reg(0x02,write=False)
-    chip['FIFO'].reset()
-    time.sleep(0.01)
+    print ddout
+
+    # only read column x == 1
+    data = chip.read_pixel_config_reg([1], write=False)
     chip.write(data)
-    time.sleep(0.01)
     print "read pixel config command sent"
     fdata = chip['FIFO'].get_data()
     print fdata
@@ -91,19 +90,17 @@ def main(args_dict):
     print dout
     ddout = chip.decode(dout[0], 0x71)
     print ddout
-    
-    data = chip.read_pixel_matrix_sequential(0x02,False)
+
+    data = chip.read_pixel_matrix_sequential(0x02, False)
     print "read matrix sequential command sent"
-    chip['FIFO'].reset()
-    time.sleep(0.01)
     chip.write(data)
-    time.sleep(0.01)
     print "waiting for packets received"
     fdata = chip['FIFO'].get_data()
     print type(fdata)
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print len(dout)
+
     counts = []
     count = 0
     xs = []
@@ -158,12 +155,7 @@ def main(args_dict):
     #     ddout = chip.decode(dout[1],0x71)
     #     print ddout
     # except IndexError:
-    #     print("no EoR found"
-   
-     
-    
-
-
+    #     print("no EoR found")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Timepix3 CTPR read/write checking script')
