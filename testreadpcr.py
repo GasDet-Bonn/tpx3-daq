@@ -101,6 +101,7 @@ def main(args_dict):
     print "waiting for packets received"
     fdata = chip['FIFO'].get_data()
     print fdata
+<<<<<<< HEAD
     print len(fdata)
     dout = chip.decode_fpga(fdata, True)
    # print dout 
@@ -108,6 +109,14 @@ def main(args_dict):
       ddout = chip.decode(dout[i], 0x90)
       print ddout
     
+=======
+    dout = chip.decode_fpga(fdata, True)
+    print dout 
+    #ddout = chip.decode(dout[0], 0x71)
+    #print ddout
+    #ddout = chip.decode(dout[1], 0x71)
+    #print ddout
+>>>>>>> b8bc9bb19bc341a01eacc24288f9bd7907dbb573
    
      
     
