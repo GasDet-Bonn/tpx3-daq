@@ -405,7 +405,7 @@ class TPX3(Dut):
         # 0x4E == local sync header
         return [0x4E] + self.chipId
 
-    def set_dac(self, dac, chip=None, write=True):
+    def set_dac(self, dac, value, chip=None, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -440,13 +440,13 @@ class TPX3(Dut):
 
         # get number of bits for values in this DAC
         dac_value_size = self.dac[dac]['size']
-        if self.dac[dac]['value'] >= (2 ** dac_value_size):
+        if value >= (2 ** dac_value_size):
             # value for the DAC, check whether in allowed range
             raise ValueError("Value {} for DAC {} exceeds the maximum size of a {} bit value!".format(value, dac, dac_value_size))
         # safely set the data for the values
 
         # set the given value at positions indicated in manual
-        bits[13:5] = self.dac[dac]['value']
+        bits[13:5] = value
         # final bits [4:0], DAC code
         bits[4:0] = self.dac[dac]['code']
         # append bits as list of bytes
@@ -1132,7 +1132,7 @@ class TPX3(Dut):
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ResetSequential"]]
-        dummy= BitLogic(142)
+        dummy= BitLogic(144)
         data += dummy.toByteList()
         data += [0x00]
 
@@ -1173,7 +1173,7 @@ class TPX3(Dut):
         data = []
 
         # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
-        bits = BitLogic(16)
+        bits = BitLogic(14)
 
         # presync header: 40 bits; TODO: header selection
         data = self.getGlobalSyncHeader()
@@ -1189,9 +1189,9 @@ class TPX3(Dut):
         bits[5:4] = clkphasediv
         bits[8:6] = clkphasenum 
         bits[13:9] = PLLOutConfig
-        bits[15:14] = 0;
+
         # append the period/phase variable to the data
-        data += bits.toByteList()
+        data += (bits + BitLogic(2)).toByteList()
 
         data += [0x00]
 
