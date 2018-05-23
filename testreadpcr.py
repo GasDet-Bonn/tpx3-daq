@@ -80,7 +80,8 @@ def main(args_dict):
     ddout=chip.decode(dout[0],0x71)
     print ddout
 
-    data = chip.read_pixel_config_reg(0x33, write=False)
+    # only read column x == 1
+    data = chip.read_pixel_config_reg([1], write=False)
     chip.write(data, True)
     print "read pixel config command sent"
     fdata = chip['FIFO'].get_data()
@@ -99,16 +100,23 @@ def main(args_dict):
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print len(dout)
-    for i in range(len(dout) - 1):
+
+    counts = []
+    count = 0
+    for i in range(len(dout)):
         print("decoding now ", dout[i])
         try:
             ddout = chip.decode(dout[i], 0x90)
+            count += 1
             if ddout[0] == "EoC":
                 continue
         except ValueError:
             try:
-                ddout = chip.decode(dout[i], 0xFB)
+                ddout = chip.decode(dout[i], 0xF0)
                 print("Found a stop matrix readout?")
+                counts.append(count)
+                count = 0
+                continue
             except ValueError:
                 print("Got value error in decode for data ", dout[i])
                 raise
@@ -118,23 +126,25 @@ def main(args_dict):
 
 
     print ddout
-    ddout = chip.decode(dout[-1], 0x71)
+    ddout = chip.decode(dout[-1], 0x90)
     print ddout
 
 
-    # Step 2a: reset sequential / resets pixels?!
-    data = chip.reset_sequential(False)
-    chip.write(data, True)
-    fdata = chip['FIFO'].get_data()
-    print fdata
-    dout = chip.decode_fpga(fdata, True)
-    print dout
-    ddout = chip.decode(dout[0],0x71)
-    try:
-        ddout = chip.decode(dout[1],0x71)
-        print ddout
-    except IndexError:
-        print("no EoR found")
+    print("Found the following counts: ", counts)
+
+    # # Step 2a: reset sequential / resets pixels?!
+    # data = chip.reset_sequential(False)
+    # chip.write(data, True)
+    # fdata = chip['FIFO'].get_data()
+    # print fdata
+    # dout = chip.decode_fpga(fdata, True)
+    # print dout
+    # ddout = chip.decode(dout[0],0x71)
+    # try:
+    #     ddout = chip.decode(dout[1],0x71)
+    #     print ddout
+    # except IndexError:
+    #     print("no EoR found")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Timepix3 CTPR read/write checking script')
