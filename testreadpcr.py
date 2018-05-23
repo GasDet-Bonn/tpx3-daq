@@ -103,6 +103,8 @@ def main(args_dict):
 
     counts = []
     count = 0
+    xs = []
+    ys = []
     for i in range(len(dout)):
         print("decoding now ", dout[i])
         try:
@@ -120,12 +122,21 @@ def main(args_dict):
             except ValueError:
                 print("Got value error in decode for data ", dout[i])
                 raise
-        print("X pos {}".format(chip.pixel_address_to_x(ddout[0])))
-        print("Y pos {}".format(chip.pixel_address_to_y(ddout[0])))
+        x = chip.pixel_address_to_x(ddout[0])
+        y = chip.pixel_address_to_y(ddout[0])
+        print("X pos {}".format(x))
+        print("Y pos {}".format(y))
+        xs.append(x)
+        ys.append(y)
         print(ddout[0].tovalue())
 
 
-    print ddout
+    print("Read {} packages".format(len(dout)))
+    print("Read x: {} \nRead y: {}".format(xs, ys))
+    print("#x: {}\n#y: {}".format(len(xs), len(ys)))
+    print("{} / {}".format(xs[183], ys[183]))
+    print("{} / {}".format(xs[184], ys[184]))
+    print("{} / {}".format(xs[185], ys[185]))
     ddout = chip.decode(dout[-1], 0x90)
     print ddout
 
