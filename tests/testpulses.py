@@ -238,13 +238,14 @@ def run_test_pulses():
     print "\tGet EoC: "
     fdata=chip['FIFO'].get_data()
     print fdata
-    dout=chip.decode_fpga(fdata,True)
+    dout=chip.decode_fpga(fdata[:-1],True)
     print dout
-    ddout = chip.decode(dout[2], 0xB0)
-    print ddout
+    for i in range (len(dout)):
+      ddout = chip.decode(dout[i], 0xB0)
+      print ddout
     #dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
     #print_cmp_commands("10111111", dout[0], dout[1])
-    time.sleep(5)
+    time.sleep(2)
     # Get the data and do the FPGA decoding
     # dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     # for el in dout:
