@@ -79,7 +79,7 @@ def main(args_dict):
     ddout=chip.decode(dout[0],0x71)
     print ddout 
     
-    data = chip.read_pixel_config_reg(0xF,write=False)
+    data = chip.read_pixel_config_reg(0x02,write=False)
     chip['FIFO'].reset()
     time.sleep(0.01)
     chip.write(data)
@@ -92,7 +92,7 @@ def main(args_dict):
     ddout = chip.decode(dout[0], 0x71)
     print ddout
     
-    data = chip.read_pixel_matrix_sequential(0xF,False)
+    data = chip.read_pixel_matrix_sequential(0x02,False)
     print "read matrix sequential command sent"
     chip['FIFO'].reset()
     time.sleep(0.01)
