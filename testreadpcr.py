@@ -45,6 +45,18 @@ def main(args_dict):
 
     while(not chip['RX'].is_ready):
         pass
+    data = chip.reset_sequential(write=False)
+    chip['FIFO'].reset()
+    time.sleep(0.01)
+    chip.write(data)
+    time.sleep(0.01)
+    print "reset sequential command sent" 
+    fdata = chip['FIFO'].get_data()
+    print fdata
+    dout = chip.decode_fpga(fdata, True)
+    print dout
+    ddout=chip.decode(dout[0],0x71)
+    print ddout    
   
        # Step 3: Set PCR
     #Step 3a: Produce needed PCR
