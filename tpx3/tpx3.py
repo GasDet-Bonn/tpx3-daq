@@ -942,6 +942,54 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def resetTimer(self, write=True):
+        """
+        Sends the ResetTimer command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["ResetTimer"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def startTimer(self, write=True):
+        """
+        Sends the T0_Sync_Command command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["T0_Sync_Command"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
     def write_tp_pulsenumber(self, number, write=True):
         """
         Writes the number of testpulses to the TP_number test pulse register (see manual v1.9 p.35)
