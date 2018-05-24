@@ -46,11 +46,24 @@ def run_test_pulses():
     chip = TPX3()
     chip.init()
 
-    # Step 2: Reset the chip
+    # Step 2: Chip start-up sequence
+    # Step 2a: Reset the chip
     chip['CONTROL']['RESET'] = 1
     chip['CONTROL'].write()
     chip['CONTROL']['RESET'] = 0
     chip['CONTROL'].write()
+
+    # Step 2b: Enable power pulsing
+    chip['CONTROL']['EN_POWER_PULSING'] = 1
+    chip['CONTROL'].write()
+
+    # Step 2c: Reset the Timer
+    data = chip.getGlobalSyncHeader() + [0x40] + [0x0]
+    chip.write(data)
+    
+    # Step 2d: Start the Timer
+    data = chip.getGlobalSyncHeader() + [0x4A] + [0x0]
+    chip.write(data)
 
     chip['RX'].reset()
     chip['RX'].DATA_DELAY = 0
@@ -67,7 +80,7 @@ def run_test_pulses():
 
     print(chip.get_configuration())
 
-    # Step 2a: reset sequential / resets pixels?!
+    # Step 2e: reset sequential / resets pixels?!
     # before setting PCR need to reset pixel matrix
     data = chip.reset_sequential(False)
     chip.write(data, True)
