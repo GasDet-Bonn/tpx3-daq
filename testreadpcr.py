@@ -29,8 +29,8 @@ def main(args_dict):
     chip['CONTROL']['RESET'] = 0
     chip['CONTROL'].write()
 
-    # print 'RX ready:', chip['RX'].is_ready
-    # print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    chip['CONTROL']['EN_POWER_PULSING'] = 1
+    chip['CONTROL'].write()
 
     data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x00]
 
@@ -45,6 +45,26 @@ def main(args_dict):
 
     while(not chip['RX'].is_ready):
         pass
+        
+    
+    
+    # Step 4d: Reset and start Timer
+    print "ReSet Timer"
+    data = chip.resetTimer(write=False)
+    chip.write(data, True)
+    print "Start Timer"
+    data = chip.startTimer(write=False)
+    chip.write(data, True)
+    
+    # Step 5: Set general config
+    print "Set general config"
+    data = chip.write_general_config(write=False)
+    chip.write(data, True)
+    # Get the data, do the FPGA decode and do the decode ot the 0th element
+    # which should be EoC (header: 0x71)
+    print "\tGet EoC: "
+    dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
+    print dout
 
 
     # Step 2a: reset sequential / resets pixels?!
@@ -61,6 +81,9 @@ def main(args_dict):
         print ddout
     except IndexError:
         print("no EoR found")
+        
+  
+
 
     # Step 3: Set PCR
     #Step 3a: Produce needed PCR
@@ -79,6 +102,7 @@ def main(args_dict):
     print dout
     ddout=chip.decode(dout[0],0x71)
     print ddout
+    
 
     # only read column x == 1
     data = chip.read_pixel_config_reg([1], write=False)
@@ -94,12 +118,12 @@ def main(args_dict):
     data = chip.read_pixel_matrix_sequential(0x02, False)
     print "read matrix sequential command sent"
     chip.write(data)
-    print "waiting for packets received"
     fdata = chip['FIFO'].get_data()
     print type(fdata)
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print len(dout)
+
 
     counts = []
     count = 0
@@ -124,19 +148,19 @@ def main(args_dict):
                 raise
         x = chip.pixel_address_to_x(ddout[0])
         y = chip.pixel_address_to_y(ddout[0])
-        print("X pos {}".format(x))
-        print("Y pos {}".format(y))
+        #print("X pos {}".format(x))
+        #print("Y pos {}".format(y))
         xs.append(x)
         ys.append(y)
-        print(ddout[0].tovalue())
+        #print(ddout[0].tovalue())
 
 
     print("Read {} packages".format(len(dout)))
-    print("Read x: {} \nRead y: {}".format(xs, ys))
-    print("#x: {}\n#y: {}".format(len(xs), len(ys)))
-    print("{} / {}".format(xs[183], ys[183]))
-    print("{} / {}".format(xs[184], ys[184]))
-    print("{} / {}".format(xs[185], ys[185]))
+   # print("Read x: {} \nRead y: {}".format(xs, ys))
+    #print("#x: {}\n#y: {}".format(len(xs), len(ys)))
+    #print("{} / {}".format(xs[183], ys[183]))
+    #print("{} / {}".format(xs[184], ys[184]))
+    #print("{} / {}".format(xs[185], ys[185]))
     ddout = chip.decode(dout[-1], 0x90)
     print ddout
 
