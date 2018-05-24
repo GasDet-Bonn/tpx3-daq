@@ -335,11 +335,9 @@ class TPX3(Dut):
             code = register['code']
             size = register['size']
             default = register['default']
-            value = register['value']
             self.dac[name] = {'code' : code,
                                  'size': size,
-                                 'default': default,
-                                 'value': value}
+                                 'default': default}
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
         # TODO: do we really need attributes for each DAC?
