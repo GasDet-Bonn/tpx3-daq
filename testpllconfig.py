@@ -45,16 +45,15 @@ def main(args_dict):
 
     while(not chip['RX'].is_ready):
         pass
-        
+       
+  # Step 2a: reset sequential / resets pixels?!
+    data = chip.reset_sequential(False)
+    chip.write(data)
+    fdata = chip['FIFO'].get_data()
+    dout = chip.decode_fpga(fdata, True)
+    ddout = chip.decode(dout[0],0x71)
+    print ddout
     
-    
-    # Step 4d: Reset and start Timer
-    print "ReSet Timer"
-    data = chip.resetTimer(write=False)
-    chip.write(data, True)
-    print "Start Timer"
-    data = chip.startTimer(write=False)
-    chip.write(data, True)
     
     # Step 5: Set general config
     print "Set general config"
@@ -64,31 +63,22 @@ def main(args_dict):
     print dout
 
 
-    # Step 2a: reset sequential / resets pixels?!
-    data = chip.reset_sequential(False)
-    chip.write(data)
-    fdata = chip['FIFO'].get_data()
-    dout = chip.decode_fpga(fdata, True)
-    ddout = chip.decode(dout[0],0x71)
-    print ddout
+    
     
     # Step 3b: Write PCR to chip
-    chip.write_pll_config(0,1,1,1,0,0,0,False)
+    data=chip.write_pll_config(0,1,1,0,0,0,0,False)
+    chip.write(data)
     print "pll config sent"
     fdata = chip['FIFO'].get_data()
-    dout = chip.decode_fpga(fdata, True)
-    print dout
+    print fdata
     # only read column x == 1
     data = chip.read_pll_config( write=False)
     chip.write(data)
     print "read pll config command sent"
     fdata = chip['FIFO'].get_data()
-    dout = chip.decode_fpga(fdata, True)
-    print dout
-    ddout = chip.decode(dout[0], 0x21)
-    print ddout
-    ddout = chip.decode(dout[1], 0x71)
-    print ddout
+    print fdata
+    
+    
 
     
 
