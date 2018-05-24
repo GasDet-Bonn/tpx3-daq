@@ -76,13 +76,13 @@ def threshold_scan():
     print "Start threshold scan"
     for coarse in range(16):
         for fine in range(160):
-            # Step 4: Set TP DACs
-            # Step 4a: Set VTP_coarse DAC (8-bit)
-            data = chip.set_dac("Vthreshold_coarse", 0b1000000, write=False)
+            # Step 4: Set Vthreshold DACs
+            # Step 4a: Set Vthreshold_coarse DAC (4-bit)
+            data = chip.set_dac("Vthreshold_coarse", coarse, write=False)
             chip.write(data, True)
 
-            # Step 4b: Set VTP_fine DAC (9-bit)
-            data = chip.set_dac("Vthreshold_fine", 0b100000000, write=False)
+            # Step 4b: Set Vthreshold_fine DAC (9-bit)
+            data = chip.set_dac("Vthreshold_fine", fine, write=False)
             chip.write(data, True)
 
             # Step 5: Set general config
