@@ -73,7 +73,7 @@ def main(args_dict):
     print ddout
     
     # Step 3b: Write PCR to chip
-    chip.write_pll_config(1,0,1,1,0,0,0,False)
+    chip.write_pll_config(0,1,1,1,0,0,0,False)
     print "pll config sent"
     fdata = chip['FIFO'].get_data()
     dout = chip.decode_fpga(fdata, True)
