@@ -16,7 +16,7 @@ registers:
   address: 3
   size: 1
   default: 0
-  mode: 0
+  mode: 1
 - name: AckCommand_en
   description: Enables/Diables the AckCommand data packet
   address: 4
@@ -27,14 +27,14 @@ registers:
   description: Enables/Diables Test Pulses
   address: 5
   size: 1
-  default: 0
-  mode: 0
+  default: 1
+  mode: 1
 - name: Fast_Io_en
   description: Enables/Diables Super-Pixel-Oscillator
   address: 6
   size: 1
   default: 0
-  mode: 0
+  mode: 1
 - name: TimerOverflowControl
   description: Selects the overflow control mode for the 48bit timer
   address: 7
