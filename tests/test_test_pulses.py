@@ -264,16 +264,23 @@ def run_test_pulses():
     chip['CONTROL'].write()
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoR (header: 0x71)
-    print "\tGet TP_internalfinished: "
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
-    print dout
-    ddout = chip.decode(dout[0], 0x71)
-    print_cmp_commands("00001111", ddout[0], ddout[1])
-    print "\tGet EoR: "
-    ddout = chip.decode(dout[1], 0x71)
-    print_cmp_commands("10110000", ddout[0], ddout[1])
-
-    print dout
+    pixel_counter = 0
+    print "Get data:"
+    for el in dout:
+        if el[47:44].tovalue() is 0xB:
+            ddout = chip.decode(el, 0xB0)
+            print "\tX Pos:", chip.pixel_address_to_x(ddout[0])
+            print "\tY Pos:", chip.pixel_address_to_y(ddout[0])
+            print "\tTOA:", ddout[1]
+            print "\tTOT:", ddout[2]
+            print "\tHit Counter", ddout[3]
+            pixel_counter += 1
+        elif el[47:40].tovalue() is 0x71:
+            print "\tEoC/EoR/TP_Finished:", el
+        else:
+            print "\tUnidentified packet:", el
+    print "Pixel counter:", pixel_counter
 
 
 if __name__ == "__main__":
