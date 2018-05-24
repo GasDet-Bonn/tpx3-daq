@@ -101,7 +101,7 @@ def run_test_pulses():
     # Step 3a: Produce needed PCR
     for x in range(256):
         for y in range(256):
-            chip.set_pixel_pcr(x, y, 1, 7, 1)
+            chip.set_pixel_pcr(x, y, 1, 7, 0)
 
     # Step 3b: Write PCR to chip
     for i in range(256):
