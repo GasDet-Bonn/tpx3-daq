@@ -74,12 +74,17 @@ def threshold_scan():
         chip.write(data, True)
 
     # Step 4: Set general config
-            data = chip.write_general_config(write=False)
-            chip.write(data, True)
+    data = chip.write_general_config(write=False)
+    chip.write(data, True)
 
     print "Start threshold scan"
-    for coarse in range(16):
-        for fine in range(160):
+    # TODO: Full threshold scan is not possible yet because for low
+    # thresholds 32 bit words keep missing. Maybe some problem with
+    # the FIFO? A longer sleep before reading the fifo extends the
+    # range of threshold a bit for lower thresholds but sleeps up to
+    # 1 second do not solve the problem.
+    for coarse in range(8, 16):
+        for fine in range(115, 275, 5):
             # Step 5: Set Vthreshold DACs
             # Step 5a: Set Vthreshold_coarse DAC (4-bit)
             data = chip.set_dac("Vthreshold_coarse", coarse, write=False)
@@ -104,6 +109,10 @@ def threshold_scan():
             # Step 9: Disable Shutter
             chip['CONTROL']['SHUTTER'] = 0
             chip['CONTROL'].write()
+
+            # Some time is needed to fill the FIFO before it is read
+            time.sleep(0.25)
+
             # Get the data, do the FPGA decode and do the decode ot the 0th element
             # which should be EoR (header: 0x71)
             dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
