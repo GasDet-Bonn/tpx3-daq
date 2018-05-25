@@ -77,6 +77,14 @@ def threshold_scan():
     data = chip.write_general_config(write=False)
     chip.write(data, True)
 
+    # Workaround: Set TP_number register
+    # TODO: Even if all other test pulse related commands are missing
+    # (CTPR, TP_phase, TP_period, ...) or set to 0 (or disabled) it is
+    # somehow needed to set the pulsenumber. Without there is no data
+    # and no 'End of Readout' after closing the shutter.
+    data = chip.write_tp_pulsenumber(10, write=False)
+    chip.write(data, True)
+
     print "Start threshold scan"
     # TODO: Full threshold scan is not possible yet because for low
     # thresholds 32 bit words keep missing. Maybe some problem with
