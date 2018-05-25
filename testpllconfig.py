@@ -6,18 +6,6 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 
-
-def pretty_print(string_val, bits=32):
-    val = int(string_val)
-    bits = BitLogic(bits)
-    bits[:] = val
-    lst = bits.toByteList(True)
-    lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
-
-
 def main(args_dict):
 
     chip = TPX3()
@@ -63,10 +51,8 @@ def main(args_dict):
     print dout
 
 
-    
-    
-    # Step 3b: Write PCR to chip
-    data=chip.write_pll_config(0,1,1,0,0,0,0,False)
+    # Step 3b: Write PLL to chip
+    data=chip.write_pll_config(1,0,1,1,1,0,0,False)
     chip.write(data)
     print "pll config sent"
     fdata = chip['FIFO'].get_data()
@@ -77,9 +63,6 @@ def main(args_dict):
     print "read pll config command sent"
     fdata = chip['FIFO'].get_data()
     print fdata
-    
-    
-
     
 
     
