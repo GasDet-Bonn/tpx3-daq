@@ -1331,7 +1331,6 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
-<<<<<<< HEAD
     
     def lfsr_10_bit(self):
         """
@@ -1382,6 +1381,7 @@ class TPX3(Dut):
             lfsr[1]=lfsr[0]
             lfsr[0]=lfsr[2]^dummy^lfsr[12]^lfsr[13]
         self.lfsr_14[2**14-1]=0;
+
     def lfsr_4_bit(self):
         """
         Generates a 4bit LFSR according to Manual v1.9 page 19
@@ -1401,8 +1401,6 @@ class TPX3(Dut):
 
     
         
-=======
->>>>>>> 0a50c6b4894a240ec0c463f53148e5cae5201678
 
 if __name__ == '__main__':
     pass
