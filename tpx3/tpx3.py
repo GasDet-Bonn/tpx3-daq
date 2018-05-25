@@ -355,10 +355,10 @@ class TPX3(Dut):
         self.Ibias_DiscS2_ON = self.dac['Ibias_DiscS2_ON']['default']
         self.Ibias_DiscS2_OFF = self.dac['Ibias_DiscS2_OFF']['default']
         self.Ibias_PixelDAC = self.dac['Ibias_PixelDAC']['default']
-        self.Ibias_TPbufferIn= self.dac['Ibias_TPbufferIn']['default']
+        self.Ibias_TPbufferIn = self.dac['Ibias_TPbufferIn']['default']
         self.Ibias_TPbufferOut = self.dac['Ibias_TPbufferOut']['default']
         self.VTP_coarse = self.dac['VTP_coarse']['default']
-        self.VTP_fine= self.dac['VTP_fine']['default']
+        self.VTP_fine = self.dac['VTP_fine']['default']
         self.Ibias_CP_PLL = self.dac['Ibias_CP_PLL']['default']
         self.PLL_Vcntrl = self.dac['PLL_Vcntrl']['default']
 
@@ -553,7 +553,6 @@ class TPX3(Dut):
 
         if clear_fifo:
             time.sleep(TPX3_SLEEP)
-
 
     def decode_fpga(self, data, string=False):
         """
@@ -877,10 +876,7 @@ class TPX3(Dut):
 
         # append the columnMask for the column selection: 256 bits
         data += self.produce_column_mask(columns)
-        #x=BitLogic(256)
-        #for i in range(256):
-         # x[i] = 1
-        #data += x.toByteList()
+
         # append the pcr for the pixels in the selected columns: 1535*columns bits
         for column in columns:
             for row in range(256):
@@ -1065,24 +1061,27 @@ class TPX3(Dut):
         return data
 
     def read_pixel_config_reg(self, columns, write=True):
-        # TODO: WRONG DOC!!!
         """
-        Sends the Read Pixel Configuration Register command h = 0x90 (see manual
-        v1.9 p.32 and  v1.9 p.49).
-        The sent bytes are also returned.
-        inputs:
-            columns: list = columns given in this list will be read back
-            write: bool = if True will immediately call the self.write function
-        outputs:
-            if write == False: will return the command to send to the chip
+        Sends the ReadConfigMatrix command (see manual v1.9 p.49) together with
+        a mask of selected columns based on the list of selected columns given
+        in 'columns'.
         """
         data = []
+
+        # create a 256-bit bitarrays for single column selection
+        SColSelectReg = BitLogic(256)
+
+        # presync header: 40 bits; TODO: header selection
         data = self.getGlobalSyncHeader()
+
+        # append the code for the ReadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["ReadConfigMatrix"]]
-        SColSelectReg= BitLogic(256)
+
+        # Set SColSelect for selected columns to 0 and for other columns to 1
         for col in range(256):
             SColSelectReg[col] = 0 if col in columns else 1
         data += SColSelectReg.toByteList()
+
         data += [0x00]
 
         if write is True:
@@ -1090,25 +1089,42 @@ class TPX3(Dut):
         return data
 
     def read_pixel_matrix_sequential(self, TokenSelect, write=True):
-        # TODO: MISSING DOC!!!
+        """
+        Sends the ReadMatrixSequential command (see manual v1.9 p.45) together with
+        a token select to select the maximum number of columns which are read
+        simultaneously.
+        """
         data = []
+
+        # create two 128-bit bitarrays for double column select and token select
+        DColSelect = BitLogic(128)
+        TokenSelectReg = BitLogic(128)
+
+        # presync header: 40 bits; TODO: header selection
         data = self.getGlobalSyncHeader()
+
+        # append the code for the ReadMatrixSequential command header: 8 bits
         data += [self.matrix_header_map["ReadMatrixSequential"]]
-        DColSelect= BitLogic(128)
+
+        # Fill the double column select with zeros (manual v1.9 p.45) and
+        # append it to the data
         for index in range(128):
             DColSelect[index] = 0
         data += DColSelect.toByteList()
-        TokenSelectReg= BitLogic(128)
+        
+        # Fill the token select (manual v1.9 p.34) with the given tokens, reverse
+        # it and append it to data
         TokenSelectReg[127:0] = TokenSelect
         TokenSelectReg.reverse()
         data += TokenSelectReg.toByteList()
+
         data += [0x00]
+
         if write is True:
             self.write(data)
         return data
 
     def reset_sequential(self, write=True):
-        # TODO: WRONG DOC!!!
         """
         Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51). If any data is still present on the pixel
         matrix (eoc_active is high) then an End of Readout packet is sent.
@@ -1118,12 +1134,18 @@ class TPX3(Dut):
         # presync header: 40 bits; TODO: header selection
         data = self.getGlobalSyncHeader()
 
-        # append the code for the LoadConfigMatrix command header: 8 bits
+        # append the code for the ResetSequential command header: 8 bits
         data += [self.matrix_header_map["ResetSequential"]]
-        # NOTE: manual states to send 142 bits, we need to send full bytes though, so we send 144 bits.
-        # manual also states that data to be dummy bytes anyways
+
+        # NOTE: The manual (v1.9 p.52) states to send 142 bits, we need to
+        # send full bytes though, so we send 144 bits. The manual also states
+        # that data to be dummy bytes anyways.
+        # TODO: The manual (v1.9 p.32) also states that after the header a
+        # 256-bit column mask is needed. So test if maybe a 256-bit dummy
+        # is needed instead of the 144-bit dummy
         dummy = BitLogic(144)
         data += dummy.toByteList()
+
         data += [0x00]
 
         if write is True:
@@ -1131,9 +1153,8 @@ class TPX3(Dut):
         return data
 
     def stop_readout(self, write=True):
-        # TODO: WRONG DOC!!!
         """
-        Sends a command to read the COlumn Test Pulse Register (Manual v 1.9 pg. 50)
+        Sends a command to stop / pause a pixel readout (Manual v 1.9 pg. 52)
         """
         data = []
 
@@ -1142,6 +1163,7 @@ class TPX3(Dut):
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["StopMatrixCommand"]]
+
         data += [0x00]
 
         if write is True:
@@ -1149,33 +1171,46 @@ class TPX3(Dut):
         return data
 
     def write_pll_config(self, bypass, reset, selectVctl, dualedge, clkphasediv, clkphasenum, PLLOutConfig, write=True):
-        # TODO: WRONG DOC!!!
         """
-        Writes the period and the phase to the TP_period and TP_phase test pulse registers (see manual v1.9 p.35)
-        and returns the written data. The period is a 8-bit value and the phase is a 4-bit value.
+        Writes the new values to the PLL config registers (see manual v1.9 p.37) and returns
+        the written data. 'bypass', 'reset', 'selectVctl' and 'dualedge' are 1-bit values,
+        'clkphasediv' is a 2-bit value, 'clkphasenum' a 3-bit value and 'PLLOutConfig' a
+        5-bit value
         """
+        if bypass > 1:
+            # check if the ByPassPLL is allowed
+            raise ValueError("The ByPassPLL must not be bigger than 1!")
+        if reset > 1:
+            # check if the ResetPLL is allowed
+            raise ValueError("The ResetPLL must not be bigger than 1!")
+        if selectVctl > 1:
+            # check if the SelectVcntrl PLL DAC is allowed
+            raise ValueError("The SelectVcntrl PLL DAC must not be bigger than 1!")
+        if dualedge > 1:
+            # check if the Dual Edge Clock is allowed
+            raise ValueError("The Dual Edge Clock must not be bigger than 1!")
         if clkphasediv > 3:
-            #  check if the period is allowed
+            # check if the Clock Phase Shift Divider is allowed
             raise ValueError("The Clock Phase Shift Divider must not be bigger than 3!")
         if clkphasenum > 4:
-            #  check if the phase is allowed
+            # check if the Clock Phase Shift Number is allowed
             raise ValueError("The Clock Phase Shift Number must not be bigger than 4!")
-        if PLLOutConfig> 22:
-            #  check if the phase is allowed
+        if PLLOutConfig > 22:
+            # check if the PLL Output Configuration is allowed
             raise ValueError("The PLL Output Configuration must not be bigger than 22!")
 
         data = []
 
-        # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
+        # create a 16 bit variable for the PLL config registers
         bits = BitLogic(16)
 
         # presync header: 40 bits; TODO: header selection
         data = self.getGlobalSyncHeader()
 
-        # append the code for the GeneralConfig_Read command header: 8 bits
+        # append the code for the PLLConfig command header: 8 bits
         data += [self.periphery_header_map["PLLConfig"]]
 
-        # fill the 12-bit variable with the period and the phase
+        # fill the 16-bit variable with values for the PLL config register
         bits[0] = bypass
         bits[1] = reset
         bits[2] = selectVctl
@@ -1184,7 +1219,7 @@ class TPX3(Dut):
         bits[8:6] = clkphasenum
         bits[13:9] = PLLOutConfig
         bits[15:14] = 0
-        # append the period/phase variable to the data
+        # append the PLL config variable to the data
         data += bits.toByteList()
 
         data += [0x00]
@@ -1194,18 +1229,17 @@ class TPX3(Dut):
         return data
 
     def read_pll_config(self, write=True):
-        # TODO: WRONG DOC!!!
         """
-        Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
-        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
-        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        Sends the PLLConfig_Eead command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the PLL Config
+        registers (see manual v1.9 p.37). The sent bytes are also returned.
         """
         data = []
 
         # presync header: 40 bits
         data = self.getGlobalSyncHeader()
 
-        # append the code for the GeneralConfig_Read command header: 8 bits
+        # append the code for the PLLConfig_Eead command header: 8 bits
         data += [self.periphery_header_map["PLLConfig_Read"]]
 
         # fill with two dummy bytes for DataIN
@@ -1217,13 +1251,16 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-
     # TODO: which data driven proc is correct? need column mask???
     # table p. 32 states column mask needed
     # schematic p. 50 states NOT needed...
+    # Tests show that both procs work, so it works with and without
+    # the column mask. But its not clear if the column mask has any
+    # effect.
     def read_pixel_matrix_datadriven(self, write=True):
         """
-        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and  v1.9 p.50). The sended bytes are also returned.
+        Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and
+        v1.9 p.50). The sended bytes are also returned. 
         """
         data = []
 
