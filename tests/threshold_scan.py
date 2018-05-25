@@ -73,35 +73,35 @@ def threshold_scan():
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
 
-    print "Start threshold scan"
-    for coarse in range(16):
-        for fine in range(160):
-            # Step 4: Set Vthreshold DACs
-            # Step 4a: Set Vthreshold_coarse DAC (4-bit)
-            data = chip.set_dac("Vthreshold_coarse", coarse, write=False)
-            chip.write(data, True)
-
-            # Step 4b: Set Vthreshold_fine DAC (9-bit)
-            data = chip.set_dac("Vthreshold_fine", fine, write=False)
-            chip.write(data, True)
-
-            # Step 5: Set general config
+    # Step 4: Set general config
             data = chip.write_general_config(write=False)
             chip.write(data, True)
 
-            # Step 8: Send "read pixel matrix data driven" command
+    print "Start threshold scan"
+    for coarse in range(16):
+        for fine in range(160):
+            # Step 5: Set Vthreshold DACs
+            # Step 5a: Set Vthreshold_coarse DAC (4-bit)
+            data = chip.set_dac("Vthreshold_coarse", coarse, write=False)
+            chip.write(data, True)
+
+            # Step 5b: Set Vthreshold_fine DAC (9-bit)
+            data = chip.set_dac("Vthreshold_fine", fine, write=False)
+            chip.write(data, True)
+
+            # Step 6: Send "read pixel matrix data driven" command
             data = chip.read_pixel_matrix_datadriven(write=False)
             chip.write(data, True)
 
-            # Step 9: Enable Shutter
+            # Step 7: Enable Shutter
             chip['CONTROL']['SHUTTER'] = 1
             chip['CONTROL'].write()
 
-            # Step 10: Receive data
+            # Step 8: Receive data
             # Leave the shutter opened for 1 ms
             time.sleep(0.001)
 
-            # Step 11: Disable Shutter
+            # Step 9: Disable Shutter
             chip['CONTROL']['SHUTTER'] = 0
             chip['CONTROL'].write()
             # Get the data, do the FPGA decode and do the decode ot the 0th element
