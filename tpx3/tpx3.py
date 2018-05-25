@@ -168,6 +168,10 @@ class TPX3(Dut):
     def __init__(self, conf=None, **kwargs):
 
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.lfsr_10 = {}
+        self.lfsr_14 = {}
+        self.lfsr_4 = {}
+        
 
         if not conf:
             conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yaml')
@@ -199,6 +203,9 @@ class TPX3(Dut):
         # set all configuration attributes to their default values, also sets
         # the `config_written_to_chip` flag to False
         self.reset_config_attributes()
+        self.lfsr_10_bit()
+        self.lfsr_14_bit()
+        self.lfsr_4_bit()
 
         # config dictionary will store the full yaml as a nested dict
         self.config = {}
@@ -1324,6 +1331,75 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+    
+    def lfsr_10_bit(self):
+        """
+        Generates a 10bit LFSR according to Manual v1.9 page 19
+        """
+        lfsr = BitLogic(10)
+        lfsr[7:0]=0xFF
+        lfsr[9:8]=0b11
+        dummy=0
+        for i in range (2**10):
+            self.lfsr_10[BitLogic.tovalue(lfsr)]=i
+            dummy=lfsr[9]
+            lfsr[9]=lfsr[8]
+            lfsr[8]=lfsr[7]
+            lfsr[7]=lfsr[6]
+            lfsr[6]=lfsr[5]
+            lfsr[5]=lfsr[4]
+            lfsr[4]=lfsr[3]
+            lfsr[3]=lfsr[2]
+            lfsr[2]=lfsr[1]
+            lfsr[1]=lfsr[0]
+            lfsr[0]=lfsr[7]^dummy
+        self.lfsr_10[2**10-1]=0;
+    
+    def lfsr_14_bit(self):
+        """
+        Generates a 14bit LFSR according to Manual v1.9 page 19
+        """
+        lfsr = BitLogic(14)
+        lfsr[7:0]=0xFF
+        lfsr[13:8]=63
+        dummy=0
+        for i in range (2**14):
+            self.lfsr_14[BitLogic.tovalue(lfsr)]=i
+            dummy=lfsr[13]
+            lfsr[13]=lfsr[12]
+            lfsr[12]=lfsr[11]
+            lfsr[11]=lfsr[10]
+            lfsr[10]=lfsr[9]
+            lfsr[9]=lfsr[8]
+            lfsr[8]=lfsr[7]
+            lfsr[7]=lfsr[6]
+            lfsr[6]=lfsr[5]
+            lfsr[5]=lfsr[4]
+            lfsr[4]=lfsr[3]
+            lfsr[3]=lfsr[2]
+            lfsr[2]=lfsr[1]
+            lfsr[1]=lfsr[0]
+            lfsr[0]=lfsr[2]^dummy^lfsr[12]^lfsr[13]
+        self.lfsr_14[2**14-1]=0;
+    def lfsr_4_bit(self):
+        """
+        Generates a 4bit LFSR according to Manual v1.9 page 19
+        """
+        lfsr = BitLogic(4)
+        lfsr[3:0]=0xF
+        dummy=0
+        for i in range (2**4):
+            self.lfsr_4[BitLogic.tovalue(lfsr)]=i
+            dummy=lfsr[3]
+            lfsr[3]=lfsr[2]
+            lfsr[2]=lfsr[1]
+            lfsr[1]=lfsr[0]
+            lfsr[0]=lfsr[3]^dummy       
+        self.lfsr_4[2**4-1]=0;
+    
+
+    
+        
 
 if __name__ == '__main__':
     pass
