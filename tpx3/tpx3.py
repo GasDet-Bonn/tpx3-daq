@@ -678,7 +678,6 @@ class TPX3(Dut):
             # If the header is a control command header dataout is the following list:
             # [H1H2H3 - 8 bit, ChipID - 32 bit]
             elif header[7:5].tovalue() is 0b011:
-                print("5")
                 ReturnedHeader = data[39:32]
                 ChipID = data[31:0]
                 dataout = [ReturnedHeader, ChipID]
