@@ -1331,6 +1331,7 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+<<<<<<< HEAD
     
     def lfsr_10_bit(self):
         """
@@ -1400,6 +1401,8 @@ class TPX3(Dut):
 
     
         
+=======
+>>>>>>> 0a50c6b4894a240ec0c463f53148e5cae5201678
 
 if __name__ == '__main__':
     pass
