@@ -171,6 +171,7 @@ class TPX3(Dut):
         self.lfsr_10 = {}
         self.lfsr_14 = {}
         self.lfsr_4 = {}
+        self.gray_14 = {}
         
 
         if not conf:
@@ -206,6 +207,7 @@ class TPX3(Dut):
         self.lfsr_10_bit()
         self.lfsr_14_bit()
         self.lfsr_4_bit()
+        self.gray_14_bit()
 
         # config dictionary will store the full yaml as a nested dict
         self.config = {}
@@ -1353,7 +1355,7 @@ class TPX3(Dut):
             lfsr[2]=lfsr[1]
             lfsr[1]=lfsr[0]
             lfsr[0]=lfsr[7]^dummy
-        self.lfsr_10[2**10-1]=0;
+        self.lfsr_10[2**10 -1]=0;
     
     def lfsr_14_bit(self):
         """
@@ -1381,6 +1383,28 @@ class TPX3(Dut):
             lfsr[1]=lfsr[0]
             lfsr[0]=lfsr[2]^dummy^lfsr[12]^lfsr[13]
         self.lfsr_14[2**14-1]=0;
+    def gray_14_bit(self):
+        """
+        Generates a 14bit gray code according to Manual v1.9 page 19
+        """
+        gray = BitLogic(14)
+        for i in range (2**14):
+            gray[13:0]=i
+            gray[0]=gray[0]^gray[1]
+            gray[1]=gray[1]^gray[2]
+            gray[2]=gray[2]^gray[3]
+            gray[3]=gray[3]^gray[4]
+            gray[4]=gray[4]^gray[5]
+            gray[5]=gray[5]^gray[6]
+            gray[6]=gray[6]^gray[7]
+            gray[7]=gray[7]^gray[8]
+            gray[8]=gray[8]^gray[9]
+            gray[9]=gray[9]^gray[10]
+            gray[10]=gray[10]^gray[11]
+            gray[11]=gray[11]^gray[12]
+            gray[12]=gray[12]^gray[13]
+            self.gray_14[BitLogic.tovalue(gray)]=i;
+
 
     def lfsr_4_bit(self):
         """

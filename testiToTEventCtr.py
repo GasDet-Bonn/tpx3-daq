@@ -114,7 +114,7 @@ def run_test_pulses():
     # Step 4: Set TP DACs
     # Step 4a: Set VTP_coarse DAC (8-bit)
     print "Set VTP_coarse"
-    data = chip.set_dac("VTP_coarse", 0b1000000, write=False)
+    data = chip.set_dac("VTP_coarse", 0b00100000, write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
@@ -135,12 +135,12 @@ def run_test_pulses():
     # Step 6: Write to the test pulse registers
     # Step 6a: Write to period and phase tp registers
     print "Write TP_period and TP_phase"
-    data = chip.write_tp_period(10, 0, write=False)
+    data = chip.write_tp_period(1, 0, write=False)
     chip.write(data, True)
     
     # Step 6b: Write to pulse number tp register
     print "Write TP_number"
-    data = chip.write_tp_pulsenumber(4, write=False)
+    data = chip.write_tp_pulsenumber(1, write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
@@ -148,11 +148,15 @@ def run_test_pulses():
     print "Read TP config"
     data = chip.read_tp_config(write=False)
     chip.write(data, True)
+    fdata=chip['FIFO'].get_data()
+    dout=chip.decode_fpga(fdata,True)
+    ddout = chip.decode(dout[0],0x0E)
+    print ddout
 
 
     # Step 7: Set CTPR
     print "Write CTPR"
-    data = chip.write_ctpr(range(128), write=False)
+    data = chip.write_ctpr(range(255), write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
@@ -174,7 +178,7 @@ def run_test_pulses():
     # Step 10: Receive data
     """ ??? """
     print "Acquisition"
-    time.sleep(1)
+    time.sleep(5)
     # Get the data and do the FPGA decoding
     # dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     # for el in dout:
@@ -198,8 +202,8 @@ def run_test_pulses():
             ddout = chip.decode(el, 0xB0)
             print "\tX Pos:", chip.pixel_address_to_x(ddout[0])
             print "\tY Pos:", chip.pixel_address_to_y(ddout[0])
-            print "\tiTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])]
-            print "\tEvent Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])]
+            print "\tToA:", chip.gray_14[BitLogic.tovalue(ddout[1])]
+            print "\tToT:", chip.lfsr_10[BitLogic.tovalue(ddout[2])]
             print "\tHit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])]
             pixel_counter += 1
         elif el[47:40].tovalue() is 0x71:

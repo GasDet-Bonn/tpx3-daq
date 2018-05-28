@@ -76,11 +76,7 @@ def main(args_dict):
     print dout
     ddout = chip.decode(dout[0],0x71)
     print ddout
-    try:
-        ddout = chip.decode(dout[1],0x71)
-        print ddout
-    except IndexError:
-        print("no EoR found")
+    
         
   
 
@@ -89,7 +85,7 @@ def main(args_dict):
     #Step 3a: Produce needed PCR
     for x in range(256):
         for y in range(256):
-            chip.set_pixel_pcr(x, y, 1, 7, 1)
+            chip.set_pixel_pcr(x, y, 1, 7, 0)
 
     # Step 3b: Write PCR to chip
     for i in range(256):
@@ -99,7 +95,7 @@ def main(args_dict):
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    #print dout
     ddout=chip.decode(dout[0],0x71)
     print ddout
     
@@ -111,7 +107,7 @@ def main(args_dict):
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    #print dout
     ddout = chip.decode(dout[0], 0x71)
     print ddout
 
@@ -120,17 +116,19 @@ def main(args_dict):
     chip.write(data)
     fdata = chip['FIFO'].get_data()
     print type(fdata)
-    print fdata
+   # print fdata
     dout = chip.decode_fpga(fdata, True)
-    print len(dout)
-
+    
 
     counts = []
     count = 0
     xs = []
     ys = []
     for i in range(len(dout)):
-        print("decoding now ", dout[i])
+        print("Double Column:", dout[i][43:37])
+        print("SuperPixel:", dout[i][36:31])
+        print("Pixel Address:", dout[i][30:28])
+        print("PCR ", dout[i][19:14])
         try:
             ddout = chip.decode(dout[i], 0x90)
             count += 1
@@ -161,7 +159,7 @@ def main(args_dict):
     #print("{} / {}".format(xs[183], ys[183]))
     #print("{} / {}".format(xs[184], ys[184]))
     #print("{} / {}".format(xs[185], ys[185]))
-    ddout = chip.decode(dout[-1], 0x90)
+    ddout = chip.decode(dout[-1], 0x71)
     print ddout
 
 

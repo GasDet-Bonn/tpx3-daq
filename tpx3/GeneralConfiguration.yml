@@ -10,7 +10,7 @@ registers:
   address: 1
   size: 2
   default: 0
-  mode: 2  
+  mode: 0  
 - name: Gray_count_en
   description: Enables/Diables EoC Gray counter  
   address: 3
