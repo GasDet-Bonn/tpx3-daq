@@ -106,15 +106,15 @@ def run_test_pulses():
     except IndexError:
         print("no EoR found")
 
-
     # Step 3: Set PCR
     # Step 3a: Produce needed PCR
     for x in range(256):
         for y in range(256):
             chip.set_pixel_pcr(x, y, TP_OFF, 7, MASK_OFF)
-    # for y in range(255):
-    #     chip.set_pixel_pcr(255,y,TP_OFF,7,MASK_OFF)
-    chip.set_pixel_pcr(128, 128, TP_ON, 7, MASK_ON)
+    # choose the pixel for which to do an SCurve
+    x_pixel = 128
+    y_pixel = 128
+    chip.set_pixel_pcr(x_pixel, y_pixel, TP_ON, 7, MASK_ON)
     # Step 3b: Write PCR to chip
     for i in range(256):
         data = chip.write_pcr([i], write=False)
@@ -131,7 +131,7 @@ def run_test_pulses():
     # Step 6: Write to the test pulse registers
     # Step 6a: Write to period and phase tp registers
     print "Write TP_period and TP_phase"
-    data = chip.write_tp_period(100, 0, write=False)
+    data = chip.write_tp_period(1, 0, write=False)
     chip.write(data, True)
     
     # Step 6b: Write to pulse number tp register
@@ -147,7 +147,7 @@ def run_test_pulses():
 
     
     print "Set Vthreshold_coarse"
-    data = chip.set_dac("Vthreshold_coarse", 7, write=False)
+    data = chip.set_dac("Vthreshold_coarse", 8, write=False)
     chip.write(data, True)
 
     # Step 7: Set CTPR
@@ -179,7 +179,7 @@ def run_test_pulses():
 
         # Step 4b: Set VTP_fine DAC (9-bit)
         #print "Set VTP_fine"
-        tpf = 50
+        tpf = 48
         data = chip.set_dac("VTP_fine", tpf, write=False)
         chip.write(data, True)
         tpval = tpf * tp_fine + tpc * tp_coarse        
@@ -246,41 +246,10 @@ def run_test_pulses():
     print("We found {} wrong commands during SCurve".format(wrongCommands))
 
     plt.plot(thrs, evCounters)
+    plt.title("SCurve scan 1 pixel ({} / {})".format(x_pixel, y_pixel))
+    plt.xlabel("Threshold fine")
+    plt.ylabel("Count / #")
     plt.show()            
-    # pixel_counter = 0
-    # EoR_counter = 0
-    # stop_readout_counter = 0
-    # reset_sequential_counter = 0
-    # unknown_counter = 0
-    # print "Get data:"
-    # for el in dout:
-    #     if el[47:44].tovalue() is 0xB:
-    #         ddout = chip.decode(el, 0xB0)
-    #         print "\tX Pos:", chip.pixel_address_to_x(ddout[0])
-    #         print "\tY Pos:", chip.pixel_address_to_y(ddout[0])
-    #         print "\tiTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])]
-    #         print "\tEvent Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])]
-    #         print "\tHit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])]
-    #         pixel_counter += 1
-    #     elif el[47:40].tovalue() is 0x71:
-    #         print "\tEoC/EoR/TP_Finished:", chip.decode(el,0x71)
-    #         EoR_counter +=1
-    #     elif el[47:40].tovalue() is 0xF0:
-    #         print "\tStop Matrix Readout:", el
-    #         stop_readout_counter +=1
-    #     elif el[47:40].tovalue() is 0xE0:
-    #         print "\tReset Sequential:", el
-    #         reset_sequential_counter +=1
-    #     else: 
-    #       print"\tUnknown Packet:", el  
-    #       unknown_counter +=1   
-    # print "Pixel counter:", pixel_counter
-    # print "EoR counter:", EoR_counter
-    # print "Stop Matrix Readout counter:", stop_readout_counter
-    # print "Reset Sequential counter:", reset_sequential_counter
-    # print "Unknown counter:", unknown_counter
-    
-
 
 if __name__ == "__main__":
     run_test_pulses()
