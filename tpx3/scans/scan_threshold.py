@@ -104,9 +104,7 @@ class ThresholdScan(ScanBase):
 
     def analyze(self):
 
-
         h5_filename = self.output_filename + '.h5'
-        h5_filename = 'output_data/20180529_222802_threshold_scan.h5'
 
         # TODO: TMP this should go to analysis function results should be stored to h5 file under results directory?
         with tb.open_file(h5_filename, 'r+') as in_file_h5:
@@ -140,5 +138,5 @@ class ThresholdScan(ScanBase):
 
 if __name__ == "__main__":
     scan = ThresholdScan()
-    #scan.start(**local_configuration)
+    scan.start(**local_configuration)
     scan.analyze()
