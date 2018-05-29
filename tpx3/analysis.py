@@ -94,6 +94,8 @@ def interpret_raw_data(raw_data, meta_data=[]):
             else:
                 ret = int_pix_data
     else:
+
+        #it can be chunked and multithreaded here
         data_words = raw_data_to_dut(raw_data)
         ret = _interpret_raw_data(data_words)
 

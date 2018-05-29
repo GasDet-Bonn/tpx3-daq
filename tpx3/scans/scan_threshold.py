@@ -33,7 +33,6 @@ local_configuration = {
 class ThresholdScan(ScanBase):
     scan_id = "threshold_scan"
 
-
     def scan(self, VTP_fine_start=100, VTP_fine_stop=200, n_injections=100, **kwargs):
         '''
         Threshold scan main loop
@@ -87,8 +86,8 @@ class ThresholdScan(ScanBase):
 
         for scan_param_id, vcal in enumerate(cal_high_range):
             self.chip.set_dac("VTP_fine", vcal)
+            time.sleep(0.001)
 
-            time.sleep(0.1)
             with self.readout(scan_param_id=scan_param_id):
                 for mask in mask_data:
 
