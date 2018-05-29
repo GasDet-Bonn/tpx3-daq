@@ -127,7 +127,30 @@ class ScanBase(object):
         pass
 
     def dump_configuration(self, **kwargs):
-       pass
+        self.h5_file.create_group(self.h5_file.root, 'configuration', 'Configuration')
+
+        run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config', title='Run config', description=RunConfigTable)
+        row = run_config_table.row
+        row['attribute'] = 'scan_id'
+        row['value'] = self.scan_id
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'run_name'
+        row['value'] = self.run_name
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'software_version'
+        row['value'] = get_software_version()
+        row.append()
+
+        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections']
+        for kw, value in kwargs.iteritems():
+            if kw in run_config_attributes:
+                row = run_config_table.row
+                row['attribute'] = kw
+                row['value'] = value if isinstance(value, str) else str(value)
+                row.append()
+        run_config_table.flush()
 
     def configure(self, load_hitbus_mask=False, **kwargs):
         '''
