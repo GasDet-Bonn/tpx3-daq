@@ -172,14 +172,14 @@ def run_test_pulses():
         #for tpc in range(2 ** 7, 2 ** 8):
         # Step 4: Set TP DACs
         # Step 4a: Set VTP_coarse DAC (8-bit)
-        tpc = 0b00100000
+        tpc = 0b10000000
         print "Set VTP_coarse"
         data = chip.set_dac("VTP_coarse", tpc, write=False)
         chip.write(data, True)
 
         # Step 4b: Set VTP_fine DAC (9-bit)
         #print "Set VTP_fine"
-        tpf = 48
+        tpf = 0
         data = chip.set_dac("VTP_fine", tpf, write=False)
         chip.write(data, True)
         tpval = tpf * tp_fine + tpc * tp_coarse        
@@ -244,7 +244,10 @@ def run_test_pulses():
 
         
     print("We found {} wrong commands during SCurve".format(wrongCommands))
-
+    
+    f=open('ThresholdScan.txt','w')
+    f.write(thrs,evCounters)
+    f.close()
     plt.plot(thrs, evCounters)
     plt.title("SCurve scan 1 pixel ({} / {})".format(x_pixel, y_pixel))
     plt.xlabel("Threshold fine")
