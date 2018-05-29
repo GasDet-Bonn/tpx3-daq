@@ -10,7 +10,6 @@
 '''
 from __future__ import print_function
 import numpy as np
-from numba import njit
 from basil.utils.BitLogic import BitLogic
 import logging
 from tqdm import tqdm
@@ -23,8 +22,14 @@ logger = logging.getLogger('Analysis')
 
 _lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
 
-@njit
-def _interpret_raw_data(data, pix_data):
+
+def _interpret_raw_data(data):
+
+    # TODO: fix types
+    data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id'],
+               'formats': ['uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16']}
+
+    pix_data = np.recarray((data.shape[0]), dtype=data_type)
 
     n47 = np.uint64(47)
     n44 = np.uint64(44)
@@ -36,49 +41,41 @@ def _interpret_raw_data(data, pix_data):
     n3ff = np.uint64(0x3ff)
     nf = np.uint64(0xf)
 
-    for i in range(data.shape[0]):
-        header = 0
-        col = 0
-        row = 0
-        TOA = 0
-        TOT = 0
-        EventCounter = 0
-        HitCounter = 0
-        EoC = 0
-        CTPR = 0
-        data_header = 0
+    pixel = (data >> n28) & np.uint64(0b111)
+    super_pixel = (data >> np.uint64(28 + 3)) & np.uint64(0x2f)
+    right_col = pixel > 3
+    eoc = (data >> np.uint64(28 + 9)) & np.uint64(0x7f)
 
-        data_header = (data[i] >> n47)
-        if data_header:
-            header = (data[i] >> n44)
-            # print hex(header)
-
-            # to be fixed
-            col = (data[i] >> n28) & nff
-            row = (data[i] >> n36) & nff
-            EventCounter = _lfsr_10_lut[(data[i] >> n4) & n3ff]
-            HitCounter = data[i] & nf
-
-        pix_data['data_header'][i] = data_header
-        pix_data['header'][i] = header
-        pix_data['col'][i] = col
-        pix_data['row'][i] = row
-        pix_data['HitCounter'][i] = HitCounter
-        pix_data['EventCounter'][i] = EventCounter
-        # TODO
-
-        # print(i,hex(data[i]), pix_data[i], pix_data['data_header'][i], pix_data['HitCounter'][i], pix_data['EventCounter'][i])
+    pix_data['data_header'] = data >> n47
+    pix_data['header'] = data >> n44
+    pix_data['y'] = (super_pixel * 4) + (pixel - right_col * 4)
+    pix_data['x'] = eoc * 2 + right_col * 1
+    pix_data['HitCounter'] = data & nf
+    pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff]
+    # TODO
 
     return pix_data
 
+def raw_data_to_dut(raw_data):
+    '''
+    Transform to 48 bit format -> fast decode_fpga
+    '''
+
+    assert len(raw_data) % 2 == 0, "Missing one 32bit subword of a 48bit package"  # This could be smarter
+
+    nwords = len(raw_data) / 2
+
+    data_words = np.empty((raw_data.shape[0] / 2), dtype=np.uint64)
+    k = (raw_data & 0xffffff)
+    data_words[:] = k[1::2].view('>u4')
+    data_words = (data_words << 16) + (k[0::2].view('>u4') >> 8)
+
+    return data_words
 
 def interpret_raw_data(raw_data, meta_data=[]):
     '''
     Chunk the data based on scan_param and interpret
     '''
-    # TODO: fix types
-    data_type = {'names': ['data_header', 'header', 'col', 'row', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id'],
-               'formats': ['uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16']}
     ret = []
 
     if len(meta_data):
@@ -97,17 +94,8 @@ def interpret_raw_data(raw_data, meta_data=[]):
             else:
                 ret = int_pix_data
     else:
-
-        # transform to 48 bit format -> fast decode_fpga
-        assert len(raw_data) % 2 == 0, "Missing one 32bit subword of a 48bit package"  # This could be smarter
-        nwords = len(raw_data) / 2
-        data = np.empty((raw_data.shape[0] / 2), dtype=np.uint64)
-        k = (raw_data & 0xffffff)
-        data[:] = k[1::2].view('>u4')
-        data = (data << 16) + (k[0::2].view('>u4') >> 8)
-
-        pix_data = np.recarray((data.shape[0]), dtype=data_type)
-        ret = _interpret_raw_data(data, pix_data)
+        data_words = raw_data_to_dut(raw_data)
+        ret = _interpret_raw_data(data_words)
 
     return ret
 
@@ -194,8 +182,6 @@ def get_noise(x, y, n_injections, invert_x=False):
     return d * (mu1 + mu2).astype(np.float) / n_injections * np.sqrt(np.pi / 2.)
 
 
-
-
 def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
     '''
         Fit one pixel data with Scurve.
@@ -258,6 +244,7 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
 
     return (popt[1], popt[2], chi2 / (y.shape[0] - 3 - 1))
 
+
 def imap_bar(func, args, n_processes=None):
     ''' Apply function (func) to interable (args) with progressbar
     '''
@@ -310,7 +297,6 @@ def fit_scurves_multithread(scurves, scan_param_range,
                                 sigma_0=sigma_0,
                                 invert_x=invert_x)
 
-
     result_list = imap_bar(partialfit_scurve, scurves.tolist())
     result_array = np.array(result_list)
     logger.info("S-curve fit finished")
@@ -323,6 +309,7 @@ def fit_scurves_multithread(scurves, scan_param_range,
     sig2D = np.reshape(sig, (256, 256))
     chi2ndf2D = np.reshape(chi2ndf, (256, 256))
     return thr2D, sig2D, chi2ndf2D
+
 
 # init LUTs
 init_lfsr_10_lut()
