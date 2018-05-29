@@ -246,7 +246,8 @@ def run_test_pulses():
     print("We found {} wrong commands during SCurve".format(wrongCommands))
     
     f=open('ThresholdScan.txt','w')
-    f.write(thrs,evCounters)
+    for index in thrs:
+      f.write(str(thrs[index]) + " " + str(evCounters[index]) + "\n")
     f.close()
     plt.plot(thrs, evCounters)
     plt.title("SCurve scan 1 pixel ({} / {})".format(x_pixel, y_pixel))
