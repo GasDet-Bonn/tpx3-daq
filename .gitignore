@@ -103,10 +103,10 @@ ENV/
 .project
 
 /firmware/ise/*
-!/firmware/ise/*.xise  
+!/firmware/ise/*.xise
 
 /firmware/src/coregen/*
-!/firmware/src/coregen/*.xco  
+!/firmware/src/coregen/*.xco
 
 tests/results.xml
 
@@ -118,3 +118,13 @@ test_si_udp.lxt
 # IDE settings
 .vscode/
 
+# Scan output data
+tpx3/scans/output_data/*
+
+.metadata/
+*.lprof
+
+# DVT settings and logs
+.dvt
+dvt_build.log
+*.pydevproject
