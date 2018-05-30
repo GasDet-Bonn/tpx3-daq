@@ -165,6 +165,11 @@ class TPX3(Dut):
                       "Ibias_dac_cas": 0b11111,
                       "SenseOFF": 0b00000}
 
+    MASK_ON = 0
+    MASK_OFF = 1
+    TP_ON = 1
+    TP_OFF = 0
+
     def __init__(self, conf=None, **kwargs):
 
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -212,17 +217,18 @@ class TPX3(Dut):
         if config_file is not None:
             self.config_file = config_file
         else:
-            # TODO: replace this by something more general!
-            self.config_file = 'tpx3/GeneralConfiguration.yml'
+            self.config_file = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+
         # TODO: think about whether we should always read the YAML config file?
         self.read_config_yaml(self.config_file)
         self.dac = {}
+
         # configuration settings
         if dac_file is not None:
             self.dac_file = dac_file
         else:
-            # TODO: replace this by something more general!
-            self.dac_file = 'tpx3/dacs.yml'
+            self.dac_file = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'dacs.yml')
+
         # TODO: think about whether we should always read the YAML config file?
         self.read_dac_yaml(self.dac_file)
 
@@ -1434,6 +1440,13 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[3] ^ dummy
         self.lfsr_4[2 ** 4 - 1] = 0
+
+
+    def set_dacs(self, **kwargs):
+        pass
+
+    def set_tdac(self, **kwargs):
+        pass
 
 
 if __name__ == '__main__':
