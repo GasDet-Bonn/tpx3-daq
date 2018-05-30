@@ -114,15 +114,20 @@ def run_test_pulses():
     # Step 4: Set TP DACs
     # Step 4a: Set VTP_coarse DAC (8-bit)
     print "Set VTP_coarse"
-    data = chip.set_dac("VTP_coarse", 0b1000000, write=False)
-    chip.write(data, True)
+    chip.dacs["VTP_coarse"] = 0b1000000
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
    
     # Step 4b: Set VTP_fine DAC (9-bit)
     print "Set VTP_fine"
-    data = chip.set_dac("VTP_fine", 0b100000000, write=False)
-    chip.write(data, True)
+    chip.dacs["VTP_fine"] = 0b100000000
+    print chip.dacs["VTP_fine"]
+
+    # after setting the DACs, write them
+    chip.write_dacs()
+
+    
+    #chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
    
     # Step 5: Set general config

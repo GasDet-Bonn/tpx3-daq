@@ -43,6 +43,38 @@ logger = logging.getLogger('tpx3')
 logger.setLevel(loglevel)
 
 
+class DacsDict(dict):
+    """
+    A custom dictionary class, used for the DACs of Timepix3, which overrides the
+    __setitem__ class of a dictionary to also make a check for the validity of
+    a given value for a dictionary
+    """
+    def __init__(self, dac_valsize_map):
+        """
+        as initialization we need the alowed sizes of each DAC
+        """
+        self.dac_valsize_map = dac_valsize_map
+
+    def __setitem__(self, dac, value):
+        """
+        Override the __setitem__ function of the dictionary and check the size
+        of the given value. Else raise a ValueError
+        """
+        # check if valid by checking size smaller than max value
+        isValidDac = True if dac in self.dac_valsize_map.keys() else False
+        if not isValidDac:
+            raise KeyError("DAC with name {} does not exist!".format(dac))
+        isValid = True if value < 2 ** self.dac_valsize_map[dac] and value >= 0 else False
+        if isValid and isValidDac:
+            super(DacsDict, self).__setitem__(dac, value)
+        elif isValid == False:
+            if value >= 0:
+                raise ValueError("DAC value of {} for DAC {} is ".format(value, dac) +
+                                 "too large for size of {}".format(self.dac_valsize_map[dac]))
+            else:
+                raise ValueError("DAC value for {} DAC may not be negative!".format(dac))
+        
+
 class TPX3(Dut):
 
     # '' Map hardware IDs for board identification '''
@@ -169,6 +201,11 @@ class TPX3(Dut):
     MASK_OFF = 1
     TP_ON = 1
     TP_OFF = 0
+
+    # define the _dacs attribute, which is a custom dictionary object, which overrides the
+    # __setitem__ function of the dictionary to also include checks for the validity of
+    # the values
+    _dacs = DacsDict(dac_valsize_map)
 
     def __init__(self, conf=None, **kwargs):
 
@@ -353,24 +390,24 @@ class TPX3(Dut):
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
         # TODO: do we really need attributes for each DAC?
-        self.Ibias_Preamp_ON = self.dac['Ibias_Preamp_ON']['default']
-        self.Ibias_Preamp_OFF = self.dac['Ibias_Preamp_OFF']['default']
-        self.VPreamp_NCAS = self.dac['VPreamp_NCAS']['default']
-        self.Ibias_Ikrum = self.dac['Ibias_Ikrum']['default']
-        self.Vfbk = self.dac['Vfbk']['default']
-        self.Vthreshold_fine = self.dac['Vthreshold_fine']['default']
-        self.Vthreshold_coarse = self.dac['Vthreshold_coarse']['default']
-        self.Ibias_DiscS1_ON = self.dac['Ibias_DiscS1_ON']['default']
-        self.Ibias_DiscS1_OFF = self.dac['Ibias_DiscS1_OFF']['default']
-        self.Ibias_DiscS2_ON = self.dac['Ibias_DiscS2_ON']['default']
-        self.Ibias_DiscS2_OFF = self.dac['Ibias_DiscS2_OFF']['default']
-        self.Ibias_PixelDAC = self.dac['Ibias_PixelDAC']['default']
-        self.Ibias_TPbufferIn = self.dac['Ibias_TPbufferIn']['default']
-        self.Ibias_TPbufferOut = self.dac['Ibias_TPbufferOut']['default']
-        self.VTP_coarse = self.dac['VTP_coarse']['default']
-        self.VTP_fine = self.dac['VTP_fine']['default']
-        self.Ibias_CP_PLL = self.dac['Ibias_CP_PLL']['default']
-        self.PLL_Vcntrl = self.dac['PLL_Vcntrl']['default']
+        self._dacs["Ibias_Preamp_ON"] = self.dac['Ibias_Preamp_ON']['default']
+        self._dacs["Ibias_Preamp_OFF"] = self.dac['Ibias_Preamp_OFF']['default']
+        self._dacs["VPreamp_NCAS"] = self.dac['VPreamp_NCAS']['default']
+        self._dacs["Ibias_Ikrum"] = self.dac['Ibias_Ikrum']['default']
+        self._dacs["Vfbk"] = self.dac['Vfbk']['default']
+        self._dacs["Vthreshold_fine"] = self.dac['Vthreshold_fine']['default']
+        self._dacs["Vthreshold_coarse"] = self.dac['Vthreshold_coarse']['default']
+        self._dacs["Ibias_DiscS1_ON"] = self.dac['Ibias_DiscS1_ON']['default']
+        self._dacs["Ibias_DiscS1_OFF"] = self.dac['Ibias_DiscS1_OFF']['default']
+        self._dacs["Ibias_DiscS2_ON"] = self.dac['Ibias_DiscS2_ON']['default']
+        self._dacs["Ibias_DiscS2_OFF"] = self.dac['Ibias_DiscS2_OFF']['default']
+        self._dacs["Ibias_PixelDAC"] = self.dac['Ibias_PixelDAC']['default']
+        self._dacs["Ibias_TPbufferIn"] = self.dac['Ibias_TPbufferIn']['default']
+        self._dacs["Ibias_TPbufferOut"] = self.dac['Ibias_TPbufferOut']['default']
+        self._dacs["VTP_coarse"] = self.dac['VTP_coarse']['default']
+        self._dacs["VTP_fine"] = self.dac['VTP_fine']['default']
+        self._dacs["Ibias_CP_PLL"] = self.dac['Ibias_CP_PLL']['default']
+        self._dacs["PLL_Vcntrl"] = self.dac['PLL_Vcntrl']['default']
 
     def get_configuration_register(self):
         """
@@ -417,6 +454,44 @@ class TPX3(Dut):
         """
         # 0x4E == local sync header
         return [0x4E] + self.chipId
+
+    @property
+    def dacs(self):
+        """
+        Getter function for the `dacs` dictionary of the Tpx3 class.
+        With this a `self.dacs[<DAC name>]` statement will return the value
+        of the DAC stored in the `DactDict` dictionary _dacs
+        """
+        return self._dacs
+
+    def write_dacs(self):
+        """
+        A convenience function, which simply writes all DAC values, by iterating over
+        the internal _dacs dictionary and calling `write` for each.
+        """
+        # Note: here we can now iterate over self.dacs instead of self._dacs
+        # due to the `dacs` property!
+        for dac, val in self.dacs.iteritems():
+            data = self.set_dac(dac, val, write = False)
+            self.write(data, True)
+
+    def read_dacs(self):
+        """
+        A convenience function to read back all DACs, print them and compare with the
+        values we have stored in the _dacs DactDict dictionary
+        TODO: should this function do something besides printing values?
+        """
+        for dac, val in self.dacs.iteritems():
+            data = self.read_dac(dac, False)
+            self.write(data, True)
+            print("Wrote {}".format(data))
+            print "\tGet DAC value, DAC code and EoC:"
+            dout = self.decode_fpga(self['FIFO'].get_data(), True)
+            b = BitLogic(9)
+            b[:] = val
+            ddout = self.decode(dout[0], 0x03)
+            # TODO: this whole decode and printing can be made much nicer!!
+            print("Data is ", ddout[0][13:5], " wrote ", b)
 
     def set_dac(self, dac, value, chip=None, write=True):
         """
