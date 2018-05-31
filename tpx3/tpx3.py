@@ -145,49 +145,8 @@ class TPX3(Dut):
                          "ResetSequential": 0xE0,
                          "StopMatrixCommand": 0xF0}
 
-    # DAC names
-    # will have to be careful when using these, due to 5 bit value
-    dac_map = {"Ibias_Preamp_ON": 0b00001,
-               "Ibias_Preamp_OFF": 0b00010,
-               "VPreamp_NCAS": 0b00011,
-               "Ibias_Ikrum": 0b00100,
-               "Vfbk": 0b00101,
-               "Vthreshold_fine": 0b00110,
-               "Vthreshold_coarse": 0b00111,
-               "Ibias_DiscS1_ON": 0b01000,
-               "Ibias_DiscS1_OFF": 0b01001,
-               "Ibias_DiscS2_ON": 0b01010,
-               "Ibias_DiscS2_OFF": 0b01011,
-               "Ibias_PixelDAC": 0b01100,
-               "Ibias_TPbufferIn": 0b01101,
-               "Ibias_TPbufferOut": 0b01110,
-               "VTP_coarse": 0b01111,
-               "VTP_fine": 0b10000,
-               "Ibias_CP_PLL": 0b10001,
-               "PLL_Vcntrl": 0b10010}
-
     # number of bits a value for a DAC can have maximally
     DAC_VALUE_BITS = 9
-
-    # DAC value size in bits
-    dac_valsize_map = {"Ibias_Preamp_ON":   8,
-                       "Ibias_Preamp_OFF":  4,
-                       "VPreamp_NCAS":      8,
-                       "Ibias_Ikrum":       8,
-                       "Vfbk":              8,
-                       "Vthreshold_fine":   9,
-                       "Vthreshold_coarse": 4,
-                       "Ibias_DiscS1_ON":   8,
-                       "Ibias_DiscS1_OFF":  4,
-                       "Ibias_DiscS2_ON":   8,
-                       "Ibias_DiscS2_OFF":  4,
-                       "Ibias_PixelDAC":    8,
-                       "Ibias_TPbufferIn":  8,
-                       "Ibias_TPbufferOut": 8,
-                       "VTP_coarse":        8,
-                       "VTP_fine":          9,
-                       "Ibias_CP_PLL":      8,
-                       "PLL_Vcntrl":        8}
 
     # monitoring voltage maps
     monitoring_map = {"PLL_Vcntrl": 0b10010,
@@ -201,11 +160,6 @@ class TPX3(Dut):
     MASK_OFF = 1
     TP_ON = 1
     TP_OFF = 0
-
-    # define the _dacs attribute, which is a custom dictionary object, which overrides the
-    # __setitem__ function of the dictionary to also include checks for the validity of
-    # the values
-    _dacs = DacsDict(dac_valsize_map)
 
     def __init__(self, conf=None, **kwargs):
 
@@ -379,6 +333,8 @@ class TPX3(Dut):
         # get the configuration bits from the GeneralConfiguration file
         dac = yaml.load(open(dac_file, 'r'))
 
+        self.dac_valsize_map = {}
+
         for register in dac['registers']:
             name = register['name']
             code = register['code']
@@ -387,6 +343,14 @@ class TPX3(Dut):
             self.dac[name] = {'code': code,
                               'size': size,
                               'default': default}
+            # fill the dict of DAC sizes
+            self.dac_valsize_map[name] = int(size)
+
+        # define the _dacs attribute, which is a custom dictionary object, which overrides the
+        # __setitem__ function of the dictionary to also include checks for the validity of
+        # the values
+        self._dacs = DacsDict(self.dac_valsize_map)
+
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
         # TODO: do we really need attributes for each DAC?
