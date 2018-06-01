@@ -73,6 +73,37 @@ class DacsDict(dict):
                                  "too large for size of {}".format(self.dac_valsize_map[dac]))
             else:
                 raise ValueError("DAC value for {} DAC may not be negative!".format(dac))
+
+class ConfigDict(dict):
+    """
+    A custom dictionary class, used for the Config of Timepix3, which overrides the
+    __setitem__ class of a dictionary to also make a check for the validity of
+    a given value for a dictionary
+    """
+    def __init__(self, config_valsize_map):
+        """
+        as initialization we need the alowed sizes of each DAC
+        """
+        self.config_valsize_map = config_valsize_map
+
+    def __setitem__(self, config, value):
+        """
+        Override the __setitem__ function of the dictionary and check the size
+        of the given value. Else raise a ValueError
+        """
+        # check if valid by checking size smaller than max value
+        isValidConfig = True if config in self.config_valsize_map.keys() else False
+        if not isValidConfig:
+            raise KeyError("Config with name {} does not exist!".format(config))
+        isValid = True if value < 2 ** self.config_valsize_map[config] and value >= 0 else False
+        if isValid and isValidConfig:
+            super(ConfigDict, self).__setitem__(config, value)
+        elif isValid == False:
+            if value >= 0:
+                raise ValueError("Config value of {} for Configuration {} is ".format(value, config) +
+                                 "too large for size of {}".format(self.config_valsize_map[config]))
+            else:
+                raise ValueError("Config value for {} Configuration may not be negative!".format(config))
         
 
 class TPX3(Dut):
@@ -164,9 +195,11 @@ class TPX3(Dut):
     def __init__(self, conf=None, **kwargs):
 
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.gray_14 = {}
         self.lfsr_10 = {}
         self.lfsr_14 = {}
         self.lfsr_4 = {}
+
 
         if not conf:
             conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yaml')
@@ -197,10 +230,11 @@ class TPX3(Dut):
 
         # set all configuration attributes to their default values, also sets
         # the `config_written_to_chip` flag to False
-        self.reset_config_attributes()
+        self.gray_14_bit()
         self.lfsr_10_bit()
         self.lfsr_14_bit()
         self.lfsr_4_bit()
+
 
         # config dictionary will store the full yaml as a nested dict
         self.config = {}
@@ -212,6 +246,7 @@ class TPX3(Dut):
 
         # TODO: think about whether we should always read the YAML config file?
         self.read_config_yaml(self.config_file)
+        self.reset_config_attributes()
         self.dac = {}
 
         # configuration settings
@@ -265,29 +300,29 @@ class TPX3(Dut):
         # general configuration settings are initialized with the default chip values
         # for an explanation see manual v1.9 p.40 or the general config YAML file
         # selects polarity (0 = positive, 1 = negative)
-        self.polarity = 1
+        self._config["Polarity"] = 1
         # pixel operation mode (0b00 = ToA and ToT, 0b01 = ToA, 0b10 = Event and iToT)
-        self.op_mode = 0b00
+        self._config["Op_mode"] = 0b00
         # end of command Gray counter (for ToA measurements?) (0 = disabled, 1 = enabled)
-        self.gray_counter = 0
+        self._config["Gray_count_en"] = 0
         # AckCommand package (0 = disabled, 1 = enabled)
-        self.ack_command_enable = 0
+        self._config["AckCommand_en"] = 0
         # test pulse enable (0 = disabled, 1 = enabled)
-        self.tp_enable = 0
+        self._config["TP_en"] = 0
         # super pixel oscillator enable (Fast_Io_en; 0 = disabled, 1 = enabled)
-        self.fast_io_enable = 0
+        self._config["Fast_Io_en"] = 0
         # time overflow control for 48bit timer
         # (0 = will cycle through, 1 = stops at 0hFFFF_FFFF_FFFF)
-        self.timer_overflow_control = 0
+        self._config["TimerOverflowControl"] = 0
         # select if test pulses are sent to the Front-End (analog domain) or
         # the discriminator input (digital domain)
         # (0 = Front-End, 1 = Discr. input)
-        self.select_tp_dig_analog = 0
+        self._config["SelectTP_Dig_Analog"] = 0
         # test pulse generation internal or external (0 = internal, 1 = external)
-        self.select_tp_ext_int = 0
+        self._config["SelectTP_Ext_Int"] = 0
         # select if clock is phase shifted in the end of command Gray counters
         # (0 = phase shifted, 1 = not shifted)
-        self.select_toa_clk = 0
+        self._config["SelectTP_ToA_Clk"] = 0
 
     def read_config_yaml(self, config_file):
         """
@@ -300,37 +335,45 @@ class TPX3(Dut):
         # get the configuration bits from the GeneralConfiguration file
         config = yaml.load(open(config_file, 'r'))
 
+        self.config_valsize_map = {}
+
         for register in config['registers']:
             name = register['name']
             address = register['address']
             size = register['size']
             mode = register['mode']
+            default = register['default']
             self.config[name] = {'address': address,
                                  'size': size,
+                                 'default': default,
                                  'mode': mode}
+                # fill the dict of DAC sizes
+            self.config_valsize_map[name] = int(size)
+
+        # define the _dacs attribute, which is a custom dictionary object, which overrides the
+        # __setitem__ function of the dictionary to also include checks for the validity of
+        # the values
+        self._config = ConfigDict(self.config_valsize_map)
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
-        self.polarity = self.config['Polarity']['mode']
-        self.op_mode = self.config['Op_mode']['mode']
-        self.gray_counter = self.config['Gray_count_en']['mode']
-        self.ack_command_enable = self.config['AckCommand_en']['mode']
-        self.tp_enable = self.config['TP_en']['mode']
-        self.fast_io_enable = self.config['Fast_Io_en']['mode']
-        self.timer_overflow_control = self.config['TimerOverflowControl']['mode']
-        self.select_tp_dig_analog = self.config['SelectTP_Dig_Analog']['mode']
-        self.select_tp_ext_int = self.config['SelectTP_Ext_Int']['mode']
-        self.select_toa_clk = self.config['SelectTP_ToA_Clk']['mode']
+        self._config["Polarity"] = self.config['Polarity']['default']
+        self._config["Op_mode"] = self.config['Op_mode']['default']
+        self._config["Gray_count_en"] = self.config['Gray_count_en']['default']
+        self._config["AckCommand_en"] = self.config['AckCommand_en']['default']
+        self._config["TP_en"] = self.config['TP_en']['default']
+        self._config["Fast_Io_en"] = self.config['Fast_Io_en']['default']
+        self._config["TimerOverflowControl"] = self.config['TimerOverflowControl']['default']
+        self._config["SelectTP_Dig_Analog"] = self.config['SelectTP_Dig_Analog']['default']
+        self._config["SelectTP_Ext_Int"] = self.config['SelectTP_Ext_Int']['default']
+        self._config["SelectTP_ToA_Clk"] = self.config['SelectTP_ToA_Clk']['default']
 
     def read_dac_yaml(self, dac_file):
-        # TODO: WRONG DOC!!!
+        
         """
-        Reads a configuration YAML file for the general Timepix3 configuration,
-        saves the content in the `self.config` field, assigns the chip attributes,
-        which store the settings correctly.
-        Note: It does not return the configuration ready to be written to the chip,
-        for that use the `get_configuration_register` method
+        Reads a dacs YAML file for the Timepix3 DAC configuration,
+        saves the content in the `self.dac` field
         """
-        # get the configuration bits from the GeneralConfiguration file
+        # get the Dac configuration bits from the dacs.yaml file
         dac = yaml.load(open(dac_file, 'r'))
 
         self.dac_valsize_map = {}
@@ -373,29 +416,22 @@ class TPX3(Dut):
         self._dacs["Ibias_CP_PLL"] = self.dac['Ibias_CP_PLL']['default']
         self._dacs["PLL_Vcntrl"] = self.dac['PLL_Vcntrl']['default']
 
-    def get_configuration_register(self):
-        """
-        Checks whether a YAML configuration file was already read and if so,
-        creates a configuration register from it and returns it.
-        """
-        if len(self.config) == 0 and self.config_file is not None:
-            read_config_yaml(self.config_file)
-        elif len(self.config) == 0 and self.config_file is None:
-            # in this case we don't know about a config file, nor have we read one,
-            # return None
-            return None
-        # create a 12 bit variable for the values of the GlobalConfig registers
-        configuration_bits = BitLogic(12)
-        # iterate over all values of the config dictionary, since each nested dict
-        # contains all necessary information, i.e. the key (=name) is not needed.
-        for reg in self.config.values():
-            address = reg['address']
-            size = reg['size']
-            mode = reg['mode']
-            # fill the variable for the register values with the values from the yaml file
-            # see see manual v1.9 p.40 for the registers
-            configuration_bits[address + size - 1:address] = mode
-        return configuration_bits
+    # def get_configuration_register(self):
+    #     """
+    #     creates a configuration register from self._config and returns it.
+    #     """
+    #     # create a 12 bit variable for the values of the GlobalConfig registers
+    #     configuration_bits = BitLogic(12)
+    #     # iterate over all values of the config dictionary, since each nested dict
+    #     # contains all necessary information, i.e. the key (=name) is not needed.
+    #     for reg in self.config.values():
+    #         address = reg['address']
+    #         size = reg['size']
+    #         mode = reg['mode']
+    #         # fill the variable for the register values with the values from the yaml file
+    #         # see see manual v1.9 p.40 for the registers
+    #         configuration_bits[address + size - 1:address] = mode
+    #     return configuration_bits
 
     def getGlobalSyncHeader(self):
         """
@@ -945,6 +981,8 @@ class TPX3(Dut):
         and writes them to the chip. Furthermore the sent data is returned.
         """
         data = []
+        configuration_bits = BitLogic(12)
+        
         # presync header: 40 bits
         data = self.getGlobalSyncHeader()
 
@@ -953,7 +991,17 @@ class TPX3(Dut):
 
         # create a 12 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the chip configuration
-        configuration_bits = self.get_configuration_register()
+        configuration_bits[0]=self._config["Polarity"]
+        configuration_bits[2:1]=self._config["Op_mode"]
+        configuration_bits[3]=self._config["Gray_count_en"]
+        configuration_bits[4]=self._config["AckCommand_en"]
+        configuration_bits[5]=self._config["TP_en"]
+        configuration_bits[6]=self._config["Fast_Io_en"]
+        configuration_bits[7]=self._config["TimerOverflowControl"]
+        configuration_bits[8]=0
+        configuration_bits[9]=self._config["SelectTP_Dig_Analog"]
+        configuration_bits[10]=self._config["SelectTP_Ext_Int"]
+        configuration_bits[11]=self._config["SelectTP_ToA_Clk"]
 
         # append the the GeneralConfiguration register with 4 additional bits to get the 16 bit DataIn
         data += (configuration_bits + BitLogic(4)).toByteList()
@@ -1413,6 +1461,29 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+
+
+    def gray_14_bit(self):
+        """
+        Generates a 14bit gray code according to Manual v1.9 page 19
+        """
+        gray = BitLogic(14)
+        for i in range (2**14):
+            gray[13:0]=i
+            gray[0]=gray[0]^gray[1]
+            gray[1]=gray[1]^gray[2]
+            gray[2]=gray[2]^gray[3]
+            gray[3]=gray[3]^gray[4]
+            gray[4]=gray[4]^gray[5]
+            gray[5]=gray[5]^gray[6]
+            gray[6]=gray[6]^gray[7]
+            gray[7]=gray[7]^gray[8]
+            gray[8]=gray[8]^gray[9]
+            gray[9]=gray[9]^gray[10]
+            gray[10]=gray[10]^gray[11]
+            gray[11]=gray[11]^gray[12]
+            gray[12]=gray[12]^gray[13]
+            self.gray_14[BitLogic.tovalue(gray)]=i;
 
     def lfsr_10_bit(self):
         """
