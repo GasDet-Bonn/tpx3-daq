@@ -142,6 +142,10 @@ class ScanBase(object):
         row['attribute'] = 'software_version'
         row['value'] = get_software_version()
         row.append()
+        row = run_config_table.row
+        row['attribute'] = 'chip_id'
+        row['value'] = kwargs.get('chip_id', '0x0000')
+        row.append()
 
         run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections']
         for kw, value in kwargs.iteritems():
@@ -151,6 +155,17 @@ class ScanBase(object):
                 row['value'] = value if isinstance(value, str) else str(value)
                 row.append()
         run_config_table.flush()
+
+        dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable)
+        for dac, value in self.chip.dacs.iteritems():
+            row = dac_table.row
+            row['DAC'] = dac
+            row['value'] = value
+            row.append()
+        dac_table.flush()
+
+        self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix',title='Mask Matrix', obj=self.chip.mask_matrix)
+        self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix',title='Threshold Matrix', obj=self.chip.thr_matrix)
 
     def configure(self, load_hitbus_mask=False, **kwargs):
         '''
@@ -218,7 +233,7 @@ class ScanBase(object):
         # Step 3a: Produce needed PCR
         for x in range(256):
             for y in range(256):
-                self.chip.set_pixel_pcr(x, y, self.chip.TP_OFF, 7, self.chip.MASK_OFF)
+                self.chip.set_pixel_pcr(x, y, self.chip.TP_OFF, 7, self.chip.MASK_OFF) #ALL OFF BY DEFAULT
 
         self.configure(**kwargs) #TODO: all DACs and pixel configuration should be from here
 
@@ -265,6 +280,9 @@ class ScanBase(object):
 
     def analyze(self):
         raise NotImplementedError('ScanBase.analyze() not implemented')
+
+    def plot(self):
+        raise NotImplementedError('ScanBase.plot() not implemented')
 
     def scan(self, **kwargs):
         raise NotImplementedError('ScanBase.scan() not implemented')

@@ -27,10 +27,10 @@ class SiUdp(SiTransferLayer):
     CMD_WR = 0x02
     CMD_RD = 0x01
 
-    MAX_RD_SIZE = 32 * 1476
+    MAX_RD_SIZE = 16 * 1476 #32 * 1476 was making some problesm maybe 31?
     MAX_WR_SIZE = 1024
 
-    UDP_TIMEOUT = 0.1
+    UDP_TIMEOUT = 1.0
     UDP_RETRANSMIT_CNT = 0  # TODO
 
     def __init__(self, conf):
@@ -51,15 +51,15 @@ class SiUdp(SiTransferLayer):
         self._sock_udp.sendto(request, (self._init['host'], self._init['port']))
 
         try:
-            ack = self._sock_udp.recv(2048)
+            ack = self._sock_udp.recv(4)
         except socket.timeout:
             raise IOError('SiUdp:_write_single - Timeout')
 
         if len(ack) != 4:
-            raise IOError('SiUdp:_write_single - Packet is wrong size')
+            raise IOError('SiUdp:_write_single - Packet is wrong size %d %d' % (len(ack), ack))
 
         if struct.unpack('>I', ack)[0] != len(data):
-            raise IOError('SiUdp:_write_single - Data error')
+            raise IOError('SiUdp:_write_single - Data error %d %d' % (len(data), struct.unpack('>I', ack)[0]))
 
     def write(self, addr, data):
 
@@ -83,12 +83,12 @@ class SiUdp(SiTransferLayer):
         ack = ''
         try:
             while len(ack) != size:
-                ack += self._sock_udp.recv(2048)
+                ack += self._sock_udp.recv(size)
         except socket.timeout:
-            raise IOError('SiUdp:_write_single - Timeout')
+            raise IOError('SiUdp:read_single - Timeout %d %d' % (len(ack), size))
 
         if len(ack) != size:
-            raise IOError('SiUdp:_read_single - Wrong packet size')
+            raise IOError('SiUdp:read_single - Wrong packet size %d %d' % (len(ack), size))
 
         return array('B', ack)
 
