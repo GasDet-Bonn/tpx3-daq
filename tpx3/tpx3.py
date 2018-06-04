@@ -354,24 +354,9 @@ class TPX3(Dut):
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
         # TODO: do we really need attributes for each DAC?
-        self._dacs["Ibias_Preamp_ON"] = self.dac['Ibias_Preamp_ON']['default']
-        self._dacs["Ibias_Preamp_OFF"] = self.dac['Ibias_Preamp_OFF']['default']
-        self._dacs["VPreamp_NCAS"] = self.dac['VPreamp_NCAS']['default']
-        self._dacs["Ibias_Ikrum"] = self.dac['Ibias_Ikrum']['default']
-        self._dacs["Vfbk"] = self.dac['Vfbk']['default']
-        self._dacs["Vthreshold_fine"] = self.dac['Vthreshold_fine']['default']
-        self._dacs["Vthreshold_coarse"] = self.dac['Vthreshold_coarse']['default']
-        self._dacs["Ibias_DiscS1_ON"] = self.dac['Ibias_DiscS1_ON']['default']
-        self._dacs["Ibias_DiscS1_OFF"] = self.dac['Ibias_DiscS1_OFF']['default']
-        self._dacs["Ibias_DiscS2_ON"] = self.dac['Ibias_DiscS2_ON']['default']
-        self._dacs["Ibias_DiscS2_OFF"] = self.dac['Ibias_DiscS2_OFF']['default']
-        self._dacs["Ibias_PixelDAC"] = self.dac['Ibias_PixelDAC']['default']
-        self._dacs["Ibias_TPbufferIn"] = self.dac['Ibias_TPbufferIn']['default']
-        self._dacs["Ibias_TPbufferOut"] = self.dac['Ibias_TPbufferOut']['default']
-        self._dacs["VTP_coarse"] = self.dac['VTP_coarse']['default']
-        self._dacs["VTP_fine"] = self.dac['VTP_fine']['default']
-        self._dacs["Ibias_CP_PLL"] = self.dac['Ibias_CP_PLL']['default']
-        self._dacs["PLL_Vcntrl"] = self.dac['PLL_Vcntrl']['default']
+        for k, v in self.dac.iteritems():
+            # key is DAC name, v contains value
+            self._dacs[k] = v['default']
 
     def get_configuration_register(self):
         """
