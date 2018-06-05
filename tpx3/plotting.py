@@ -752,7 +752,7 @@ class Plotting(object):
     def plot_scurves(self, scurves, scan_parameters, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None):
 
         if max_occ is None:
-            max_occ = 110 #np.max(scurves) + 5  # Maybe?
+            max_occ = np.max(scurves) + 5
 
         x_bins = scan_parameters  # np.arange(-0.5, max(scan_parameters) + 1.5)
         y_bins = np.arange(-0.5, max_occ + 0.5)
