@@ -73,7 +73,7 @@ class DacsDict(dict):
                                  "too large for size of {}".format(self.dac_valsize_map[dac]))
             else:
                 raise ValueError("DAC value for {} DAC may not be negative!".format(dac))
-        
+
 
 class TPX3(Dut):
 
@@ -233,10 +233,10 @@ class TPX3(Dut):
             self.test_matrix = np.zeros((256, 256), dtype=int)
         # set the thr matrix with zeros for all pixels
         if thr:
-            self.thr_matrix = np.zeros((256, 256), dtype=int)
+            self.thr_matrix = np.zeros((256, 256), dtype=np.uint8)
         # set the mask matrix with zeros for all pixels
         if mask:
-            self.mask_matrix = np.zeros((256, 256), dtype=int)
+            self.mask_matrix = np.zeros((256, 256), dtype=np.bool)
         # matrix storing ToT (= Time over Threshold) values of this Tpx3
         # 8 bit values
         if tot:
@@ -572,6 +572,12 @@ class TPX3(Dut):
             clear_fifo: bool = if True, we clear the FIFO and wait before and
                 after writing to the chip
         """
+
+        if isinstance(data[0], list):
+            for indata in data:
+                self.write(indata, clear_fifo)
+            return
+
         if clear_fifo:
             self['FIFO'].reset()
             time.sleep(TPX3_SLEEP)
@@ -845,20 +851,14 @@ class TPX3(Dut):
         # create a 6 bit variable for the pcr
         pcr = BitLogic(6)
 
-        # create the variables for test, thr and mask with their defined lenghts
-        test = BitLogic(1)
-        thr = BitLogic(4)
-        mask = BitLogic(1)
-
-        # get test, thr and matrix from the corresponding matrices
-        test = self.test_matrix[x_pos, y_pos]
-        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos], 4)
-        mask = self.mask_matrix[x_pos, y_pos]
-
         # fill the pcr with test, thr and mask
-        pcr[5] = test
-        pcr[4:1] = thr
-        pcr[0] = mask
+        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos], 4)
+        pcr[5] = np.int(self.test_matrix[x_pos, y_pos])
+        pcr[4] = thr[0]
+        pcr[3] = thr[1]
+        pcr[2] = thr[2]
+        pcr[1] = thr[3]
+        pcr[0] = np.int(self.mask_matrix[x_pos, y_pos])
 
         return pcr
 
@@ -902,7 +902,7 @@ class TPX3(Dut):
         data = []
 
         # create a 1536 bit variable for the PCRs of all pixels of one column
-        pixeldata = BitLogic(1536)
+        pixeldata = np.zeros((1536), dtype=np.uint8)
 
         # presync header: 40 bits; TODO: header selection
         data = self.getGlobalSyncHeader()
@@ -912,11 +912,17 @@ class TPX3(Dut):
 
         # append the columnMask for the column selection: 256 bits
         data += self.produce_column_mask(columns)
+
         # append the pcr for the pixels in the selected columns: 1535*columns bits
         for column in columns:
-            for row in range(256):
-                pixeldata[(5 + 6 * row):(0 + 6 * row)] = self.matrices_to_pcr(column, row)
-            data += pixeldata.toByteList()
+            pixeldata[0::6] = self.mask_matrix[column,:]
+            col_thr_bits = np.unpackbits(self.thr_matrix[column,:])
+            pixeldata[1::6] = col_thr_bits[4::8]
+            pixeldata[2::6] = col_thr_bits[5::8]
+            pixeldata[3::6] = col_thr_bits[6::8]
+            pixeldata[4::6] = col_thr_bits[7::8]
+            pixeldata[5::6] = self.test_matrix[column,:]
+            data += np.packbits(pixeldata[::-1]).tolist()
 
         data += [0x00]
 

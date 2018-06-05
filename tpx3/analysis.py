@@ -17,17 +17,33 @@ import multiprocessing as mp
 from functools import partial
 from scipy.optimize import curve_fit
 from scipy.special import erf
+from numba import njit
 
 logger = logging.getLogger('Analysis')
 
 _lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
 
+from numba import njit
 
+@njit
+def scurve_hist(hit_data, param_range):
+    scurves = np.zeros((256*256, len(param_range)), dtype=np.uint16)
+
+    for i in range(hit_data.shape[0]):
+        x = hit_data['x'][i]
+        y = hit_data['y'][i]
+        p = hit_data['scan_param_id'][i]
+        c = hit_data['EventCounter'][i]
+        scurves[x*256+y,p] += c
+
+    return scurves
+
+#TODO: This is bad should be njit
 def _interpret_raw_data(data):
 
     # TODO: fix types
     data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id'],
-               'formats': ['uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16']}
+               'formats': ['uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16']}
 
     pix_data = np.recarray((data.shape[0]), dtype=data_type)
 
@@ -42,7 +58,7 @@ def _interpret_raw_data(data):
     nf = np.uint64(0xf)
 
     pixel = (data >> n28) & np.uint64(0b111)
-    super_pixel = (data >> np.uint64(28 + 3)) & np.uint64(0x2f)
+    super_pixel = (data >> np.uint64(28 + 3)) & np.uint64(0x3f)
     right_col = pixel > 3
     eoc = (data >> np.uint64(28 + 9)) & np.uint64(0x7f)
 
