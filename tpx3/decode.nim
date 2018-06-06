@@ -5,6 +5,8 @@ import math
 # a simple Nim module, which performs decoding of the data sent by the FPGA
 # *`fast`*
 
+import random
+
 type
   BitArray[T: static[int]] = object
     data: array[T, bool]
@@ -39,7 +41,7 @@ proc `[]=`*[T, U](b: var BitArray, inds: HSlice[T, U], val: SomeInteger) =
     
     if nInds > b.len:
       raise newException(IndexError, &"Slice of {inds} is out of range for BitArray of size {b.len}")
-    if val.uint > (2 ^ nInds).uint:
+    if val.uint64 > (2 ^ nInds).uint64:
       raise newException(ValueError, &"Value of {val} is too large for {nInds} bits slice! " &
                                      &"Max size is {2 ^ nInds}")
 
@@ -60,7 +62,6 @@ proc `[]=`[T: not HSlice, U: SomeInteger | bool](b: var BitArray, ind: T, val: U
     elif val is bool:
       let boolVal = val
     let i = b ^^ ind
-    echo "index is ", i
     b.data[i] = boolVal
 
 proc `[]`[T: BackwardsIndex | SomeInteger](b: BitArray, ind: T): uint =
@@ -192,6 +193,15 @@ proc testSeq*(): (array[4, uint64], uint8) {.exportc, dynlib.} =
   #result = (addr(res[0]), 4'u8)
   result = (res, 4'u8)
 
+proc grayEncode*(val: uint64): uint64 =
+  result = val xor (val shr 1)
+
+proc grayDecode*(val: BitArray): BitArray =
+  result = createBitarray(48)
+  result[47] = val[47]
+  for i in countdown(46, 0):
+    result[i] = result[i+1] xor val[i]
+
 proc destroy*(data: ptr uint64) {.exportc, dynlib.} =
   dealloc(data)
   
@@ -239,3 +249,26 @@ when isMainModule:
   var b2 = createBitarray(48)
   b2[0 .. 47] = outBuf[0]
   #doAssert b2.toByteList == @[0'u, 0, 0, 0, 48, 113]
+
+  let n1 = 10'u64
+  let n1_enc = grayEncode(n1)
+  echo "N1 grayEncoded is ", n1_enc
+  var n1_ba = createBitarray(48)
+  n1_ba[0..47] = n1_enc
+  echo "N1 grayEncoded bitarray ", n1_ba
+  let n1_enc_grayDecode = grayDecode(n1_ba)
+  echo "N1 grayDecoded again is ", n1_enc_grayDecode
+  echo n1_enc_grayDecode[0..47]
+
+  let tstart = cpuTime()
+  for i in 0 .. 1_000_000:
+    let
+      val = rand(2 ^ 48).uint64
+      val_enc = grayEncode(val)
+    var val_ba = createBitarray(48)
+    val_ba[0..47] = val_enc
+    doAssert val_ba.grayDecode[0..47].uint64 == val
+  let tstop = cpuTime()
+
+  echo "Time for 1 Mio grayEncodes and grayDecodes is ", (tstop - tstart)
+  
