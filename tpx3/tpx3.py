@@ -222,7 +222,8 @@ class TPX3(Dut):
 
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
-        self.chipId = [0x00 for _ in range(4)]
+        # Our current chip seems to think its chip ID is all 0s. ?!
+        self.chipId = [0x00 for _ in range(3)] + [0x01]
 
         # reset all matrices to empty defaults
         self.reset_matrices()
@@ -450,8 +451,8 @@ class TPX3(Dut):
         Outputs:
             list of 5 bytes corresponding to 40 bits
         """
-        # 0x4E == local sync header
-        return [0x4E] + self.chipId
+        # 0xE4 == local sync header
+        return [0xE4] + self.chipId
 
     @property
     def dacs(self):
