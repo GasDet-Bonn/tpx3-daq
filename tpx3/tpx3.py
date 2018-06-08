@@ -171,7 +171,6 @@ class TPX3(Dut):
         self.lfsr_10 = {}
         self.lfsr_14 = {}
         self.lfsr_4 = {}
-        self.gray_14 = {}
         
 
         if not conf:
@@ -207,8 +206,7 @@ class TPX3(Dut):
         self.lfsr_10_bit()
         self.lfsr_14_bit()
         self.lfsr_4_bit()
-        self.gray_14_bit()
-
+        
         # config dictionary will store the full yaml as a nested dict
         self.config = {}
         # configuration settings
@@ -972,7 +970,216 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+    def requestTimerLow(self, write=True):
+        """
+        Sends the RequestTimerLow command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = []
 
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["RequestTimeLow"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerHigh(self, write=True):
+        """
+        Sends the RequestTimerhigh command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["RequestTimeHigh"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerRisingShutterLow(self, write=True):
+        """
+        Sends the Timer Rising Shutter Low command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["TimeRisingShutterLow"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerRisingShutterHigh(self, write=True):
+        """
+        Sends the Timer Rising Shutter High command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["TimeRisingShutterHigh"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerFallingShutterLow(self, write=True):
+        """
+        Sends the Timer Falling Shutter Low command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["TimeFallingShutterLow"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerFallingShutterHigh(self, write=True):
+        """
+        Sends the Timer Falling Shutter High command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["TimeFallingShutterHigh"]]
+
+        # fill with two dummy bytes for DataIN
+        data += [0x00]
+        data += [0x00]
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def SetTimer_15_0(self, setTime, write=True):
+        """
+        Sends the RequestTimerhigh command (see manual v1.9 p.32) together with the
+        SyncHeader and timer values for DataIn (see manual v1.9 p.43). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["SetTimer_15_0"]]
+
+        # fill with two dummy bytes for DataIN
+        time=BitLogic(16)
+        time[15:0]=setTime
+        data +=BitLogic.toByteList(time)
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def SetTimer_31_16(self, setTime, write=True):
+        """
+        Sends the setTimer_31_!6 command (see manual v1.9 p.32) together with the
+        SyncHeader and timer values for DataIn to (see manual v1.9 p.43). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["SetTimer_31_16"]]
+
+        # fill with two dummy bytes for DataIN
+        time=BitLogic(16)
+        time[15:0]=setTime
+        data +=BitLogic.toByteList(time)
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+    def SetTimer_47_32(self, setTime, write=True):
+        """
+        Sends the Set Timer 47_32 command (see manual v1.9 p.32) together with the
+        SyncHeader and timer values for DataIn (see manual v1.9 p.43). The sent bytes are also returned.
+        """
+        data = []
+
+        # presync header: 40 bits
+        data = self.getGlobalSyncHeader()
+
+        # append the code for the GeneralConfig_Read command header: 8 bits
+        data += [self.periphery_header_map["SetTimer_47_32"]]
+
+        # fill with two dummy bytes for DataIN
+        time=BitLogic(16)
+        time[15:0]=setTime
+        data +=BitLogic.toByteList(time)
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
     def startTimer(self, write=True):
         """
         Sends the T0_Sync_Command command (see manual v1.9 p.32) together with the
@@ -1383,28 +1590,7 @@ class TPX3(Dut):
             lfsr[1]=lfsr[0]
             lfsr[0]=lfsr[2]^dummy^lfsr[12]^lfsr[13]
         self.lfsr_14[2**14-1]=0;
-    def gray_14_bit(self):
-        """
-        Generates a 14bit gray code according to Manual v1.9 page 19
-        """
-        gray = BitLogic(14)
-        for i in range (2**14):
-            gray[13:0]=i
-            gray[0]=gray[0]^gray[1]
-            gray[1]=gray[1]^gray[2]
-            gray[2]=gray[2]^gray[3]
-            gray[3]=gray[3]^gray[4]
-            gray[4]=gray[4]^gray[5]
-            gray[5]=gray[5]^gray[6]
-            gray[6]=gray[6]^gray[7]
-            gray[7]=gray[7]^gray[8]
-            gray[8]=gray[8]^gray[9]
-            gray[9]=gray[9]^gray[10]
-            gray[10]=gray[10]^gray[11]
-            gray[11]=gray[11]^gray[12]
-            gray[12]=gray[12]^gray[13]
-            self.gray_14[BitLogic.tovalue(gray)]=i;
-
+    
 
     def lfsr_4_bit(self):
         """
@@ -1422,7 +1608,17 @@ class TPX3(Dut):
             lfsr[0]=lfsr[3]^dummy       
         self.lfsr_4[2**4-1]=0;
     
-
+    def gray_decrypt(self, value):
+        """
+        Decrypts a gray encoded 48 bit value according to Manual v1.9 page 19
+        """
+        encoded_value = BitLogic(48)
+        encoded_value[47:0]=value
+        gray_decrypt = BitLogic(48)
+        gray_decrypt[47]=encoded_value[47]
+        for i in range (46, -1, -1):
+            gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
+        return BitLogic.tovalue(gray_decrypt)    
     
         
 

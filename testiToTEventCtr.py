@@ -56,15 +56,6 @@ def run_test_pulses():
     # Step 2b: Enable power pulsing
     chip['CONTROL']['EN_POWER_PULSING'] = 1
     chip['CONTROL'].write()
-
-    # Step 2c: Reset the Timer
-    data = chip.getGlobalSyncHeader() + [0x40] + [0x0]
-    chip.write(data)
-    
-    # Step 2d: Start the Timer
-    data = chip.getGlobalSyncHeader() + [0x4A] + [0x0]
-    chip.write(data)
-
     chip['RX'].reset()
     chip['RX'].DATA_DELAY = 0
     chip['RX'].ENABLE = 1
@@ -74,7 +65,7 @@ def run_test_pulses():
     print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
 
     data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x0]
-    chip.write(data)
+    chip.write(data,False)
 
     print 'RX ready:', chip['RX'].is_ready
 
@@ -111,20 +102,7 @@ def run_test_pulses():
         chip.write(data, True)
       
 
-    # Step 4: Set TP DACs
-    # Step 4a: Set VTP_coarse DAC (8-bit)
-    print "Set VTP_coarse"
-    data = chip.set_dac("VTP_coarse", 0b00100000, write=False)
-    chip.write(data, True)
-    # Get the data, do the FPGA decode and do the decode ot the 0th element
-    # which should be EoC (header: 0x71)
-   
-    # Step 4b: Set VTP_fine DAC (9-bit)
-    print "Set VTP_fine"
-    data = chip.set_dac("VTP_fine", 0b100000000, write=False)
-    chip.write(data, True)
-    # Get the data, do the FPGA decode and do the decode ot the 0th element
-   
+    
     # Step 5: Set general config
     print "Set general config"
     data = chip.write_general_config(write=False)
@@ -132,39 +110,41 @@ def run_test_pulses():
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     
-    # Step 6: Write to the test pulse registers
-    # Step 6a: Write to period and phase tp registers
-    print "Write TP_period and TP_phase"
-    data = chip.write_tp_period(1, 0, write=False)
-    chip.write(data, True)
+   
     
-    # Step 6b: Write to pulse number tp register
-    print "Write TP_number"
-    data = chip.write_tp_pulsenumber(1, write=False)
-    chip.write(data, True)
-    # Get the data, do the FPGA decode and do the decode ot the 0th element
-    # which should be EoC (header: 0x71)
-    
-    print "Read TP config"
-    data = chip.read_tp_config(write=False)
-    chip.write(data, True)
+# Step 2c: Reset the Timer
+    print "Set Timer Low"
+    chip['CONTROL']['TO_SYNC'] = 0
+    chip['CONTROL'].write()
+    data = chip.resetTimer(False)
+    chip.write(data)
+    chip['CONTROL']['TO_SYNC'] = 1
+    chip['CONTROL'].write()
+    data = chip.requestTimerLow(False)
+    chip.write(data)
     fdata=chip['FIFO'].get_data()
     dout=chip.decode_fpga(fdata,True)
-    ddout = chip.decode(dout[0],0x0E)
-    print ddout
-
-
+    ddout = chip.decode(dout[0],0x44)
+    print ddout[0]
+    # Step 2d: Start the Timer
+    chip['CONTROL']['TO_SYNC'] = 0
+    chip['CONTROL'].write()
+    data = chip.startTimer(False)
+    chip.write(data)
     # Step 7: Set CTPR
     print "Write CTPR"
     data = chip.write_ctpr(range(255), write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
-    print "\tGet EoC: "
-    dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print_cmp_commands("11001111", dout[0], dout[1])
-
-    # Step 8: Send "read pixel matrix data driven" command
+    data = chip.requestTimerLow(False)
+    chip.write(data)
+    fdata=chip['FIFO'].get_data()
+    dout=chip.decode_fpga(fdata,True)
+    ddout = chip.decode(dout[1],0x44)
+    print "Timer Check:", BitLogic.tovalue(ddout[0])
+     
+   # Step 8: Send "read pixel matrix data driven" command
     print "Read pixel matrix data driven"
     data = chip.read_pixel_matrix_datadriven(write=False)
     chip.write(data, True)
@@ -172,57 +152,56 @@ def run_test_pulses():
     # which should be EoC (header: 0x71)
     
     # Step 9: Enable Shutter
+    print "Shutter Open"
     chip['CONTROL']['SHUTTER'] = 1
     chip['CONTROL'].write()
+    
 
     # Step 10: Receive data
-    """ ??? """
-    print "Acquisition"
-    time.sleep(5)
-    # Get the data and do the FPGA decoding
-    # dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
-    # for el in dout:
-    #    print "Decoded: ", el
-
+   
+    dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
+    data = chip.requestTimerLow(False)
+    for i in range(15):
+      chip.write(data)
+    #fdata1=chip['FIFO'].get_data()
+    fdata2=chip['FIFO'].get_data()
+    d1out1=chip.decode_fpga(fdata2,True)
+    for i in range(15):
+      dd1out1 = chip.decode(d1out1[2*i],0x44)
+      print "Timer Check:",BitLogic.tovalue(dd1out1[0])
+  
     # Step 11: Disable Shutter
-    print "Receive 'TP_internalfinished' and 'End of Readout'"
+    print "Shutter Closed'"
     chip['CONTROL']['SHUTTER'] = 0
     chip['CONTROL'].write()
-    # Get the data, do the FPGA decode and do the decode ot the 0th element
-    # which should be EoR (header: 0x71)
-    dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
-    pixel_counter = 0
-    EoR_counter = 0
-    stop_readout_counter = 0
-    reset_sequential_counter = 0
-    unknown_counter = 0
-    print "Get data:"
-    for el in dout:
-        if el[47:44].tovalue() is 0xB:
-            ddout = chip.decode(el, 0xB0)
-            print "\tX Pos:", chip.pixel_address_to_x(ddout[0])
-            print "\tY Pos:", chip.pixel_address_to_y(ddout[0])
-            print "\tToA:", chip.gray_14[BitLogic.tovalue(ddout[1])]
-            print "\tToT:", chip.lfsr_10[BitLogic.tovalue(ddout[2])]
-            print "\tHit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])]
-            pixel_counter += 1
-        elif el[47:40].tovalue() is 0x71:
-            print "\tEoC/EoR/TP_Finished:", chip.decode(el,0x71)
-            EoR_counter +=1
-        elif el[47:40].tovalue() is 0xF0:
-            print "\tStop Matrix Readout:", el
-            stop_readout_counter +=1
-        elif el[47:40].tovalue() is 0xE0:
-            print "\tReset Sequential:", el
-            reset_sequential_counter +=1
-        else: 
-          print"\tUnknown Packet:", el  
-          unknown_counter +=1   
-    print "Pixel counter:", pixel_counter
-    print "EoR counter:", EoR_counter
-    print "Stop Matrix Readout counter:", stop_readout_counter
-    print "Reset Sequential counter:", reset_sequential_counter
-    print "Unknown counter:", unknown_counter
+    
+    
+    data = chip.requestTimerRisingShutterLow(False)
+    chip.write(data)
+    fdata=chip['FIFO'].get_data()
+    dout=chip.decode_fpga(fdata,True)
+    ddout = chip.decode(dout[1],0x46)
+    print "Timer Check Rising Low:", BitLogic.tovalue(ddout[0])
+    data = chip.requestTimerRisingShutterHigh(False)
+    chip.write(data)
+    fdata=chip['FIFO'].get_data()
+    dout=chip.decode_fpga(fdata,True)
+    ddout = chip.decode(dout[0],0x47)
+    print "Timer Check Rising High:", BitLogic.tovalue(ddout[0])
+    data = chip.requestTimerFallingShutterLow(False)
+    chip.write(data)
+    ftdata=chip['FIFO'].get_data()
+    dtout=chip.decode_fpga(ftdata,True)
+    ddout = chip.decode(dtout[0],0x48)
+    print "Timer Check Falling Low:",BitLogic.tovalue(ddout[0])
+    data = chip.requestTimerFallingShutterHigh(False)
+    chip.write(data)
+    ftdata=chip['FIFO'].get_data()
+    dtout=chip.decode_fpga(ftdata,True)
+    ddout = chip.decode(dtout[0],0x49)
+    print "Timer Check Falling Low:",BitLogic.tovalue(ddout[0])
+   
+    
     
 
 

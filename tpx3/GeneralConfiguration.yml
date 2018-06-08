@@ -27,8 +27,8 @@ registers:
   description: Enables/Diables Test Pulses
   address: 5
   size: 1
-  default: 1
-  mode: 1
+  default: 0
+  mode: 0
 - name: Fast_Io_en
   description: Enables/Diables Super-Pixel-Oscillator
   address: 6
