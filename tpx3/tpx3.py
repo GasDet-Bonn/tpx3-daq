@@ -1011,25 +1011,47 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def read_periphery_template(self, name, header_only = False, local_header = False):
+        # presync header: 40 bits
+        if local_header:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
+
+        # append the correct data for each periphery command
+        data += [self.periphery_header_map[name]]
+        if not header_only:
+            # only append data, if not only header requested
+            # fill with two dummy bytes for DataIN
+            data += [0x00, 0x00]
+            # final dummy byte
+            data += [0x00]
+
+        return data
+
+    def read_matrix_template(self, name, header_only = False, local_header = False):
+        if local_header:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
+
+        # append the correct data for each periphery command
+        data += [self.matrix_header_map[name]]
+        if not header_only:
+            # only append data, if not only header requested
+            # final dummy byte
+            data += [0x00]
+
+        return data
+
     def read_general_config(self, write=True):
         """
         Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
         # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["GeneralConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("GeneralConfig_Read")
 
         if write is True:
             self.write(data)
@@ -1041,19 +1063,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["ResetTimer"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("ResetTimer")        
 
         if write is True:
             self.write(data)
@@ -1065,20 +1075,8 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["RequestTimeLow"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
-
+        data = self.read_periphery_template("RequestTimeLow")
+        
         if write is True:
             self.write(data)
         return data
@@ -1089,20 +1087,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["RequestTimeHigh"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
-
+        data = self.read_periphery_template("RequestTimeHigh")        
         if write is True:
             self.write(data)
         return data
@@ -1112,19 +1097,7 @@ class TPX3(Dut):
         Sends the Timer Rising Shutter Low command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TimeRisingShutterLow"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("TimeRisingShutterLow")
 
         if write is True:
             self.write(data)
@@ -1135,19 +1108,7 @@ class TPX3(Dut):
         Sends the Timer Rising Shutter High command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TimeRisingShutterHigh"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("TimeRisingShutterHigh")
 
         if write is True:
             self.write(data)
@@ -1158,19 +1119,7 @@ class TPX3(Dut):
         Sends the Timer Falling Shutter Low command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TimeFallingShutterLow"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("TimeFallingShutterLow")
 
         if write is True:
             self.write(data)
@@ -1181,36 +1130,20 @@ class TPX3(Dut):
         Sends the Timer Falling Shutter High command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TimeFallingShutterHigh"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("TimeFallingShutterHigh")
 
         if write is True:
             self.write(data)
         return data
 
+
+    # TODO: combine all 3 set timer functions into 1. No need for all 3!
     def SetTimer_15_0(self, setTime, write=True):
         """
         Sends the RequestTimerhigh command (see manual v1.9 p.32) together with the
         SyncHeader and timer values for DataIn (see manual v1.9 p.43). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["SetTimer_15_0"]]
+        data = self.read_periphery_template("SetTimer_15_0", True)
 
         # fill with two dummy bytes for DataIN
         time=BitLogic(16)
@@ -1228,14 +1161,8 @@ class TPX3(Dut):
         Sends the setTimer_31_!6 command (see manual v1.9 p.32) together with the
         SyncHeader and timer values for DataIn to (see manual v1.9 p.43). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["SetTimer_31_16"]]
-
+        data = self.read_periphery_template("SetTimer_31_16", True)
+        
         # fill with two dummy bytes for DataIN
         time=BitLogic(16)
         time[15:0]=setTime
@@ -1246,18 +1173,13 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
+    
     def SetTimer_47_32(self, setTime, write=True):
         """
         Sends the Set Timer 47_32 command (see manual v1.9 p.32) together with the
         SyncHeader and timer values for DataIn (see manual v1.9 p.43). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["SetTimer_47_32"]]
+        data = self.read_periphery_template("SetTimer_47_32", True)
 
         # fill with two dummy bytes for DataIN
         time=BitLogic(16)
@@ -1276,19 +1198,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["T0_Sync_Command"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("T0_Sync_Command")
 
         if write is True:
             self.write(data)
@@ -1338,16 +1248,9 @@ class TPX3(Dut):
             #  check if the phase is allowed
             raise ValueError("The phase must not be bigger than 15!")
 
-        data = []
-
+        data = self.read_periphery_template("TP_Period", True)
         # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
         bits = BitLogic(12)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TP_Period"]]
 
         # fill the 12-bit variable with the period and the phase
         bits[7:0] = period
@@ -1368,18 +1271,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the test pulse
         registers (see manual v1.9 p.35). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TPConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00, 0x00]
-        # and the empty byte which seems necessary...
-        data += [0x00]
+        data = self.read_periphery_template("TPConfig_Read")
 
         if write is True:
             self.write(data)
@@ -1396,13 +1288,8 @@ class TPX3(Dut):
             raise ValueError("""The columns list must not contain more than 256 entries and
             no entry may be larger than 255!""")
 
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
         # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["LoadCTPR"]]
+        data = self.read_matrix_template("LoadCTPR", True)
 
         # append the column mask based on the selected columns
         # TODO: The manual (v1.9) does not state if columns are masked with 1 or 0
@@ -1422,16 +1309,10 @@ class TPX3(Dut):
         a mask of selected columns based on the list of selected columns given
         in 'columns'.
         """
-        data = []
+        data = self.read_matrix_template("ReadConfigMatrix", True)
 
         # create a 256-bit bitarrays for single column selection
         SColSelectReg = BitLogic(256)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["ReadConfigMatrix"]]
 
         # Set SColSelect for selected columns to 0 and for other columns to 1
         for col in range(256):
@@ -1450,18 +1331,12 @@ class TPX3(Dut):
         a token select to select the maximum number of columns which are read
         simultaneously.
         """
-        data = []
+        data = self.read_matrix_template("ReadMatrixSequential", True)
 
         # create two 128-bit bitarrays for double column select and token select
         DColSelect = BitLogic(128)
         TokenSelectReg = BitLogic(128)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixSequential"]]
-
+        
         # Fill the double column select with zeros (manual v1.9 p.45) and
         # append it to the data
         for index in range(128):
@@ -1485,13 +1360,8 @@ class TPX3(Dut):
         Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51). If any data is still present on the pixel
         matrix (eoc_active is high) then an End of Readout packet is sent.
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
         # append the code for the ResetSequential command header: 8 bits
-        data += [self.matrix_header_map["ResetSequential"]]
+        data = self.read_matrix_template("ResetSequential", True)
 
         # NOTE: The manual (v1.9 p.52) states to send 142 bits, we need to
         # send full bytes though, so we send 144 bits. The manual also states
@@ -1512,15 +1382,7 @@ class TPX3(Dut):
         """
         Sends a command to stop / pause a pixel readout (Manual v 1.9 pg. 52)
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["StopMatrixCommand"]]
-
-        data += [0x00]
+        data = self.read_matrix_template("StopMatrixCommand")
 
         if write is True:
             self.write(data)
@@ -1555,16 +1417,9 @@ class TPX3(Dut):
             # check if the PLL Output Configuration is allowed
             raise ValueError("The PLL Output Configuration must not be bigger than 22!")
 
-        data = []
-
+        data = self.read_periphery_template("PLLConfig", True)
         # create a 16 bit variable for the PLL config registers
         bits = BitLogic(16)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the PLLConfig command header: 8 bits
-        data += [self.periphery_header_map["PLLConfig"]]
 
         # fill the 16-bit variable with values for the PLL config register
         bits[0] = bypass
@@ -1590,18 +1445,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the PLL Config
         registers (see manual v1.9 p.37). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the PLLConfig_Eead command header: 8 bits
-        data += [self.periphery_header_map["PLLConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00, 0x00]
-        # empty needed byte...
-        data += [0x00]
+        data = self.read_periphery_template("PLLConfig_Read")
 
         if write is True:
             self.write(data)
@@ -1618,15 +1462,7 @@ class TPX3(Dut):
         Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and
         v1.9 p.50). The sended bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-
-        data += [0x00]
+        data = self.read_matrix_template("ReadMatrixDataDriven")
 
         if write is True:
             self.write(data)
@@ -1637,14 +1473,8 @@ class TPX3(Dut):
         Sends the "ReadMatrixDataDriven" command with the column mask. The column mask is
         set such all columns are loaded.
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-
+        data = self.read_matrix_template("ReadMatrixDataDriven", True)
+        
         # append the 256 bit column mask; TODO: make the columns selectable
         data += self.produce_column_mask(range(256))
 
@@ -1658,16 +1488,8 @@ class TPX3(Dut):
         """
         Sends a command to read the Column Test Pulse Register (Manual v 1.9 pg. 50)
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["ReadCTPR"]]
-
-        data += [0x00]
-
+        data = self.read_matrix_template("ReadCTPR")
+        
         if write is True:
             self.write(data)
         return data
