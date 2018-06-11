@@ -1090,6 +1090,18 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def read_output_block_config(self, write=True):
+        """
+        Sends the OutBlockConfig_Read command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at
+        shutter start. The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("OutBlockConfig_Read")
+
+        if write is True:
+            self.write(data)
+        return data
+
 
     # TODO: combine all 3 set timer functions into 1. No need for all 3!
     def SetTimer_15_0(self, setTime, write=True):
