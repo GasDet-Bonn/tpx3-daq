@@ -43,68 +43,53 @@ logger = logging.getLogger('tpx3')
 logger.setLevel(loglevel)
 
 
-class DacsDict(dict):
-    """
-    A custom dictionary class, used for the DACs of Timepix3, which overrides the
-    __setitem__ class of a dictionary to also make a check for the validity of
-    a given value for a dictionary
-    """
-    def __init__(self, dac_valsize_map):
-        """
-        as initialization we need the alowed sizes of each DAC
-        """
-        self.dac_valsize_map = dac_valsize_map
+customDictErrors = {
+    "DacsDict" :
+    { "invalidKey"  : "DAC with name {} does not exist!",
+      "invalidSize" : "DAC value of {} for DAC {} is too large for size of {}",
+      "negativeVal" : "DAC value for {} DAC may not be negative!" },
+    "ConfigDict" :
+    {
+        "invalidKey"  : "Config with name {} does not exist!",
+        "invalidSize" : "Config value of {} for Configuration {} is too large for size of {}",
+        "negativeVal" : "Config value for {} Configuration may not be negative!"
+    }
+}
 
-    def __setitem__(self, dac, value):
+class CustomDict(dict):
+    """
+    A custom dictionary class, used for the DACs and general config of Timepix3,
+    which overrides the __setitem__ class of a dictionary to also make a check 
+    for the validity of a given value for a dictionary
+    """
+    def __init__(self, valsize_map, dict_type):
+        """
+        as initialization we need the alowed sizes of each DAC / value for each config
+        """
+        self.valsize_map = valsize_map
+        self.dictErrors = customDictErrors[dict_type]
+
+    def __setitem__(self, key, value):
         """
         Override the __setitem__ function of the dictionary and check the size
         of the given value. Else raise a ValueError
         """
         # check if valid by checking size smaller than max value
-        isValidDac = True if dac in self.dac_valsize_map.keys() else False
-        if not isValidDac:
-            raise KeyError("DAC with name {} does not exist!".format(dac))
-        isValid = True if value < 2 ** self.dac_valsize_map[dac] and value >= 0 else False
-        if isValid and isValidDac:
-            super(DacsDict, self).__setitem__(dac, value)
+        isValidKey = True if key in self.valsize_map.keys() else False        
+        if not isValidKey:
+            raise KeyError(self.dictErrors['invalidKey'].format(key))
+        isValid = True if value < 2 ** self.valsize_map[key] and value >= 0 else False
+        if isValid and isValidKey:
+            super(CustomDict, self).__setitem__(key, value)
         elif isValid == False:
             if value >= 0:
-                raise ValueError("DAC value of {} for DAC {} is ".format(value, dac) +
-                                 "too large for size of {}".format(self.dac_valsize_map[dac]))
+                raise ValueError(
+                    self.dictErrors['invalidSize'].format(value,
+                                                          key,
+                                                          self.valsize_map[key])
+                )
             else:
-                raise ValueError("DAC value for {} DAC may not be negative!".format(dac))
-
-class ConfigDict(dict):
-    """
-    A custom dictionary class, used for the Config of Timepix3, which overrides the
-    __setitem__ class of a dictionary to also make a check for the validity of
-    a given value for a dictionary
-    """
-    def __init__(self, config_valsize_map):
-        """
-        as initialization we need the alowed sizes of each DAC
-        """
-        self.config_valsize_map = config_valsize_map
-
-    def __setitem__(self, config, value):
-        """
-        Override the __setitem__ function of the dictionary and check the size
-        of the given value. Else raise a ValueError
-        """
-        # check if valid by checking size smaller than max value
-        isValidConfig = True if config in self.config_valsize_map.keys() else False
-        if not isValidConfig:
-            raise KeyError("Config with name {} does not exist!".format(config))
-        isValid = True if value < 2 ** self.config_valsize_map[config] and value >= 0 else False
-        if isValid and isValidConfig:
-            super(ConfigDict, self).__setitem__(config, value)
-        elif isValid == False:
-            if value >= 0:
-                raise ValueError("Config value of {} for Configuration {} is ".format(value, config) +
-                                 "too large for size of {}".format(self.config_valsize_map[config]))
-            else:
-                raise ValueError("Config value for {} Configuration may not be negative!".format(config))
-        
+                raise ValueError(self.dictErrors['negativeVal'].format(key))
 
 class TPX3(Dut):
 
@@ -335,7 +320,7 @@ class TPX3(Dut):
         # define the _dacs attribute, which is a custom dictionary object, which overrides the
         # __setitem__ function of the dictionary to also include checks for the validity of
         # the values
-        self._config = ConfigDict(self.config_valsize_map)
+        self._config = CustomDict(self.config_valsize_map, "ConfigDict")
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
         for k, v in self.config.iteritems():
@@ -369,7 +354,7 @@ class TPX3(Dut):
         # define the _dacs attribute, which is a custom dictionary object, which overrides the
         # __setitem__ function of the dictionary to also include checks for the validity of
         # the values
-        self._dacs = DacsDict(self.dac_valsize_map)
+        self._dacs = CustomDict(self.dac_valsize_map, "DacsDict")
 
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
