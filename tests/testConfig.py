@@ -84,7 +84,7 @@ def test_dacs():
     print "Enable Test pulses"
     chip._config["TP_en"] = 1
     # assert we wrote the value correctly to the dictionary
-    assert(chip.config["Polarity"] == 1, "We wrote 1 but received {}".format(chip.config["TP_en"]))
+    assert(chip.config["TP_en"] == 1, "We wrote 1 but received {}".format(chip.config["TP_en"]))
     data=chip.write_general_config(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
