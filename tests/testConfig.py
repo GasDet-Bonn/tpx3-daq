@@ -11,11 +11,13 @@ def print_exp_recvd(name, exp_header, header, chipId = None):
     if chipId != None:
         print "\tChipID:", chipId
 
+
 def print_cmp_dacvals(exp_val, val):
     """
     Convenience printing function to compare expected and receive DAC values
     """
     print_exp_recvd("DAC value", exp_val, val, None)
+
 
 def print_cmp_daccodes(exp_code, code):
     """
@@ -23,7 +25,8 @@ def print_cmp_daccodes(exp_code, code):
     """
     print_exp_recvd("DAC code", exp_code, code, None)
 
-def test_dacs():
+
+def test_config():
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
@@ -42,7 +45,7 @@ def test_dacs():
     # Step 2c: Reset the Timer
     data = chip.getGlobalSyncHeader() + [0x40] + [0x0]
     chip.write(data)
-    
+
     # Step 2d: Start the Timer
     data = chip.getGlobalSyncHeader() + [0x4A] + [0x0]
     chip.write(data)
@@ -80,12 +83,12 @@ def test_dacs():
 
     # now set some random config bits to different values than default
     print "Switch Polarity"
-    chip._config["Polarity"] = 0
+    chip.config["Polarity"] = 0
     print "Enable Test pulses"
-    chip._config["TP_en"] = 1
+    chip.config["TP_en"] = 1
     # assert we wrote the value correctly to the dictionary
     assert(chip.config["TP_en"] == 1, "We wrote 1 but received {}".format(chip.config["TP_en"]))
-    data=chip.write_general_config(False)
+    data = chip.write_general_config(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
     print fdata
@@ -96,7 +99,7 @@ def test_dacs():
     # now read them back
     # NOTE: this check needs to be done by eye for now
     # TODO: fix that!
-    data=chip.read_general_config(False)
+    data = chip.read_general_config(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
     print fdata
@@ -104,5 +107,7 @@ def test_dacs():
     print dout
     ddout = chip.decode(dout[0], 0x31)
     print ddout
+
+
 if __name__ == "__main__":
-    test_dacs()
+    test_config()
