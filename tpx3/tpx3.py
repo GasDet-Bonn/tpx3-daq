@@ -252,10 +252,10 @@ class TPX3(Dut):
             self.test_matrix = np.zeros((256, 256), dtype=int)
         # set the thr matrix with zeros for all pixels
         if thr:
-            self.thr_matrix = np.zeros((256, 256), dtype=int)
+            self.thr_matrix = np.zeros((256, 256), dtype=np.uint8)
         # set the mask matrix with zeros for all pixels
         if mask:
-            self.mask_matrix = np.zeros((256, 256), dtype=int)
+            self.mask_matrix = np.zeros((256, 256), dtype=np.bool)
         # matrix storing ToT (= Time over Threshold) values of this Tpx3
         # 8 bit values
         if tot:
@@ -359,24 +359,9 @@ class TPX3(Dut):
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
         # TODO: do we really need attributes for each DAC?
-        self._dacs["Ibias_Preamp_ON"] = self.dac['Ibias_Preamp_ON']['default']
-        self._dacs["Ibias_Preamp_OFF"] = self.dac['Ibias_Preamp_OFF']['default']
-        self._dacs["VPreamp_NCAS"] = self.dac['VPreamp_NCAS']['default']
-        self._dacs["Ibias_Ikrum"] = self.dac['Ibias_Ikrum']['default']
-        self._dacs["Vfbk"] = self.dac['Vfbk']['default']
-        self._dacs["Vthreshold_fine"] = self.dac['Vthreshold_fine']['default']
-        self._dacs["Vthreshold_coarse"] = self.dac['Vthreshold_coarse']['default']
-        self._dacs["Ibias_DiscS1_ON"] = self.dac['Ibias_DiscS1_ON']['default']
-        self._dacs["Ibias_DiscS1_OFF"] = self.dac['Ibias_DiscS1_OFF']['default']
-        self._dacs["Ibias_DiscS2_ON"] = self.dac['Ibias_DiscS2_ON']['default']
-        self._dacs["Ibias_DiscS2_OFF"] = self.dac['Ibias_DiscS2_OFF']['default']
-        self._dacs["Ibias_PixelDAC"] = self.dac['Ibias_PixelDAC']['default']
-        self._dacs["Ibias_TPbufferIn"] = self.dac['Ibias_TPbufferIn']['default']
-        self._dacs["Ibias_TPbufferOut"] = self.dac['Ibias_TPbufferOut']['default']
-        self._dacs["VTP_coarse"] = self.dac['VTP_coarse']['default']
-        self._dacs["VTP_fine"] = self.dac['VTP_fine']['default']
-        self._dacs["Ibias_CP_PLL"] = self.dac['Ibias_CP_PLL']['default']
-        self._dacs["PLL_Vcntrl"] = self.dac['PLL_Vcntrl']['default']
+        for k, v in self.dac.iteritems():
+            # key is DAC name, v contains value
+            self._dacs[k] = v['default']
 
     # def get_configuration_register(self):
     #     """
@@ -585,6 +570,12 @@ class TPX3(Dut):
             clear_fifo: bool = if True, we clear the FIFO and wait before and
                 after writing to the chip
         """
+
+        if isinstance(data[0], list):
+            for indata in data:
+                self.write(indata, clear_fifo)
+            return
+
         if clear_fifo:
             self['FIFO'].reset()
             time.sleep(TPX3_SLEEP)
@@ -858,20 +849,14 @@ class TPX3(Dut):
         # create a 6 bit variable for the pcr
         pcr = BitLogic(6)
 
-        # create the variables for test, thr and mask with their defined lenghts
-        test = BitLogic(1)
-        thr = BitLogic(4)
-        mask = BitLogic(1)
-
-        # get test, thr and matrix from the corresponding matrices
-        test = self.test_matrix[x_pos, y_pos]
-        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos], 4)
-        mask = self.mask_matrix[x_pos, y_pos]
-
         # fill the pcr with test, thr and mask
-        pcr[5] = test
-        pcr[4:1] = thr
-        pcr[0] = mask
+        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos], 4)
+        pcr[5] = np.int(self.test_matrix[x_pos, y_pos])
+        pcr[4] = thr[0]
+        pcr[3] = thr[1]
+        pcr[2] = thr[2]
+        pcr[1] = thr[3]
+        pcr[0] = np.int(self.mask_matrix[x_pos, y_pos])
 
         return pcr
 
@@ -915,7 +900,7 @@ class TPX3(Dut):
         data = []
 
         # create a 1536 bit variable for the PCRs of all pixels of one column
-        pixeldata = BitLogic(1536)
+        pixeldata = np.zeros((1536), dtype=np.uint8)
 
         # presync header: 40 bits; TODO: header selection
         data = self.getGlobalSyncHeader()
@@ -925,11 +910,17 @@ class TPX3(Dut):
 
         # append the columnMask for the column selection: 256 bits
         data += self.produce_column_mask(columns)
+
         # append the pcr for the pixels in the selected columns: 1535*columns bits
         for column in columns:
-            for row in range(256):
-                pixeldata[(5 + 6 * row):(0 + 6 * row)] = self.matrices_to_pcr(column, row)
-            data += pixeldata.toByteList()
+            pixeldata[0::6] = self.mask_matrix[column,:]
+            col_thr_bits = np.unpackbits(self.thr_matrix[column,:])
+            pixeldata[1::6] = col_thr_bits[4::8]
+            pixeldata[2::6] = col_thr_bits[5::8]
+            pixeldata[3::6] = col_thr_bits[6::8]
+            pixeldata[4::6] = col_thr_bits[7::8]
+            pixeldata[5::6] = self.test_matrix[column,:]
+            data += np.packbits(pixeldata[::-1]).tolist()
 
         data += [0x00]
 
