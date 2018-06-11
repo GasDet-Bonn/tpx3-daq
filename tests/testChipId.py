@@ -16,7 +16,12 @@ def pretty_print(string_val, bits=32):
     print "Hex ", lst_hex
     print "Binary ", bits
 
+
 def print_exp_recvd(name, exp_header, header, chipId = None):
+    """
+    Printing function to print the expected and received header as well as the chipId
+    (if available).
+    """
     print "\tExpected {}: {}".format(name, exp_header)
     print "\tReceived {}: {}".format(name, header)
     if chipId != None:
@@ -29,11 +34,13 @@ def print_cmp_commands(exp_header, header, chipId = None):
     """
     print_exp_recvd("command header", exp_header, header, chipId)
 
+
 def print_cmp_dacvals(exp_val, val):
     """
     Convenience printing function to compare expected and receive DAC values
     """
     print_exp_recvd("DAC value", exp_val, val, None)
+
 
 def print_cmp_daccodes(exp_code, code):
     """
@@ -41,7 +48,8 @@ def print_cmp_daccodes(exp_code, code):
     """
     print_exp_recvd("DAC code", exp_code, code, None)
 
-def run_test_pulses():
+
+def test_chipID():
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
@@ -87,28 +95,20 @@ def run_test_pulses():
     except IndexError:
         print("no EoR found")
 
-
     # Step 3: Set PCR
     # Step 3a: Produce needed PCR
-    for x in range(255):
+    for x in range(256):
         for y in range(256):
             chip.set_pixel_pcr(x, y, 0, 7, 1)
-    for y in range(255):
-        chip.set_pixel_pcr(255,y,0,7,1)
-    chip.set_pixel_pcr(255,255,1,7,0)
     # Step 3b: Write PCR to chip
     for i in range(256):
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
-      
 
-    
-    # Step 5: Set general config
+    # Step 4: Set general config
     print "Set general config"
     data = chip.write_general_config(write=False)
     chip.write(data, True)
-    # Get the data, do the FPGA decode and do the decode ot the 0th element
-    # which should be EoC (header: 0x71)
 
     chip['FIFO'].reset()
 
@@ -121,7 +121,7 @@ def run_test_pulses():
     a local chip ID of 0x01. The chip correctly answers with an OtherChipCommand,
     but containing the chip ID with all 0s...
     """
-    
+
     data = chip.read_periphery_template("SenseDACsel", local_header = True)
     chip.write(data, False, printf = True)
 
@@ -129,14 +129,14 @@ def run_test_pulses():
     dout = chip.decode_fpga(fdata, True)
     print("Fdata is ", fdata)
     print("dout is {} and its length {}".format(dout, len(dout)))
-    
+
     ddout = chip.decode(dout[0], 0x72)
-    #ddout1 = chip.decode(dout[1], 0x00)    
-    
+    # ddout1 = chip.decode(dout[1], 0x00)
+
     print("ddout is ", ddout)
-    #print("ddout1 is ", ddout1)    
-   
+    # print("ddout1 is ", ddout1)
+
 
 
 if __name__ == "__main__":
-    run_test_pulses()
+    test_chipID()
