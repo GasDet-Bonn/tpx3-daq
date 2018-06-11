@@ -243,9 +243,9 @@ class TPX3(Dut):
         else:
             self.config_file = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
-        # TODO: think about whether we should always read the YAML config file?
+        # read the general configuration from the YAML file and set the _config dictionary
+        # to the values given by the 'mode' field (i.e. the user desired setting)
         self.read_config_yaml(self.config_file)
-        self.reset_config_attributes()
         self.dac = {}
 
         # configuration settings
@@ -290,38 +290,21 @@ class TPX3(Dut):
         if hits:
             self.hits = np.zeros((256, 256), dtype=np.int8)
 
-    def reset_config_attributes(self):
+    def reset_config_attributes(self, to_default=False):
         """
-        Resets all configuration attributes to their default values
+        Resets all configuration attributes to their default values if to_default
+        is true, else we reset the values to the 'mode' value of the YAML file,
+        i.e. the user desired chip specific settings
         """
         # flag to determine whether the configuration has been written to the chip already
         self.config_written_to_chip = False
         # general configuration settings are initialized with the default chip values
         # for an explanation see manual v1.9 p.40 or the general config YAML file
-        # selects polarity (0 = positive, 1 = negative)
-        self._config["Polarity"] = 1
-        # pixel operation mode (0b00 = ToA and ToT, 0b01 = ToA, 0b10 = Event and iToT)
-        self._config["Op_mode"] = 0b00
-        # end of command Gray counter (for ToA measurements?) (0 = disabled, 1 = enabled)
-        self._config["Gray_count_en"] = 0
-        # AckCommand package (0 = disabled, 1 = enabled)
-        self._config["AckCommand_en"] = 0
-        # test pulse enable (0 = disabled, 1 = enabled)
-        self._config["TP_en"] = 0
-        # super pixel oscillator enable (Fast_Io_en; 0 = disabled, 1 = enabled)
-        self._config["Fast_Io_en"] = 0
-        # time overflow control for 48bit timer
-        # (0 = will cycle through, 1 = stops at 0hFFFF_FFFF_FFFF)
-        self._config["TimerOverflowControl"] = 0
-        # select if test pulses are sent to the Front-End (analog domain) or
-        # the discriminator input (digital domain)
-        # (0 = Front-End, 1 = Discr. input)
-        self._config["SelectTP_Dig_Analog"] = 0
-        # test pulse generation internal or external (0 = internal, 1 = external)
-        self._config["SelectTP_Ext_Int"] = 0
-        # select if clock is phase shifted in the end of command Gray counters
-        # (0 = phase shifted, 1 = not shifted)
-        self._config["SelectTP_ToA_Clk"] = 0
+        for k, v in self.config.iteritems():
+            if to_default:
+                self._config[k] = v['default']
+            else:
+                self._config[k] = v['mode']
 
     def read_config_yaml(self, config_file):
         """
@@ -346,7 +329,7 @@ class TPX3(Dut):
                                  'size': size,
                                  'default': default,
                                  'mode': mode}
-                # fill the dict of DAC sizes
+            # fill the dict of DAC sizes
             self.config_valsize_map[name] = int(size)
 
         # define the _dacs attribute, which is a custom dictionary object, which overrides the
@@ -355,16 +338,11 @@ class TPX3(Dut):
         self._config = ConfigDict(self.config_valsize_map)
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
-        self._config["Polarity"] = self.config['Polarity']['default']
-        self._config["Op_mode"] = self.config['Op_mode']['default']
-        self._config["Gray_count_en"] = self.config['Gray_count_en']['default']
-        self._config["AckCommand_en"] = self.config['AckCommand_en']['default']
-        self._config["TP_en"] = self.config['TP_en']['default']
-        self._config["Fast_Io_en"] = self.config['Fast_Io_en']['default']
-        self._config["TimerOverflowControl"] = self.config['TimerOverflowControl']['default']
-        self._config["SelectTP_Dig_Analog"] = self.config['SelectTP_Dig_Analog']['default']
-        self._config["SelectTP_Ext_Int"] = self.config['SelectTP_Ext_Int']['default']
-        self._config["SelectTP_ToA_Clk"] = self.config['SelectTP_ToA_Clk']['default']
+        for k, v in self.config.iteritems():
+            # NOTE: here we write 'mode' to write the current desired values from the YAML
+            # file, instead of the default values, in order to allow us to read a file 
+            # with specific settings.
+            self._config[k] = v['mode']
 
     def read_dac_yaml(self, dac_file):
         
