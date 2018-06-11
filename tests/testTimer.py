@@ -16,6 +16,7 @@ def pretty_print(string_val, bits=32):
     print "Hex ", lst_hex
     print "Binary ", bits
 
+
 def print_exp_recvd(name, exp_header, header, chipId = None):
     print "\tExpected {}: {}".format(name, exp_header)
     print "\tReceived {}: {}".format(name, header)
@@ -29,11 +30,13 @@ def print_cmp_commands(exp_header, header, chipId = None):
     """
     print_exp_recvd("command header", exp_header, header, chipId)
 
+
 def print_cmp_dacvals(exp_val, val):
     """
     Convenience printing function to compare expected and receive DAC values
     """
     print_exp_recvd("DAC value", exp_val, val, None)
+
 
 def print_cmp_daccodes(exp_code, code):
     """
@@ -41,7 +44,8 @@ def print_cmp_daccodes(exp_code, code):
     """
     print_exp_recvd("DAC code", exp_code, code, None)
 
-def run_test_pulses():
+
+def test_timer():
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
@@ -87,32 +91,27 @@ def run_test_pulses():
     except IndexError:
         print("no EoR found")
 
-
     # Step 3: Set PCR
     # Step 3a: Produce needed PCR
     for x in range(255):
         for y in range(256):
             chip.set_pixel_pcr(x, y, 0, 7, 1)
     for y in range(255):
-        chip.set_pixel_pcr(255,y,0,7,1)
-    chip.set_pixel_pcr(255,255,1,7,0)
+        chip.set_pixel_pcr(255, y, 0, 7, 1)
+    chip.set_pixel_pcr(255, 255, 1, 7, 0)
     # Step 3b: Write PCR to chip
     for i in range(256):
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
-      
 
-    
-    # Step 5: Set general config
+    # Step 4: Set general config
     print "Set general config"
     data = chip.write_general_config(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
-    
-   
-    
-# Step 2c: Reset the Timer
+
+    # Step 5: Reset the Timer
     print "Set Timer Low"
     chip['CONTROL']['TO_SYNC'] = 0
     chip['CONTROL'].write()
@@ -122,15 +121,17 @@ def run_test_pulses():
     chip['CONTROL'].write()
     data = chip.requestTimerLow(False)
     chip.write(data)
-    fdata=chip['FIFO'].get_data()
-    dout=chip.decode_fpga(fdata,True)
-    ddout = chip.decode(dout[0],0x44)
+    fdata = chip['FIFO'].get_data()
+    dout = chip.decode_fpga(fdata, True)
+    ddout = chip.decode(dout[0], 0x44)
     print ddout[0]
-    # Step 2d: Start the Timer
+
+    # Step 6: Start the Timer
     chip['CONTROL']['TO_SYNC'] = 0
     chip['CONTROL'].write()
     data = chip.startTimer(False)
     chip.write(data)
+
     # Step 7: Set CTPR
     print "Write CTPR"
     data = chip.write_ctpr(range(255), write=False)
@@ -139,71 +140,69 @@ def run_test_pulses():
     # which should be EoC (header: 0x71)
     data = chip.requestTimerLow(False)
     chip.write(data)
-    fdata=chip['FIFO'].get_data()
-    dout=chip.decode_fpga(fdata,True)
-    ddout = chip.decode(dout[1],0x44)
+    fdata = chip['FIFO'].get_data()
+    dout = chip.decode_fpga(fdata, True)
+    ddout = chip.decode(dout[1], 0x44)
     print "Timer Check:", BitLogic.tovalue(ddout[0])
-     
-   # Step 8: Send "read pixel matrix data driven" command
+
+    # Step 8: Send "read pixel matrix data driven" command
     print "Read pixel matrix data driven"
     data = chip.read_pixel_matrix_datadriven(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
-    
+
     # Step 9: Enable Shutter
     print "Shutter Open"
     chip['CONTROL']['SHUTTER'] = 1
     chip['CONTROL'].write()
-    
 
     # Step 10: Receive data
-   
     dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
+
+    # Step11: Request the low 32 bits of the timer multiple times
     data = chip.requestTimerLow(False)
     for i in range(15):
-      chip.write(data)
-    #fdata1=chip['FIFO'].get_data()
-    fdata2=chip['FIFO'].get_data()
-    d1out1=chip.decode_fpga(fdata2,True)
+        chip.write(data)
+    # fdata1=chip['FIFO'].get_data()
+    fdata2 = chip['FIFO'].get_data()
+    d1out1 = chip.decode_fpga(fdata2, True)
     for i in range(15):
-      dd1out1 = chip.decode(d1out1[2*i],0x44)
-      print "Timer Check:",BitLogic.tovalue(dd1out1[0])
-  
+        dd1out1 = chip.decode(d1out1[2 * i], 0x44)
+        print "Timer Check:", BitLogic.tovalue(dd1out1[0])
+
     # Step 11: Disable Shutter
     print "Shutter Closed'"
     chip['CONTROL']['SHUTTER'] = 0
     chip['CONTROL'].write()
-    
-    
+
+    # Step 12: Request the low 32 bit and the high 16 bit of the timer
+    #          for the shutter start (Rising) and the shutter end (Falling)
     data = chip.requestTimerRisingShutterLow(False)
     chip.write(data)
-    fdata=chip['FIFO'].get_data()
-    dout=chip.decode_fpga(fdata,True)
-    ddout = chip.decode(dout[1],0x46)
+    fdata = chip['FIFO'].get_data()
+    dout = chip.decode_fpga(fdata, True)
+    ddout = chip.decode(dout[1], 0x46)
     print "Timer Check Rising Low:", BitLogic.tovalue(ddout[0])
     data = chip.requestTimerRisingShutterHigh(False)
     chip.write(data)
-    fdata=chip['FIFO'].get_data()
-    dout=chip.decode_fpga(fdata,True)
-    ddout = chip.decode(dout[0],0x47)
+    fdata = chip['FIFO'].get_data()
+    dout = chip.decode_fpga(fdata, True)
+    ddout = chip.decode(dout[0], 0x47)
     print "Timer Check Rising High:", BitLogic.tovalue(ddout[0])
     data = chip.requestTimerFallingShutterLow(False)
     chip.write(data)
-    ftdata=chip['FIFO'].get_data()
-    dtout=chip.decode_fpga(ftdata,True)
-    ddout = chip.decode(dtout[0],0x48)
-    print "Timer Check Falling Low:",BitLogic.tovalue(ddout[0])
+    ftdata = chip['FIFO'].get_data()
+    dtout = chip.decode_fpga(ftdata, True)
+    ddout = chip.decode(dtout[0], 0x48)
+    print "Timer Check Falling Low:", BitLogic.tovalue(ddout[0])
     data = chip.requestTimerFallingShutterHigh(False)
     chip.write(data)
-    ftdata=chip['FIFO'].get_data()
-    dtout=chip.decode_fpga(ftdata,True)
-    ddout = chip.decode(dtout[0],0x49)
-    print "Timer Check Falling Low:",BitLogic.tovalue(ddout[0])
-   
-    
-    
+    ftdata = chip['FIFO'].get_data()
+    dtout = chip.decode_fpga(ftdata, True)
+    ddout = chip.decode(dtout[0], 0x49)
+    print "Timer Check Falling Low:", BitLogic.tovalue(ddout[0])
 
 
 if __name__ == "__main__":
-    run_test_pulses()
+    test_timer()
