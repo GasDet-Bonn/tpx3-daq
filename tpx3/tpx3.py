@@ -43,37 +43,53 @@ logger = logging.getLogger('tpx3')
 logger.setLevel(loglevel)
 
 
-class DacsDict(dict):
-    """
-    A custom dictionary class, used for the DACs of Timepix3, which overrides the
-    __setitem__ class of a dictionary to also make a check for the validity of
-    a given value for a dictionary
-    """
-    def __init__(self, dac_valsize_map):
-        """
-        as initialization we need the alowed sizes of each DAC
-        """
-        self.dac_valsize_map = dac_valsize_map
+customDictErrors = {
+    "DacsDict" :
+    { "invalidKey"  : "DAC with name {} does not exist!",
+      "invalidSize" : "DAC value of {} for DAC {} is too large for size of {}",
+      "negativeVal" : "DAC value for {} DAC may not be negative!" },
+    "ConfigDict" :
+    {
+        "invalidKey"  : "Config with name {} does not exist!",
+        "invalidSize" : "Config value of {} for Configuration {} is too large for size of {}",
+        "negativeVal" : "Config value for {} Configuration may not be negative!"
+    }
+}
 
-    def __setitem__(self, dac, value):
+class CustomDict(dict):
+    """
+    A custom dictionary class, used for the DACs and general config of Timepix3,
+    which overrides the __setitem__ class of a dictionary to also make a check 
+    for the validity of a given value for a dictionary
+    """
+    def __init__(self, valsize_map, dict_type):
+        """
+        as initialization we need the alowed sizes of each DAC / value for each config
+        """
+        self.valsize_map = valsize_map
+        self.dictErrors = customDictErrors[dict_type]
+
+    def __setitem__(self, key, value):
         """
         Override the __setitem__ function of the dictionary and check the size
         of the given value. Else raise a ValueError
         """
         # check if valid by checking size smaller than max value
-        isValidDac = True if dac in self.dac_valsize_map.keys() else False
-        if not isValidDac:
-            raise KeyError("DAC with name {} does not exist!".format(dac))
-        isValid = True if value < 2 ** self.dac_valsize_map[dac] and value >= 0 else False
-        if isValid and isValidDac:
-            super(DacsDict, self).__setitem__(dac, value)
+        isValidKey = True if key in self.valsize_map.keys() else False        
+        if not isValidKey:
+            raise KeyError(self.dictErrors['invalidKey'].format(key))
+        isValid = True if value < 2 ** self.valsize_map[key] and value >= 0 else False
+        if isValid and isValidKey:
+            super(CustomDict, self).__setitem__(key, value)
         elif isValid == False:
             if value >= 0:
-                raise ValueError("DAC value of {} for DAC {} is ".format(value, dac) +
-                                 "too large for size of {}".format(self.dac_valsize_map[dac]))
+                raise ValueError(
+                    self.dictErrors['invalidSize'].format(value,
+                                                          key,
+                                                          self.valsize_map[key])
+                )
             else:
-                raise ValueError("DAC value for {} DAC may not be negative!".format(dac))
-
+                raise ValueError(self.dictErrors['negativeVal'].format(key))
 
 class TPX3(Dut):
 
@@ -168,6 +184,7 @@ class TPX3(Dut):
         self.lfsr_14 = {}
         self.lfsr_4 = {}
 
+
         if not conf:
             conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yaml')
 
@@ -190,17 +207,18 @@ class TPX3(Dut):
 
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
-        self.chipId = [0x00 for _ in range(4)]
+        # Our current chip seems to think its chip ID is all 0s. ?!
+        self.chipId = [0x00 for _ in range(3)] + [0x01]
 
         # reset all matrices to empty defaults
         self.reset_matrices()
 
         # set all configuration attributes to their default values, also sets
         # the `config_written_to_chip` flag to False
-        self.reset_config_attributes()
         self.lfsr_10_bit()
         self.lfsr_14_bit()
         self.lfsr_4_bit()
+
 
         # config dictionary will store the full yaml as a nested dict
         self.config = {}
@@ -210,7 +228,8 @@ class TPX3(Dut):
         else:
             self.config_file = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
-        # TODO: think about whether we should always read the YAML config file?
+        # read the general configuration from the YAML file and set the _config dictionary
+        # to the values given by the 'mode' field (i.e. the user desired setting)
         self.read_config_yaml(self.config_file)
         self.dac = {}
 
@@ -256,38 +275,21 @@ class TPX3(Dut):
         if hits:
             self.hits = np.zeros((256, 256), dtype=np.int8)
 
-    def reset_config_attributes(self):
+    def reset_config_attributes(self, to_default=False):
         """
-        Resets all configuration attributes to their default values
+        Resets all configuration attributes to their default values if to_default
+        is true, else we reset the values to the 'mode' value of the YAML file,
+        i.e. the user desired chip specific settings
         """
         # flag to determine whether the configuration has been written to the chip already
         self.config_written_to_chip = False
         # general configuration settings are initialized with the default chip values
         # for an explanation see manual v1.9 p.40 or the general config YAML file
-        # selects polarity (0 = positive, 1 = negative)
-        self.polarity = 1
-        # pixel operation mode (0b00 = ToA and ToT, 0b01 = ToA, 0b10 = Event and iToT)
-        self.op_mode = 0b00
-        # end of command Gray counter (for ToA measurements?) (0 = disabled, 1 = enabled)
-        self.gray_counter = 0
-        # AckCommand package (0 = disabled, 1 = enabled)
-        self.ack_command_enable = 0
-        # test pulse enable (0 = disabled, 1 = enabled)
-        self.tp_enable = 0
-        # super pixel oscillator enable (Fast_Io_en; 0 = disabled, 1 = enabled)
-        self.fast_io_enable = 0
-        # time overflow control for 48bit timer
-        # (0 = will cycle through, 1 = stops at 0hFFFF_FFFF_FFFF)
-        self.timer_overflow_control = 0
-        # select if test pulses are sent to the Front-End (analog domain) or
-        # the discriminator input (digital domain)
-        # (0 = Front-End, 1 = Discr. input)
-        self.select_tp_dig_analog = 0
-        # test pulse generation internal or external (0 = internal, 1 = external)
-        self.select_tp_ext_int = 0
-        # select if clock is phase shifted in the end of command Gray counters
-        # (0 = phase shifted, 1 = not shifted)
-        self.select_toa_clk = 0
+        for k, v in self.config.iteritems():
+            if to_default:
+                self._config[k] = v['default']
+            else:
+                self._config[k] = v['mode']
 
     def read_config_yaml(self, config_file):
         """
@@ -300,37 +302,40 @@ class TPX3(Dut):
         # get the configuration bits from the GeneralConfiguration file
         config = yaml.load(open(config_file, 'r'))
 
+        self.config_valsize_map = {}
+
         for register in config['registers']:
             name = register['name']
             address = register['address']
             size = register['size']
             mode = register['mode']
+            default = register['default']
             self.config[name] = {'address': address,
                                  'size': size,
+                                 'default': default,
                                  'mode': mode}
+            # fill the dict of DAC sizes
+            self.config_valsize_map[name] = int(size)
+
+        # define the _dacs attribute, which is a custom dictionary object, which overrides the
+        # __setitem__ function of the dictionary to also include checks for the validity of
+        # the values
+        self._config = CustomDict(self.config_valsize_map, "ConfigDict")
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
-        self.polarity = self.config['Polarity']['mode']
-        self.op_mode = self.config['Op_mode']['mode']
-        self.gray_counter = self.config['Gray_count_en']['mode']
-        self.ack_command_enable = self.config['AckCommand_en']['mode']
-        self.tp_enable = self.config['TP_en']['mode']
-        self.fast_io_enable = self.config['Fast_Io_en']['mode']
-        self.timer_overflow_control = self.config['TimerOverflowControl']['mode']
-        self.select_tp_dig_analog = self.config['SelectTP_Dig_Analog']['mode']
-        self.select_tp_ext_int = self.config['SelectTP_Ext_Int']['mode']
-        self.select_toa_clk = self.config['SelectTP_ToA_Clk']['mode']
+        for k, v in self.config.iteritems():
+            # NOTE: here we write 'mode' to write the current desired values from the YAML
+            # file, instead of the default values, in order to allow us to read a file 
+            # with specific settings.
+            self._config[k] = v['mode']
 
     def read_dac_yaml(self, dac_file):
-        # TODO: WRONG DOC!!!
+        
         """
-        Reads a configuration YAML file for the general Timepix3 configuration,
-        saves the content in the `self.config` field, assigns the chip attributes,
-        which store the settings correctly.
-        Note: It does not return the configuration ready to be written to the chip,
-        for that use the `get_configuration_register` method
+        Reads a dacs YAML file for the Timepix3 DAC configuration,
+        saves the content in the `self.dac` field
         """
-        # get the configuration bits from the GeneralConfiguration file
+        # get the Dac configuration bits from the dacs.yaml file
         dac = yaml.load(open(dac_file, 'r'))
 
         self.dac_valsize_map = {}
@@ -349,7 +354,7 @@ class TPX3(Dut):
         # define the _dacs attribute, which is a custom dictionary object, which overrides the
         # __setitem__ function of the dictionary to also include checks for the validity of
         # the values
-        self._dacs = DacsDict(self.dac_valsize_map)
+        self._dacs = CustomDict(self.dac_valsize_map, "DacsDict")
 
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
@@ -358,29 +363,22 @@ class TPX3(Dut):
             # key is DAC name, v contains value
             self._dacs[k] = v['default']
 
-    def get_configuration_register(self):
-        """
-        Checks whether a YAML configuration file was already read and if so,
-        creates a configuration register from it and returns it.
-        """
-        if len(self.config) == 0 and self.config_file is not None:
-            read_config_yaml(self.config_file)
-        elif len(self.config) == 0 and self.config_file is None:
-            # in this case we don't know about a config file, nor have we read one,
-            # return None
-            return None
-        # create a 12 bit variable for the values of the GlobalConfig registers
-        configuration_bits = BitLogic(12)
-        # iterate over all values of the config dictionary, since each nested dict
-        # contains all necessary information, i.e. the key (=name) is not needed.
-        for reg in self.config.values():
-            address = reg['address']
-            size = reg['size']
-            mode = reg['mode']
-            # fill the variable for the register values with the values from the yaml file
-            # see see manual v1.9 p.40 for the registers
-            configuration_bits[address + size - 1:address] = mode
-        return configuration_bits
+    # def get_configuration_register(self):
+    #     """
+    #     creates a configuration register from self._config and returns it.
+    #     """
+    #     # create a 12 bit variable for the values of the GlobalConfig registers
+    #     configuration_bits = BitLogic(12)
+    #     # iterate over all values of the config dictionary, since each nested dict
+    #     # contains all necessary information, i.e. the key (=name) is not needed.
+    #     for reg in self.config.values():
+    #         address = reg['address']
+    #         size = reg['size']
+    #         mode = reg['mode']
+    #         # fill the variable for the register values with the values from the yaml file
+    #         # see see manual v1.9 p.40 for the registers
+    #         configuration_bits[address + size - 1:address] = mode
+    #     return configuration_bits
 
     def getGlobalSyncHeader(self):
         """
@@ -401,8 +399,8 @@ class TPX3(Dut):
         Outputs:
             list of 5 bytes corresponding to 40 bits
         """
-        # 0x4E == local sync header
-        return [0x4E] + self.chipId
+        # 0xE4 == local sync header
+        return [0xE4] + self.chipId
 
     @property
     def dacs(self):
@@ -936,6 +934,8 @@ class TPX3(Dut):
         and writes them to the chip. Furthermore the sent data is returned.
         """
         data = []
+        configuration_bits = BitLogic(12)
+        
         # presync header: 40 bits
         data = self.getGlobalSyncHeader()
 
@@ -944,7 +944,17 @@ class TPX3(Dut):
 
         # create a 12 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the chip configuration
-        configuration_bits = self.get_configuration_register()
+        configuration_bits[0]=self._config["Polarity"]
+        configuration_bits[2:1]=self._config["Op_mode"]
+        configuration_bits[3]=self._config["Gray_count_en"]
+        configuration_bits[4]=self._config["AckCommand_en"]
+        configuration_bits[5]=self._config["TP_en"]
+        configuration_bits[6]=self._config["Fast_Io_en"]
+        configuration_bits[7]=self._config["TimerOverflowControl"]
+        configuration_bits[8]=0
+        configuration_bits[9]=self._config["SelectTP_Dig_Analog"]
+        configuration_bits[10]=self._config["SelectTP_Ext_Int"]
+        configuration_bits[11]=self._config["SelectTP_ToA_Clk"]
 
         # append the the GeneralConfiguration register with 4 additional bits to get the 16 bit DataIn
         data += (configuration_bits + BitLogic(4)).toByteList()
@@ -955,25 +965,47 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def read_periphery_template(self, name, header_only = False, local_header = False):
+        # presync header: 40 bits
+        if local_header:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
+
+        # append the correct data for each periphery command
+        data += [self.periphery_header_map[name]]
+        if not header_only:
+            # only append data, if not only header requested
+            # fill with two dummy bytes for DataIN
+            data += [0x00, 0x00]
+            # final dummy byte
+            data += [0x00]
+
+        return data
+
+    def read_matrix_template(self, name, header_only = False, local_header = False):
+        if local_header:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
+
+        # append the correct data for each periphery command
+        data += [self.matrix_header_map[name]]
+        if not header_only:
+            # only append data, if not only header requested
+            # final dummy byte
+            data += [0x00]
+
+        return data
+
     def read_general_config(self, write=True):
         """
         Sends the GeneralConfig_Read command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
         # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["GeneralConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("GeneralConfig_Read")
 
         if write is True:
             self.write(data)
@@ -985,17 +1017,92 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
+        data = self.read_periphery_template("ResetTimer")        
 
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
+        if write is True:
+            self.write(data)
+        return data
 
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["ResetTimer"]]
+    def requestTimerLow(self, write=True):
+        """
+        Sends the RequestTimerLow command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("RequestTimeLow")
+        
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerHigh(self, write=True):
+        """
+        Sends the RequestTimerhigh command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
+        registers (see manual v1.9 p.40). The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("RequestTimeHigh")        
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerRisingShutterLow(self, write=True):
+        """
+        Sends the Timer Rising Shutter Low command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("TimeRisingShutterLow")
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerRisingShutterHigh(self, write=True):
+        """
+        Sends the Timer Rising Shutter High command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("TimeRisingShutterHigh")
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerFallingShutterLow(self, write=True):
+        """
+        Sends the Timer Falling Shutter Low command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("TimeFallingShutterLow")
+
+        if write is True:
+            self.write(data)
+        return data
+
+    def requestTimerFallingShutterHigh(self, write=True):
+        """
+        Sends the Timer Falling Shutter High command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the actual values of the timer at shutter start. The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("TimeFallingShutterHigh")
+
+        if write is True:
+            self.write(data)
+        return data
+
+
+    # TODO: combine all 3 set timer functions into 1. No need for all 3!
+    def SetTimer_15_0(self, setTime, write=True):
+        """
+        Sends the RequestTimerhigh command (see manual v1.9 p.32) together with the
+        SyncHeader and timer values for DataIn (see manual v1.9 p.43). The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("SetTimer_15_0", True)
 
         # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
+        time=BitLogic(16)
+        time[15:0]=setTime
+        data +=BitLogic.toByteList(time)
 
         data += [0x00]
 
@@ -1003,25 +1110,49 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def SetTimer_31_16(self, setTime, write=True):
+        """
+        Sends the setTimer_31_!6 command (see manual v1.9 p.32) together with the
+        SyncHeader and timer values for DataIn to (see manual v1.9 p.43). The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("SetTimer_31_16", True)
+        
+        # fill with two dummy bytes for DataIN
+        time=BitLogic(16)
+        time[15:0]=setTime
+        data +=BitLogic.toByteList(time)
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+    
+    def SetTimer_47_32(self, setTime, write=True):
+        """
+        Sends the Set Timer 47_32 command (see manual v1.9 p.32) together with the
+        SyncHeader and timer values for DataIn (see manual v1.9 p.43). The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("SetTimer_47_32", True)
+
+        # fill with two dummy bytes for DataIN
+        time=BitLogic(16)
+        time[15:0]=setTime
+        data +=BitLogic.toByteList(time)
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+    
+
     def startTimer(self, write=True):
         """
         Sends the T0_Sync_Command command (see manual v1.9 p.32) together with the
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["T0_Sync_Command"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00]
-        data += [0x00]
-
-        data += [0x00]
+        data = self.read_periphery_template("T0_Sync_Command")
 
         if write is True:
             self.write(data)
@@ -1071,16 +1202,9 @@ class TPX3(Dut):
             #  check if the phase is allowed
             raise ValueError("The phase must not be bigger than 15!")
 
-        data = []
-
+        data = self.read_periphery_template("TP_Period", True)
         # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
         bits = BitLogic(12)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TP_Period"]]
 
         # fill the 12-bit variable with the period and the phase
         bits[7:0] = period
@@ -1101,18 +1225,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the test pulse
         registers (see manual v1.9 p.35). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the GeneralConfig_Read command header: 8 bits
-        data += [self.periphery_header_map["TPConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00, 0x00]
-        # and the empty byte which seems necessary...
-        data += [0x00]
+        data = self.read_periphery_template("TPConfig_Read")
 
         if write is True:
             self.write(data)
@@ -1129,13 +1242,8 @@ class TPX3(Dut):
             raise ValueError("""The columns list must not contain more than 256 entries and
             no entry may be larger than 255!""")
 
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
         # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["LoadCTPR"]]
+        data = self.read_matrix_template("LoadCTPR", True)
 
         # append the column mask based on the selected columns
         # TODO: The manual (v1.9) does not state if columns are masked with 1 or 0
@@ -1155,16 +1263,10 @@ class TPX3(Dut):
         a mask of selected columns based on the list of selected columns given
         in 'columns'.
         """
-        data = []
+        data = self.read_matrix_template("ReadConfigMatrix", True)
 
         # create a 256-bit bitarrays for single column selection
         SColSelectReg = BitLogic(256)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["ReadConfigMatrix"]]
 
         # Set SColSelect for selected columns to 0 and for other columns to 1
         for col in range(256):
@@ -1183,18 +1285,12 @@ class TPX3(Dut):
         a token select to select the maximum number of columns which are read
         simultaneously.
         """
-        data = []
+        data = self.read_matrix_template("ReadMatrixSequential", True)
 
         # create two 128-bit bitarrays for double column select and token select
         DColSelect = BitLogic(128)
         TokenSelectReg = BitLogic(128)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixSequential"]]
-
+        
         # Fill the double column select with zeros (manual v1.9 p.45) and
         # append it to the data
         for index in range(128):
@@ -1218,13 +1314,8 @@ class TPX3(Dut):
         Sends a command to reset the pixel matrix column by column  (Manual v 1.9 pg. 51). If any data is still present on the pixel
         matrix (eoc_active is high) then an End of Readout packet is sent.
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
         # append the code for the ResetSequential command header: 8 bits
-        data += [self.matrix_header_map["ResetSequential"]]
+        data = self.read_matrix_template("ResetSequential", True)
 
         # NOTE: The manual (v1.9 p.52) states to send 142 bits, we need to
         # send full bytes though, so we send 144 bits. The manual also states
@@ -1245,15 +1336,7 @@ class TPX3(Dut):
         """
         Sends a command to stop / pause a pixel readout (Manual v 1.9 pg. 52)
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["StopMatrixCommand"]]
-
-        data += [0x00]
+        data = self.read_matrix_template("StopMatrixCommand")
 
         if write is True:
             self.write(data)
@@ -1288,16 +1371,9 @@ class TPX3(Dut):
             # check if the PLL Output Configuration is allowed
             raise ValueError("The PLL Output Configuration must not be bigger than 22!")
 
-        data = []
-
+        data = self.read_periphery_template("PLLConfig", True)
         # create a 16 bit variable for the PLL config registers
         bits = BitLogic(16)
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the PLLConfig command header: 8 bits
-        data += [self.periphery_header_map["PLLConfig"]]
 
         # fill the 16-bit variable with values for the PLL config register
         bits[0] = bypass
@@ -1323,18 +1399,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the PLL Config
         registers (see manual v1.9 p.37). The sent bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the PLLConfig_Eead command header: 8 bits
-        data += [self.periphery_header_map["PLLConfig_Read"]]
-
-        # fill with two dummy bytes for DataIN
-        data += [0x00, 0x00]
-        # empty needed byte...
-        data += [0x00]
+        data = self.read_periphery_template("PLLConfig_Read")
 
         if write is True:
             self.write(data)
@@ -1351,15 +1416,7 @@ class TPX3(Dut):
         Sends the Pixel Matrix Read Data Driven command (see manual v1.9 p.32 and
         v1.9 p.50). The sended bytes are also returned.
         """
-        data = []
-
-        # presync header: 40 bits
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the ReadMatrixSequential command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-
-        data += [0x00]
+        data = self.read_matrix_template("ReadMatrixDataDriven")
 
         if write is True:
             self.write(data)
@@ -1370,14 +1427,8 @@ class TPX3(Dut):
         Sends the "ReadMatrixDataDriven" command with the column mask. The column mask is
         set such all columns are loaded.
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["ReadMatrixDataDriven"]]
-
+        data = self.read_matrix_template("ReadMatrixDataDriven", True)
+        
         # append the 256 bit column mask; TODO: make the columns selectable
         data += self.produce_column_mask(range(256))
 
@@ -1391,16 +1442,8 @@ class TPX3(Dut):
         """
         Sends a command to read the Column Test Pulse Register (Manual v 1.9 pg. 50)
         """
-        data = []
-
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
-        # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["ReadCTPR"]]
-
-        data += [0x00]
-
+        data = self.read_matrix_template("ReadCTPR")
+        
         if write is True:
             self.write(data)
         return data
@@ -1471,6 +1514,17 @@ class TPX3(Dut):
             lfsr[0] = lfsr[3] ^ dummy
         self.lfsr_4[2 ** 4 - 1] = 0
 
+    def gray_decrypt(self, value):
+        """
+        Decrypts a gray encoded 48 bit value according to Manual v1.9 page 19
+        """
+        encoded_value = BitLogic(48)
+        encoded_value[47:0]=value
+        gray_decrypt = BitLogic(48)
+        gray_decrypt[47]=encoded_value[47]
+        for i in range (46, -1, -1):
+            gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
+       
 
     def set_dacs(self, **kwargs):
         pass
