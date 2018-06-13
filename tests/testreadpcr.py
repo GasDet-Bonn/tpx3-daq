@@ -32,8 +32,7 @@ def main(args_dict):
     chip['CONTROL']['EN_POWER_PULSING'] = 1
     chip['CONTROL'].write()
 
-    data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x00]
-
+    data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
     print 'RX ready:', chip['RX'].is_ready
