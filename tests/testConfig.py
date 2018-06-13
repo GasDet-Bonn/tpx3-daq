@@ -11,13 +11,11 @@ def print_exp_recvd(name, exp_header, header, chipId = None):
     if chipId != None:
         print "\tChipID:", chipId
 
-
 def print_cmp_dacvals(exp_val, val):
     """
     Convenience printing function to compare expected and receive DAC values
     """
     print_exp_recvd("DAC value", exp_val, val, None)
-
 
 def print_cmp_daccodes(exp_code, code):
     """
@@ -25,8 +23,7 @@ def print_cmp_daccodes(exp_code, code):
     """
     print_exp_recvd("DAC code", exp_code, code, None)
 
-
-def test_config():
+def test_config(value1, value2, value3):
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
@@ -45,7 +42,7 @@ def test_config():
     # Step 2c: Reset the Timer
     data = chip.getGlobalSyncHeader() + [0x40] + [0x0]
     chip.write(data)
-
+    
     # Step 2d: Start the Timer
     data = chip.getGlobalSyncHeader() + [0x4A] + [0x0]
     chip.write(data)
@@ -70,44 +67,41 @@ def test_config():
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    #print fdata
     dout = chip.decode_fpga(fdata, True)
-    print dout
-    ddout = chip.decode(dout[0], 0x71)
-    print ddout
-    try:
-        ddout = chip.decode(dout[1], 0x71)
-        print ddout
-    except IndexError:
-        print("no EoR found")
-
+    #print dout
+    #ddout = chip.decode(dout[0], 0x71)
+    #print ddout
+    #try:
+        #ddout = chip.decode(dout[1], 0x71)
+        #print ddout
+    #except IndexError:
+        #print("no EoR found")
+    chip.reset_config_attributes()
     # now set some random config bits to different values than default
     print "Switch Polarity"
-    chip.config["Polarity"] = 0
+    chip._config["Polarity"] = value1
     print "Enable Test pulses"
-    chip.config["TP_en"] = 1
+    chip._config["TP_en"] = value2
+    print "Operating Mode ToA/ToT"
+    chip._config["Op_mode"] = value3
     # assert we wrote the value correctly to the dictionary
-    assert(chip.config["TP_en"] == 1, "We wrote 1 but received {}".format(chip.config["TP_en"]))
-    data = chip.write_general_config(False)
+    data=chip.write_general_config(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
-    print fdata
     dout = chip.decode_fpga(fdata, True)
-    print dout
-    ddout = chip.decode(dout[0], 0x30)
-    print ddout
+    #ddout = chip.decode(dout[0], 0x30)
+    #print ddout
     # now read them back
     # NOTE: this check needs to be done by eye for now
     # TODO: fix that!
-    data = chip.read_general_config(False)
+    data=chip.read_general_config(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
     print fdata
     dout = chip.decode_fpga(fdata, True)
     print dout
     ddout = chip.decode(dout[0], 0x31)
-    print ddout
-
-
+    return ddout
 if __name__ == "__main__":
-    test_config()
+    test_config(0,0,0)
