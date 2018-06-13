@@ -412,9 +412,11 @@ class TPX3(Dut):
             address = register['address']
             size = register['size']
             default = register['default']
+            value = register['value']
             self.outputBlock[name] = {'address': address,
                               'size': size,
-                              'default': default}
+                              'default': default,
+                              'value': value}
             # fill the dict of outputBlock sizes
             self.outputBlock_valsize_map[name] = int(size)
 
@@ -427,7 +429,7 @@ class TPX3(Dut):
         # the YAML file or the declaration of the fields at the beginning of the class
         for k, v in self.outputBlock.iteritems():
             # key is outputBlock name, v contains value
-            self._outputBlock[k] = v['default']
+            self._outputBlock[k] = v['value']
 
     def getGlobalSyncHeader(self):
         """
