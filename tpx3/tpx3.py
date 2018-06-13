@@ -428,10 +428,10 @@ class TPX3(Dut):
         values we have stored in the _dacs DactDict dictionary
         TODO: should this function do something besides printing values?
         """
+        counter=0;
         for dac, val in self.dacs.iteritems():
             data = self.read_dac(dac, False)
             self.write(data, True)
-            print("Wrote {}".format(data))
             print "\tGet DAC value, DAC code and EoC:"
             dout = self.decode_fpga(self['FIFO'].get_data(), True)
             b = BitLogic(9)
@@ -439,7 +439,9 @@ class TPX3(Dut):
             ddout = self.decode(dout[0], 0x03)
             # TODO: this whole decode and printing can be made much nicer!!
             print("Data is ", ddout[0][13:5], " wrote ", b)
-
+            if ddout[0][13:5].tovalue()==BitLogic.tovalue(b):
+              counter+=1
+        return counter
     def set_dac(self, dac, value, chip=None, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
