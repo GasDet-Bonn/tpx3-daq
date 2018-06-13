@@ -106,7 +106,8 @@ def test_dacs():
     # now read them back
     # NOTE: this check needs to be done by eye for now
     # TODO: fix that!
-    chip.read_dacs()
+    counter=chip.read_dacs()
+    return counter
 
 if __name__ == "__main__":
     test_dacs()
