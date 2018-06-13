@@ -462,6 +462,26 @@ class TPX3(Dut):
         """
         return self._dacs
 
+    @property
+    def config(self):
+        """
+        Getter function for the `config` dictionary of the Tpx3 class.
+        With this a `self.config[<config name>]` statement will return
+        the value of the general config register stored in the `ConfigDict`
+        dictionary _config
+        """
+        return self._config
+
+    @property
+    def outputBlock(self):
+        """
+        Getter function for the `outputBlock` dictionary of the Tpx3 class.
+        With this a `self.outputBlock[<outputBlock name>]` statement will
+        return the value of the outputBlock register stored in the `outputBlockDict`
+        dictionary _outputBlock
+        """
+        return self._outputBlock
+
     def write_dacs(self):
         """
         A convenience function, which simply writes all DAC values, by iterating over
