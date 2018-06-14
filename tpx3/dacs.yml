@@ -1,109 +1,109 @@
 registers:
 - name: Ibias_Preamp_ON
   description: Selects PreAmplifier Bias on
-  code: 0b00001
+  address: 0b00001
   size: 8
   default: 0b10000000
   value: 0
 - name: Ibias_Preamp_OFF
   description: Sets PreAmplifier Bias off
-  code: 0b00010
+  address: 0b00010
   size: 4
   default: 0b1000
   value: 0
 - name: VPreamp_NCAS
   description: Sets the PreAmplifier voltage  
-  code: 0b00011
+  address: 0b00011
   size: 8
   default: 0b10000000
   value: 0
 - name: Ibias_Ikrum
   description: Enables/Diables the Ibias_Ikrum data packet
-  code: 0b00100
+  address: 0b00100
   size: 8
   default: 0b10000000
   value: 0
 - name: Vfbk
   description:  Vfbk
-  code: 0b00101
+  address: 0b00101
   size: 8
   default: 0b10000000
   value: 0
 - name: Vthreshold_fine
   description: Fine control of Pixel Threshold
-  code: 0b00110
+  address: 0b00110
   size: 9
   default: 0b100000000
   value: 0
 - name: Vthreshold_coarse
   description: Coarse Control of Pixel Threshold
-  code: 0b00111
+  address: 0b00111
   size: 4
   default: 0b1000
   value: 0
 - name: Ibias_DiscS1_ON
   description: Ibias_DiscS1 switched on
-  code: 0b01000
+  address: 0b01000
   size: 8
   default: 0b10000000
   value: 0
 - name: Ibias_DiscS1_OFF
   description: Ibias_DiscS1 switched OFF
-  code: 0b01001
+  address: 0b01001
   size: 4
   default: 0b1000
   value: 0
 - name: Ibias_DiscS2_ON
   description: SIbias_DiscS2 switched on 
-  code: 0b01010
+  address: 0b01010
   size: 8
   default: 0b10000000
   value: 0
 - name: Ibias_DiscS2_OFF
   description: Ibias_DiscS2 switched oFF 
-  code: 0b01011
+  address: 0b01011
   size: 4
   default: 0b1000
   value: 0
 - name: Ibias_PixelDAC
   description: Ibias Pixel DAC value 
-  code: 0b01100
+  address: 0b01100
   size: 8
   default: 0b10000000
   value: 0
 - name: Ibias_TPbufferIn
   description: Test Pulse Buffer input 
-  code: 0b01101
+  address: 0b01101
   size: 8
   default: 0b10000000
   value: 0
 - name: Ibias_TPbufferOut
   description: Test Pulse Buffer output 
-  code: 0b01110
+  address: 0b01110
   size: 8
   default: 0b10000000
   value: 0
 - name: VTP_coarse
   description: Coarse control of V TestPulse
-  code: 0b01111
+  address: 0b01111
   size: 8
   default: 0b10000000
   value: 6
 - name: VTP_fine
   description: Fine Controlof V TestPulse
-  code: 0b10000
+  address: 0b10000
   size: 9
   default: 0b100000000
   value: 0
 - name: Ibias_CP_PLL
   description: Ibias_CP_PLL value 
-  code: 0b10001
+  address: 0b10001
   size: 8
   default: 0b10000000
   value: 0
 - name: PLL_Vcntrl
   description: PLL voltage
-  code: 0b10010
+  address: 0b10010
   size: 8
   default: 0b10000000
   value: 0
