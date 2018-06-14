@@ -7,7 +7,7 @@ import unittest
 
 from testConfig import test_config
 from testDacs import test_dacs
-from testiToTEventCtr import run_test_iToTEventCtr
+from test_iToTEventCtr import run_test_iToTEventCtr
 from testTimer import run_test_timer
 from testChipId import test_chipID
 logger = logging.getLogger(__file__)
