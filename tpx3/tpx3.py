@@ -233,7 +233,7 @@ class TPX3(Dut):
         else:
             self.config_file = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
-        # read the general configuration from the YAML file and set the _config dictionary
+        # read the general configuration from the YAML file and set the _configs dictionary
         # to the values given by the 'mode' field (i.e. the user desired setting)
         self.read_config_yaml(self.config_file)
         self.dac = {}
@@ -256,7 +256,7 @@ class TPX3(Dut):
         else:
             self.outputBlock_file = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'outputBlock.yml')
 
-        # read the outputBlock configuration from the YAML file and set the _outputBlock
+        # read the outputBlock configuration from the YAML file and set the _outputBlocks
         # dictionary to the values given by the 'mode' field (i.e. the user desired setting)
         self.read_outputBlock_yaml(self.outputBlock_file)
 
@@ -305,9 +305,9 @@ class TPX3(Dut):
         # for an explanation see manual v1.9 p.40 or the general config YAML file
         for k, v in self.config.iteritems():
             if to_default:
-                self._config[k] = v['default']
+                self._configs[k] = v['default']
             else:
-                self._config[k] = v['mode']
+                self._configs[k] = v['mode']
 
     def reset_outputBlock_attributes(self, to_default=False):
         """
@@ -321,9 +321,9 @@ class TPX3(Dut):
         # for an explanation see manual v1.9 p.40 or the general config YAML file
         for k, v in self.outputBlock.iteritems():
             if to_default:
-                self._outputBlock[k] = v['default']
+                self._outputBlocks[k] = v['default']
             else:
-                self._outputBlock[k] = v['value']
+                self._outputBlocks[k] = v['value']
 
     def read_config_yaml(self, config_file):
         """
@@ -351,17 +351,17 @@ class TPX3(Dut):
             # fill the dict of DAC sizes
             self.config_valsize_map[name] = int(size)
 
-        # define the _dacs attribute, which is a custom dictionary object, which overrides the
+        # define the _configs attribute, which is a custom dictionary object, which overrides the
         # __setitem__ function of the dictionary to also include checks for the validity of
         # the values
-        self._config = CustomDict(self.config_valsize_map, "ConfigDict")
+        self._configs = CustomDict(self.config_valsize_map, "ConfigDict")
         # for an explanation on the different options see manual v1.9 p.40,
         # the YAML file or the declaration of the fields at the beginning of the class
         for k, v in self.config.iteritems():
             # NOTE: here we write 'mode' to write the current desired values from the YAML
             # file, instead of the default values, in order to allow us to read a file
             # with specific settings.
-            self._config[k] = v['mode']
+            self._configs[k] = v['mode']
 
     def read_dac_yaml(self, dac_file):
         """
@@ -419,16 +419,16 @@ class TPX3(Dut):
             # fill the dict of outputBlock sizes
             self.outputBlock_valsize_map[name] = int(size)
 
-        # define the _outputBlock attribute, which is a custom dictionary object, which overrides the
+        # define the _outputBlocks attribute, which is a custom dictionary object, which overrides the
         # __setitem__ function of the dictionary to also include checks for the validity of
         # the values
-        self._outputBlock = CustomDict(self.outputBlock_valsize_map, "outputBlockDict")
+        self._outputBlocks = CustomDict(self.outputBlock_valsize_map, "outputBlockDict")
 
         # for an explanation on the different options see manual v1.9 p.37,
         # the YAML file or the declaration of the fields at the beginning of the class
         for k, v in self.outputBlock.iteritems():
             # key is outputBlock name, v contains value
-            self._outputBlock[k] = v['value']
+            self._outputBlocks[k] = v['value']
 
     def getGlobalSyncHeader(self):
         """
@@ -462,24 +462,24 @@ class TPX3(Dut):
         return self._dacs
 
     @property
-    def config(self):
+    def configs(self):
         """
         Getter function for the `config` dictionary of the Tpx3 class.
         With this a `self.config[<config name>]` statement will return
         the value of the general config register stored in the `ConfigDict`
-        dictionary _config
+        dictionary _configs
         """
-        return self._config
+        return self._configs
 
     @property
-    def outputBlock(self):
+    def outputBlocks(self):
         """
         Getter function for the `outputBlock` dictionary of the Tpx3 class.
         With this a `self.outputBlock[<outputBlock name>]` statement will
         return the value of the outputBlock register stored in the `outputBlockDict`
-        dictionary _outputBlock
+        dictionary _outputBlocks
         """
-        return self._outputBlock
+        return self._outputBlocks
 
     def write_dacs(self):
         """
@@ -1010,17 +1010,17 @@ class TPX3(Dut):
 
         # create a 12 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the chip configuration
-        configuration_bits[0]=self._config["Polarity"]
-        configuration_bits[2:1]=self._config["Op_mode"]
-        configuration_bits[3]=self._config["Gray_count_en"]
-        configuration_bits[4]=self._config["AckCommand_en"]
-        configuration_bits[5]=self._config["TP_en"]
-        configuration_bits[6]=self._config["Fast_Io_en"]
-        configuration_bits[7]=self._config["TimerOverflowControl"]
+        configuration_bits[0]=self._configs["Polarity"]
+        configuration_bits[2:1]=self._configs["Op_mode"]
+        configuration_bits[3]=self._configs["Gray_count_en"]
+        configuration_bits[4]=self._configs["AckCommand_en"]
+        configuration_bits[5]=self._configs["TP_en"]
+        configuration_bits[6]=self._configs["Fast_Io_en"]
+        configuration_bits[7]=self._configs["TimerOverflowControl"]
         configuration_bits[8]=0
-        configuration_bits[9]=self._config["SelectTP_Dig_Analog"]
-        configuration_bits[10]=self._config["SelectTP_Ext_Int"]
-        configuration_bits[11]=self._config["SelectTP_ToA_Clk"]
+        configuration_bits[9]=self._configs["SelectTP_Dig_Analog"]
+        configuration_bits[10]=self._configs["SelectTP_Ext_Int"]
+        configuration_bits[11]=self._configs["SelectTP_ToA_Clk"]
 
         # append the the GeneralConfiguration register with 4 additional bits to get the 16 bit DataIn
         data += (configuration_bits + BitLogic(4)).toByteList()
@@ -1033,7 +1033,7 @@ class TPX3(Dut):
 
     def write_outputBlock_config(self, write=True):
         """
-        reads the values for the _outputBlock registers (see manual v1.9 p.37) from a yaml file
+        reads the values for the outputBlock registers (see manual v1.9 p.37) from a yaml file
         and writes them to the chip. Furthermore the sent data is returned.
         """
         data = []
@@ -1043,11 +1043,11 @@ class TPX3(Dut):
 
         # create a 16 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the outputBlock configuration
-        configuration_bits[7:0] = self._outputBlock["chan_mask"]
-        configuration_bits[10:8] = self._outputBlock["clk_readout_src"]
-        configuration_bits[11] = self._outputBlock["8b_10b_en"]
-        configuration_bits[12] = self._outputBlock["clk_fast_out"]
-        configuration_bits[15:13] = self._outputBlock["ClkOut_frequency_src"]
+        configuration_bits[7:0] = self._outputBlocks["chan_mask"]
+        configuration_bits[10:8] = self._outputBlocks["clk_readout_src"]
+        configuration_bits[11] = self._outputBlocks["8b_10b_en"]
+        configuration_bits[12] = self._outputBlocks["clk_fast_out"]
+        configuration_bits[15:13] = self._outputBlocks["ClkOut_frequency_src"]
 
         # append the the outputBlock register
         data += (configuration_bits).toByteList()
