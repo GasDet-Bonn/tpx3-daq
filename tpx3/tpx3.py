@@ -396,23 +396,6 @@ class TPX3(Dut):
             # key is DAC name, v contains value
             self._dacs[k] = v['default']
 
-    # def get_configuration_register(self):
-    #     """
-    #     creates a configuration register from self._config and returns it.
-    #     """
-    #     # create a 12 bit variable for the values of the GlobalConfig registers
-    #     configuration_bits = BitLogic(12)
-    #     # iterate over all values of the config dictionary, since each nested dict
-    #     # contains all necessary information, i.e. the key (=name) is not needed.
-    #     for reg in self.config.values():
-    #         address = reg['address']
-    #         size = reg['size']
-    #         mode = reg['mode']
-    #         # fill the variable for the register values with the values from the yaml file
-    #         # see see manual v1.9 p.40 for the registers
-    #         configuration_bits[address + size - 1:address] = mode
-    #     return configuration_bits
-
     def read_outputBlock_yaml(self, outputBlock_file):
         """
         Reads a outputBlock YAML file for the Timepix3 outputBlock
