@@ -198,7 +198,7 @@ class ScanBase(object):
         self.chip['CONTROL'].write()
 
         # Init communication -> set ouput mode
-        self.chip.write(self.chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x0])
+        data = self.chip.write_outputBlock_config()
 
         self.fifo_readout.reset_rx()
         self.fifo_readout.enable_rx(True)

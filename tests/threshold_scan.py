@@ -38,7 +38,7 @@ def threshold_scan():
     print 'RX ready:', chip['RX'].is_ready
     print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
 
-    data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x0]
+    data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
     print 'RX ready:', chip['RX'].is_ready
