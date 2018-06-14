@@ -1006,7 +1006,7 @@ class TPX3(Dut):
         data = []
         configuration_bits = BitLogic(12)
 
-        data = self.read_periphery_template("GeneralConfig")
+        data = self.read_periphery_template("GeneralConfig", header_only=True)
 
         # create a 12 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the chip configuration
@@ -1039,7 +1039,7 @@ class TPX3(Dut):
         data = []
         configuration_bits = BitLogic(16)
 
-        data = self.read_periphery_template("OutBlockConfig")
+        data = self.read_periphery_template("OutBlockConfig", header_only=True)
 
         # create a 16 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the outputBlock configuration
