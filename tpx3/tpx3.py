@@ -309,6 +309,22 @@ class TPX3(Dut):
             else:
                 self._config[k] = v['mode']
 
+    def reset_outputBlock_attributes(self, to_default=False):
+        """
+        Resets all output block attributes to their default values if to_default
+        is true, else we reset the values to the 'value' of the YAML file,
+        i.e. the user desired chip specific settings
+        """
+        # flag to determine whether the output block has been written to the chip already
+        self.outputBlock_written_to_chip = False
+        # general configuration settings are initialized with the default chip values
+        # for an explanation see manual v1.9 p.40 or the general config YAML file
+        for k, v in self.outputBlock.iteritems():
+            if to_default:
+                self._outputBlock[k] = v['default']
+            else:
+                self._outputBlock[k] = v['value']
+
     def read_config_yaml(self, config_file):
         """
         Reads a configuration YAML file for the general Timepix3 configuration,
