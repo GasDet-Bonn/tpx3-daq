@@ -108,5 +108,18 @@ def test_dacs():
     # TODO: fix that!
     chip.read_dacs()
 
+    # now reset the dacs to the default values
+    print("Now reset the attributes, and write defaults\n\n")
+    chip.reset_dac_attributes(to_default = True)
+    # write them to the chip
+    chip.write_dacs()
+
+    # and read them back
+    time.sleep(0.1)
+    chip.read_dacs()
+
+    
+    
+
 if __name__ == "__main__":
     test_dacs()
