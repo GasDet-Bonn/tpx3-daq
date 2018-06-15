@@ -303,38 +303,40 @@ class TPX3(Dut):
         if hits:
             self.hits = np.zeros((256, 256), dtype=np.int8)
 
+
+    def reset_attributes(self, dict_type, to_default=False):
+        """
+        Resets all attributes of the given dictionary (cased on `dict_type`, either
+        _configs, _outputBlocks or _dacs) to their default values if `to_default` is
+        True, else we reset the values to the `value` field of the YAML file,
+        i.e. the user desired chip specific settings.
+        """
+        # build the correct attribute name based on dictNames "YamlContent" string
+        var_name = dictNames[dict_type]["YamlContent"] + "_written_to_chip"
+        # set this to False (Note: not used so far)
+        setattr(self, var_name, False)
+
+        yaml_dict = getattr(self, dictNames[dict_type]["YamlContent"])
+        c_dict = getattr(self, dictNames[dict_type]["CustomDict"])
+        for k, v in yaml_dict.iteritems():
+            if to_default:
+                c_dict[k] = v['default']
+            else:
+                c_dict[k] = v['value']
+
+        # set c_dict back as the correct CustomDict
+        setattr(self, dictNames[dict_type]["CustomDict"], c_dict)
+
+    # based on above proc, define methods with easier names to work with
     def reset_config_attributes(self, to_default=False):
-        """
-        Resets all configuration attributes to their default values if to_default
-        is true, else we reset the values to the 'value' value of the YAML file,
-        i.e. the user desired chip specific settings
-        """
-        # flag to determine whether the configuration has been written to the chip already
-        self.config_written_to_chip = False
-        # general configuration settings are initialized with the default chip values
-        # for an explanation see manual v1.9 p.40 or the general config YAML file
-        for k, v in self.config.iteritems():
-            if to_default:
-                self._configs[k] = v['default']
-            else:
-                self._configs[k] = v['value']
-
+        self.reset_attributes("ConfigDict", to_default)
+        
     def reset_outputBlock_attributes(self, to_default=False):
-        """
-        Resets all output block attributes to their default values if to_default
-        is true, else we reset the values to the 'value' of the YAML file,
-        i.e. the user desired chip specific settings
-        """
-        # flag to determine whether the output block has been written to the chip already
-        self.outputBlock_written_to_chip = False
-        # general configuration settings are initialized with the default chip values
-        # for an explanation see manual v1.9 p.40 or the general config YAML file
-        for k, v in self.outputBlock.iteritems():
-            if to_default:
-                self._outputBlocks[k] = v['default']
-            else:
-                self._outputBlocks[k] = v['value']
-
+        self.reset_attributes("OutputBlockDict", to_default)
+        
+    def reset_dac_attributes(self, to_default=False):
+        self.reset_attributes("DacsDict", to_default)
+        
     def read_yaml(self, filename, dict_type):
         """
         This function reads a given YAML file, stores each register in
