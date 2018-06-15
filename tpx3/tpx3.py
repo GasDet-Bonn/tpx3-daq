@@ -440,12 +440,22 @@ class TPX3(Dut):
         """
         A convenience function to read back all DACs, print them and compare with the
         values we have stored in the _dacs DactDict dictionary
-        TODO: should this function do something besides printing values?
+        Besides printing the DAC names, codes and EoC for the read_dac command,
+        it also prints the expected value (the one we wrote before, i.e. contained 
+        in the _dacs dictionary) and the value we read back.
+        Then we assert that this is actually the same value.
         """
+        # TODO: currently we compare with the values of the _dacs dictionary. However,
+        # since we currently never check whether the _dacs dict is written to the chip
+        # this may fail!
+        if self.dac_written_to_chip == False:
+            print("The assertion in the following loop may fail, since we are not",
+                  " may not have written the DAC values to the chip!")
+        
         for dac, val in self.dacs.iteritems():
             data = self.read_dac(dac, False)
             self.write(data, True)
-            print("Wrote {}".format(data))
+            print("Wrote {} to dac {}".format(data, dac))
             print "\tGet DAC value, DAC code and EoC:"
             dout = self.decode_fpga(self['FIFO'].get_data(), True)
             b = BitLogic(9)
@@ -453,7 +463,10 @@ class TPX3(Dut):
             ddout = self.decode(dout[0], 0x03)
             # TODO: this whole decode and printing can be made much nicer!!
             print("Data is ", ddout[0][13:5], " wrote ", b)
+            # assert we read the correct values we wrote before 
+            assert(ddout[0][13:5].tovalue() == b.tovalue())
 
+    # TODO: add the given values to the _dacs dictionary, if this function is used!
     def set_dac(self, dac, value, chip=None, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
@@ -942,6 +955,10 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+
+    # TODO: replace explicit calls to the _configs and _outputBlocks_config dicts by
+    # looping over the correct dictionary and using the `size` field to determine the
+    # number of bits of each setting
     def write_general_config(self, write=True):
         """
         reads the values for the GeneralConfig registers (see manual v1.9 p.40) from a yaml file
