@@ -242,6 +242,57 @@ class TPX3(Dut):
         # TODO: think about whether we should always read the YAML config file?
         self.read_dac_yaml(self.dac_file)
 
+    def startup(self):
+       
+
+        self['CONTROL']['RESET'] = 1
+        self['CONTROL'].write()
+        self['CONTROL']['RESET'] = 0
+        self['CONTROL'].write()
+    
+        # Step 2b: Enable power pulsing
+        self['CONTROL']['EN_POWER_PULSING'] = 1
+        self['CONTROL'].write()
+        # Step 2c: Reset the Timer
+        data = self.getGlobalSyncHeader() + [0x40] + [0x0]
+        self.write(data)
+        
+        # Step 2d: Start the Timer
+        data = self.getGlobalSyncHeader() + [0x4A] + [0x0]
+        self.write(data)
+    
+        self['RX'].reset()
+        self['RX'].DATA_DELAY = 0
+        self['RX'].ENABLE = 1
+        time.sleep(0.01)
+        print 'RX ready:', self['RX'].is_ready
+        print 'get_decoder_error_counter', self['RX'].get_decoder_error_counter()
+        data = self.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x0]
+        self.write(data)
+    
+        logger.info( 'RX ready:', self['RX'].is_ready)
+    
+        logger.info(self.get_configuration())
+    
+        # Step 2e: reset sequential / resets pixels?!
+        # before setting PCR need to reset pixel matrix
+        data = self.reset_sequential(False)
+        self.write(data, True)
+        self.reset_config_attributes()
+    
+        # Step 3: Set PCR
+        # Step 3a: Produce needed PCR
+        for x in range(256):
+            for y in range(256):
+                self.set_pixel_pcr(x, y, 1, 7, 0)
+        
+        for i in range(256):
+            data = self.write_pcr([i], write=False)
+            self.write(data, True)
+         
+
+        
+
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
         """

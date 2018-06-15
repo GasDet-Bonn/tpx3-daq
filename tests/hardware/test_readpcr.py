@@ -24,38 +24,7 @@ def test_readpcr():
 
     chip = TPX3()
     chip.init()
-
-    chip['CONTROL']['RESET'] = 1
-    chip['CONTROL'].write()
-
-    chip['CONTROL']['RESET'] = 0
-    chip['CONTROL'].write()
-
-    chip['CONTROL']['EN_POWER_PULSING'] = 1
-    chip['CONTROL'].write()
-
-    data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x00]
-
-    chip.write(data)
-
-    logger.info('RX ready:', chip['RX'].is_ready)
-
-    chip['RX'].reset()
-    chip['RX'].DATA_DELAY = 0
-    chip['RX'].ENABLE = 1
-    time.sleep(0.01)
-
-    while(not chip['RX'].is_ready):
-        pass
-
-    # Step 4d: Reset and start Timer
-    logger.info("ReSet Timer")
-    data = chip.resetTimer(write=False)
-    chip.write(data, True)
-    logger.info("Start Timer")
-    data = chip.startTimer(write=False)
-    chip.write(data, True)
-
+    chip.startup()
     # Step 5: Set general config
     logger.info("Set general config")
     data = chip.write_general_config(write=False)

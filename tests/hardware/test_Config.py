@@ -23,57 +23,8 @@ def test_config(value1, value2, value3):
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
-
-    # Step 2: Chip start-up sequence
-    # Step 2a: Reset the chip
-    chip['CONTROL']['RESET'] = 1
-    chip['CONTROL'].write()
-    chip['CONTROL']['RESET'] = 0
-    chip['CONTROL'].write()
-
-    # Step 2b: Enable power pulsing
-    chip['CONTROL']['EN_POWER_PULSING'] = 1
-    chip['CONTROL'].write()
-
-    # Step 2c: Reset the Timer
-    data = chip.getGlobalSyncHeader() + [0x40] + [0x0]
-    chip.write(data)
+    chip.startup()
     
-    # Step 2d: Start the Timer
-    data = chip.getGlobalSyncHeader() + [0x4A] + [0x0]
-    chip.write(data)
-
-    chip['RX'].reset()
-    chip['RX'].DATA_DELAY = 0
-    chip['RX'].ENABLE = 1
-    time.sleep(0.01)
-
-    logger.info(chip['RX'].is_ready,":Receiver Ready")
-    logger.info('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
-
-    data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x0]
-    chip.write(data)
-
-    logger.info('RX ready:', chip['RX'].is_ready)
-
-    logger.info(chip.get_configuration())
-
-    # Step 2e: reset sequential / resets pixels?!
-    # before setting PCR need to reset pixel matrix
-    data = chip.reset_sequential(False)
-    chip.write(data, True)
-    fdata = chip['FIFO'].get_data()
-    #print fdata
-    dout = chip.decode_fpga(fdata, True)
-    #print dout
-    ddout = chip.decode(dout[0], 0x71)
-    logger.info(ddout)
-    #try:
-        #ddout = chip.decode(dout[1], 0x71)
-        #print ddout
-    #except IndexError:
-        #print("no EoR found")
-    chip.reset_config_attributes()
     # now set some random config bits to different values than default
     logger.info("Switch Polarity:",value1)
     chip._config["Polarity"] = value1
