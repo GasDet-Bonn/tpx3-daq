@@ -23,46 +23,8 @@ def run_test_timer(val):
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
-
-    # Step 2: Chip start-up sequence
-    # Step 2a: Reset the chip
-    chip['CONTROL']['RESET'] = 1
-    chip['CONTROL'].write()
-    chip['CONTROL']['RESET'] = 0
-    chip['CONTROL'].write()
-
-    # Step 2b: Enable power pulsing
-    chip['CONTROL']['EN_POWER_PULSING'] = 1
-    chip['CONTROL'].write()
-    chip['RX'].reset()
-    chip['RX'].DATA_DELAY = 0
-    chip['RX'].ENABLE = 1
-    time.sleep(0.01)
-
-    logger.info('RX ready:', chip['RX'].is_ready)
-    logger.info('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
-
-    data = chip.getGlobalSyncHeader() + [0x10] + [0b10101010, 0x01] + [0x0]
-    chip.write(data)
-
-    logger.info('RX ready:', chip['RX'].is_ready)
-
-    logger.info(chip.get_configuration())
-
-    # Step 2e: reset sequential / resets pixels?!
-    # before setting PCR need to reset pixel matrix
-    data = chip.reset_sequential(False)
-    chip.write(data, True)
-    fdata = chip['FIFO'].get_data()
-    dout = chip.decode_fpga(fdata, True)
-    ddout = chip.decode(dout[0], 0x71)
-    logger.info(ddout)
-    try:
-        ddout = chip.decode(dout[1], 0x71)
-        logger.info(ddout)
-    except IndexError:
-        logger.info("no EoR found")
-
+    chip.startup()
+    
 
     logger.info("Set PCR")
     # Step 3a: Produce needed PCR
