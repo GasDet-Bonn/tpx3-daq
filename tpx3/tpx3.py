@@ -374,6 +374,11 @@ class TPX3(Dut):
         # and set the dict containing the YAML content
         setattr(self, dictNames[dict_type]["YamlContent"], outdict)
 
+        # now set the `_written_to_chip` variables as attributes, init with False
+        var_name = dictNames[dict_type]["YamlContent"] + "_written_to_chip"
+        # set this to False (Note: not used so far)
+        setattr(self, var_name, False)
+
     def getGlobalSyncHeader(self):
         """
         Returns the global sync header, which is used to address all available
