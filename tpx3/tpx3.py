@@ -1526,7 +1526,7 @@ class TPX3(Dut):
         gray_decrypt[47]=encoded_value[47]
         for i in range (46, -1, -1):
             gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
-       
+        return BitLogic.tovalue(gray_decrypt)
 
     def set_dacs(self, **kwargs):
         pass

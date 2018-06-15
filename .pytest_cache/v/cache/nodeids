@@ -3,5 +3,6 @@
   "tests/hardware/test_Config.py::grouptest::test_Config", 
   "tests/hardware/test_Dacs.py::grouptest::test_dacs", 
   "tests/hardware/test_Timer.py::grouptest::test_timer", 
-  "tests/hardware/test_iToTEventCtr.py::grouptest::test_iToTEventCtr"
+  "tests/hardware/test_iToTEventCtr.py::grouptest::test_iToTEventCtr", 
+  "tests/hardware/test_readpcr.py::grouptest::test_readpcr"
 ]
