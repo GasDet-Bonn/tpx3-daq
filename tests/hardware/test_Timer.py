@@ -23,7 +23,7 @@ def run_test_timer(val):
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
-    chip.startup()
+    #chip.startup()
     
 
     logger.info("Set PCR")

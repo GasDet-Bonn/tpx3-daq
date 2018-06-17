@@ -23,7 +23,7 @@ def test_dacs():
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
-    chip.startup()
+    #chip.startup()
     
     # now set some random DACS to different values than default
     chip.dacs["VTP_coarse"] = 11
