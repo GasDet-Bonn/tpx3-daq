@@ -23,7 +23,7 @@ def test_config(value1, value2, value3):
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
-    #chip.startup()
+    
     
     # now set some random config bits to different values than default
     logger.info("Switch Polarity:",value1)
