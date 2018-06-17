@@ -24,7 +24,6 @@ def test_readpcr():
 
     chip = TPX3()
     chip.init()
-    chip.startup()
     # Step 5: Set general config
     logger.info("Set general config")
     data = chip.write_general_config(write=False)

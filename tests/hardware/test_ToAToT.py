@@ -22,7 +22,7 @@ def run_test_ToAToT():
     # Step 1: Initialize chip & hardware
     chip = TPX3()
     chip.init()
-    chip.startup()
+    
 
     # Step 3: Set PCR
     # Step 3a: Produce needed PCR

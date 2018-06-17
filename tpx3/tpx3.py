@@ -241,7 +241,8 @@ class TPX3(Dut):
 
         # TODO: think about whether we should always read the YAML config file?
         self.read_dac_yaml(self.dac_file)
-
+        self.startup()
+        
     def startup(self):
        
 
