@@ -4,6 +4,7 @@
   "tests/hardware/test_Dacs.py::grouptest::test_dacs", 
   "tests/hardware/test_Timer.py::grouptest::test_timer", 
   "tests/hardware/test_ToAToT.py::grouptest::test_ToAToT", 
+  "tests/hardware/test_fToA.py::grouptest::test_fToA", 
   "tests/hardware/test_iToTEventCtr.py::grouptest::test_iToTEventCtr", 
   "tests/hardware/test_readpcr.py::grouptest::test_readpcr"
 ]
