@@ -5,20 +5,22 @@ import time
 from basil.utils.BitLogic import BitLogic
 import array
 import argparse
+import logging
+import unittest
+import pytest
+ 
 
+logger = logging.getLogger(__file__)
+class grouptest(unittest.TestCase):
+ 
+    def setUp(self):
+        pass
+    def test_readpcr(self):
+        self.assertEqual(test_readpcr(),258)
+    
 
-def pretty_print(string_val, bits=32):
-    val = int(string_val)
-    bits = BitLogic(bits)
-    bits[:] = val
-    lst = bits.toByteList(True)
-    lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
-
-
-def main(args_dict):
+@pytest.fixture(scope='module')    
+def test_readpcr():
 
     chip = TPX3()
     chip.init()
@@ -36,7 +38,7 @@ def main(args_dict):
 
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    logger.info('RX ready:', chip['RX'].is_ready)
 
     chip['RX'].reset()
     chip['RX'].DATA_DELAY = 0
@@ -47,37 +49,34 @@ def main(args_dict):
         pass
 
     # Step 4d: Reset and start Timer
-    print "ReSet Timer"
+    logger.info("ReSet Timer")
     data = chip.resetTimer(write=False)
     chip.write(data, True)
-    print "Start Timer"
+    logger.info("Start Timer")
     data = chip.startTimer(write=False)
     chip.write(data, True)
 
     # Step 5: Set general config
-    print "Set general config"
+    logger.info("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
-    print "\tGet EoC: "
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print dout
+    
 
     # Step 2a: reset sequential / resets pixels?!
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
     dout = chip.decode_fpga(fdata, True)
-    print dout
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    logger.info(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        logger.info(ddout)
     except IndexError:
-        print("no EoR found")
+        logger.info("no EoR found")
 
     # Step 3: Set PCR
     # Step 3a: Produce needed PCR
@@ -89,35 +88,26 @@ def main(args_dict):
     for i in range(256):
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
-    print "pixel config sent"
+    logger.info("pixel config sent")
     fdata = chip['FIFO'].get_data()
-    print fdata
     dout = chip.decode_fpga(fdata, True)
-    print dout
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
-
+    
     # only read column x == 1
     data = chip.read_pixel_config_reg([1], write=False)
     chip.write(data, True)
-    print "read pixel config command sent"
+    logger.info("read pixel config command sent")
     fdata = chip['FIFO'].get_data()
-    print fdata
     dout = chip.decode_fpga(fdata, True)
-    print dout
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
-
+    
     data = chip.read_pixel_matrix_sequential(0x02, False)
-    print "read matrix sequential command sent"
+    logger.info("read matrix sequential command sent")
     chip.write(data, True)
-    print "waiting for packets received"
+    logger.info("waiting for packets received")
     fdata = chip['FIFO'].get_data()
-    print type(fdata)
-    print fdata
     dout = chip.decode_fpga(fdata, True)
-    print len(dout)
-
+    
     counts = []
     count = 0
     xs = []
@@ -132,12 +122,12 @@ def main(args_dict):
         except ValueError:
             try:
                 ddout = chip.decode(dout[i], 0xF0)
-                print("Found a stop matrix readout?")
+                logger.info("Found a stop matrix readout?")
                 counts.append(count)
                 count = 0
                 continue
             except ValueError:
-                print("Got value error in decode for data ", dout[i])
+                logger.info("Got value error in decode for data ", dout[i])
                 raise
         x = chip.pixel_address_to_x(ddout[0])
         y = chip.pixel_address_to_y(ddout[0])
@@ -147,18 +137,9 @@ def main(args_dict):
         ys.append(y)
         # print(ddout[0].tovalue())
 
-    print("Read {} packages".format(len(dout)))
-    # print("Read x: {} \nRead y: {}".format(xs, ys))
-    # print("#x: {}\n#y: {}".format(len(xs), len(ys)))
-    # print("{} / {}".format(xs[183], ys[183]))
-    # print("{} / {}".format(xs[184], ys[184]))
-    # print("{} / {}".format(xs[185], ys[185]))
-    ddout = chip.decode(dout[-1], 0x90)
-    print ddout
-
-    print("Found the following counts: ", counts)
+    logger.info("Read {} packages".format(len(dout)))
+    logger.info("Found the following counts: ", counts)
+    return len(dout)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Timepix3 CTPR read/write checking script')
-    args_dict = vars(parser.parse_args())
-    main(args_dict)
+    test_readpcr()

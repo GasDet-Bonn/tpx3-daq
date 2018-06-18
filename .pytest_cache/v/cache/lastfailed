@@ -1,0 +1,6 @@
+{
+  "firmware/lib/si_udp/tb/test_si_udp.py": true, 
+  "tests/hardware/test_ChipId.py::grouptest::test_chipID": true, 
+  "tests/hardware/test_Config.py::grouptest::test_config": true, 
+  "tests/hardware/test_Config.py::test_config": true
+}

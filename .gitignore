@@ -120,6 +120,7 @@ test_si_udp.lxt
 
 # Scan output data
 tpx3/scans/output_data/*
+output_data/*
 
 .metadata/
 *.lprof
