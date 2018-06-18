@@ -20,6 +20,11 @@ from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
 from utils import toByteList, bitword_to_byte_list
 
+# import ctypes to use experimental decode written in Nim
+from numpy.ctypeslib import ndpointer
+from ctypes import *
+import ctypes
+
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
 
@@ -120,6 +125,15 @@ class CustomDict(dict):
                 )
             else:
                 raise ValueError(self.dictErrors['negativeVal'].format(key))
+
+class GenericSeq(Structure):
+    _fields_ = [("len", c_int), ("reserved", c_int)]
+
+class Seq(Structure):
+    _fields_ = [("Sup", GenericSeq), ("data", POINTER(c_uint64))]
+
+class ArrayTup(Structure):
+    _fields_ = [("FieldP", POINTER(c_uint64)), ("Field1", c_uint8)]
 
 class TPX3(Dut):
 
@@ -249,6 +263,7 @@ class TPX3(Dut):
         self.lfsr_14_bit()
         self.lfsr_4_bit()
 
+
         # assign filenames so we can check them
         self.config_file = config_file
         self.dac_file = dac_file
@@ -270,6 +285,28 @@ class TPX3(Dut):
             # read all 3 YAML files for config registers, DACS and the output block configuration
             self.read_yaml(getattr(self, var_name), dict_type)
 
+        self.init_decode_lib()
+
+    def init_decode_lib(self):
+        # libdecode contains the decode proc
+        self.decode_lib = CDLL("tpx3/libdecode.so")
+        # init Nim's GC
+        self.decode_lib.initThread()
+        # need two arrays as arguments. one contains the input, one the output
+        # we don't have a return type, since we hand a buffer
+        
+        self.decode_lib.decode_fpga.argtypes = [POINTER(c_uint32), c_int, POINTER(c_uint64), c_int]
+        self.decode_lib.destroy.argtypes = [POINTER(c_uint64)]
+        #self.decode_lib.testSeq.restype = Seq
+        self.decode_lib.testSeq.restype = ArrayTup #ndpointer(dtype=c_uint64, shape=(4,))  # POINTER(c_uint64)
+
+        seq = self.decode_lib.testSeq()
+        print("Seq of ", seq.FieldP[3])#.contents[3])
+        print("Nums ", seq.Field1)
+        self.decode_lib.destroy(seq.FieldP)
+        # should segfault now
+        print("Seq of ", seq.FieldP[2])#.contents[3])
+        
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
         """
@@ -645,6 +682,22 @@ class TPX3(Dut):
         command header (see manual v1.9 p.28)
         A list of 48 bit bitarrays for each word is returned.
         """
+        dtest = BitLogic(32)
+
+        dtest[7:0] = 255
+        dtest[31] = 1
+
+        print(dtest)
+        print(toByteList(dtest))
+
+        # get data as ctypes pointer
+        self.dataC = data.ctypes.data_as(POINTER(c_uint32))
+        self.nData = data.size
+        print("N data is ", self.nData, data.shape)
+        # get memory for the buffer
+        self.bufferC = (c_uint64 * self.nData)()
+        self.decode_lib.decode_fpga(self.dataC, self.nData, self.bufferC, self.nData)
+        print("Got the following back from Nim ", np.frombuffer(self.bufferC, dtype = np.uint64))
 
         # determine number of 48bit words
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
@@ -667,9 +720,20 @@ class TPX3(Dut):
             dataout[23:16] = d1[3]
             dataout[15:8] = d1[2]
             dataout[7:0] = d1[1]
+            print "Result 40..47 ", dataout[47:40].tovalue()
+            print "Result 32..39 ", dataout[39:32].tovalue()
+            print "Result 24..31 ", dataout[31:24].tovalue()
+            print "Result 15..23 ", dataout[23:16].tovalue()
+            print "Result 8..15 ",  dataout[15:8].tovalue()
+            print "Result 0..7 ",   dataout[7:0].tovalue()
+            
 
             # add the bitarray for the current 48 bit word to the output list
             result.append(dataout)
+
+        print("Python says ", result[0].tovalue())
+        #import sys
+        #sys.exit()
 
         return result
 
