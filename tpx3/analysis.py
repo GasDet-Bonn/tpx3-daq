@@ -21,7 +21,9 @@ from numba import njit
 
 logger = logging.getLogger('Analysis')
 
+_lfsr_14_lut = np.zeros((2 ** 14), dtype=np.uint16)
 _lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
+_lfsr_4_lut = np.zeros((2 ** 4), dtype=np.uint16)
 
 from numba import njit
 
@@ -118,6 +120,34 @@ def interpret_raw_data(raw_data, meta_data=[]):
     return ret
 
 
+def init_lfsr_14_lut():
+    """
+    Generates a 14bit LFSR according to Manual v1.9 page 19
+    """
+    lfsr = BitLogic(14)
+    lfsr[7:0] = 0xFF
+    lfsr[13:8] = 63
+    dummy = 0
+    for i in range(2**14):
+        _lfsr_14_lut[BitLogic.tovalue(lfsr)] = i
+        dummy = lfsr[13]
+        lfsr[13] = lfsr[12]
+        lfsr[12] = lfsr[11]
+        lfsr[11] = lfsr[10]
+        lfsr[10] = lfsr[9]
+        lfsr[9] = lfsr[8]
+        lfsr[8] = lfsr[7]
+        lfsr[7] = lfsr[6]
+        lfsr[6] = lfsr[5]
+        lfsr[5] = lfsr[4]
+        lfsr[4] = lfsr[3]
+        lfsr[3] = lfsr[2]
+        lfsr[2] = lfsr[1]
+        lfsr[1] = lfsr[0]
+        lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
+    _lfsr_14_lut[2 ** 14 - 1] = 0
+
+
 def init_lfsr_10_lut():
     """
     Generates a 10bit LFSR according to Manual v1.9 page 19
@@ -141,6 +171,23 @@ def init_lfsr_10_lut():
         lfsr[1] = lfsr[0]
         lfsr[0] = lfsr[7] ^ dummy
     _lfsr_10_lut[2 ** 10 - 1] = 0
+
+
+def init_lfsr_4_lut():
+    """
+    Generates a 4bit LFSR according to Manual v1.9 page 19
+    """
+    lfsr = BitLogic(4)
+    lfsr[3:0] = 0xF
+    dummy = 0
+    for i in range(2**4):
+        _lfsr_4_lut[BitLogic.tovalue(lfsr)] = i
+        dummy = lfsr[3]
+        lfsr[3] = lfsr[2]
+        lfsr[2] = lfsr[1]
+        lfsr[1] = lfsr[0]
+        lfsr[0] = lfsr[3] ^ dummy
+    _lfsr_4_lut[2 ** 4 - 1] = 0
 
 
 def scurve(x, A, mu, sigma):
@@ -330,7 +377,9 @@ def fit_scurves_multithread(scurves, scan_param_range,
 
 
 # init LUTs
+init_lfsr_14_lut()
 init_lfsr_10_lut()
+init_lfsr_4_lut()
 
 if __name__ == "__main__":
     pass
