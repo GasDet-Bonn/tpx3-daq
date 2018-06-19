@@ -27,6 +27,19 @@ _lfsr_4_lut = np.zeros((2 ** 4), dtype=np.uint16)
 
 from numba import njit
 
+
+@njit
+def gray_decrypt(value):
+    """
+    Decrypts a gray encoded 14 bit value according to Manual v1.9 page 19
+    """
+    encoded_value = np.uint16(value)
+    gray_decrypt = np.uint16(0)
+    gray_decrypt = (encoded_value >> np.uint64(13)) << np.uint64(13)
+    for i in range(12, -1, -1):
+        gray_decrypt = gray_decrypt | ((((gray_decrypt >> np.uint64(i+1)) & np.uint64(0x1)) ^ ((encoded_value >> np.uint64(i)) & np.uint64(0x1))) << np.uint64(i))
+    return gray_decrypt
+
 @njit
 def scurve_hist(hit_data, param_range):
     scurves = np.zeros((256*256, len(param_range)), dtype=np.uint16)
