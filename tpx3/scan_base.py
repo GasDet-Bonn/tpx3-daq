@@ -146,6 +146,14 @@ class ScanBase(object):
         row['attribute'] = 'chip_id'
         row['value'] = kwargs.get('chip_id', '0x0000')
         row.append()
+        row = run_config_table.row
+        row['attribute'] = 'op_mode'
+        row['value'] = self.chip.config['Op_mode']['value']
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'VCO_mode'
+        row['value'] = self.chip.config['Fast_Io_en']['value']
+        row.append()
 
         run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections']
         for kw, value in kwargs.iteritems():
