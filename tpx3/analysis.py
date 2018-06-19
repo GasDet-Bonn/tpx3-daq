@@ -53,37 +53,65 @@ def scurve_hist(hit_data, param_range):
 
     return scurves
 
-#TODO: This is bad should be njit
-def _interpret_raw_data(data):
 
-    # TODO: fix types
-    data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id'],
-               'formats': ['uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16']}
-
-    pix_data = np.recarray((data.shape[0]), dtype=data_type)
-
+@njit
+def _interpret_raw_data(data, pix_data, mode, vco_mode):
     n47 = np.uint64(47)
     n44 = np.uint64(44)
+    n40 = np.uint64(40)
     n28 = np.uint64(28)
     n36 = np.uint64(36)
+    n14 = np.uint64(14)
+    n10 = np.uint64(10)
     n4 = np.uint64(4)
+    n3 = np.uint64(3)
 
+    n3f = np.uint64(0x3f)
     nff = np.uint64(0xff)
     n3ff = np.uint64(0x3ff)
+    n3fff = np.uint64(0x3fff)
+    n3ffff = np.uint64(0x3ffff)
+    nffffffffff = np.uint64(0xffffffffff)
     nf = np.uint64(0xf)
 
-    pixel = (data >> n28) & np.uint64(0b111)
-    super_pixel = (data >> np.uint64(28 + 3)) & np.uint64(0x3f)
-    right_col = pixel > 3
-    eoc = (data >> np.uint64(28 + 9)) & np.uint64(0x7f)
+    for i in range(data.shape[0]):
+        # pixel is a 3 bit value in data[30:28]
+        pixel = (data[i] >> n28) & np.uint64(0b111)
+        # super_pixel is a 6 bit value in data [36:31]
+        super_pixel = (data[i] >> np.uint64(28 + 3)) & np.uint64(0x3f)
+        # right_col shows if the pixel is in the left (pixel <= 3) column of
+        # the super_pixel or in the right (pixel > 3)
+        right_col = pixel > 3
+        # eoc is a 7 bit value in data [43:37]
+        eoc = (data[i] >> np.uint64(28 + 9)) & np.uint64(0x7f)
 
-    pix_data['data_header'] = data >> n47
-    pix_data['header'] = data >> n44
-    pix_data['y'] = (super_pixel * 4) + (pixel - right_col * 4)
-    pix_data['x'] = eoc * 2 + right_col * 1
-    pix_data['HitCounter'] = data & nf
-    pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff]
-    # TODO
+        pix_data['data_header'][i] = data[i] >> n47
+        pix_data['header'][i] = data[i] >> n44
+        pix_data['y'][i] = (super_pixel * 4) + (pixel - right_col * 4)
+        pix_data['x'][i] = eoc * 2 + right_col * 1
+        if vco_mode is 1:
+            if mode is 0:
+                pix_data['TOA'][i] = gray_decrypt((data[i] >> n14) & n3fff)
+                pix_data['TOT'][i] = _lfsr_10_lut[(data[i] >> n4) & n3ff]
+                pix_data['FTOA'][i] = data[i] & nf
+            elif mode is 1:
+                pix_data['TOA'][i] = gray_decrypt((data[i] >> n14) & n3fff)
+                pix_data['FTOA'][i] = data[i] & nf
+            else:
+                pix_data['iTOT'][i] = _lfsr_14_lut[(data[i] >> n14) & n3fff]
+                pix_data['EventCounter'][i] = _lfsr_10_lut[(data[i] >> n4) & n3ff]
+        else:
+            if mode is 0:
+                pix_data['TOA'][i] = gray_decrypt((data[i] >> n14) & n3fff)
+                pix_data['TOT'][i] = _lfsr_10_lut[(data[i] >> n4) & n3ff]
+                pix_data['HitCounter'][i] = _lfsr_10_lut[data[i] & nf]
+            elif mode is 1:
+                pix_data['TOA'][i] = gray_decrypt((data[i] >> n14) & n3fff)
+                pix_data['HitCounter'][i] = _lfsr_10_lut[data[i] & nf]
+            else:
+                pix_data['iTOT'][i] = _lfsr_14_lut[(data[i] >> n14) & n3fff]
+                pix_data['EventCounter'][i] = _lfsr_10_lut[(data[i] >> n4) & n3ff]
+                pix_data['HitCounter'][i] = _lfsr_4_lut[data[i] & nf]
 
     return pix_data
 
@@ -103,7 +131,7 @@ def raw_data_to_dut(raw_data):
 
     return data_words
 
-def interpret_raw_data(raw_data, meta_data=[]):
+def interpret_raw_data(raw_data, meta_data=[], mode=0, vco_mode=0):
     '''
     Chunk the data based on scan_param and interpret
     '''
@@ -118,7 +146,7 @@ def interpret_raw_data(raw_data, meta_data=[]):
         split = np.split(raw_data, stops)
         for i in range(len(split[:-1])):
             # print param[i], stops[i], len(split[i]), split[i]
-            int_pix_data = interpret_raw_data(split[i])
+            int_pix_data = interpret_raw_data(split[i], mode=mode, vco_mode=vco_mode)
             int_pix_data['scan_param_id'][:] = param[i]
             if len(ret):
                 ret = np.hstack((ret, int_pix_data))
@@ -128,7 +156,13 @@ def interpret_raw_data(raw_data, meta_data=[]):
 
         #it can be chunked and multithreaded here
         data_words = raw_data_to_dut(raw_data)
-        ret = _interpret_raw_data(data_words)
+        # TODO: fix types
+        data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'FTOA', 'iTOT', 'EventCounter', 'HitCounter', 'config', 'EoC', 'CTPR', 'periphery_data', 'scan_param_id'],
+                     'formats': ['uint8', 'uint8', 'uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint32', 'uint8', 'uint64', 'uint16']}
+
+        pix_data = np.recarray((data_words.shape[0]), dtype=data_type)
+
+        ret = _interpret_raw_data(data_words, pix_data, mode, vco_mode)
 
     return ret
 
@@ -165,7 +199,6 @@ def init_lfsr_10_lut():
     """
     Generates a 10bit LFSR according to Manual v1.9 page 19
     """
-
     lfsr = BitLogic(10)
     lfsr[7:0] = 0xFF
     lfsr[9:8] = 0b11
