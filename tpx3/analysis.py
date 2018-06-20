@@ -86,6 +86,7 @@ def _interpret_raw_data(data, pix_data, mode, vco_mode):
         eoc = (data[i] >> np.uint64(28 + 9)) & np.uint64(0x7f)
 
         pix_data['data_header'][i] = data[i] >> n47
+        # if pix_data['data_header'][i] is 0b1:
         pix_data['header'][i] = data[i] >> n44
         pix_data['y'][i] = (super_pixel * 4) + (pixel - right_col * 4)
         pix_data['x'][i] = eoc * 2 + right_col * 1
@@ -112,6 +113,9 @@ def _interpret_raw_data(data, pix_data, mode, vco_mode):
                 pix_data['iTOT'][i] = _lfsr_14_lut[(data[i] >> n14) & n3fff]
                 pix_data['EventCounter'][i] = _lfsr_10_lut[(data[i] >> n4) & n3ff]
                 pix_data['HitCounter'][i] = _lfsr_4_lut[data[i] & nf]
+        #else:
+        #   pix_data['header'][i] = data[i] >> n40
+        #   pix_data['periphery_data'][i] = data[i] & nffffffffff
 
     return pix_data
 
