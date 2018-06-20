@@ -7,10 +7,7 @@ import numpy as np
 import argparse
 import logging
 from tables import *
-
-
-
-    
+ 
 logger = logging.getLogger(__file__)
 
 def run_test_tables():
@@ -40,6 +37,8 @@ def run_test_tables():
     for i in range(256):
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
+    # NOTE: We cannot seem to read the entire pixel PCR in a single read_pixel_config_reg command, which is why we have sectioned the entire matrix readout into groups of 4 columns
+    
     for i in range(0,256,4):
       data = chip.read_pixel_config_reg(range(i,i+4), write=False)
       chip.write(data, True)
