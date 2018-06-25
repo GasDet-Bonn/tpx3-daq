@@ -23,12 +23,19 @@ def run_test_fToA():
     chip = TPX3()
     chip.init()
     
+
     # Step 3: Set PCR
-    # all other pixels are set to TP_OFF and MASK_ON from initialization
-    chip.set_pixel_pcr(255,255,chip.TP_ON,7,chip.MASK_OFF)
-    # Step 3b: Write this columns' PCR to chip
-    data = chip.write_pcr([255], write=False)
-    chip.write(data, True)
+    # Step 3a: Produce needed PCR
+    for x in range(255):
+        for y in range(256):
+            chip.set_pixel_pcr(x, y, 0, 7, 1)
+    for y in range(255):
+        chip.set_pixel_pcr(255,y,0,7,1)
+    chip.set_pixel_pcr(255,255,1,7,0)
+    # Step 3b: Write PCR to chip
+    for i in range(256):
+        data = chip.write_pcr([i], write=False)
+        chip.write(data, True)
       
 
     # Step 4: Set TP DACs
@@ -47,11 +54,11 @@ def run_test_fToA():
    
     # Step 5: Set general config
     print "Enable Test pulses"
-    chip._config["TP_en"] = 1
+    chip.config["TP_en"] = 1
     print "Enable Local Oscillator"
-    chip._config["Fast_Io_en"] = 1
+    chip.config["Fast_Io_en"] = 1
     print "Enable Opmode"
-    chip._config["Op_mode"] = 0
+    chip.config["Op_mode"] = 0
     print "Set general config"
     data = chip.write_general_config(write=False)
     chip.write(data, True)
@@ -142,7 +149,7 @@ def run_test_fToA():
         else: 
           print"\tUnknown Packet:", el  
           unknown_counter +=1   
-    return pixel_counter
+    print pixel_counter
     
     
 

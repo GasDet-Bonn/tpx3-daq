@@ -26,7 +26,7 @@ def run_test_timer(val):
     
     # Step 5: Set general config
     logger.info("Enable Test pulses")
-    chip._config["TP_en"] = 0
+    chip._configa["TP_en"] = 0
     logger.info("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)

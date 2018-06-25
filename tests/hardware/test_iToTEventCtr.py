@@ -46,9 +46,9 @@ def run_test_iToTEventCtr():
    
     # Step 5: Set general config
     logger.info("Enable Test pulses")
-    chip._config["TP_en"] = 1
+    chip.config["TP_en"] = 1
     logger.info("Enable Opmode")
-    chip._config["Op_mode"] = 2
+    chip.config["Op_mode"] = 2
     logger.info("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)

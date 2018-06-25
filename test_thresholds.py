@@ -50,7 +50,7 @@ def scan():
         
     print("Acquisition for 0.2 s")
     #for vtc in range(16):
-    for vtc in range(15):
+    for vtc in range(15,-1,-1):
       for vtf in range(180,0,-1):
     #TODO: Should be loaded from configuration and saved in rn_config
         print vtc," ",vtf

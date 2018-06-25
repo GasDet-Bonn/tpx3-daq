@@ -47,9 +47,9 @@ def run_test_ToAToT():
    
     # Step 5: Set general config
     print "Enable Test pulses"
-    chip._config["TP_en"] = 1
+    chip._configs["TP_en"] = 1
     print "Enable Opmode"
-    chip._config["Op_mode"] = 0
+    chip._configs["Op_mode"] = 0
     print "Set general config"
     data = chip.write_general_config(write=False)
     chip.write(data, True)
@@ -140,7 +140,7 @@ def run_test_ToAToT():
         else: 
           print"\tUnknown Packet:", el  
           unknown_counter +=1   
-    return pixel_counter
+    print pixel_counter
     
     
 

@@ -1635,6 +1635,7 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[3] ^ dummy
         self.lfsr_4[2 ** 4 - 1] = 0
+        self.lfsr_4[0] = 0
 
     def gray_decrypt(self, value):
         """
