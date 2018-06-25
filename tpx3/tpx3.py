@@ -193,6 +193,10 @@ class TPX3(Dut):
 
     # number of bits a value for a DAC can have maximally
     DAC_VALUE_BITS = 9
+    MASK_ON = 0
+    MASK_OFF = 1
+    TP_ON = 1
+    TP_OFF = 0
 
     # monitoring voltage maps
     monitoring_map = {"PLL_Vcntrl": 0b10010,
@@ -202,10 +206,7 @@ class TPX3(Dut):
                       "Ibias_dac_cas": 0b11111,
                       "SenseOFF": 0b00000}
 
-    MASK_ON = 0
-    MASK_OFF = 1
-    TP_ON = 1
-    TP_OFF = 0
+
 
     def __init__(self, conf=None, **kwargs):
 
@@ -314,10 +315,10 @@ class TPX3(Dut):
         # Step 3a: Produce needed PCR
         for x in range(256):
             for y in range(256):
-                self.set_pixel_pcr(x, y, TP_OFF, 7, MASK_ON)
-
-        data = self.write_pcr(range(256), write=False)
-        self.write(data, True)
+                self.set_pixel_pcr(x, y, self.TP_OFF, 7, self.MASK_ON)
+            data = self.write_pcr([x], write=False)
+            self.write(data, True)
+        
 
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
