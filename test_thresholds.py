@@ -50,7 +50,9 @@ def scan():
         
     print("Acquisition for 0.2 s")
     #for vtc in range(16):
-    for vtc in range(15):
+    for vtc in range(15,-1,-1):
+      if pixel_counter>60:
+        break
       for vtf in range(180,0,-1):
     #TODO: Should be loaded from configuration and saved in rn_config
         print vtc," ",vtf
@@ -70,7 +72,7 @@ def scan():
       
         # Step 10: Receive data
         """ ??? """
-        time.sleep(0.2)
+        time.sleep(0.002)
         # Get the data and do the FPGA decoding
         # dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
         # for el in dout:
@@ -109,6 +111,10 @@ def scan():
               print("\tUnknown Packet:", el)  
               unknown_counter +=1 
         print pixel_counter
+        if pixel_counter>60:
+          print "Final Thresholds:"," ",vtc," ",vtf
+          break
+      
         #pixel_counter=0
   
 
