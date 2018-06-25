@@ -285,7 +285,7 @@ class TPX3(Dut):
         # Step 3a: Produce needed PCR
         for x in range(256):
             for y in range(256):
-                self.set_pixel_pcr(x, y, 1, 7, 0)
+                self.set_pixel_pcr(x, y, 0, 7, 0)
         
         for i in range(256):
             data = self.write_pcr([i], write=False)
@@ -1567,6 +1567,7 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[3] ^ dummy
         self.lfsr_4[2 ** 4 - 1] = 0
+        self.lfsr_4[0] = 0
 
     def gray_decrypt(self, value):
         """
