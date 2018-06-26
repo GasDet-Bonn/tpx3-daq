@@ -17,6 +17,15 @@ def scan():
     '''
     chip = TPX3()
     chip.init()
+    h5file = open_file("pcr1.h5", mode="w", title="Test file")
+    group_threshold = h5file.create_group("/", 'group_threshold', 'PCR Threshold Matrix')
+    group_test = h5file.create_group("/", 'group_test', 'PCR Test bit Matrix')
+    group_mask = h5file.create_group("/", 'group_mask', 'PCR Mask Matrix')
+    
+    test_bit=np.zeros((256, 256),dtype=int)
+    mask_bit=np.zeros((256, 256), dtype=int)
+    threshold_pcr=np.zeros((256, 256), dtype=int)
+
     pixel_counts=np.zeros((256),dtype=int)
     pixel_threshold_coarse=np.zeros((256,256),dtype=int)
     pixel_threshold_fine=np.zeros((256,256),dtype=int)
@@ -114,7 +123,60 @@ def scan():
         if pixel_counter>60:
           print "Final Thresholds:"," ",vtc," ",vtf
           break
+    for i in range(0,256,4):
+      data = chip.read_pixel_config_reg(range(i,i+4), write=False)
+      chip.write(data, True)
+      print("read pixel config command sent")
+      fdata = chip['FIFO'].get_data()
+      dout = chip.decode_fpga(fdata, True)
+      ddout = chip.decode(dout[0], 0x71)
       
+      data = chip.read_pixel_matrix_sequential(0x02, False)
+      print("read matrix sequential command sent")
+      chip.write(data, True)
+      print("waiting for packets received")
+      fdata = chip['FIFO'].get_data()
+      dout = chip.decode_fpga(fdata, True)
+      
+      counts = []
+      count = 0
+      xs = []
+      ys = []
+      for i in range(len(dout)):
+          #print("decoding now ", dout[i])
+          try:
+              ddout = chip.decode(dout[i], 0x90)
+              count += 1
+              x = chip.pixel_address_to_x(ddout[0])
+              y = chip.pixel_address_to_y(ddout[0])
+              print("X pos {}".format(x))
+              print("Y pos {}".format(y))
+              xs.append(x)
+              ys.append(y)
+              print(ddout[1].reverse())
+              test_bit[x][y]=ddout[1][0]
+              threshold_pcr[x][y]=ddout[1][4:1].tovalue()
+              mask_bit[x][y]=ddout[1][5]
+              if ddout[0] == "EoC":
+                  continue
+          except ValueError:
+              try:
+                  ddout = chip.decode(dout[i], 0xF0)
+                  print("Found a stop matrix readout?")
+                  counts.append(count)
+                  count = 0
+                  continue
+              except ValueError:
+                  print("Got value error in decode for data ", dout[i])
+                  raise
+   
+      
+        
+    print("Read {} packages".format(len(dout)))
+    print mask_bit
+    h5file.create_array(group_threshold, 'threshold_pcr', threshold_pcr, "PCR Threshold Matrix")
+    h5file.create_array(group_test, 'test_bit', test_bit, "PCR Test Bit Matrix")
+    h5file.create_array(group_mask, 'mask_bit', mask_bit, "PCR Mask Matrix")
         #pixel_counter=0
   
 
