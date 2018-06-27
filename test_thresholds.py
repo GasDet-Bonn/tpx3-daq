@@ -8,7 +8,7 @@ import argparse
 import logging
 from tables import *
  
-logger = logging.getLogger(__file__)
+#logger = logging.getLogger(__file__)
 
 
 def scan():
@@ -34,13 +34,13 @@ def scan():
      #   for y in range(256):
       #      chip.set_pixel_pcr(x, y, 0, 15, 0)
     # Step 3b: Write PCR to chip
-    chip.set_pixel_pcr(40,38, 0, 0, 1)
-    data = chip.write_pcr([40], write=False)
-    chip.write(data, True)
+
+    chip.set_pixel_pcr(40,38, 0, 0, 0)
+    chip.set_pixel_pcr(38,40, 0, 0, 0)
+    data = chip.write_pcr([38,40], write=True)
     
     for i in range(256):
-        data = chip.write_pcr([i], write=False)
-        chip.write(data, True)
+        data = chip.write_pcr([i], write=True)
    # Step 5: Set general config
     print("Disable Testpulses")
     chip._configs["TP_en"] = 0
@@ -99,16 +99,19 @@ def scan():
         for el in dout:
             if el[47:44].tovalue() is 0xB:
                 ddout = chip.decode(el, 0xB0)
-                print("X Pos:", chip.pixel_address_to_x(ddout[0]))
-                print("Y Pos:", chip.pixel_address_to_y(ddout[0]))
+                x = chip.pixel_address_to_x(ddout[0])
+                y = chip.pixel_address_to_y(ddout[0])
+                
+                print("X Pos:", x)
+                print("Y Pos:", y)
                 print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
                 print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
                 print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
-                pixel_threshold_coarse[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=vtc
-                pixel_threshold_fine[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=vtf
+                pixel_threshold_coarse[x][y]=vtc
+                pixel_threshold_fine[x][y]=vtf
                 
-                chip.set_pixel_pcr(chip.pixel_address_to_x(ddout[0]), chip.pixel_address_to_y(ddout[0]), 0, 0, 1)
-                data = chip.write_pcr([chip.pixel_address_to_x(ddout[0])], write=False)
+                chip.set_pixel_pcr(x, y, 0, 0, 1)
+                data = chip.write_pcr([x], write=False)
                 chip.write(data, True)
                 pixel_counter += 1
             elif el[47:40].tovalue() is 0x71:
