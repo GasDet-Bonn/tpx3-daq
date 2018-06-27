@@ -703,29 +703,59 @@ class TPX3(Dut):
         """
 
         # determine number of 48bit words
-        assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
-        nwords = len(data) / 2
-        result = []
-
-        for i in range(nwords):
-            # create a 48 bit bitarrray for the current 48 bit word
-            dataout = BitLogic(48)
-
-            # tranform the header and data of the 32 bit words lists of bytes
-            d1 = bitword_to_byte_list(int(data[2 * i]), string)
-            d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
-
-            # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
-            # contain the header which is not needed).
-            dataout[47:40] = d2[3]
-            dataout[39:32] = d2[2]
-            dataout[31:24] = d2[1]
-            dataout[23:16] = d1[3]
-            dataout[15:8] = d1[2]
-            dataout[7:0] = d1[1]
-
-            # add the bitarray for the current 48 bit word to the output list
-            result.append(dataout)
+        try:
+            assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
+            nwords = len(data) / 2
+            result = []      
+            for i in range(nwords):
+                # create a 48 bit bitarrray for the current 48 bit word
+                dataout = BitLogic(48)
+    
+                # tranform the header and data of the 32 bit words lists of bytes
+                d1 = bitword_to_byte_list(int(data[2 * i]), string)
+                d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
+    
+                # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
+                # contain the header which is not needed).
+                dataout[47:40] = d2[3]
+                dataout[39:32] = d2[2]
+                dataout[31:24] = d2[1]
+                dataout[23:16] = d1[3]
+                dataout[15:8] = d1[2]
+                dataout[7:0] = d1[1]
+    
+                # add the bitarray for the current 48 bit word to the output list
+                result.append(dataout)            
+        except AssertionError:
+            print "size error"
+            errors =[]
+            for i in range(len(data)-1):
+              d1 = bitword_to_byte_list(int(data[i]), string)
+              d2 = bitword_to_byte_list(int(data[i + 1]), string)
+              if (d2[0]==d1[0]):
+                  errors.append(d2[0])
+            data_corrected=np.delete(data,errors)
+            nwords = len(data_corrected) / 2
+            result = []      
+            for i in range(nwords):
+                # create a 48 bit bitarrray for the current 48 bit word
+                dataout = BitLogic(48)
+    
+                # tranform the header and data of the 32 bit words lists of bytes
+                d1 = bitword_to_byte_list(int(data_corrected[2 * i]), string)
+                d2 = bitword_to_byte_list(int(data_corrected[2 * i + 1]), string)
+    
+                # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
+                # contain the header which is not needed).
+                dataout[47:40] = d2[3]
+                dataout[39:32] = d2[2]
+                dataout[31:24] = d2[1]
+                dataout[23:16] = d1[3]
+                dataout[15:8] = d1[2]
+                dataout[7:0] = d1[1]
+    
+                # add the bitarray for the current 48 bit word to the output list
+                result.append(dataout)
 
         return result
 
