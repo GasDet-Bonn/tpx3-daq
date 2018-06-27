@@ -137,6 +137,67 @@ def scan():
     
     Coarse_array[:][:]=pixel_threshold_coarse
     Fine_array[:][:]=pixel_threshold_fine
+    pixel_counter=0
+    data=chip.set_dac("Vthreshold_fine", 42, write=True)
+    data=chip.set_dac("Vthreshold_coarse", 8, write=True)
+    for vth in range(16):
+        print "Threshold:",vth
+        for x in range(256):
+          for y in range(256):
+            if pixel_mask[x][y]==0:
+              chip.set_pixel_pcr(x, y, 0, vth,0 )  
+          data = chip.write_pcr([x], write=False)
+          chip.write(data, True)
+    # Step 8: Send "read pixel matrix data driven" command
+        print("Read pixel matrix data driven")
+        data = chip.read_pixel_matrix_datadriven(write=False)
+        chip.write(data, True)
+      
+        chip['CONTROL']['SHUTTER'] = 1
+        chip['CONTROL'].write()
+      
+        # Step 10: Receive data
+        """ ??? """
+        time.sleep(0.002)
+       
+        chip['CONTROL']['SHUTTER'] = 0
+        chip['CONTROL'].write()
+        # Get the data, do the FPGA decode and do the decode ot the 0th element
+        # which should be EoR (header: 0x71)
+        fdata=chip['FIFO'].get_data()
+        try:
+            dout = chip.decode_fpga(fdata, True)
+            for el in dout:
+              if el[47:44].tovalue() is 0xB:
+                  ddout = chip.decode(el, 0xB0)
+                  print("X Pos:", chip.pixel_address_to_x(ddout[0]))
+                  print("Y Pos:", chip.pixel_address_to_y(ddout[0]))
+                  print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
+                  print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
+                  print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
+                  threshold_pcr[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=vth
+                  pixel_mask[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=1
+                  chip.set_pixel_pcr(chip.pixel_address_to_x(ddout[0]), chip.pixel_address_to_y(ddout[0]), 0, vth, 1)
+                  data = chip.write_pcr([chip.pixel_address_to_x(ddout[0])], write=False)
+                  chip.write(data, True)
+                  pixel_counter += 1
+              elif el[47:40].tovalue() is 0x71:
+                  print("\tEoC/EoR/TP_Finished:", chip.decode(el,0x71))
+                  EoR_counter +=1
+              elif el[47:40].tovalue() is 0xF0:
+                  print("\tStop Matrix Readout:", el)
+                  stop_readout_counter +=1
+              elif el[47:40].tovalue() is 0xE0:
+                  print("\tReset Sequential:", el)
+                  reset_sequential_counter +=1
+              else: 
+                print("\tUnknown Packet:", el)  
+                unknown_counter +=1 
+        except AssertionError:
+            print "package size error"
+        print pixel_counter
+      
+   
     h5file.close()
 if __name__ == "__main__":
      scan()
