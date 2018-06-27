@@ -17,10 +17,10 @@ def scan():
     '''
     chip = TPX3()
     chip.init()
-    #h5file = open_file("pcr1.h5", mode="w", title="Test file")
-    #group_threshold = h5file.create_group("/", 'group_threshold', 'PCR Threshold Matrix')
+    h5file = open_file("pcr1.h5", mode="w", title="Test file")
+    group_threshold = h5file.create_group("/", 'group_threshold', 'PCR Threshold Matrix')
     
-    
+            
     threshold_pcr=np.zeros((256, 256), dtype=int)
 
     pixel_counts=np.zeros((256),dtype=int)
@@ -34,6 +34,10 @@ def scan():
      #   for y in range(256):
       #      chip.set_pixel_pcr(x, y, 0, 15, 0)
     # Step 3b: Write PCR to chip
+    chip.set_pixel_pcr(40,38, 0, 0, 1)
+    data = chip.write_pcr([40], write=False)
+    chip.write(data, True)
+    
     for i in range(256):
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
@@ -57,10 +61,10 @@ def scan():
     print("Acquisition for 0.2 s")
     #for vtc in range(16):
     
-    for vtc in range(15):
+    for vtc in range(11,-1,-1):
       if pixel_counter>70:
         break
-      for vtf in range(255):
+      for vtf in range(255,-1,-1):
     #TODO: Should be loaded from configuration and saved in rn_config
         print vtc," ",vtf
         data=chip.set_dac("Vthreshold_fine", vtf, write=True)
@@ -100,9 +104,10 @@ def scan():
                 print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
                 print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
                 print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
-                chip.set_pixel_pcr(chip.pixel_address_to_x(ddout[0]), chip.pixel_address_to_y(ddout[0]), 0, 0, 1)
                 pixel_threshold_coarse[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=vtc
                 pixel_threshold_fine[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=vtf
+                
+                chip.set_pixel_pcr(chip.pixel_address_to_x(ddout[0]), chip.pixel_address_to_y(ddout[0]), 0, 0, 1)
                 data = chip.write_pcr([chip.pixel_address_to_x(ddout[0])], write=False)
                 chip.write(data, True)
                 pixel_counter += 1
@@ -122,69 +127,14 @@ def scan():
         if pixel_counter>70:
           print "Final Thresholds:"," ",vtc," ",vtf
           break
+    print(h5file)
+    PCR_array=h5file.create_array(group_threshold, 'pixel_threshold_pcr', threshold_pcr, "PCR threshold Matrix")
+    Coarse_array=h5file.create_array(group_threshold, 'pixel_coarse_mask', pixel_threshold_coarse, "PCR threshold Matrix")
+    Fine_array=h5file.create_array(group_threshold, 'pixel_fine_mask', pixel_threshold_fine, "PCR threshold Matrix")
     
-    pixel_counter=0
-    data=chip.set_dac("Vthreshold_fine", 5, write=True)
-    data=chip.set_dac("Vthreshold_coarse", 9, write=True)
-    for vth in range(15,-1,-1):
-        print "Threshold:",vth
-        for x in range(256):
-          for y in range(256):
-            if pixel_mask[x][y]==0:
-              chip.set_pixel_pcr(x, y, 0, vth,0 )  
-          data = chip.write_pcr([x], write=False)
-          chip.write(data, True)
-    # Step 8: Send "read pixel matrix data driven" command
-        print("Read pixel matrix data driven")
-        data = chip.read_pixel_matrix_datadriven(write=False)
-        chip.write(data, True)
-      
-        chip['CONTROL']['SHUTTER'] = 1
-        chip['CONTROL'].write()
-      
-        # Step 10: Receive data
-        """ ??? """
-        time.sleep(0.002)
-       
-        chip['CONTROL']['SHUTTER'] = 0
-        chip['CONTROL'].write()
-        # Get the data, do the FPGA decode and do the decode ot the 0th element
-        # which should be EoR (header: 0x71)
-        fdata=chip['FIFO'].get_data()
-        try:
-            dout = chip.decode_fpga(fdata, True)
-            for el in dout:
-              if el[47:44].tovalue() is 0xB:
-                  ddout = chip.decode(el, 0xB0)
-                  print("X Pos:", chip.pixel_address_to_x(ddout[0]))
-                  print("Y Pos:", chip.pixel_address_to_y(ddout[0]))
-                  print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
-                  print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
-                  print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
-                  threshold_pcr[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=vth
-                  pixel_mask[chip.pixel_address_to_x(ddout[0])][chip.pixel_address_to_y(ddout[0])]=1
-                  chip.set_pixel_pcr(chip.pixel_address_to_x(ddout[0]), chip.pixel_address_to_y(ddout[0]), 0, vth, 1)
-                  data = chip.write_pcr([chip.pixel_address_to_x(ddout[0])], write=False)
-                  chip.write(data, True)
-                  pixel_counter += 1
-              elif el[47:40].tovalue() is 0x71:
-                  print("\tEoC/EoR/TP_Finished:", chip.decode(el,0x71))
-                  EoR_counter +=1
-              elif el[47:40].tovalue() is 0xF0:
-                  print("\tStop Matrix Readout:", el)
-                  stop_readout_counter +=1
-              elif el[47:40].tovalue() is 0xE0:
-                  print("\tReset Sequential:", el)
-                  reset_sequential_counter +=1
-              else: 
-                print("\tUnknown Packet:", el)  
-                unknown_counter +=1 
-        except AssertionError:
-            print "package size error"
-        print pixel_counter
-        
-    #h5file.create_array(group_threshold, 'pixel_threshold_pcr', threshold_pcr, "PCR threshold Matrix")
-    
+    Coarse_array[:][:]=pixel_threshold_coarse
+    Fine_array[:][:]=pixel_threshold_fine
+    h5file.close()
 if __name__ == "__main__":
      scan()
     
