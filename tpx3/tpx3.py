@@ -1622,7 +1622,7 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[7] ^ dummy
         self.lfsr_10[2 ** 10 - 1] = 0
-
+        self.lfsr_10[0] = 0
     def lfsr_14_bit(self):
         """
         Generates a 14bit LFSR according to Manual v1.9 page 19
@@ -1649,7 +1649,7 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
         self.lfsr_14[2 ** 14 - 1] = 0
-
+        self.lfsr_14[0] = 0
     def lfsr_4_bit(self):
         """
         Generates a 4bit LFSR according to Manual v1.9 page 19
