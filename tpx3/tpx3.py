@@ -701,6 +701,7 @@ class TPX3(Dut):
         command header (see manual v1.9 p.28)
         A list of 48 bit bitarrays for each word is returned.
         """
+        print "Shape is ", np.shape(data)
 
         # determine number of 48bit words
         try:
@@ -733,29 +734,11 @@ class TPX3(Dut):
               d1 = bitword_to_byte_list(int(data[i]), string)
               d2 = bitword_to_byte_list(int(data[i + 1]), string)
               if (d2[0]==d1[0]):
-                  errors.append(d2[0])
-            data_corrected=np.delete(data,errors)
+                  errors.append(i + 1)
+            print "errors ", errors
+            data_corrected=np.delete(data, errors)
             nwords = len(data_corrected) / 2
-            result = []      
-            for i in range(nwords):
-                # create a 48 bit bitarrray for the current 48 bit word
-                dataout = BitLogic(48)
-    
-                # tranform the header and data of the 32 bit words lists of bytes
-                d1 = bitword_to_byte_list(int(data_corrected[2 * i]), string)
-                d2 = bitword_to_byte_list(int(data_corrected[2 * i + 1]), string)
-    
-                # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
-                # contain the header which is not needed).
-                dataout[47:40] = d2[3]
-                dataout[39:32] = d2[2]
-                dataout[31:24] = d2[1]
-                dataout[23:16] = d1[3]
-                dataout[15:8] = d1[2]
-                dataout[7:0] = d1[1]
-    
-                # add the bitarray for the current 48 bit word to the output list
-                result.append(dataout)
+            result = self.decode_fpga(data_corrected)
 
         return result
 
@@ -1649,6 +1632,7 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
         self.lfsr_14[2 ** 14 - 1] = 0
+        self.lfsr_14[0] = 0
 
     def lfsr_4_bit(self):
         """
