@@ -136,7 +136,7 @@ def scan():
     
     pixel_counter=0
 
-    data=chip.set_dac("Vthreshold_fine", vtf+30, write=True)
+    data=chip.set_dac("Vthreshold_fine", vtf+50, write=True)
     data=chip.set_dac("Vthreshold_coarse", vtc, write=True)
     for vth in range(16):
         print "Threshold:",vth
@@ -213,8 +213,8 @@ def scan():
     Fine_array=h5file.create_array(group_threshold, 'pixel_fine_mask', pixel_threshold_fine, "PCR threshold Matrix")
    
     h5file.close()
-    plt.plot(pixel_counts,label='Global Threshold 8,70')
-    
+    plt.plot(pixel_counts,label="8,70")
+    plt.title("Global Threshold:8,90")
     plt.xlabel('Pixel PCR value')
     
     plt.ylabel('No. of noise packets received')
