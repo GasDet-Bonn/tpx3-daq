@@ -6,6 +6,7 @@ import array
 import numpy as np
 import argparse
 import logging
+import matplotlib.pyplot as plt
 from tables import *
  
 #logger = logging.getLogger(__file__)
@@ -23,7 +24,7 @@ def scan():
             
     threshold_pcr=np.zeros((256, 256), dtype=int)
 
-    pixel_counts=np.zeros((256),dtype=int)
+    pixel_counts=np.zeros((16),dtype=int)
     pixel_threshold_coarse=np.zeros((256,256),dtype=int)
     pixel_threshold_fine=np.zeros((256,256),dtype=int)
     pixel_mask=np.zeros((256,256),dtype=int)
@@ -135,7 +136,7 @@ def scan():
     
     pixel_counter=0
 
-    data=chip.set_dac("Vthreshold_fine", 160, write=True)
+    data=chip.set_dac("Vthreshold_fine", vtf+30, write=True)
     data=chip.set_dac("Vthreshold_coarse", vtc, write=True)
     for vth in range(16):
         print "Threshold:",vth
@@ -186,6 +187,7 @@ def scan():
                     data = chip.write_pcr([x], write=False)
                     chip.write(data, True)
                     pixel_counter += 1
+                    pixel_counts[vth] +=1
               elif el[47:40].tovalue() is 0x71:
                   print("\tEoC/EoR/TP_Finished:", chip.decode(el,0x71))
                   EoR_counter +=1
@@ -196,7 +198,7 @@ def scan():
                   print("\tReset Sequential:", el)
                   reset_sequential_counter +=1
               else: 
-                print("\tUnknown Packet:", el, " with header ", hex(el[47:40].tovalue()))
+                #print("\tUnknown Packet:", el, " with header ", hex(el[47:40].tovalue()))
                 #while chip['RX'].is_ready == False:
                 #    continue
                 unknown_counter +=1 
@@ -211,6 +213,12 @@ def scan():
     Fine_array=h5file.create_array(group_threshold, 'pixel_fine_mask', pixel_threshold_fine, "PCR threshold Matrix")
    
     h5file.close()
+    plt.plot(pixel_counts,label='Global Threshold 8,70')
+    
+    plt.xlabel('Pixel PCR value')
+    
+    plt.ylabel('No. of noise packets received')
+    plt.show()
 if __name__ == "__main__":
      scan()
     
