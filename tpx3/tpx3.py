@@ -729,23 +729,24 @@ class TPX3(Dut):
                 result.append(dataout)            
         except AssertionError:
             print "size error"
-            #errors =[]
-            #for i in range(len(data)-1):
-            #  d1 = bitword_to_byte_list(int(data[i]), string)
-            #  d2 = bitword_to_byte_list(int(data[i + 1]), string)
-            #  darray1=BitLogic(8)
-            #  darray2=BitLogic(8)
-            #  darray1[7:0]=d1[0]
-            #  darray2[7:0]=d2[0]
-            #  print "d2",d2[0]
-            #  print "d1",d1[0]
-            #  if (darray2.tovalue()==darray1.tovalue()):
-            #      errors.append(i + 1)
-            #print "errors ", errors
-            #data_corrected=np.delete(data, errors)
-            #nwords = len(data_corrected) / 2
-            result = self.decode_fpga(data[:-1])
-
+            errors =[]
+            for i in range(len(data)-1):
+              d1 = bitword_to_byte_list(int(data[i]), string)
+              d2 = bitword_to_byte_list(int(data[i + 1]), string)
+              darray1=BitLogic(8)
+              darray2=BitLogic(8)
+              darray1[7:0]=d1[0]
+              darray2[7:0]=d2[0]
+              if (darray2.tovalue()==darray1.tovalue()):
+                  errors.append(i + 1)
+            print "errors ", errors, "length:", len(errors)
+            if (len(errors) == 0):
+              result = self.decode_fpga(data[:-1])
+            else:
+              data_corrected=np.delete(data, errors)
+              nwords = len(data_corrected) / 2
+              result=self.decode_fpga(data_corrected)
+            
         return result
 
     def decode(self, data, command_header):
