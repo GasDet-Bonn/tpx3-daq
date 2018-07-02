@@ -61,7 +61,7 @@ def scan():
         
     print("Acquisition for 0.2 s")
     for vtc in range(9,7,-1):
-      if pixel_counter>50:
+      if pixel_counter>70:
         break
       for vtf in range(511,-1,-1):
     #TODO: Should be loaded from configuration and saved in rn_config
@@ -129,14 +129,14 @@ def scan():
               unknown_counter +=1 
         print pixel_counter
         print unknown_counter
-        if pixel_counter>50:
+        if pixel_counter>70:
           print "Final Thresholds:"," ",vtc," ",vtf
           break
     print(h5file)
     
     pixel_counter=0
 
-    data=chip.set_dac("Vthreshold_fine", vtf+50, write=True)
+    data=chip.set_dac("Vthreshold_fine", vtf+40, write=True)
     data=chip.set_dac("Vthreshold_coarse", vtc, write=True)
     for vth in range(16):
         print "Threshold:",vth
@@ -158,7 +158,7 @@ def scan():
       
         # Step 10: Receive data
         """ ??? """
-        time.sleep(0.002)
+        time.sleep(0.001)
        
         chip['CONTROL']['SHUTTER'] = 0
         chip['CONTROL'].write()
@@ -178,9 +178,12 @@ def scan():
                     print("On pixel thr value ", vth)
                     print("X Pos:", x)
                     print("Y Pos:", y)
-                    print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
-                    print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
-                    print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
+                    try:
+                      print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
+                      print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
+                      print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
+                    except KeyError:
+                      print ("received invalid values, manually decipher:",ddout[1]," ",ddout[2]," ",ddout[3])
                     threshold_pcr[x][y]=vth
                     pixel_mask[x][y]=1
                     chip.set_pixel_pcr(x, y, 0, vth, 1)
@@ -213,8 +216,8 @@ def scan():
     Fine_array=h5file.create_array(group_threshold, 'pixel_fine_mask', pixel_threshold_fine, "PCR threshold Matrix")
    
     h5file.close()
-    plt.plot(pixel_counts,label="8,70")
-    plt.title("Global Threshold:8,90")
+    plt.plot(pixel_counts,label="8,86")
+    plt.title("Global Threshold:8,86")
     plt.xlabel('Pixel PCR value')
     
     plt.ylabel('No. of noise packets received')
