@@ -103,9 +103,12 @@ def scan():
                 if not(((x==40) and (y==38))or((x==35) and (y==255))):
                   print("X Pos:", x)
                   print("Y Pos:", y)
-                  print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
-                  print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
-                  print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
+                  try:
+                    print("iTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
+                    print("Event Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
+                    print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
+                  except KeyError:
+                    print ("received invalid values, manually decipher:",ddout[1]," ",ddout[2]," ",ddout[3])
                   pixel_threshold_coarse[x][y]=vtc
                   pixel_threshold_fine[x][y]=vtf
                   
@@ -184,7 +187,10 @@ def scan():
                       print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
                     except KeyError:
                       print ("received invalid values, manually decipher:",ddout[1]," ",ddout[2]," ",ddout[3])
-                    threshold_pcr[x][y]=vth
+                    if vth>0:
+                      threshold_pcr[x][y]=vth-1
+                    else:
+                      threshold_pcr[x][y]=0
                     pixel_mask[x][y]=1
                     chip.set_pixel_pcr(x, y, 0, vth, 1)
                     data = chip.write_pcr([x], write=False)
