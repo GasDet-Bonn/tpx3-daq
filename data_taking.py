@@ -30,14 +30,18 @@ def data_taking():
     chip = TPX3()
     chip.init()
     vtc=8
-    vtf=97
+    vtf=95
     proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     working_dir = os.path.join(os.getcwd(), 'data_taking:'+str(vtc)+'_'+str(vtf))
+    display_dir = os.path.join(os.getcwd(), "data_taking_display")
+    
     if not os.path.exists(working_dir):
         os.makedirs(working_dir)
+    if not os.path.exists(display_dir):
+        os.makedirs(display_dir)
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     datafilename = os.path.join(working_dir, timestamp)+'.h5'
-
+    displayfilename = os.path.join(display_dir, timestamp)+'.txt'
     #Storing run values in an HDF5 file
     datafile = open_file(datafilename, mode="w", title="run file")
         
@@ -87,10 +91,8 @@ def data_taking():
     stop_readout_counter = 0
     reset_sequential_counter = 0
     unknown_counter = 0
-        
-    
-
-    
+    displayfile = open(displayfilename,"w") 
+ 
     
 # Step 8: Send "read pixel matrix data driven" command
     logger.info("Read pixel matrix data driven")
@@ -131,7 +133,7 @@ def data_taking():
                               data_process['timestamp']=time.clock()
                               logger.info('ToT Value:%s', (str(tot_val)))
                               logger.info('Hit Counter:%s', (str(hit_cntr)))
-                            
+                              displayfile.write(str(x)+'  '+str(y)+'  '+str(tot_val)+'\n') 
                             except KeyError:
                               logger.info('received invalid values, manually decipher:%s', (str(ddout[1],ddout[2],ddout[3])))
                               data_process['ToT_value']=65535
@@ -161,6 +163,7 @@ def data_taking():
             logger.info('\tNo. of Stop Readouts received:%s', (str(stop_readout_counter)))
             logger.info('\tNo. of Reset Sequentials received:%s', (str(reset_sequential_counter)))                
             logger.info('Readout manually stopped at Time:%s', (str(time.ctime())))
+            displayfile.close()
             break
 
 
