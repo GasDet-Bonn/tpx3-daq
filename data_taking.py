@@ -30,7 +30,7 @@ def data_taking():
     chip = TPX3()
     chip.init()
     vtc=8
-    vtf=95
+    vtf=97
     proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     working_dir = os.path.join(os.getcwd(), 'data_taking:'+str(vtc)+'_'+str(vtf))
     display_dir = os.path.join(os.getcwd(), "data_taking_display")
@@ -41,7 +41,6 @@ def data_taking():
         os.makedirs(display_dir)
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     datafilename = os.path.join(working_dir, timestamp)+'.h5'
-    displayfilename = os.path.join(display_dir, timestamp)+'.txt'
     #Storing run values in an HDF5 file
     datafile = open_file(datafilename, mode="w", title="run file")
         
@@ -91,8 +90,7 @@ def data_taking():
     stop_readout_counter = 0
     reset_sequential_counter = 0
     unknown_counter = 0
-    displayfile = open(displayfilename,"w") 
- 
+    
     
 # Step 8: Send "read pixel matrix data driven" command
     logger.info("Read pixel matrix data driven")
@@ -113,6 +111,9 @@ def data_taking():
                 data_raw['data_packets']=fdata[i]
                 data_raw['timestamp']=time.clock()
                 data_raw.append()
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            displayfilename = os.path.join(display_dir, timestamp)+'.txt'
+            displayfile = open(displayfilename, "w")        
             if len(fdata)>0:    
                 try:
                     dout = chip.decode_fpga(fdata, True)
@@ -133,7 +134,8 @@ def data_taking():
                               data_process['timestamp']=time.clock()
                               logger.info('ToT Value:%s', (str(tot_val)))
                               logger.info('Hit Counter:%s', (str(hit_cntr)))
-                              displayfile.write(str(x)+'  '+str(y)+'  '+str(tot_val)+'\n') 
+                              displayfile.write(str(x)+'  '+str(y)+'  '+str(tot_val)+'\n')
+                              
                             except KeyError:
                               logger.info('received invalid values, manually decipher:%s', (str(ddout[1],ddout[2],ddout[3])))
                               data_process['ToT_value']=65535
@@ -153,17 +155,18 @@ def data_taking():
                         #logger.info("\tUnknown Packet:", el, " with header ", hex(el[47:40].tovalue()))
                         #while chip['RX'].is_ready == False:
                         #    continue
-                        unknown_counter +=1 
+                        unknown_counter +=1
+                    
                 except AssertionError:
                     logger.info("package size error")
                 logger.info('\tNo. of hits received:%s', (str(pixel_counter)))
                 time.sleep(0.1)
+            displayfile.close()
         except KeyboardInterrupt:
             logger.info('\tNo. of EoRs received:%s', (str(EoR_counter)))
             logger.info('\tNo. of Stop Readouts received:%s', (str(stop_readout_counter)))
             logger.info('\tNo. of Reset Sequentials received:%s', (str(reset_sequential_counter)))                
             logger.info('Readout manually stopped at Time:%s', (str(time.ctime())))
-            displayfile.close()
             break
 
 
