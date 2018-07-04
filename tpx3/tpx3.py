@@ -82,7 +82,7 @@ dictNames = {
         "CustomDict" : "_outputBlocks",
         "YamlContent" : "outputBlock",
         "Filename" : "outputBlock.yml",
-        "FnameVar" : "outputBlock_file"        
+        "FnameVar" : "outputBlock_file"
     }
 }
 
@@ -105,7 +105,7 @@ class CustomDict(dict):
         of the given value. Else raise a ValueError
         """
         # check if valid by checking size smaller than max value
-        isValidKey = True if key in self.valsize_map.keys() else False        
+        isValidKey = True if key in self.valsize_map.keys() else False
         if not isValidKey:
             raise KeyError(self.dictErrors['invalidKey'].format(key))
         isValid = True if value < 2 ** self.valsize_map[key] and value >= 0 else False
@@ -193,6 +193,10 @@ class TPX3(Dut):
 
     # number of bits a value for a DAC can have maximally
     DAC_VALUE_BITS = 9
+    MASK_ON = 0
+    MASK_OFF = 1
+    TP_ON = 1
+    TP_OFF = 0
 
     # monitoring voltage maps
     monitoring_map = {"PLL_Vcntrl": 0b10010,
@@ -202,10 +206,7 @@ class TPX3(Dut):
                       "Ibias_dac_cas": 0b11111,
                       "SenseOFF": 0b00000}
 
-    MASK_ON = 0
-    MASK_OFF = 1
-    TP_ON = 1
-    TP_OFF = 0
+
 
     def __init__(self, conf=None, **kwargs):
 
@@ -252,7 +253,7 @@ class TPX3(Dut):
         # assign filenames so we can check them
         self.config_file = config_file
         self.dac_file = dac_file
-        self.outputBlock_file = outputBlock_file        
+        self.outputBlock_file = outputBlock_file
 
         for dict_type, type_dict in dictNames.iteritems():
             setattr(self, type_dict["YamlContent"], {})
@@ -269,6 +270,55 @@ class TPX3(Dut):
             # to the values given by the 'value' field (i.e. the user desired setting)
             # read all 3 YAML files for config registers, DACS and the output block configuration
             self.read_yaml(getattr(self, var_name), dict_type)
+
+        # finally call the startup procedure of the Timepix3, so that
+        # it is set up for data taking
+        self.startup()
+
+    def startup(self):
+
+        self['CONTROL']['RESET'] = 1
+        self['CONTROL'].write()
+        self['CONTROL']['RESET'] = 0
+        self['CONTROL'].write()
+
+        # Step 2b: Enable power pulsing
+        self['CONTROL']['EN_POWER_PULSING'] = 1
+        self['CONTROL'].write()
+        # Step 2c: Reset the Timer
+        data = self.resetTimer()
+        self.write(data)
+
+        # Step 2d: Start the Timer
+        data = self.startTimer()
+        self.write(data)
+
+        self['RX'].reset()
+        self['RX'].DATA_DELAY = 0
+        self['RX'].ENABLE = 1
+        time.sleep(0.01)
+        print 'RX ready:', self['RX'].is_ready
+        print 'get_decoder_error_counter', self['RX'].get_decoder_error_counter()
+        data = self.write_outputBlock_config(write=False)
+        self.write(data)
+
+        logger.info( 'RX ready:', self['RX'].is_ready)
+
+        logger.info(self.get_configuration())
+
+        # Step 2e: reset sequential / resets pixels?!
+        # before setting PCR need to reset pixel matrix
+        data = self.reset_sequential(False)
+        self.write(data, True)
+
+        # Step 3: Set PCR
+        # Step 3a: Produce needed PCR
+        for x in range(256):
+            for y in range(256):
+                self.set_pixel_pcr(x, y, self.TP_OFF, 7, self.MASK_ON)
+            data = self.write_pcr([x], write=False)
+            self.write(data, True)
+        
 
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
@@ -330,17 +380,17 @@ class TPX3(Dut):
     # based on above proc, define methods with easier names to work with
     def reset_config_attributes(self, to_default=False):
         self.reset_attributes("ConfigDict", to_default)
-        
+
     def reset_outputBlock_attributes(self, to_default=False):
         self.reset_attributes("OutputBlockDict", to_default)
-        
+
     def reset_dac_attributes(self, to_default=False):
         self.reset_attributes("DacsDict", to_default)
-        
+
     def read_yaml(self, filename, dict_type):
         """
         This function reads a given YAML file, stores each register in
-        a small dictionary containing its values. Depending on the 
+        a small dictionary containing its values. Depending on the
         `dict_type` it generically creates a custom dictionary of the correct
         type, writes the user defined values of the YAML file to that dictionary
         and assigns it to the correct attribute, taken from the dictNames global
@@ -445,8 +495,9 @@ class TPX3(Dut):
         """
         A convenience function to read back all DACs, print them and compare with the
         values we have stored in the _dacs DactDict dictionary
+
         Besides printing the DAC names, codes and EoC for the read_dac command,
-        it also prints the expected value (the one we wrote before, i.e. contained 
+        it also prints the expected value (the one we wrote before, i.e. contained
         in the _dacs dictionary) and the value we read back.
         Then we assert that this is actually the same value.
         """
@@ -456,11 +507,12 @@ class TPX3(Dut):
         if self.dac_written_to_chip == False:
             print("The assertion in the following loop may fail, since we are not",
                   " may not have written the DAC values to the chip!")
-        
+        counter = 0
         for dac, val in self.dacs.iteritems():
             data = self.read_dac(dac, False)
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
+
             print "\tGet DAC value, DAC code and EoC:"
             dout = self.decode_fpga(self['FIFO'].get_data(), True)
             b = BitLogic(9)
@@ -468,8 +520,12 @@ class TPX3(Dut):
             ddout = self.decode(dout[0], 0x03)
             # TODO: this whole decode and printing can be made much nicer!!
             print("Data is ", ddout[0][13:5], " wrote ", b)
-            # assert we read the correct values we wrote before 
+            # assert we read the correct values we wrote before
             assert(ddout[0][13:5].tovalue() == b.tovalue())
+            counter += 1
+        # NOTE: if an assertion fails, this will break anyways...
+        # TODO: Need to lean about pytest to know, whether assertions work in it?
+        return counter
 
     # TODO: add the given values to the _dacs dictionary, if this function is used!
     def set_dac(self, dac, value, chip=None, write=True):
@@ -645,32 +701,52 @@ class TPX3(Dut):
         command header (see manual v1.9 p.28)
         A list of 48 bit bitarrays for each word is returned.
         """
+        print "Shape is ", np.shape(data)
 
         # determine number of 48bit words
-        assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
-        nwords = len(data) / 2
-        result = []
-
-        for i in range(nwords):
-            # create a 48 bit bitarrray for the current 48 bit word
-            dataout = BitLogic(48)
-
-            # tranform the header and data of the 32 bit words lists of bytes
-            d1 = bitword_to_byte_list(int(data[2 * i]), string)
-            d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
-
-            # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
-            # contain the header which is not needed).
-            dataout[47:40] = d2[3]
-            dataout[39:32] = d2[2]
-            dataout[31:24] = d2[1]
-            dataout[23:16] = d1[3]
-            dataout[15:8] = d1[2]
-            dataout[7:0] = d1[1]
-
-            # add the bitarray for the current 48 bit word to the output list
-            result.append(dataout)
-
+        try:
+            assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
+            nwords = len(data) / 2
+            result = []      
+            for i in range(nwords):
+                # create a 48 bit bitarrray for the current 48 bit word
+                dataout = BitLogic(48)
+    
+                # tranform the header and data of the 32 bit words lists of bytes
+                d1 = bitword_to_byte_list(int(data[2 * i]), string)
+                d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
+    
+                # use the byte lists to construct the dataout bitarray (d2[0] and d1[0]
+                # contain the header which is not needed).
+                dataout[47:40] = d2[3]
+                dataout[39:32] = d2[2]
+                dataout[31:24] = d2[1]
+                dataout[23:16] = d1[3]
+                dataout[15:8] = d1[2]
+                dataout[7:0] = d1[1]
+    
+                # add the bitarray for the current 48 bit word to the output list
+                result.append(dataout)            
+        except AssertionError:
+            print "size error"
+            errors =[]
+            for i in range(len(data)-1):
+              d1 = bitword_to_byte_list(int(data[i]), string)
+              d2 = bitword_to_byte_list(int(data[i + 1]), string)
+              darray1=BitLogic(8)
+              darray2=BitLogic(8)
+              darray1[7:0]=d1[0]
+              darray2[7:0]=d2[0]
+              if (darray2.tovalue()==darray1.tovalue()):
+                  errors.append(i + 1)
+            print "errors ", errors, "length:", len(errors)
+            if (len(errors) == 0):
+              result = self.decode_fpga(data[:-1])
+            else:
+              data_corrected=np.delete(data, errors)
+              nwords = len(data_corrected) / 2
+              result=self.decode_fpga(data_corrected)
+            
         return result
 
     def decode(self, data, command_header):
@@ -929,16 +1005,11 @@ class TPX3(Dut):
             raise ValueError("""The columns list must not contain more than 256 entries and
             no entry may be larger than 255!""")
 
-        data = []
-
         # create a 1536 bit variable for the PCRs of all pixels of one column
         pixeldata = np.zeros((1536), dtype=np.uint8)
 
-        # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
-
         # append the code for the LoadConfigMatrix command header: 8 bits
-        data += [self.matrix_header_map["LoadConfigMatrix"]]
+        data = self.read_matrix_template("LoadConfigMatrix", True)
 
         # append the columnMask for the column selection: 256 bits
         data += self.produce_column_mask(columns)
@@ -1076,7 +1147,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = self.read_periphery_template("ResetTimer")        
+        data = self.read_periphery_template("ResetTimer")
 
         if write is True:
             self.write(data)
@@ -1089,7 +1160,7 @@ class TPX3(Dut):
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
         data = self.read_periphery_template("RequestTimeLow")
-        
+
         if write is True:
             self.write(data)
         return data
@@ -1100,7 +1171,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = self.read_periphery_template("RequestTimeHigh")        
+        data = self.read_periphery_template("RequestTimeHigh")
         if write is True:
             self.write(data)
         return data
@@ -1187,7 +1258,7 @@ class TPX3(Dut):
         SyncHeader and timer values for DataIn to (see manual v1.9 p.43). The sent bytes are also returned.
         """
         data = self.read_periphery_template("SetTimer_31_16", True)
-        
+
         # fill with two dummy bytes for DataIN
         time=BitLogic(16)
         time[15:0]=setTime
@@ -1198,7 +1269,7 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
-    
+
     def SetTimer_47_32(self, setTime, write=True):
         """
         Sends the Set Timer 47_32 command (see manual v1.9 p.32) together with the
@@ -1215,7 +1286,7 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
-    
+
 
     def startTimer(self, write=True):
         """
@@ -1361,7 +1432,7 @@ class TPX3(Dut):
         # create two 128-bit bitarrays for double column select and token select
         DColSelect = BitLogic(128)
         TokenSelectReg = BitLogic(128)
-        
+
         # Fill the double column select with zeros (manual v1.9 p.45) and
         # append it to the data
         for index in range(128):
@@ -1499,7 +1570,7 @@ class TPX3(Dut):
         set such all columns are loaded.
         """
         data = self.read_matrix_template("ReadMatrixDataDriven", True)
-        
+
         # append the 256 bit column mask; TODO: make the columns selectable
         data += self.produce_column_mask(range(256))
 
@@ -1514,7 +1585,7 @@ class TPX3(Dut):
         Sends a command to read the Column Test Pulse Register (Manual v 1.9 pg. 50)
         """
         data = self.read_matrix_template("ReadCTPR")
-        
+
         if write is True:
             self.write(data)
         return data
@@ -1568,6 +1639,7 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
         self.lfsr_14[2 ** 14 - 1] = 0
+        self.lfsr_14[0] = 0
 
     def lfsr_4_bit(self):
         """
@@ -1584,6 +1656,7 @@ class TPX3(Dut):
             lfsr[1] = lfsr[0]
             lfsr[0] = lfsr[3] ^ dummy
         self.lfsr_4[2 ** 4 - 1] = 0
+        self.lfsr_4[0] = 0
 
     def gray_decrypt(self, value):
         """
@@ -1595,7 +1668,7 @@ class TPX3(Dut):
         gray_decrypt[47]=encoded_value[47]
         for i in range (46, -1, -1):
             gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
-       
+        return BitLogic.tovalue(gray_decrypt)
 
     def set_dacs(self, **kwargs):
         pass
