@@ -27,7 +27,9 @@ def scan():
     pixel_counts=np.zeros((16),dtype=int)
     pixel_threshold_coarse=np.zeros((256,256),dtype=int)
     pixel_threshold_fine=np.zeros((256,256),dtype=int)
+    pixel_mask_temp=np.zeros((256,256),dtype=int)
     pixel_mask=np.zeros((256,256),dtype=int)
+    
     for x in range(256):
         for y in range(256):
             chip.set_pixel_pcr(x, y, 0, 0, 0)
@@ -111,7 +113,8 @@ def scan():
                     print ("received invalid values, manually decipher:",ddout[1]," ",ddout[2]," ",ddout[3])
                   pixel_threshold_coarse[x][y]=vtc
                   pixel_threshold_fine[x][y]=vtf
-                  
+                  pixel_mask[x][y]=1
+                    
                   chip.set_pixel_pcr(x, y, 0, 0, 1)
                   data = chip.write_pcr([x], write=False)
                   chip.write(data, True)
@@ -136,6 +139,7 @@ def scan():
           print "Final Thresholds:"," ",vtc," ",vtf
           break
     print(h5file)
+    mask_array=h5file.create_array(group_threshold, 'pixel_mask', pixel_mask, "pixel mask matrix")
     
     pixel_counter=0
 
@@ -145,7 +149,7 @@ def scan():
         print "Threshold:",vth
         for x in range(256):
           for y in range(256):
-            if pixel_mask[x][y]==0:
+            if pixel_mask_temp[x][y]==0:
               chip.set_pixel_pcr(x, y, 0, vth, 0)  
           data = chip.write_pcr([x], write=False)
           chip.write(data, True)
@@ -187,11 +191,9 @@ def scan():
                       print("Hit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
                     except KeyError:
                       print ("received invalid values, manually decipher:",ddout[1]," ",ddout[2]," ",ddout[3])
-                    if vth>0:
-                      threshold_pcr[x][y]=vth-1
-                    else:
-                      threshold_pcr[x][y]=0
-                    pixel_mask[x][y]=1
+                    
+                    threshold_pcr[x][y]=vth-1
+                    pixel_mask_temp[x][y]=1
                     chip.set_pixel_pcr(x, y, 0, vth, 1)
                     data = chip.write_pcr([x], write=False)
                     chip.write(data, True)

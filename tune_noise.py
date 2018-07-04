@@ -95,7 +95,7 @@ class NoiseTune(ScanBase):
                 self.chip.set_dac("Vthreshold_coarse", 6)
                 time.sleep(0.01)
                 with self.shutter():
-                    time.sleep(1)
+                    time.sleep(0.1)
                 self.chip.write(stop_cmd)
                 time.sleep(0.1)
 
