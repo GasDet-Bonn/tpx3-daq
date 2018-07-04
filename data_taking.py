@@ -22,21 +22,15 @@ class ToTReadout(IsDescription):
      timestamp  = Float32Col()    # float  (single-precision)
 
 
-
 def data_taking():
     '''
-    Threshold scan main loop
+    Data Taking run main loop
     '''
     chip = TPX3()
     chip.init()
-    h5file = open_file("pcr1.h5", mode="r+", title="Test file")
-    threshold_pcr=h5file.root.group_threshold.pixel_threshold_pcr.read()
-    #logger.info("threshold_pcr is an object of type:", type(threshold_pcr))
-    #logger.info threshold_pcr
-    pixel_mask=h5file.root.group_threshold.pixel_mask.read()
-    logger.info('Data taking begun at Time:%s', (str(time.ctime())))
-            
-    datafile = open_file("data_taking_run.h5", mode="w", title="run file")
+    #Storing run values in an HDF5 file
+    datafilename = "data_run-" + str(time.ctime()) + ".h5"
+    datafile = open_file(datafilename, mode="w", title="run file")
         
     group_data_preprocessing = datafile.create_group("/", 'group_data_packets', 'raw data packets  run')
     table_raw = datafile.create_table(group_data_preprocessing, 'raw', raw_packets, "raw packets data run")
@@ -47,21 +41,25 @@ def data_taking():
     
     data_raw = table_raw.row
     data_process = table_process.row
+    logger.info("Starting" +datafilename)
+    
+    #reading the PCR and masking settings from file
+    pcr_file = open_file("pcr1.h5", mode="r+", title="Test file")
+    threshold_pcr=pcr_file.root.group_threshold.pixel_threshold_pcr.read()
+    pixel_mask=pcr_file.root.group_threshold.pixel_mask.read()
+    
+    
+    #set pixel pcrs
     for x in range(256):
         for y in range(256):
           if pixel_mask[x][y]>0 or threshold_pcr[x][y]<0:
             chip.set_pixel_pcr(x, y, 0, 0, 1)
           else: 
             chip.set_pixel_pcr(x, y, 0, threshold_pcr[x][y], 0)
-    # Step 3b: Write PCR to chip
-
-    chip.set_pixel_pcr(40,38, 0, 0, 1)
-    chip.set_pixel_pcr(38,40, 0, 0, 1)
-    data = chip.write_pcr([38,40], write=True)
-    
+    # Write PCR to chip
     for i in range(256):
         data = chip.write_pcr([i], write=True)
-    h5file.close()
+    pcr_file.close()
     
    # Step 5: Set general config
     logger.info("Disable Testpulses")
@@ -70,18 +68,20 @@ def data_taking():
     logger.info("Opmode:ToA_ToT")
     chip._configs["Op_mode"] = 0
     logger.info("Set general config")
-    data=chip.set_dac("Vthreshold_fine", 105, write=True)
+    data=chip.set_dac("Vthreshold_fine", 95, write=True)
     data=chip.set_dac("Vthreshold_coarse", 8, write=True)
     
     data = chip.write_general_config(write=False)
     chip.write(data, True)
+    
+    #counters to keep track of unexpected results. logged at end
     pixel_counter = 0
     EoR_counter = 0
     stop_readout_counter = 0
     reset_sequential_counter = 0
     unknown_counter = 0
         
-    pixel_counter=0
+    
 
     
     
@@ -95,19 +95,11 @@ def data_taking():
     chip['CONTROL']['SHUTTER'] = 1
     chip['CONTROL'].write()
   
-    # Step 10: Receive data
-    """ ??? """
-    
-   
-    
-    # Get the data, do the FPGA decode and do the decode ot the 0th element
-    # which should be EoR (header: 0x71)
     while 1:
         try:
             while chip['RX'].is_ready == False:
                 continue        
             fdata=chip['FIFO'].get_data()
-
             for i in range(len(fdata)):
                 data_raw['data_packets']=fdata[i]
                 data_raw['timestamp']=time.clock()
@@ -135,6 +127,8 @@ def data_taking():
                             
                             except KeyError:
                               logger.info('received invalid values, manually decipher:%s', (str(ddout[1],ddout[2],ddout[3])))
+                              data_process['ToT_value']=65535
+                              data_process['timestamp']=time.clock()
                               
                             pixel_counter += 1
                       elif el[47:40].tovalue() is 0x71:
@@ -153,18 +147,22 @@ def data_taking():
                         unknown_counter +=1 
                 except AssertionError:
                     logger.info("package size error")
-                logger.info('\tNo. of pixels received:%s', (str(pixel_counter)))
+                logger.info('\tNo. of hits received:%s', (str(pixel_counter)))
                 time.sleep(0.1)
         except KeyboardInterrupt:
+            logger.info('\tNo. of EoRs received:%s', (str(EoR_counter)))
+            logger.info('\tNo. of Stop Readouts received:%s', (str(stop_readout_counter)))
+            logger.info('\tNo. of Reset Sequentials received:%s', (str(reset_sequential_counter)))                
             logger.info('Readout manually stopped at Time:%s', (str(time.ctime())))
             break
 
 
- 
-          
+         
     chip['CONTROL']['SHUTTER'] = 0
     chip['CONTROL'].write()
-
+    table_raw.flush()
+    table_process.flush() 
+    datafile.close()
     # plt.plot(pixel_counts,label="8,86")
     # plt.title("Global Threshold:8,86")
     # plt.xlabel('Pixel PCR value')
