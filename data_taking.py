@@ -34,8 +34,8 @@ def data_taking():
     #logger.info("threshold_pcr is an object of type:", type(threshold_pcr))
     #logger.info threshold_pcr
     pixel_mask=h5file.root.group_threshold.pixel_mask.read()
-    logger.info(h5file)
-    
+    logger.info('Data taking begun at Time:%s', (str(time.ctime())))
+            
     datafile = open_file("data_taking_run.h5", mode="w", title="run file")
         
     group_data_preprocessing = datafile.create_group("/", 'group_data_packets', 'raw data packets  run')
@@ -70,7 +70,7 @@ def data_taking():
     logger.info("Opmode:ToA_ToT")
     chip._configs["Op_mode"] = 0
     logger.info("Set general config")
-    data=chip.set_dac("Vthreshold_fine", 85, write=True)
+    data=chip.set_dac("Vthreshold_fine", 105, write=True)
     data=chip.set_dac("Vthreshold_coarse", 8, write=True)
     
     data = chip.write_general_config(write=False)
@@ -156,8 +156,7 @@ def data_taking():
                 logger.info('\tNo. of pixels received:%s', (str(pixel_counter)))
                 time.sleep(0.1)
         except KeyboardInterrupt:
-            logger.info("Readout manually stopped")
-            logger.info('\tTime:%s', (str(time.ctime())))
+            logger.info('Readout manually stopped at Time:%s', (str(time.ctime())))
             break
 
 
