@@ -27,16 +27,17 @@ def data_taking():
     '''
     Data Taking run main loop
     '''
+    chip = TPX3()
+    chip.init()
+    vtc=8
+    vtf=97
     proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    working_dir = os.path.join(os.getcwd(), "data_taking_output")
+    working_dir = os.path.join(os.getcwd(), 'data_taking:'+str(vtc)+'_'+str(vtf))
     if not os.path.exists(working_dir):
         os.makedirs(working_dir)
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    run_name = timestamp + '_data'
-    datafilename = os.path.join(working_dir, run_name)+'.h5'
+    datafilename = os.path.join(working_dir, timestamp)+'.h5'
 
-    chip = TPX3()
-    chip.init()
     #Storing run values in an HDF5 file
     datafile = open_file(datafilename, mode="w", title="run file")
         
@@ -74,8 +75,8 @@ def data_taking():
     logger.info("Opmode:ToA_ToT")
     chip._configs["Op_mode"] = 0
     logger.info("Set general config")
-    data=chip.set_dac("Vthreshold_fine", 95, write=True)
-    data=chip.set_dac("Vthreshold_coarse", 8, write=True)
+    data=chip.set_dac("Vthreshold_fine", vtf, write=True)
+    data=chip.set_dac("Vthreshold_coarse",vtc, write=True)
     
     data = chip.write_general_config(write=False)
     chip.write(data, True)
