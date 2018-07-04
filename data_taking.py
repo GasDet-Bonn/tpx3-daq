@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from tpx3.tpx3 import TPX3
 import time
+import os
 from basil.utils.BitLogic import BitLogic
 import array
 import numpy as np
@@ -16,8 +17,8 @@ class raw_packets(IsDescription):
      timestamp  = Float32Col()    # float  (single-precision)    
 
 class ToTReadout(IsDescription):
-     pixel_x   = Int8Col()   # 8-bit integer
-     pixel_y   = Int8Col()   # 8-bit integer
+     pixel_x   = UInt8Col()   # 8-bit integer
+     pixel_y   = UInt8Col()   # 8-bit integer
      ToT_value = UInt16Col()     # Unsigned short integer
      timestamp  = Float32Col()    # float  (single-precision)
 
@@ -26,17 +27,22 @@ def data_taking():
     '''
     Data Taking run main loop
     '''
+    proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    working_dir = os.path.join(os.getcwd(), "data_taking_output")
+    if not os.path.exists(working_dir):
+        os.makedirs(working_dir)
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    run_name = timestamp + '_data'
+    datafilename = os.path.join(working_dir, run_name)+'.h5'
+
     chip = TPX3()
     chip.init()
     #Storing run values in an HDF5 file
-    datafilename = "data_run-" + str(time.ctime()) + ".h5"
     datafile = open_file(datafilename, mode="w", title="run file")
         
-    group_data_preprocessing = datafile.create_group("/", 'group_data_packets', 'raw data packets  run')
-    table_raw = datafile.create_table(group_data_preprocessing, 'raw', raw_packets, "raw packets data run")
-
-    group_data_postprocessing = datafile.create_group("/", 'group_readout', 'data taking run')
-    table_process = datafile.create_table(group_data_postprocessing, 'readout', ToTReadout, "Readout for data run")
+    group_data = datafile.create_group("/", 'group_data', 'raw data packets  run')
+    table_raw = datafile.create_table(group_data, 'raw_packets', raw_packets, "raw packets data run")
+    table_process = datafile.create_table(group_data, 'processed_readout', ToTReadout, "Readout for data run")
     logger.info(datafile)
     
     data_raw = table_raw.row
@@ -129,7 +135,7 @@ def data_taking():
                               logger.info('received invalid values, manually decipher:%s', (str(ddout[1],ddout[2],ddout[3])))
                               data_process['ToT_value']=65535
                               data_process['timestamp']=time.clock()
-                              
+                            data_process.append()  
                             pixel_counter += 1
                       elif el[47:40].tovalue() is 0x71:
                           logger.info('\tEoC/EoR/TP_Finished:%s', (str(chip.decode(el,0x71))))
@@ -160,9 +166,6 @@ def data_taking():
          
     chip['CONTROL']['SHUTTER'] = 0
     chip['CONTROL'].write()
-    table_raw.flush()
-    table_process.flush() 
-    datafile.close()
     # plt.plot(pixel_counts,label="8,86")
     # plt.title("Global Threshold:8,86")
     # plt.xlabel('Pixel PCR value')
