@@ -10,16 +10,17 @@ import matplotlib.pyplot as plt
 from tables import *
  
 logger = logging.getLogger(__file__)
+
 class raw_packets(IsDescription):
-...     data_packets = UInt32Col()     # Unsigned short integer
-...     timestamp  = Float32Col()    # float  (single-precision)    
->>>
+     data_packets = UInt32Col()     # Unsigned short integer
+     timestamp  = Float32Col()    # float  (single-precision)    
+
 class ToTReadout(IsDescription):
-...     pixel_x   = Int8Col()   # 8-bit integer
-...     pixel_y   = Int8Col()   # 8-bit integer
-...     ToT_value = UInt16Col()     # Unsigned short integer
-...     timestamp  = Float32Col()    # float  (single-precision)
->>>
+     pixel_x   = Int8Col()   # 8-bit integer
+     pixel_y   = Int8Col()   # 8-bit integer
+     ToT_value = UInt16Col()     # Unsigned short integer
+     timestamp  = Float32Col()    # float  (single-precision)
+
 
 
 def data_taking():
@@ -41,7 +42,7 @@ def data_taking():
     table_raw = datafile.create_table(group_data_preprocessing, 'raw', raw_packets, "raw packets data run")
 
     group_data_postprocessing = datafile.create_group("/", 'group_readout', 'data taking run')
-    table_process = datafile.create_table(group_data_postprocessing 'readout', ToTReadout, "Readout for data run")
+    table_process = datafile.create_table(group_data_postprocessing, 'readout', ToTReadout, "Readout for data run")
     logger.info(datafile)
     
     data_raw = table_raw.row
@@ -50,7 +51,7 @@ def data_taking():
         for y in range(256):
           if pixel_mask[x][y]>0 or threshold_pcr[x][y]<0:
             chip.set_pixel_pcr(x, y, 0, 0, 1)
-          else 
+          else: 
             chip.set_pixel_pcr(x, y, 0, threshold_pcr[x][y], 0)
     # Step 3b: Write PCR to chip
 
@@ -122,27 +123,28 @@ def data_taking():
                           if not(((x==40) and (y==38))or((x==35) and (y==255))):
                             data_process['pixel_x']=x
                             data_process['pixel_y']=y
-                            logger.info("X Pos:", x)
-                            logger.info("Y Pos:", y)
+                            logger.info('X Pos:%s', (str(x)))
+                            logger.info('Y Pos:%s', (str(y)))
                             try:
                               tot_val=chip.lfsr_10[BitLogic.tovalue(ddout[2])]
                               hit_cntr=chip.lfsr_4[BitLogic.tovalue(ddout[3])]
                               data_process['ToT_value']=tot_val
                               data_process['timestamp']=time.clock()
-                              logger.info("ToT Value:", tot_val)
-                              logger.info("Hit Counter", hit_cntr)
-                            except KeyError:
-                              logger.info ("received invalid values, manually decipher:",ddout[1]," ",ddout[2]," ",ddout[3])
+                              logger.info('ToT Value:%s', (str(tot_val)))
+                              logger.info('Hit Counter:%s', (str(hit_cntr)))
                             
+                            except KeyError:
+                              logger.info('received invalid values, manually decipher:%s', (str(ddout[1],ddout[2],ddout[3])))
+                              
                             pixel_counter += 1
                       elif el[47:40].tovalue() is 0x71:
-                          logger.info("\tEoC/EoR/TP_Finished:", chip.decode(el,0x71))
+                          logger.info('\tEoC/EoR/TP_Finished:%s', (str(chip.decode(el,0x71))))
                           EoR_counter +=1
                       elif el[47:40].tovalue() is 0xF0:
-                          logger.info("\tStop Matrix Readout:", el)
+                          logger.info('\tStop Matrix Readout:%s', (str(el)))
                           stop_readout_counter +=1
                       elif el[47:40].tovalue() is 0xE0:
-                          logger.info("\tReset Sequential:", el)
+                          logger.info('\tReset Sequential:%s', (str(el)))
                           reset_sequential_counter +=1
                       else: 
                         #logger.info("\tUnknown Packet:", el, " with header ", hex(el[47:40].tovalue()))
@@ -151,11 +153,11 @@ def data_taking():
                         unknown_counter +=1 
                 except AssertionError:
                     logger.info("package size error")
-                logger.info(pixel_counter)
+                logger.info('\tNo. of pixels received:%s', (str(pixel_counter)))
                 time.sleep(0.1)
         except KeyboardInterrupt:
             logger.info("Readout manually stopped")
-            logger.infor(time.time())
+            logger.info('\tTime:%s', (str(time.ctime())))
             break
 
 
