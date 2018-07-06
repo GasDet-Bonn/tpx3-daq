@@ -108,23 +108,9 @@ class ScanBase(object):
     def get_chip(self):
         return self.chip
 
-    def load_disable_mask(self, **kwargs):
-        pass
-
-    def load_enable_mask(self, **kwargs):
-        pass
-
     def prepare_injection_masks(self, start_column, stop_column, start_row, stop_row, mask_step):
         pass
 
-    def save_disable_mask(self, update=True):
-        pass
-
-    def save_tdac_mask(self):
-        pass
-
-    def get_latest_maskfile(self):
-        pass
 
     def dump_configuration(self, **kwargs):
         self.h5_file.create_group(self.h5_file.root, 'configuration', 'Configuration')
@@ -167,15 +153,15 @@ class ScanBase(object):
         self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix',title='Mask Matrix', obj=self.chip.mask_matrix)
         self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix',title='Threshold Matrix', obj=self.chip.thr_matrix)
 
-    def configure(self, load_hitbus_mask=False, **kwargs):
+    def configure(self, **kwargs):
         '''
             Configuring step before scan start
         '''
         self.logger.info('Configuring chip...')
-        self.chip.set_dacs(**kwargs)
-        self.chip.set_tdac(**kwargs)
-        self.load_enable_mask(**kwargs)
-        self.load_disable_mask(**kwargs)
+        #self.chip.set_dacs(**kwargs)
+
+        self.load_mask_matrix(**kwargs)
+        self.load_thr_matrix(**kwargs)
 
     def start(self, **kwargs):
         '''
@@ -229,14 +215,20 @@ class ScanBase(object):
         except IndexError:
             self.logger.warning("no EoR found")
 
-        # Step 3: Set PCR
-        # Step 3a: Produce needed PCR
-        for x in range(256):
-            for y in range(256):
-                self.chip.set_pixel_pcr(x, y, self.chip.TP_OFF, 7, self.chip.MASK_OFF) #ALL OFF BY DEFAULT
+        self.maskfile = kwargs.get('maskfile', None)
 
-        self.configure(**kwargs) #TODO: all DACs and pixel configuration should be from here
+        self.configure(**kwargs) #TODO: all DACs set here
 
+        # Dissable columns
+        start_column = kwargs.get('start_column', 0)
+        stop_column = kwargs.get('stop_column', 256)
+        self.chip.test_matrix[:, :] = self.chip.TP_OFF
+
+        # Step 3a: Produce needed PCR (Pixel conficuration)
+        for i in range(256 / 4):
+            self.chip.write_pcr(range(4 * i, 4 * i + 4))
+
+        # Setup files
         filename = self.output_filename + '.h5'
         filter_raw_data = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
         self.filter_tables = tb.Filters(complib='zlib', complevel=5, fletcher32=False)
@@ -246,6 +238,7 @@ class ScanBase(object):
         self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data', description=MetaTable,
                                                         title='meta_data', filters=self.filter_tables)
 
+        #save configuration
         self.dump_configuration(**kwargs)
 
         # Setup data sending
@@ -289,7 +282,7 @@ class ScanBase(object):
 
     @contextmanager
     def readout(self, *args, **kwargs):
-        timeout = kwargs.pop('timeout', 10.0)
+        timeout = kwargs.pop('timeout', 30.0)
 
         self.start_readout(*args, **kwargs)
         yield
@@ -364,6 +357,62 @@ class ScanBase(object):
         for lg in logging.Logger.manager.loggerDict.itervalues():
             if isinstance(lg, logging.Logger):
                 lg.removeHandler(self.fh)
+
+    def save_mask_matrix(self):
+        self.logger.info('Writing mask_matrix to file...')
+        if not self.maskfile:
+            self.maskfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
+
+        with tb.open_file(self.maskfile, 'a') as out_file:
+            try:
+                out_file.remove_node(out_file.root.mask_matrix)
+            except NoSuchNodeError:
+                self.logger.debug('Specified maskfile does not include a mask_matrix yet!')
+
+            out_file.create_carray(out_file.root,
+                                   name='mask_matrix',
+                                   title='Matrix mask',
+                                   obj=self.chip.mask_matrix)
+            self.logger.info('Closing mask file: %s' % (self.maskfile))
+
+    def save_thr_mask(self):
+        self.logger.info('Writing TDAC mask to file...')
+        if not self.maskfile:
+            self.maskfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
+
+        with tb.open_file(self.maskfile, 'a') as out_file:
+            try:
+                out_file.remove_node(out_file.root.thr_matrix)
+            except NoSuchNodeError:
+                self.logger.debug('Specified maskfile does not include a thr_mask yet!')
+
+            out_file.create_carray(out_file.root,
+                                       name='thr_matrix',
+                                       title='Matrix Threshold',
+                                       obj=self.chip.thr_matrix)
+            self.logger.info('Closing TDAC mask threshold file: %s' % (self.maskfile))
+
+
+    def load_mask_matrix(self, **kwargs):
+        if self.maskfile:
+            self.logger.info('Loading mask_matrix file: %s' % (self.maskfile))
+            try:
+                with tb.open_file(self.maskfile, 'r') as infile:
+                    self.chip.mask_matrix = infile.root.mask_matrix[:]
+            except NoSuchNodeError:
+                self.logger.debug('Specified maskfile does not include a mask_matrix!')
+                pass
+
+    def load_thr_matrix(self, **kwargs):
+        if self.maskfile:
+            self.logger.info('Loading thr_matrix file: %s' % (self.maskfile))
+            try:
+                with tb.open_file(self.maskfile, 'r') as infile:
+                    self.chip.thr_matrix = infile.root.thr_matrix[:]
+            except NoSuchNodeError:
+                self.logger.debug('Specified maskfile does not include a thr_matrix!')
+                pass
+
 
     def close(self):
         self.chip.close()

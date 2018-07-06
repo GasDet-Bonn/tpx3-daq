@@ -22,10 +22,12 @@ import tpx3.plotting as plotting
 
 local_configuration = {
     # Scan parameters
-    'mask_step'        : 32,
-    'VTP_fine_start'   : 256,
-    'VTP_fine_stop'    : 256 + 140,
+    'mask_step'        : 64,
+    'VTP_fine_start'   : 256 - 40,
+    'VTP_fine_stop'    : 256 + 40,
     'n_injections'     : 100,
+    'start_column'     : 0,
+    'stop_column'      : 256
 }
 
 
@@ -70,25 +72,22 @@ class ThresholdScan(ScanBase):
 
         self.chip.read_pixel_matrix_datadriven()
 
+        #self.chip.thr_matrix[:, :] = np.load('thr.npy')
+        #self.chip.mask_matrix[:, :] = np.load('mask.npy')
+
+        self.chip.set_dac("Vthreshold_fine", 358+10)
+        self.chip.set_dac("Vthreshold_coarse", 15)
+
         self.logger.info('Preparing injection masks...')
-
-        start_column = 0
-        stop_column = 256
-
-        #TODO: should be loaded from file/configuration
-        self.chip.thr_matrix[:, :] = 7
-        self.chip.mask_matrix[start_column:stop_column, :] = self.chip.MASK_ON
-
         mask_cmds = []
         pbar = tqdm(total=mask_step)
         for i in range(mask_step):
             mask_step_cmd = []
 
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
-            # self.chip.test_matrix[start_column:stop_column,i*mask_step:i*mask_step+mask_step] = self.chip.TP_ON
             self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
 
-            for i in range(256 / 4):
+            for i in range(stop_column / 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
@@ -109,11 +108,17 @@ class ThresholdScan(ScanBase):
             with self.readout(scan_param_id=scan_param_id):
                 for mask_step_cmd in mask_cmds:
                     self.chip.write(mask_step_cmd)
+                    #self.chip.set_dac("Vthreshold_coarse", 6)
+                    time.sleep(0.01)
                     with self.shutter():
                         time.sleep(0.001)
                         pbar.update(1)
+                    self.chip.stop_readout()
+                    #self.chip.set_dac("Vthreshold_coarse", 15)
+                    self.chip.reset_sequential()
+
                     time.sleep(0.001)
-                time.sleep(0.001)
+                time.sleep(0.01)
         pbar.close()
 
         self.logger.info('Scan finished')

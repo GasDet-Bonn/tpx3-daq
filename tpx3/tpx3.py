@@ -82,7 +82,7 @@ dictNames = {
         "CustomDict" : "_outputBlocks",
         "YamlContent" : "outputBlock",
         "Filename" : "outputBlock.yml",
-        "FnameVar" : "outputBlock_file"        
+        "FnameVar" : "outputBlock_file"
     }
 }
 
@@ -105,7 +105,7 @@ class CustomDict(dict):
         of the given value. Else raise a ValueError
         """
         # check if valid by checking size smaller than max value
-        isValidKey = True if key in self.valsize_map.keys() else False        
+        isValidKey = True if key in self.valsize_map.keys() else False
         if not isValidKey:
             raise KeyError(self.dictErrors['invalidKey'].format(key))
         isValid = True if value < 2 ** self.valsize_map[key] and value >= 0 else False
@@ -252,7 +252,7 @@ class TPX3(Dut):
         # assign filenames so we can check them
         self.config_file = config_file
         self.dac_file = dac_file
-        self.outputBlock_file = outputBlock_file        
+        self.outputBlock_file = outputBlock_file
 
         for dict_type, type_dict in dictNames.iteritems():
             setattr(self, type_dict["YamlContent"], {})
@@ -330,17 +330,17 @@ class TPX3(Dut):
     # based on above proc, define methods with easier names to work with
     def reset_config_attributes(self, to_default=False):
         self.reset_attributes("ConfigDict", to_default)
-        
+
     def reset_outputBlock_attributes(self, to_default=False):
         self.reset_attributes("OutputBlockDict", to_default)
-        
+
     def reset_dac_attributes(self, to_default=False):
         self.reset_attributes("DacsDict", to_default)
-        
+
     def read_yaml(self, filename, dict_type):
         """
         This function reads a given YAML file, stores each register in
-        a small dictionary containing its values. Depending on the 
+        a small dictionary containing its values. Depending on the
         `dict_type` it generically creates a custom dictionary of the correct
         type, writes the user defined values of the YAML file to that dictionary
         and assigns it to the correct attribute, taken from the dictNames global
@@ -446,7 +446,7 @@ class TPX3(Dut):
         A convenience function to read back all DACs, print them and compare with the
         values we have stored in the _dacs DactDict dictionary
         Besides printing the DAC names, codes and EoC for the read_dac command,
-        it also prints the expected value (the one we wrote before, i.e. contained 
+        it also prints the expected value (the one we wrote before, i.e. contained
         in the _dacs dictionary) and the value we read back.
         Then we assert that this is actually the same value.
         """
@@ -456,7 +456,7 @@ class TPX3(Dut):
         if self.dac_written_to_chip == False:
             print("The assertion in the following loop may fail, since we are not",
                   " may not have written the DAC values to the chip!")
-        
+
         for dac, val in self.dacs.iteritems():
             data = self.read_dac(dac, False)
             self.write(data, True)
@@ -468,7 +468,7 @@ class TPX3(Dut):
             ddout = self.decode(dout[0], 0x03)
             # TODO: this whole decode and printing can be made much nicer!!
             print("Data is ", ddout[0][13:5], " wrote ", b)
-            # assert we read the correct values we wrote before 
+            # assert we read the correct values we wrote before
             assert(ddout[0][13:5].tovalue() == b.tovalue())
 
     # TODO: add the given values to the _dacs dictionary, if this function is used!
@@ -1076,7 +1076,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = self.read_periphery_template("ResetTimer")        
+        data = self.read_periphery_template("ResetTimer")
 
         if write is True:
             self.write(data)
@@ -1089,7 +1089,7 @@ class TPX3(Dut):
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
         data = self.read_periphery_template("RequestTimeLow")
-        
+
         if write is True:
             self.write(data)
         return data
@@ -1100,7 +1100,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the GlobalConfig
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
-        data = self.read_periphery_template("RequestTimeHigh")        
+        data = self.read_periphery_template("RequestTimeHigh")
         if write is True:
             self.write(data)
         return data
@@ -1187,7 +1187,7 @@ class TPX3(Dut):
         SyncHeader and timer values for DataIn to (see manual v1.9 p.43). The sent bytes are also returned.
         """
         data = self.read_periphery_template("SetTimer_31_16", True)
-        
+
         # fill with two dummy bytes for DataIN
         time=BitLogic(16)
         time[15:0]=setTime
@@ -1198,7 +1198,7 @@ class TPX3(Dut):
         if write is True:
             self.write(data)
         return data
-    
+
     def SetTimer_47_32(self, setTime, write=True):
         """
         Sends the Set Timer 47_32 command (see manual v1.9 p.32) together with the
@@ -1215,7 +1215,7 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
-    
+
 
     def startTimer(self, write=True):
         """
@@ -1361,7 +1361,7 @@ class TPX3(Dut):
         # create two 128-bit bitarrays for double column select and token select
         DColSelect = BitLogic(128)
         TokenSelectReg = BitLogic(128)
-        
+
         # Fill the double column select with zeros (manual v1.9 p.45) and
         # append it to the data
         for index in range(128):
@@ -1499,7 +1499,7 @@ class TPX3(Dut):
         set such all columns are loaded.
         """
         data = self.read_matrix_template("ReadMatrixDataDriven", True)
-        
+
         # append the 256 bit column mask; TODO: make the columns selectable
         data += self.produce_column_mask(range(256))
 
@@ -1514,7 +1514,7 @@ class TPX3(Dut):
         Sends a command to read the Column Test Pulse Register (Manual v 1.9 pg. 50)
         """
         data = self.read_matrix_template("ReadCTPR")
-        
+
         if write is True:
             self.write(data)
         return data
@@ -1595,13 +1595,6 @@ class TPX3(Dut):
         gray_decrypt[47]=encoded_value[47]
         for i in range (46, -1, -1):
             gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
-       
-
-    def set_dacs(self, **kwargs):
-        pass
-
-    def set_tdac(self, **kwargs):
-        pass
 
 
 if __name__ == '__main__':
