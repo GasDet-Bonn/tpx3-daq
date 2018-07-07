@@ -65,17 +65,17 @@ class ThresholdScan(ScanBase):
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
 
-        #TODO: Should be loaded from configuration and saved in rn_config
+        # TODO: Should be loaded from configuration and saved in rn_config
         self.chip.set_dac("VTP_coarse", 128)
         self.chip.set_dac("Vthreshold_fine", 220)
         self.chip.set_dac("Vthreshold_coarse", 8)
 
         self.chip.read_pixel_matrix_datadriven()
 
-        #self.chip.thr_matrix[:, :] = np.load('thr.npy')
-        #self.chip.mask_matrix[:, :] = np.load('mask.npy')
+        # self.chip.thr_matrix[:, :] = np.load('thr.npy')
+        # self.chip.mask_matrix[:, :] = np.load('mask.npy')
 
-        self.chip.set_dac("Vthreshold_fine", 358+10)
+        self.chip.set_dac("Vthreshold_fine", 358 + 10)
         self.chip.set_dac("Vthreshold_coarse", 15)
 
         self.logger.info('Preparing injection masks...')
@@ -108,13 +108,13 @@ class ThresholdScan(ScanBase):
             with self.readout(scan_param_id=scan_param_id):
                 for mask_step_cmd in mask_cmds:
                     self.chip.write(mask_step_cmd)
-                    #self.chip.set_dac("Vthreshold_coarse", 6)
+                    # self.chip.set_dac("Vthreshold_coarse", 6)
                     time.sleep(0.01)
                     with self.shutter():
                         time.sleep(0.001)
                         pbar.update(1)
                     self.chip.stop_readout()
-                    #self.chip.set_dac("Vthreshold_coarse", 15)
+                    # self.chip.set_dac("Vthreshold_coarse", 15)
                     self.chip.reset_sequential()
 
                     time.sleep(0.001)
@@ -154,7 +154,10 @@ class ThresholdScan(ScanBase):
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap', obj=thr2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='NoiseMap', obj=sig2D.T)
 
-            hist_occ = np.reshape(np.sum(scurve, axis=1), (256, 256)).T
+            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256*256).astype(np.uint32)
+            hist_occ = np.reshape(pix_occ, (256, 256)).T
+
+            #hist_occ = np.reshape(np.sum(scurve, axis=1), (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
     def plot(self):

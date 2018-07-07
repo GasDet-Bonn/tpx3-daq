@@ -28,9 +28,9 @@ local_configuration = {
 
 class NoiseTune(ScanBase):
 
-    scan_id = "threshold_scan"
+    scan_id = "tune_noise"
 
-    def scan(self, start_column = 0, stop_column = 256, **kwargs):
+    def scan(self, start_column=0, stop_column=256, **kwargs):
         '''
 
         Parameters
@@ -54,7 +54,7 @@ class NoiseTune(ScanBase):
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(1)
 
-        #TODO: Should be loaded from configuration and saved in rn_config
+        # TODO: Should be loaded from configuration and saved in rn_config
         self.chip.set_dac("VTP_coarse", 128)
         self.chip.set_dac("Vthreshold_fine", 100)
         self.chip.set_dac("Vthreshold_coarse", 8)
@@ -85,7 +85,7 @@ class NoiseTune(ScanBase):
             stop_cmd.append(self.chip.set_dac("Vthreshold_coarse", 15, write=False))
             stop_cmd.append(self.chip.reset_sequential(write=False))
 
-            with self.readout(scan_param_id=1,fill_buffer=True, clear_buffer=True):
+            with self.readout(scan_param_id=1, fill_buffer=True, clear_buffer=True):
                 time.sleep(1)
                 self.chip.set_dac("Vthreshold_coarse", 6)
                 time.sleep(0.01)
@@ -99,7 +99,7 @@ class NoiseTune(ScanBase):
             error = (len(raw_data) % 2 != 0)
 
             hit_data = analysis.interpret_raw_data(raw_data)
-            self.logger.info('raw_data = %d, hit_data = %d' %(len(raw_data),len(hit_data)))
+            self.logger.info('raw_data = %d, hit_data = %d' % (len(raw_data), len(hit_data)))
 
             error |= (self.chip['RX'].LOST_DATA_COUNTER > 0)
             error |= (self.chip['RX'].DECODER_ERROR_COUNTER > 0)
@@ -107,14 +107,14 @@ class NoiseTune(ScanBase):
                 self.logger.error('DATA ERROR')
 
             hit_data = hit_data[hit_data['data_header'] == 1]
-            bc = np.bincount(hit_data['x'].astype(np.uint16)*256+hit_data['y'],minlength=256*256)
+            bc = np.bincount(hit_data['x'].astype(np.uint16) * 256 + hit_data['y'], minlength=256 * 256)
             hist_occ = np.reshape(bc, (256, 256))
             return hist_occ
 
         Vthreshold_fine = 370
         Vthreshold_coarse = 15
 
-        ### Find lowest global threshold (mask noisy pixel on te way)
+        # ## Find lowest global threshold (mask noisy pixel on te way)
         dis_pix_no = 0
         while 1:
             self.chip.set_dac("Vthreshold_fine", Vthreshold_fine)
@@ -123,16 +123,16 @@ class NoiseTune(ScanBase):
             self.logger.info('Vthreshold_fine = %d' % (Vthreshold_fine,))
 
             occ = take_data()
-            to_dis_p = (float(dis_pix_no + np.count_nonzero(occ)) / ((stop_column-start_column)*256)) * 100.0
+            to_dis_p = (float(dis_pix_no + np.count_nonzero(occ)) / ((stop_column - start_column) * 256)) * 100.0
 
             if (to_dis_p > 0.1):
                 break
 
             disbaled_smt = False
-            where_hit = np.where(occ>0)
+            where_hit = np.where(occ > 0)
             for h in range(len(where_hit[0])):
-                self.chip.mask_matrix[where_hit[0][h],where_hit[1][h]] = self.chip.MASK_OFF
-                print('Disable:', where_hit[0][h],where_hit[1][h])
+                self.chip.mask_matrix[where_hit[0][h], where_hit[1][h]] = self.chip.MASK_OFF
+                print('Disable:', where_hit[0][h], where_hit[1][h])
                 disbaled_smt = True
 
             dis_pix_no = np.count_nonzero(self.chip.mask_matrix[start_column:stop_column, :])
@@ -140,15 +140,14 @@ class NoiseTune(ScanBase):
             if (disbaled_smt == False):
                 Vthreshold_fine -= 1
 
-            dis_pix_no_p = (float(dis_pix_no) / ((stop_column-start_column)*256)) * 100.0
+            dis_pix_no_p = (float(dis_pix_no) / ((stop_column - start_column) * 256)) * 100.0
 
-            self.logger.info('dis_pix_no = %d %.3f %%' % (dis_pix_no, dis_pix_no_p) )
+            self.logger.info('dis_pix_no = %d %.3f %%' % (dis_pix_no, dis_pix_no_p))
 
+        self.chip.set_dac("Vthreshold_fine", Vthreshold_fine + 2)
 
-        self.chip.set_dac("Vthreshold_fine", Vthreshold_fine+2)
-
-        ### Find lowest local threshold
-        ### Lower local threshold gradually and increse if noisy
+        # ## Find lowest local threshold
+        # ## Lower local threshold gradually and increse if noisy
         np.set_printoptions(linewidth=120)
 
         for tdac_set in range(16):
@@ -158,23 +157,23 @@ class NoiseTune(ScanBase):
 
                 to_change = ~np.logical_or(self.chip.mask_matrix, self.chip.thr_matrix < tdac_set)
                 mask_inc = np.zeros((256, 256), dtype=np.bool)
-                mask_inc[:,step::step_inc] = True
+                mask_inc[:, step::step_inc] = True
 
-                self.chip.thr_matrix[np.logical_and(to_change,mask_inc)] += 1
+                self.chip.thr_matrix[np.logical_and(to_change, mask_inc)] += 1
 
                 while 1:
                     occ = take_data()
 
                     correct_smt = 0
-                    for col in range(start_column,stop_column):
+                    for col in range(start_column, stop_column):
                         for row in range(256):
-                            if occ[col,row]:
+                            if occ[col, row]:
                                 if self.chip.thr_matrix[col, row] >= tdac_set and  self.chip.thr_matrix[col, row] > 0:
-                                    self.chip.thr_matrix[col, row] -=1
+                                    self.chip.thr_matrix[col, row] -= 1
                                     correct_smt += 1
 
-                    tdac_dist = np.bincount(self.chip.thr_matrix[start_column:stop_column,:].flatten())
-                    self.logger.info(str((tdac_set,step,Vthreshold_fine, correct_smt, tdac_dist)))
+                    tdac_dist = np.bincount(self.chip.thr_matrix[start_column:stop_column, :].flatten())
+                    self.logger.info(str((tdac_set, step, Vthreshold_fine, correct_smt, tdac_dist)))
 
                     if step != step_inc - 1:
                         break
@@ -184,6 +183,7 @@ class NoiseTune(ScanBase):
 
         self.save_mask_matrix()
         self.save_thr_mask()
+
 
 if __name__ == "__main__":
     scan = NoiseTune()

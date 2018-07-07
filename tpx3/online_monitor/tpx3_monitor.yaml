@@ -1,0 +1,20 @@
+#producer_sim:
+#    DAQ :
+#        kind : tpx3_sim
+#        delay : 0.001
+#        backend : tcp://127.0.0.1:5500
+#        data_file : /home/tomek/git/tpx3-daq/tpx3/scans/output_data/20180702_204047_threshold_scan.h5
+
+converter :
+    TPX3Converter :
+        kind : tpx3_inter
+        frontend : tcp://127.0.0.1:5500
+        backend : tcp://127.0.0.1:5600
+
+receiver :
+    TPX3 :
+        kind : tpx3_recv
+        frontend : tcp://127.0.0.1:5600
+
+
+
