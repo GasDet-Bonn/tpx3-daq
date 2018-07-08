@@ -22,12 +22,11 @@ import tpx3.plotting as plotting
 
 local_configuration = {
     # Scan parameters
-    'mask_step'        : 64,
-    'VTP_fine_start'   : 256 - 40,
-    'VTP_fine_stop'    : 256 + 40,
+    'mask_step'        : 32,
+    'VTP_fine_start'   : 256 + 0,
+    'VTP_fine_stop'    : 256 + 140,
     'n_injections'     : 100,
-    'start_column'     : 0,
-    'stop_column'      : 256
+    #'maskfile'        : './output_data/?_mask.h5'
 }
 
 
@@ -35,7 +34,7 @@ class ThresholdScan(ScanBase):
 
     scan_id = "threshold_scan"
 
-    def scan(self, VTP_fine_start=100, VTP_fine_stop=200, n_injections=100, mask_step=8, **kwargs):
+    def scan(self,  start_column = 0, stop_column = 256, VTP_fine_start=100, VTP_fine_stop=200, n_injections=100, mask_step=32, **kwargs):
         '''
         Threshold scan main loop
 
@@ -65,20 +64,13 @@ class ThresholdScan(ScanBase):
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
 
-        # TODO: Should be loaded from configuration and saved in rn_config
+        #TODO: Should be loaded from configuration and saved in rn_config
         self.chip.set_dac("VTP_coarse", 128)
-        self.chip.set_dac("Vthreshold_fine", 220)
+        self.chip.set_dac("Vthreshold_fine", 88) #220)
         self.chip.set_dac("Vthreshold_coarse", 8)
 
-        self.chip.read_pixel_matrix_datadriven()
-
-        # self.chip.thr_matrix[:, :] = np.load('thr.npy')
-        # self.chip.mask_matrix[:, :] = np.load('mask.npy')
-
-        self.chip.set_dac("Vthreshold_fine", 358 + 10)
-        self.chip.set_dac("Vthreshold_coarse", 15)
-
         self.logger.info('Preparing injection masks...')
+
         mask_cmds = []
         pbar = tqdm(total=mask_step)
         for i in range(mask_step):
@@ -87,7 +79,7 @@ class ThresholdScan(ScanBase):
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
             self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
 
-            for i in range(stop_column / 4):
+            for i in range(256 / 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
@@ -108,17 +100,13 @@ class ThresholdScan(ScanBase):
             with self.readout(scan_param_id=scan_param_id):
                 for mask_step_cmd in mask_cmds:
                     self.chip.write(mask_step_cmd)
-                    # self.chip.set_dac("Vthreshold_coarse", 6)
-                    time.sleep(0.01)
                     with self.shutter():
                         time.sleep(0.001)
                         pbar.update(1)
                     self.chip.stop_readout()
-                    # self.chip.set_dac("Vthreshold_coarse", 15)
                     self.chip.reset_sequential()
-
                     time.sleep(0.001)
-                time.sleep(0.01)
+                time.sleep(0.001)
         pbar.close()
 
         self.logger.info('Scan finished')
@@ -154,10 +142,8 @@ class ThresholdScan(ScanBase):
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap', obj=thr2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='NoiseMap', obj=sig2D.T)
 
-            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256*256).astype(np.uint32)
+            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
             hist_occ = np.reshape(pix_occ, (256, 256)).T
-
-            #hist_occ = np.reshape(np.sum(scurve, axis=1), (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
     def plot(self):
@@ -175,7 +161,7 @@ class ThresholdScan(ScanBase):
 
                 p.plot_parameter_page()
 
-                mask = ~h5_file.root.configuration.mask_matrix[:]
+                mask = h5_file.root.configuration.mask_matrix[:]
 
                 occ_masked = np.ma.masked_array(h5_file.root.interpreted.HistOcc[:], mask)
                 p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='median', suffix='occupancy')

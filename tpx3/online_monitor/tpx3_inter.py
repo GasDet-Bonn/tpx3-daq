@@ -97,16 +97,22 @@ class Tpx3(Transceiver):
 
         raw_data = data[0][1]
         hit_data = analysis.interpret_raw_data(data[0][1])
+        hit_data = hit_data[hit_data['data_header'] == 1]
 
         pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256*256).astype(np.uint32)
-        hist_occ = np.reshape(pix_occ, (256, 256)).T
+        hist_occ = np.reshape(pix_occ, (256, 256))
 
-        self.hist_occ += hist_occ
 
+        hit_count = np.count_nonzero(hist_occ.flat)
         self.total_hits += len(hit_data)
         self.readout += 1
 
-        #TODO: self.hist_tot & self.hist_hit_count
+        if hit_count > 1: #cut noise
+            self.hist_hit_count[hit_count] += 1
+            self.hist_occ += hist_occ
+
+
+        #TODO: self.hist_tot ...
         interpreted_data = {
             #'hits': hit_data,
             'occupancy': self.hist_occ,

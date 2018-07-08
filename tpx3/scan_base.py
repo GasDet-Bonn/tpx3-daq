@@ -18,6 +18,7 @@ import zmq
 from contextlib import contextmanager
 from tpx3 import TPX3
 from fifo_readout import FifoReadout
+from tables.exceptions import NoSuchNodeError
 
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
 loglevel = logging.getLogger('TPX3').getEffectiveLevel()
@@ -216,13 +217,7 @@ class ScanBase(object):
             self.logger.warning("no EoR found")
 
         self.maskfile = kwargs.get('maskfile', None)
-
         self.configure(**kwargs) #TODO: all DACs set here
-
-        # Dissable columns
-        start_column = kwargs.get('start_column', 0)
-        stop_column = kwargs.get('stop_column', 256)
-        self.chip.test_matrix[:, :] = self.chip.TP_OFF
 
         # Step 3a: Produce needed PCR (Pixel conficuration)
         for i in range(256 / 4):

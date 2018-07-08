@@ -8,6 +8,7 @@
 import sys
 import datetime
 import logging
+import numpy as np
 from time import sleep, time, mktime
 from threading import Thread, Event
 from collections import deque
@@ -51,7 +52,7 @@ class FifoReadout(object):
         self.worker_thread = None
         self.watchdog_thread = None
         self.fill_buffer = False
-        self.readout_interval = 0.01
+        self.readout_interval = 0.1
         self._moving_average_time_period = 10.0
         self._data_deque = deque()
         self._data_buffer = deque()

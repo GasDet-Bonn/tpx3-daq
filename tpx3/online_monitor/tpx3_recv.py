@@ -97,8 +97,8 @@ class Tpx3(Receiver):
         dock_tot.addWidget(tot_plot_widget)
 
         hit_timing_widget = pg.PlotWidget()
-        self.hist_hit_count = hit_timing_widget.plot(np.linspace(-0.5, 15.5, 17),
-                                                      np.zeros((16)), stepMode=True)
+        self.hist_hit_count = hit_timing_widget.plot(np.linspace(-0.5, 100.5, 101),
+                                                      np.zeros((100)), stepMode=True)
         hit_timing_widget.showGrid(y=True)
         dock_hit_timing.addWidget(hit_timing_widget)
 
@@ -128,8 +128,8 @@ class Tpx3(Receiver):
             self.tot_plot.setData(x=np.linspace(-0.5, 15.5, 17),
                                   y=data['tot_hist'], fillLevel=0,
                                   brush=(0, 0, 255, 150))
-            self.hist_hit_count.setData(x=np.linspace(-0.5, 15.5, 17),
-                                         y=data['hist_hit_count'][:16],
+            self.hist_hit_count.setData(x=np.linspace(-0.5, 100.5, 101),
+                                         y=data['hist_hit_count'][:100],
                                          stepMode=True,
                                          fillLevel=0, brush=(0, 0, 255, 150))
         else:  # Meta data

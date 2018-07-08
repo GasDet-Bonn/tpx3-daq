@@ -29,6 +29,7 @@ setup(
     maintainer_email=author_email,
     install_requires=install_requires,
     packages=find_packages(),
+    setup_requires=['online_monitor>=0.4.0<0.5'],
     include_package_data=True,
     platforms='any',
     entry_points={

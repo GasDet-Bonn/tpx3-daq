@@ -22,7 +22,7 @@ import tpx3.plotting as plotting
 
 local_configuration = {
     # Scan parameters
-
+    'wait_time': 0.1
 }
 
 
@@ -30,7 +30,7 @@ class NoiseTune(ScanBase):
 
     scan_id = "tune_noise"
 
-    def scan(self, start_column=0, stop_column=256, **kwargs):
+    def scan(self, start_column=0, stop_column=256, wait_time=1.0, **kwargs):
         '''
 
         Parameters
@@ -38,32 +38,26 @@ class NoiseTune(ScanBase):
 
         '''
 
-        #
-        # ALL this should be set in set_configuration?
-        #
-
         self.chip.write_ctpr([])  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
 
-        # Step 6: Write to the test pulse registers
-        # Step 6a: Write to period and phase tp registers
-        data = self.chip.write_tp_period(1, 0)
+        #TODO: Move to configuration
+        Vthreshold_fine = 130
+        Vthreshold_coarse = 8
 
-        # Step 6b: Write to pulse number tp register
-        self.chip.write_tp_pulsenumber(1)
 
         # TODO: Should be loaded from configuration and saved in rn_config
         self.chip.set_dac("VTP_coarse", 128)
-        self.chip.set_dac("Vthreshold_fine", 100)
-        self.chip.set_dac("Vthreshold_coarse", 8)
+        self.chip.set_dac("Vthreshold_fine", Vthreshold_fine)
+        self.chip.set_dac("Vthreshold_coarse", Vthreshold_coarse)
+
+        self.chip._configs["TP_en"] = 0
+        self.chip._configs["Op_mode"] = 0
+        self.chip.write_general_config()
 
         self.chip.read_pixel_matrix_datadriven()
-
-        self.logger.info('Preparing injection masks...')
-
-        self.chip.set_dac("Vthreshold_coarse", 15)
 
         self.chip.thr_matrix[:, :] = 0
         self.chip.test_matrix[:, :] = self.chip.TP_OFF
@@ -82,15 +76,15 @@ class NoiseTune(ScanBase):
 
             stop_cmd = []
             stop_cmd.append(self.chip.stop_readout(write=False))
-            stop_cmd.append(self.chip.set_dac("Vthreshold_coarse", 15, write=False))
+            #stop_cmd.append(self.chip.set_dac("Vthreshold_coarse", 15, write=False))
             stop_cmd.append(self.chip.reset_sequential(write=False))
 
             with self.readout(scan_param_id=1, fill_buffer=True, clear_buffer=True):
-                time.sleep(1)
-                self.chip.set_dac("Vthreshold_coarse", 6)
+                time.sleep(0.1)
+                #self.chip.set_dac("Vthreshold_coarse", 6)
                 time.sleep(0.01)
                 with self.shutter():
-                    time.sleep(1)
+                    time.sleep(wait_time)
                 self.chip.write(stop_cmd)
                 time.sleep(0.1)
 
@@ -99,7 +93,6 @@ class NoiseTune(ScanBase):
             error = (len(raw_data) % 2 != 0)
 
             hit_data = analysis.interpret_raw_data(raw_data)
-            self.logger.info('raw_data = %d, hit_data = %d' % (len(raw_data), len(hit_data)))
 
             error |= (self.chip['RX'].LOST_DATA_COUNTER > 0)
             error |= (self.chip['RX'].DECODER_ERROR_COUNTER > 0)
@@ -107,14 +100,13 @@ class NoiseTune(ScanBase):
                 self.logger.error('DATA ERROR')
 
             hit_data = hit_data[hit_data['data_header'] == 1]
+            self.logger.info('raw_data = %d, hit_data = %d' % (len(raw_data), len(hit_data)))
+
             bc = np.bincount(hit_data['x'].astype(np.uint16) * 256 + hit_data['y'], minlength=256 * 256)
             hist_occ = np.reshape(bc, (256, 256))
             return hist_occ
 
-        Vthreshold_fine = 370
-        Vthreshold_coarse = 15
-
-        # ## Find lowest global threshold (mask noisy pixel on te way)
+        ## Find lowest global threshold (mask noisy pixel on te way)
         dis_pix_no = 0
         while 1:
             self.chip.set_dac("Vthreshold_fine", Vthreshold_fine)
@@ -125,19 +117,19 @@ class NoiseTune(ScanBase):
             occ = take_data()
             to_dis_p = (float(dis_pix_no + np.count_nonzero(occ)) / ((stop_column - start_column) * 256)) * 100.0
 
-            if (to_dis_p > 0.1):
+            if to_dis_p > 0.1:
                 break
 
             disbaled_smt = False
             where_hit = np.where(occ > 0)
             for h in range(len(where_hit[0])):
                 self.chip.mask_matrix[where_hit[0][h], where_hit[1][h]] = self.chip.MASK_OFF
-                print('Disable:', where_hit[0][h], where_hit[1][h])
+                self.logger.info('Disable: col=%d row=%d' % (where_hit[0][h], where_hit[1][h]))
                 disbaled_smt = True
 
             dis_pix_no = np.count_nonzero(self.chip.mask_matrix[start_column:stop_column, :])
 
-            if (disbaled_smt == False):
+            if disbaled_smt is False:
                 Vthreshold_fine -= 1
 
             dis_pix_no_p = (float(dis_pix_no) / ((stop_column - start_column) * 256)) * 100.0
@@ -183,7 +175,7 @@ class NoiseTune(ScanBase):
 
         self.save_mask_matrix()
         self.save_thr_mask()
-
+        #TODO: Save DACs?
 
 if __name__ == "__main__":
     scan = NoiseTune()
