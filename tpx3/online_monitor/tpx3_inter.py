@@ -106,6 +106,7 @@ class Tpx3(Transceiver):
         hit_count = np.count_nonzero(hist_occ.flat)
         self.total_hits += len(hit_data)
         self.readout += 1
+        self.total_events = self.readout  # ???
 
         if hit_count > 1: #cut noise
             self.hist_hit_count[hit_count] += 1
