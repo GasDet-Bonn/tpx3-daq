@@ -194,9 +194,10 @@ class FifoReadout(object):
                     raise NoDataTimeout('Received no data for %0.1f second(s)' % no_data_timeout)
 
                 # TODO: maybe not best solution?
-                data = self.read_data()
-                while time() - time_read < (self.readout_interval*0.99):  # pool 95% of time
-                    data = np.append(data, self.read_data())
+                dlist = []
+                while time() - time_read < self.readout_interval:
+                    dlist.append(self.read_data())
+                data = np.hstack(dlist)
 
                 self._record_count += len(data)
             except Exception:
