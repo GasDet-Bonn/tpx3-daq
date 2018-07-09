@@ -872,7 +872,7 @@ class Plotting(object):
                     textright = '$\mu=%.0f\;\Delta$VCAL\n$\;\,\,=%.0f \; e^-$\n\n$\sigma=%.0f\;\Delta$VCAL\n$\;\,\,=%.0f \; e^-$' % (
                         abs(coeff[1]), self._convert_to_e(abs(coeff[1]), use_offset=use_electron_offset), abs(coeff[2]), self._convert_to_e(abs(coeff[2]), use_offset=False))
                 else:
-                    textright = '$\mu=%.0f$\n$\sigma=%.0f$' % (abs(coeff[1]), abs(coeff[2]))
+                    textright = '$\mu=%.2f$\n$\sigma=%.2f$' % (abs(coeff[1]), abs(coeff[2]))
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
             ax.text(0.05, 0.9, textright, transform=ax.transAxes,
                     fontsize=8, verticalalignment='top', bbox=props)
