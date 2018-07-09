@@ -77,7 +77,10 @@ def raw_data_to_dut(raw_data):
     Transform to 48 bit format -> fast decode_fpga
     '''
 
-    assert len(raw_data) % 2 == 0, "Missing one 32bit subword of a 48bit package"  # This could be smarter
+    #assert len(raw_data) % 2 == 0, "Missing one 32bit subword of a 48bit package"  # This could be smarter
+    if len(raw_data) % 2 != 0:
+        logger.error("Missing one 32bit subword of a 48bit package!")
+        return np.empty(0, dtype=np.uint64)
 
     nwords = len(raw_data) / 2
 

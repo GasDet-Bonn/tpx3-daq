@@ -8,6 +8,7 @@
 import sys
 import datetime
 import logging
+import numpy as np
 from time import sleep, time, mktime
 from threading import Thread, Event
 from collections import deque
@@ -51,7 +52,7 @@ class FifoReadout(object):
         self.worker_thread = None
         self.watchdog_thread = None
         self.fill_buffer = False
-        self.readout_interval = 0.05
+        self.readout_interval = 0.1
         self._moving_average_time_period = 10.0
         self._data_deque = deque()
         self._data_buffer = deque()
@@ -191,7 +192,13 @@ class FifoReadout(object):
                 time_read = time()
                 if no_data_timeout and curr_time + no_data_timeout < self.get_float_time():
                     raise NoDataTimeout('Received no data for %0.1f second(s)' % no_data_timeout)
-                data = self.read_data()
+
+                # TODO: maybe not best solution?
+                dlist = []
+                while time() - time_read < self.readout_interval:
+                    dlist.append(self.read_data())
+                data = np.hstack(dlist)
+
                 self._record_count += len(data)
             except Exception:
                 no_data_timeout = None  # raise exception only once
