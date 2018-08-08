@@ -141,9 +141,19 @@ class Tpx3(Receiver):
                               data['meta_data']['total_hits'],
                               data['meta_data']['eps'],
                               data['meta_data']['total_events'])
-            self.timestamp_label.setText("Data Timestamp\n%s" % time.asctime(time.localtime(data['meta_data']['timestamp_stop'])))
-            self.scan_parameter_label.setText("Parameter ID\n%d" % data['meta_data']['scan_par_id'])
+            self.timestamp_label.setText(
+                "Data Timestamp\n%s" % time.asctime(
+                    time.localtime(data['meta_data']['timestamp_stop'])
+                )
+            )
+            self.scan_parameter_label.setText(
+                "Parameter ID\n%d" % data['meta_data']['scan_par_id']
+            )
             now = ptime.time()
-            self.plot_delay = self.plot_delay * 0.9 + (now - data['meta_data']['timestamp_stop']) * 0.1
-            self.plot_delay_label.setText("Plot Delay\n%s" % 'not realtime' if abs(self.plot_delay) > 5 else "Plot Delay\n%1.2f ms" % (self.plot_delay * 1.e3))
-
+            self.plot_delay = self.plot_delay * 0.9 + (
+                now - data['meta_data']['timestamp_stop']
+            ) * 0.1
+            self.plot_delay_label.setText(
+                "Plot Delay\n%s" % 'not realtime' if abs(self.plot_delay) > 5
+                else "Plot Delay\n%1.2f ms" % (self.plot_delay * 1.e3)
+            )
