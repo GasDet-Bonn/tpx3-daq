@@ -192,6 +192,11 @@ class Tpx3(Receiver):
         if 'meta_data' not in data:  # Histograms
             self.occupancy_img.setImage(data['occupancy'][:, :],
                                         autoDownsample=True)
+
+            # TODO: implement checkbox to optionally disable updating of 3D plots.
+            # useful if occupancy is being integrated
+            self.plot_3d.setData(pos = data['scatter3d'])
+
             self.tot_plot.setData(x=np.linspace(-0.5, 15.5, 17),
                                   y=data['tot_hist'], fillLevel=0,
                                   brush=(0, 0, 255, 150))
