@@ -7,6 +7,7 @@ from matplotlib import cm
 
 from PyQt5 import Qt
 import pyqtgraph as pg
+import pyqtgraph.opengl as gl
 from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph.ptime as ptime
 from pyqtgraph.dockarea import DockArea, Dock
@@ -31,22 +32,8 @@ class Tpx3(Receiver):
         # We want to change converter settings
         self.set_bidirectional_communication()
 
-    def setup_widgets(self, parent, name):
-        dock_area = DockArea()
-        parent.addTab(dock_area, name)
-
-        # Docks
-        dock_occcupancy = Dock("Occupancy", size=(400, 400))
-        dock_tot = Dock("Time over threshold values (TOT)", size=(200, 200))
-        dock_hit_timing = Dock("Hit count histogram", size=(200, 200))
-        dock_status = Dock("Status", size=(800, 40))
-
-        dock_area.addDock(dock_occcupancy, 'top')
-
-        dock_area.addDock(dock_tot, 'right', dock_occcupancy)
-        dock_area.addDock(dock_hit_timing, 'bottom', dock_tot)
-
-        dock_area.addDock(dock_status, 'top')
+    def setup_top_dock(self):
+        self.dock_status = Dock("Status", size=(800, 40))
 
         # Status dock on top
         cw = QtGui.QWidget()
@@ -71,11 +58,27 @@ class Tpx3(Receiver):
         layout.addWidget(self.scan_parameter_label, 0, 5, 0, 1)
         layout.addWidget(self.spin_box, 0, 6, 0, 1)
         layout.addWidget(self.reset_button, 0, 7, 0, 1)
-        dock_status.addWidget(cw)
+        self.dock_status.addWidget(cw)
 
         # Connect widgets
         self.reset_button.clicked.connect(lambda: self.send_command('RESET'))
         self.spin_box.valueChanged.connect(lambda value: self.send_command(str(value)))
+
+    def setup_plots(self, parent, name):
+        dock_area = DockArea()
+        parent.addTab(dock_area, name)
+
+        # Docks
+        dock_occupancy = Dock("Occupancy", size=(400, 400))
+        dock_tot = Dock("Time over threshold values (TOT)", size=(200, 200))
+        dock_hit_timing = Dock("Hit count histogram", size=(200, 200))
+
+        dock_area.addDock(dock_occupancy, 'top')
+
+        dock_area.addDock(dock_tot, 'right', dock_occupancy)
+        dock_area.addDock(dock_hit_timing, 'bottom', dock_tot)
+
+        dock_area.addDock(self.dock_status, 'top')
 
         # Different plot docks
         occupancy_graphics = pg.GraphicsLayoutWidget()
@@ -91,7 +94,7 @@ class Tpx3(Receiver):
         plot = pg.PlotWidget(viewBox=view, labels={'bottom': 'Column', 'left': 'Row'})
         plot.addItem(self.occupancy_img)
 
-        dock_occcupancy.addWidget(plot)
+        dock_occupancy.addWidget(plot)
 
         tot_plot_widget = pg.PlotWidget(background="w")
         self.tot_plot = tot_plot_widget.plot(np.linspace(-0.5, 15.5, 17),
@@ -106,6 +109,67 @@ class Tpx3(Receiver):
         dock_hit_timing.addWidget(hit_timing_widget)
 
         self.plot_delay = 0
+
+        # add tabbed 3D plot
+        dock_3d = self.setup_3d_plot()
+        dock_area.addDock(dock_3d, 'above', dock_occupancy)
+
+    def setup_3d_plot(self):
+        # Docks
+        dock_3d = Dock("3D events", size=(400, 400))
+
+        # Different plot docks
+        graphics_3d = gl.GLViewWidget()
+        graphics_3d.show()
+        graphics_3d.setCameraPosition(distance=200)
+        #view = graphics_3d.addViewBox()
+        #view.invertY(True)
+        self.img_3d = pg.ImageItem(border='w')
+        # Set colormap from matplotlib
+        lut = generatePgColormap("viridis").getLookupTable(0.0, 1.0, 256)
+
+        self.img_3d.setLookupTable(lut, update=True)
+        # view.addItem(self.occupancy_img)
+
+        dock_3d.addWidget(graphics_3d)
+
+        ## create three grids, add each to the view
+        xgrid = gl.GLGridItem(antialias = True)
+        xgrid.setSize(x=256.0, y=256.0, z=256.0)
+        ygrid = gl.GLGridItem(antialias = True)
+        ygrid.setSize(x=256.0, y=256.0, z=256.0)
+        zgrid = gl.GLGridItem(antialias = True)
+        zgrid.setSize(x=256.0, y=256.0, z=256.0)
+        graphics_3d.addItem(xgrid)
+        graphics_3d.addItem(ygrid)
+        graphics_3d.addItem(zgrid)
+
+        # TODO: make axis look reasonable
+        axis_3d = gl.GLAxisItem()
+        axis_3d.setSize(x = 256.0, y = 256.0, z = 256.0)
+        graphics_3d.addItem(axis_3d)
+
+        # rotate x and y grids to face the correct direction
+        xgrid.rotate(90, 0, 1, 0)
+        ygrid.rotate(90, 1, 0, 0)
+
+        # translate each axis to the correct position
+        # TODO: fix Z axis for good choice of TOA values!
+        xgrid.translate(0.0, 128.0, 128.0)
+        ygrid.translate(128.0, 0.0, 128.0)
+        zgrid.translate(128.0, 128.0, 0.0)
+
+        self.plot_3d = gl.GLScatterPlotItem(pos = np.zeros((0, 3),
+                                                           dtype=np.uint32),
+                                            color = (0.5, 1.0, 0.0, 1.0))
+        graphics_3d.addItem(self.plot_3d)
+
+        return dock_3d
+
+    def setup_widgets(self, parent, name):
+        self.setup_top_dock()
+
+        self.setup_plots(parent, name)
 
     def deserialize_data(self, data):
         datar, meta = utils.simple_dec(data)
