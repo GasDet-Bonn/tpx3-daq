@@ -120,8 +120,11 @@ class ThresholdScan(ScanBase):
             meta_data = h5_file.root.meta_data[:]
             run_config = h5_file.root.configuration.run_config[:]
 
+            op_mode = [int(item[1]) for item in run_config if item[0] == 'op_mode'][0]
+            VCO_mode = [int(item[1]) for item in run_config if item[0] == 'VCO_mode'][0]
+
             # TODO: TMP this should go to analysis function with chunking
-            hit_data = analysis.interpret_raw_data(raw_data, meta_data)
+            hit_data = analysis.interpret_raw_data(raw_data, meta_data, op_mode, VCO_mode)
             hit_data = hit_data[hit_data['data_header'] == 1]
             param_range = np.unique(meta_data['scan_param_id'])
             scurve = analysis.scurve_hist(hit_data, param_range)
