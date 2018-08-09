@@ -8,7 +8,8 @@ DAQ for the [Timepix3](https://medipix.web.cern.ch/technology-chip/timepix3-chip
 
 - Install dependencies and tpx3-daq:
 ```
-conda install numpy bitarray pyyaml scipy numba pytables matplotlib tqdm pyzmq blosc psutil
+conda install numpy bitarray pyyaml scipy numba pytables matplotlib
+tqdm pyzmq blosc psutil pyopengl
 pip install git+https://github.com/SiLab-Bonn/tpx3-daq.git@master
 ```
 
