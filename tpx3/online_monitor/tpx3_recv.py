@@ -121,11 +121,16 @@ class Tpx3(Receiver):
         # Different plot docks
         graphics_3d = gl.GLViewWidget()
         graphics_3d.show()
-        graphics_3d.setCameraPosition(distance=200)
+        # set camera position to center of "cube"
+        pos = QtGui.QVector3D(128.0, 128.0, 128.0)
+        graphics_3d.opts['center'] = pos
+        graphics_3d.opts['distance'] = 800.0
+
         #view = graphics_3d.addViewBox()
         #view.invertY(True)
         self.img_3d = pg.ImageItem(border='w')
         # Set colormap from matplotlib
+        # Colormap to be used for ToT values?
         lut = generatePgColormap("viridis").getLookupTable(0.0, 1.0, 256)
 
         self.img_3d.setLookupTable(lut, update=True)
