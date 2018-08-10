@@ -106,9 +106,9 @@ class Tpx3(Transceiver):
         toa_data = hit_data['TOA']
         n_events = np.shape(toa_data)[0]
         if n_events > 0:
-            toa_max = np.percentile(toa_data, 80.0)
+            toa_max = np.percentile(toa_data, 90.0)
             toa_min = np.min(toa_data)
-            toa_scaled = toa_data / (toa_max - toa_min) * 256.0
+            toa_scaled = (toa_data - toa_min) / (toa_max - toa_min) * 256.0
             scatter3d = np.transpose(np.asarray([hit_data['x'], hit_data['y'], toa_scaled], dtype = np.uint32))
         else:
             scatter3d = np.zeros((0, 1), dtype = np.uint32)
@@ -117,6 +117,8 @@ class Tpx3(Transceiver):
         self.total_hits += len(hit_data)
         self.readout += 1
         self.total_events = self.readout  # ???
+
+
 
         if hit_count > 1: #cut noise
             self.hist_hit_count[hit_count] += 1
