@@ -101,6 +101,8 @@ class Tpx3(Transceiver):
 
         pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256*256).astype(np.uint32)
         hist_occ = np.reshape(pix_occ, (256, 256))
+        hist_occ[:, 250:] = 0
+        hist_occ[250:, :] = 0
 
         # create (x, y, TOA) values
         toa_data = hit_data['TOA']
