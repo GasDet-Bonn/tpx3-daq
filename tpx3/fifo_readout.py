@@ -30,6 +30,8 @@ class EightbTenbError(Exception):
 class FifoError(Exception):
     pass
 
+class FifoResetError(Exception):
+    pass
 
 class NoDataTimeout(Exception):
     pass
@@ -257,8 +259,11 @@ class FifoReadout(object):
                 if not any(self.get_rx_sync_status()):
                     raise RxSyncError('No RX sync')
                 cnt = self.get_rx_fifo_discard_count()
-                if any(cnt):
+                if any(cnt) and cnt[0] != 255:
                     raise FifoError('RX FIFO discard error(s) detected ', cnt)
+                if cnt[0] == 255:
+                    raise FifoResetError('RX FIFO discard error(s) detected ',
+                                         cnt, '. Resetting chip!')
             except Exception:
                 self.errback(sys.exc_info())
             if self.stop_readout.wait(self.readout_interval * 10):

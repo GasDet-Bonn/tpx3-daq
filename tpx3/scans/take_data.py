@@ -30,21 +30,13 @@ class DataTake(ScanBase):
 
     scan_id = "data_take"
 
-    def scan(self, scan_timeout=60.0, **kwargs):
-        '''
-
-        Parameters
-        ----------
-
-        '''
-
-
+    def initChip(self):
         self.chip.write_ctpr([])  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
 
-        Vthreshold_fine = 117
+        Vthreshold_fine = 80
         Vthreshold_coarse = 8
 
 
@@ -58,6 +50,16 @@ class DataTake(ScanBase):
         self.chip.write_general_config()
 
         self.chip.read_pixel_matrix_datadriven()
+
+    def scan(self, scan_timeout=60.0, **kwargs):
+        '''
+
+        Parameters
+        ----------
+
+        '''
+
+        self.initChip()
 
         self.logger.info('Starting data taking...')
         pbar = tqdm(total=int(scan_timeout))  # [s]
@@ -78,6 +80,14 @@ class DataTake(ScanBase):
                         if how_long > scan_timeout:
                             self.stop_scan = True
 
+                        if self.resetChip == True:
+                            self.logger.warning('Too many RX errors encountered.'
+                                                'Will try to reset the chip.')
+                            # close shutter
+                            self.shutter()
+                            self.initChip()
+                            self.resetChip = False
+                            self.shutter()
                     except KeyboardInterrupt:  # react on keyboard interupt
                         self.logger.info('Scan was stopped due to keyboard interrupt')
                         self.stop_scan = True

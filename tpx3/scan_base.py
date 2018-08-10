@@ -17,7 +17,7 @@ import zmq
 
 from contextlib import contextmanager
 from tpx3 import TPX3
-from fifo_readout import FifoReadout
+from fifo_readout import FifoReadout, FifoResetError
 from tables.exceptions import NoSuchNodeError
 
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
@@ -102,6 +102,8 @@ class ScanBase(object):
         self.logger.info('Initializing %s...', self.__class__.__name__)
 
         self.chip = TPX3(dut_conf)
+
+        self.resetChip = False
 
     def get_basil_dir(self):
         return str(os.path.dirname(os.path.dirname(basil.__file__)))
@@ -345,6 +347,11 @@ class ScanBase(object):
             self.logger.error('%s Data Errors...', msg)
         else:
             self.logger.error(' Data Errors...')
+        print exc[0]
+        print type(exc[0])
+        if exc[0] == FifoResetError:
+            # reset the chip in this case
+            self.resetChip = True
 
     def setup_logfile(self):
         self.fh = logging.FileHandler(self.output_filename + '.log')
