@@ -99,6 +99,13 @@ class FifoReadout(object):
             return None
         return result / float(self._moving_average_time_period)
 
+    def clear_buffer(self):
+        """
+        Clears the deque and buffer of the FIFO
+        """
+        self._data_deque.clear()
+        self._data_buffer.clear()
+
     def start(self, callback=None, errback=None, reset_rx=False, reset_sram_fifo=False, clear_buffer=False, fill_buffer=False, no_data_timeout=None):
         if self._is_running:
             raise RuntimeError('Readout already running: use stop() before start()')
@@ -119,8 +126,8 @@ class FifoReadout(object):
                 self.logger.warning('FIFO not empty when starting FIFO readout: size = %i', fifo_size)
         self._words_per_read.clear()
         if clear_buffer:
-            self._data_deque.clear()
-            self._data_buffer.clear()
+            self.clear_buffer()
+
         self.stop_readout.clear()
         self.force_stop.clear()
         if self.errback:
@@ -262,8 +269,14 @@ class FifoReadout(object):
                 if any(cnt) and cnt[0] != 255:
                     raise FifoError('RX FIFO discard error(s) detected ', cnt)
                 if cnt[0] == 255:
+                    # clear fifo buffers and stop readout thread
+                    self.chip['FIFO'].reset()
+                    # clear internal buffers (dequeue)
+                    self.clear_buffer()
+                    cnt = 0
                     raise FifoResetError('RX FIFO discard error(s) detected ',
                                          cnt, '. Resetting chip!')
+
             except Exception:
                 self.errback(sys.exc_info())
             if self.stop_readout.wait(self.readout_interval * 10):
