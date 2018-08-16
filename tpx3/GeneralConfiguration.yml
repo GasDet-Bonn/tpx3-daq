@@ -12,25 +12,25 @@ registers:
   default: 0
   value: 2  
 - name: Gray_count_en
-  description: Enables/Diables EoC Gray counter (0 = disabled, 1 = enabled)
+  description: Enables/Disables EoC Gray counter (0 = disabled, 1 = enabled)
   address: 3
   size: 1
   default: 0
   value: 1
 - name: AckCommand_en
-  description: Enables/Diables the AckCommand data packet (0 = disabled, 1 = enabled)
+  description: Enables/Disables the AckCommand data packet (0 = disabled, 1 = enabled)
   address: 4
   size: 1
   default: 0
   value: 0 
 - name: TP_en
-  description: Enables/Diables Test Pulses (0 = disabled, 1 = enabled)
+  description: Enables/Disables Test Pulses (0 = disabled, 1 = enabled)
   address: 5
   size: 1
   default: 0
   value: 1
 - name: Fast_Io_en
-  description: Enables/Diables Super-Pixel-Oscillator (Fast_Io_en; 0 = disabled, 1 = enabled)
+  description: Enables/Disables Super-Pixel-Oscillator (Fast_Io_en; 0 = disabled, 1 = enabled)
   address: 6
   size: 1
   default: 0
