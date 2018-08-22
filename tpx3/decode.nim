@@ -115,7 +115,73 @@ proc bitwordToByteSeq(val: SomeInteger, size: static[int]): seq[uint] =
   b[0 ..< size] = val
   result = b.toByteList
 
-proc decode*(data: openArray[uint64]) {.exportc, dynlib.} =
+proc initLfsr14Lut(): seq[uint16] =
+  ## Generates a 14bit LFSR according to Manual v1.9 page 19
+  result = newSeq[uint16](2^14)
+  var lfsr = createBitarray(14)
+  lfsr[0 .. 7] = 0xFF'u16
+  lfsr[8 .. 13] = 63'u16
+  var dummy = 0'u16
+  for i in 0 ..< 2^14:
+    result[lfsr[0 .. 13].int] = i.uint16
+    dummy = lfsr[13].uint16
+    lfsr[13] = lfsr[12].uint16
+    lfsr[12] = lfsr[11].uint16
+    lfsr[11] = lfsr[10].uint16
+    lfsr[10] = lfsr[9].uint16
+    lfsr[9] = lfsr[8].uint16
+    lfsr[8] = lfsr[7].uint16
+    lfsr[7] = lfsr[6].uint16
+    lfsr[6] = lfsr[5].uint16
+    lfsr[5] = lfsr[4].uint16
+    lfsr[4] = lfsr[3].uint16
+    lfsr[3] = lfsr[2].uint16
+    lfsr[2] = lfsr[1].uint16
+    lfsr[1] = lfsr[0].uint16
+    lfsr[0] = (lfsr[2] xor dummy xor lfsr[12] xor lfsr[13]).uint16
+  result[2 ^ 14 - 1] = 0'u16
+
+proc initLfsr10Lut(): seq[uint16] =
+  ## Generates a 10bit LFSR according to Manual v1.9 page 19
+  result = newSeq[uint16](2 ^ 10)
+  var lfsr = createBitarray(10)
+  lfsr[0 .. 7] = 0xff'u16
+  lfsr[8 .. 9] = 0b11'u16
+  var dummy = 0'u16
+  for i in 0 ..< 2^10:
+    result[lfsr[0 .. 9].int] = i.uint16
+    dummy = lfsr[9].uint16
+    lfsr[9] = lfsr[8].uint16
+    lfsr[8] = lfsr[7].uint16
+    lfsr[7] = lfsr[6].uint16
+    lfsr[6] = lfsr[5].uint16
+    lfsr[5] = lfsr[4].uint16
+    lfsr[4] = lfsr[3].uint16
+    lfsr[3] = lfsr[2].uint16
+    lfsr[2] = lfsr[1].uint16
+    lfsr[1] = lfsr[0].uint16
+    lfsr[0] = (lfsr[7] xor dummy).uint16
+  result[2 ^ 10 - 1] = 0'u16
+
+proc initLfsr4Lut(): seq[uint16] =
+  ## Generates a 4bit LFSR according to Manual v1.9 page 19
+  result = newSeq[uint16](2 ^ 4)
+  var lfsr = createBitarray(4)
+  lfsr[0 .. 3] = 0xF'u16
+  var dummy = 0'u16
+  for i in 0 ..< 2^4:
+    result[lfsr[0 .. 3].int] = i.uint16
+    dummy = lfsr[3].uint16
+    lfsr[3] = lfsr[2].uint16
+    lfsr[2] = lfsr[1].uint16
+    lfsr[1] = lfsr[0].uint16
+    lfsr[0] = (lfsr[3] xor dummy).uint16
+  result[2 ^ 4 - 1] = 0'u16
+
+# lookup tables for LFSR values
+const Lfsr14Lut = initLfsr14Lut()
+const Lfsr10Lut = initLfsr10Lut()
+const Lfsr4Lut = initLfsr4Lut()
   ## get the header and check for type
 
   for d in data:
