@@ -203,6 +203,17 @@ proc grayDecode*(val: BitArray): BitArray =
   for i in countdown(46, 0):
     result[i] = result[i+1] xor val[i]
 
+proc grayDecode*(val: SomeInteger): uint16 =
+  let encodedValue = val.uint16
+  result = 0'u16
+  result = (encodedValue shr 13'u16) shl 13'u16
+  for i in countdown(12, -1):
+    result = result or (
+      ( ((result shr (i + 1).uint16) and 0x1'u16) xor
+        ((encodedValue shr i.uint16) and 0x1'u16)
+      ) shl i.uint16
+    )
+
 proc destroy*(data: ptr uint64) {.exportc, dynlib.} =
   dealloc(data)
 
