@@ -165,7 +165,13 @@ proc decode_fpga*(data: openArray[uint32], buffer: var openArray[uint64]) {.expo
     buffer[i] = res_ba[0..47]
 
   # now decode the data
-  decode(buffer)
+  #decode(buffer)
+
+proc decode_fpga*(data: openArray[uint32]): seq[uint64] =
+  ## wrapper around above function, which does not work in place
+  result = newSeq[uint64](data.len div 2)
+  data.decode_fpga(result)
+
 
 # proc initThread*() {.exportc, dynlib.} =
 #   # perform necessary steps for Nim's GC
