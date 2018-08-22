@@ -182,31 +182,96 @@ proc initLfsr4Lut(): seq[uint16] =
 const Lfsr14Lut = initLfsr14Lut()
 const Lfsr10Lut = initLfsr10Lut()
 const Lfsr4Lut = initLfsr4Lut()
+
+# forward declare grayDecode proc
+proc grayDecode*(val: SomeInteger): uint16
+
+proc decode*(data: openArray[uint64], vcoMode, mode: uint8): Table[string, seq[uint64]] {.exportc, dynlib.} =
   ## get the header and check for type
 
-  for d in data:
-    var header: uint16
-    if ((d shr 47) and 1).bool:
-      # if first bit is 1, small header
-      header = (d shr 44).uint16
-    else:
-      header = (d shr 40).uint16
+  const pixKeys = ["data_header",
+                   "header",
+                   "x", "y",
+                   "TOA", "TOT", "FTOA",
+                   "iTOT", "EventCounter", "HitCounter",
+                   "config",
+                   "EoC",
+                   "CTPR",
+                   "periphery_data",
+                   "scan_param_id"]
+  result = initTable[string, seq[uint64]]()
+  for key in pixKeys:
+    # create seqs with a decent start size. Should cover many cases
+    # at least spares us to resize too many times
+    echo "Adding key: ", key
+    result[key] = newSeqOfCap[uint64](512)
 
-    if (header shr 5) == headerMap["Acquisition"]:
-      echo "It's Acquisition!"
-    elif (header shr 5) == headerMap["StopMatrix"]:
-      echo "It's StopMatrix!"
-    elif (header shr 5) == headerMap["CTPR"]:
-      echo "It's CTPR!"
-    elif (header shr 5) == headerMap["PCR"]:
-      echo "It's PCR"
-    elif (header shr 5) == headerMap["Control"]:
-      echo "It's Control"
+  for d in data:
+    # pixel is a 3 bit value in d[30:28]
+    let pixel = (d shr 28) and 0b111'u64
+    # super_pixel is a 6 bit value in data [36:31]
+    let superPixel = (d shr (28 + 3)) and 0x3f'u64
+
+    # right_col shows if the pixel is in the left (pixel <= 3) column of
+    # the super_pixel or in the right (pixel > 3)
+    let rightCol = if pixel > 3'u64: 1'u64 else: 0'u64
+    # eoc is a 7 bit value in data [43:37]
+    let eoc = (d shr (28 + 9)) and 0x7f'u64
+
+    result["data_header"].add d shr 47'u64
+
+    # if result['data_header'][i] is 0b1:
+    result["header"].add d shr 44'u64
+    result["y"].add (superPixel * 4) + (pixel - rightCol * 4)
+    result["x"].add eoc * 2 + rightCol * 1
+    if vco_mode == 1'u8:
+      if mode == 0'u8:
+        result["TOA"].add grayDecode((d shr 14'u64) and 0x3fff'u64)
+        result["TOT"].add Lfsr10Lut[((d shr 4'u64) and 0x3ff'u64).int]
+        result["FTOA"].add d and 0xf'u64
+      elif mode == 1'u8:
+        result["TOA"].add grayDecode((d shr 14'u64) and 0x3fff'u64)
+        result["FTOA"].add d and 0xf'u64
+      else:
+        result["iTOT"].add Lfsr14Lut[((d shr 14'u64) and 0x3fff'u64).int]
+        result["EventCounter"].add Lfsr10Lut[((d shr 4'u64) and 0x3ff'u64).int]
     else:
-      echo "It's hopefully periphery! ", header
+      if mode == 0'u8:
+        result["TOA"].add grayDecode((d shr 14'u64) and 0x3fff'u64)
+        result["TOT"].add Lfsr10Lut[((d shr 4'u64) and 0x3ff'u64).int]
+        result["HitCounter"].add Lfsr10Lut[(d and 0xf'u64).int]
+      elif mode == 1'u8:
+        result["TOA"].add grayDecode((d shr 14'u64) and 0x3fff'u64)
+        result["HitCounter"].add Lfsr10Lut[(d and 0xf'u64).int]
+      else:
+        result["iTOT"].add Lfsr14Lut[((d shr 14'u64) and 0x3fff'u64).int]
+        result["EventCounter"].add Lfsr10Lut[((d shr 4'u64) and 0x3ff'u64).int]
+        result["HitCounter"].add Lfsr4Lut[(d and 0xf'u64).int]
+
+#    var header: uint16
+#    if ((d shr 47) and 1).bool:
+#      # if first bit is 1, small header
+#      header = (d shr 44).uint16
+#    else:
+#      header = (d shr 40).uint16
+#
+#    if (header shr 5) == headerMap["Acquisition"]:
+#      echo "It's Acquisition!"
+#    elif (header shr 5) == headerMap["StopMatrix"]:
+#      echo "It's StopMatrix!"
+#    elif (header shr 5) == headerMap["CTPR"]:
+#      echo "It's CTPR!"
+#    elif (header shr 5) == headerMap["PCR"]:
+#      echo "It's PCR"
+#    elif (header shr 5) == headerMap["Control"]:
+#      echo "It's Control"
+#    else:
+#      echo "It's hopefully periphery! ", header
+#
+#        if vco_mode is 1:
+
 
 proc decode_fpga*(data: openArray[uint32], buffer: var openArray[uint64]) {.exportc, dynlib.} =
-
   assert data.len mod 2 == 0, "Missing one 32 bit subword of a 48 bit package!"
   let nwords = data.len div 2
 
