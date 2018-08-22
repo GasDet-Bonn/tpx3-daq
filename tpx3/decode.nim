@@ -167,10 +167,10 @@ proc decode_fpga*(data: openArray[uint32], buffer: var openArray[uint64]) {.expo
   # now decode the data
   decode(buffer)
 
-proc initThread*() {.exportc, dynlib.} =
-  # perform necessary steps for Nim's GC  
-  var locals {.volatile.}: pointer
-  setStackBottom(addr(locals))
+# proc initThread*() {.exportc, dynlib.} =
+#   # perform necessary steps for Nim's GC
+#   var locals {.volatile.}: pointer
+#   setStackBottom(addr(locals))
 
 proc testPtr(a: array[4, uint64]) =
   echo a
