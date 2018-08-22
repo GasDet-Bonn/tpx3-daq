@@ -1,3 +1,4 @@
+
 #import bitarray
 import strformat
 import tables
@@ -16,14 +17,14 @@ type
     len*: uint8
 
 const headers = {0b101.uint16, 0b111, 0b110, 0b100, 0b011}
-  
+
 const headerMap = { "Acquisition" : 0b101.uint16,
                     "StopMatrix"  : 0b111.uint16,
                     "CTPR"        : 0b110.uint16,
                     "PCR"         : 0b100.uint16,
                     "Control"     : 0b011.uint16  }.toTable()
-                  
-    
+
+
 proc len(b: BitArray): int =
   b.data.len
 
@@ -38,7 +39,7 @@ proc `[]=`*[T, U](b: var BitArray, inds: HSlice[T, U], val: SomeInteger) =
     let iStart = b ^^ inds.a
     let iEnd   = b ^^ inds.b
     let nInds = iEnd - iStart + 1
-    
+
     if nInds > b.len:
       raise newException(IndexError, &"Slice of {inds} is out of range for BitArray of size {b.len}")
     if val.uint64 > (2 ^ nInds).uint64:
@@ -74,12 +75,12 @@ proc `[]`[T, U](b: BitArray, inds: HSlice[T, U]): uint =
   if inds.len > b.len:
     raise newException(IndexError, &"Slice of {inds} is out of range for BitArray of size {b.len}")
   let iStart = b ^^ inds.a
-  let iEnd   = b ^^ inds.b  
+  let iEnd   = b ^^ inds.b
   var m = 0
   for x in iStart .. iEnd:
     if b[x] == 1.uint:
       result += (2 ^ m).uint
-    inc m  
+    inc m
 
 proc printBytes*(ba: BitArray, asBytes = false): string =
   ## prints the BitArray as a list of individual bytes
@@ -95,7 +96,7 @@ proc printBytes*(ba: BitArray, asBytes = false): string =
         result.add ", "
     result.add "]"
   else:
-    result = $(ba.toByteList)  
+    result = $(ba.toByteList)
 
 proc `$`(b: BitArray): string =
   b.printBytes
@@ -156,10 +157,10 @@ proc decode_fpga*(data: openArray[uint32], buffer: var openArray[uint64]) {.expo
 
     res_ba[40 .. 47] = d2[0]
     res_ba[32 .. 39] = d2[1]
-    res_ba[24 .. 31] = d2[2]      
-    res_ba[16 .. 23] = d1[0]      
-    res_ba[8 .. 15]  = d1[1]      
-    res_ba[0 .. 7]   = d1[2]      
+    res_ba[24 .. 31] = d2[2]
+    res_ba[16 .. 23] = d1[0]
+    res_ba[8 .. 15]  = d1[1]
+    res_ba[0 .. 7]   = d1[2]
     #echo &"Result {i} is {res_ba.toByteList}"
     buffer[i] = res_ba[0..47]
 
@@ -204,14 +205,14 @@ proc grayDecode*(val: BitArray): BitArray =
 
 proc destroy*(data: ptr uint64) {.exportc, dynlib.} =
   dealloc(data)
-  
+
 when isMainModule:
 
   let d = @[16777216'u32, 12401]
 
   var b = createBitarray(48)
   b[40 .. 47] = 255
-  doAssert b[40 .. 47] == 255 
+  doAssert b[40 .. 47] == 255
   # get the words and convert to seqs
   let
     d1 = bitwordToByteSeq(d[0], 32)
@@ -223,13 +224,13 @@ when isMainModule:
   doAssert b[40 .. 47] == 113
   b[32 .. 39] = d2[1]
   doAssert b[32 .. 39] == 48
-  b[24 .. 31] = d2[2]      
+  b[24 .. 31] = d2[2]
   doAssert b[24 .. 31] == 0
-  b[16 .. 23] = d1[0]      
+  b[16 .. 23] = d1[0]
   doAssert b[16 .. 23] == 0
-  b[8 .. 15]  = d1[1]      
+  b[8 .. 15]  = d1[1]
   doAssert b[8 .. 15] == 0
-  b[0 .. 7]   = d1[2]      
+  b[0 .. 7]   = d1[2]
   doAssert b[0 .. 7] == 0
   var outBuf = newSeq[uint64](2)
 
@@ -241,7 +242,7 @@ when isMainModule:
   echo "Decode took ", ((t1 - t0) / 10_000.0), " per call"
 
   decode_fpga(d, outBuf)
-  
+
   #doAssert outBuf[0] == 124450972368896'u64
   #doAssert outBuf[1] == 0'u64
 
@@ -271,4 +272,3 @@ when isMainModule:
   let tstop = cpuTime()
 
   echo "Time for 1 Mio grayEncodes and grayDecodes is ", (tstop - tstart)
-  
