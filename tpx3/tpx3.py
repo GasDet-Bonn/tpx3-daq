@@ -1302,6 +1302,18 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def read_EFuse(self, write=True):
+        """
+        Sends te EFuse_Read command (see manual v1.9 p.32) together with the
+        SyncHeader and a dummy for DataIn to request the burned configuration of
+        the EFuse. The sent bytes are also returned.
+        """
+        data = self.read_periphery_template("EFuse_Read")
+
+        if write is True:
+            self.write(data)
+        return data
+
     def write_ctpr(self, columns=range(256), write=True):
         """
         Writes the column test pulse register to the chip (see manual v1.9 p.50) and returns
