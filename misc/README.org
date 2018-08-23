@@ -1,0 +1,4 @@
+* Use of this folder
+
+This folder contains random testing programs created during
+development of new features.
