@@ -128,3 +128,4 @@ tpx3/scans/output_data/*
 .dvt
 dvt_build.log
 *.pydevproject
+**/output_data/*
