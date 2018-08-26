@@ -17,7 +17,7 @@ import zmq
 
 from contextlib import contextmanager
 from tpx3 import TPX3
-from fifo_readout import FifoReadout
+from fifo_readout import FifoReadout, FifoResetError
 from tables.exceptions import NoSuchNodeError
 
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
@@ -103,6 +103,8 @@ class ScanBase(object):
 
         self.chip = TPX3(dut_conf)
 
+        self.reset_chip = False
+
     def get_basil_dir(self):
         return str(os.path.dirname(os.path.dirname(basil.__file__)))
 
@@ -132,6 +134,14 @@ class ScanBase(object):
         row = run_config_table.row
         row['attribute'] = 'chip_id'
         row['value'] = kwargs.get('chip_id', '0x0000')
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'op_mode'
+        row['value'] = self.chip.config['Op_mode']['value']
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'VCO_mode'
+        row['value'] = self.chip.config['Fast_Io_en']['value']
         row.append()
 
         run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections']
@@ -164,32 +174,35 @@ class ScanBase(object):
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
-    def start(self, **kwargs):
-        '''
-            Prepares the scan and starts the actual test routine
-        '''
-
-        self._first_read = False
-        self.scan_param_id = 0
-
-        self.chip.init()
-        self.fifo_readout = FifoReadout(self.chip)
-
-        # self.chip.init_communication()
+    def init_chip(self, reset=False, **kwargs):
+        """
+        Perform the initialization of the Timepix3 needed to perform
+        different scans. Consists of writing default configuration and...
+        """
 
         # Step 2: Chip start-up sequence
         # Step 2a: Reset the chip
+        if reset and self.fifo_readout.get_rx_en_status == False:
+            # if we have reset the chip and RX is disabled, reset it
+            # and enable again
+            self.fifo_readout.reset_rx()
+            self.fifo_readout.clear_buffer()
+            self.fifo_readout.enable_rx(True)
+        # self.fifo_readout.print_readout_status()
+
+        #self.chip['RX'].rx_reset()
+        #self.chip['FIFO'].reset()
+
         self.chip['CONTROL']['RESET'] = 1
         self.chip['CONTROL'].write()
         self.chip['CONTROL']['RESET'] = 0
         self.chip['CONTROL'].write()
 
+        self.chip['CONTROL'].LOST_DATA_COUNTER = 0
+        self.chip['CONTROL'].write()
+
         # Init communication -> set ouput mode
         data = self.chip.write_outputBlock_config()
-
-        self.fifo_readout.reset_rx()
-        self.fifo_readout.enable_rx(True)
-        self.fifo_readout.print_readout_status()
 
         # Step 2b: Enable power pulsing
         self.chip['CONTROL']['EN_POWER_PULSING'] = 1
@@ -209,7 +222,10 @@ class ScanBase(object):
         self.chip.write(data, True)
         fdata = self.chip['FIFO'].get_data()
         dout = self.chip.decode_fpga(fdata, True)
-        ddout = self.chip.decode(dout[0], 0x71)
+        try:
+            ddout = self.chip.decode(dout[0], 0x71)
+        except IndexError:
+            self.logger.warning(dout, " did not have element EoR")
         try:
             ddout = self.chip.decode(dout[1], 0x71)
             # print ddout
@@ -223,15 +239,43 @@ class ScanBase(object):
         for i in range(256 / 4):
             self.chip.write_pcr(range(4 * i, 4 * i + 4))
 
+    def start(self, **kwargs):
+        '''
+            Prepares the scan and starts the actual test routine
+        '''
+
+        self._first_read = False
+        self.scan_param_id = 0
+
+        # self.chip.init_communication()
+        # init the Tpx3 chip object
+        self.chip.init()
+
+        # init the FIFO and enable RX
+        self.fifo_readout = FifoReadout(self.chip)
+        self.fifo_readout.reset_rx()
+        self.fifo_readout.enable_rx(True)
+        self.fifo_readout.print_readout_status()
+
+        # initialize the chip
+        self.init_chip(reset = False, **kwargs)
+
         # Setup files
         filename = self.output_filename + '.h5'
         filter_raw_data = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
         self.filter_tables = tb.Filters(complib='zlib', complevel=5, fletcher32=False)
         self.h5_file = tb.open_file(filename, mode='w', title=self.scan_id)
-        self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data', atom=tb.UIntAtom(),
-                                                         shape=(0,), title='raw_data', filters=filter_raw_data)
-        self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data', description=MetaTable,
-                                                        title='meta_data', filters=self.filter_tables)
+        self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root,
+                                                          name='raw_data',
+                                                          atom=tb.UIntAtom(),
+                                                          shape=(0,),
+                                                          title='raw_data',
+                                                          filters=filter_raw_data)
+        self.meta_data_table = self.h5_file.create_table(self.h5_file.root,
+                                                         name='meta_data',
+                                                         description=MetaTable,
+                                                         title='meta_data',
+                                                         filters=self.filter_tables)
 
         #save configuration
         self.dump_configuration(**kwargs)
@@ -337,6 +381,11 @@ class ScanBase(object):
             self.logger.error('%s Data Errors...', msg)
         else:
             self.logger.error(' Data Errors...')
+        print exc[0]
+        print type(exc[0])
+        if exc[0] == FifoResetError:
+            # reset the chip in this case
+            self.reset_chip = True
 
     def setup_logfile(self):
         self.fh = logging.FileHandler(self.output_filename + '.log')

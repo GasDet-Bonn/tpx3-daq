@@ -30,6 +30,8 @@ class EightbTenbError(Exception):
 class FifoError(Exception):
     pass
 
+class FifoResetError(Exception):
+    pass
 
 class NoDataTimeout(Exception):
     pass
@@ -97,6 +99,13 @@ class FifoReadout(object):
             return None
         return result / float(self._moving_average_time_period)
 
+    def clear_buffer(self):
+        """
+        Clears the deque and buffer of the FIFO
+        """
+        self._data_deque.clear()
+        self._data_buffer.clear()
+
     def start(self, callback=None, errback=None, reset_rx=False, reset_sram_fifo=False, clear_buffer=False, fill_buffer=False, no_data_timeout=None):
         if self._is_running:
             raise RuntimeError('Readout already running: use stop() before start()')
@@ -117,8 +126,8 @@ class FifoReadout(object):
                 self.logger.warning('FIFO not empty when starting FIFO readout: size = %i', fifo_size)
         self._words_per_read.clear()
         if clear_buffer:
-            self._data_deque.clear()
-            self._data_buffer.clear()
+            self.clear_buffer()
+
         self.stop_readout.clear()
         self.force_stop.clear()
         if self.errback:
@@ -171,7 +180,7 @@ class FifoReadout(object):
         if not any(self.get_rx_sync_status()) or any(discard_count)  or any(decode_error_count) :
             self.logger.warning('RX errors detected')
 
-        self.logger.info('Recived words:               %d', self._record_count)
+        self.logger.info('Received words:              %d', self._record_count)
         self.logger.info('Data queue size:             %d', len(self._data_deque))
         self.logger.info('FIFO size:                   %d', self.chip['FIFO']['FIFO_SIZE'])
         self.logger.info('Channel:                     %s', " | ".join([channel.name.rjust(3) for channel in self.chip.get_modules('tpx3_rx')]))
@@ -257,8 +266,17 @@ class FifoReadout(object):
                 if not any(self.get_rx_sync_status()):
                     raise RxSyncError('No RX sync')
                 cnt = self.get_rx_fifo_discard_count()
-                if any(cnt):
+                if any(cnt) and cnt[0] != 255:
                     raise FifoError('RX FIFO discard error(s) detected ', cnt)
+                if cnt[0] == 255:
+                    # clear fifo buffers and stop readout thread
+                    self.chip['FIFO'].reset()
+                    # clear internal buffers (dequeue)
+                    self.clear_buffer()
+                    cnt = 0
+                    raise FifoResetError('RX FIFO discard error(s) detected ',
+                                         cnt, '. Resetting chip!')
+
             except Exception:
                 self.errback(sys.exc_info())
             if self.stop_readout.wait(self.readout_interval * 10):

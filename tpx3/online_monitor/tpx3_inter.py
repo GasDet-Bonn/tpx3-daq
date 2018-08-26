@@ -101,22 +101,37 @@ class Tpx3(Transceiver):
 
         pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256*256).astype(np.uint32)
         hist_occ = np.reshape(pix_occ, (256, 256))
+        hist_occ[:, 250:] = 0
+        hist_occ[250:, :] = 0
 
+        # create (x, y, TOA) values
+        toa_data = hit_data['TOA']
+        n_events = np.shape(toa_data)[0]
+        if n_events > 0:
+            toa_max = np.percentile(toa_data, 90.0)
+            toa_min = np.min(toa_data)
+            toa_scaled = (toa_data - toa_min) / (toa_max - toa_min) * 256.0
+            scatter3d = np.transpose(np.asarray([hit_data['x'], hit_data['y'], toa_scaled], dtype = np.uint32))
+        else:
+            scatter3d = np.zeros((0, 1), dtype = np.uint32)
 
         hit_count = np.count_nonzero(hist_occ.flat)
         self.total_hits += len(hit_data)
         self.readout += 1
         self.total_events = self.readout  # ???
 
+
+
         if hit_count > 1: #cut noise
             self.hist_hit_count[hit_count] += 1
             self.hist_occ += hist_occ
-
+            self.scatter3d = np.concatenate([self.scatter3d, scatter3d])
 
         #TODO: self.hist_tot ...
         interpreted_data = {
             #'hits': hit_data,
             'occupancy': self.hist_occ,
+            'scatter3d': self.scatter3d,
             'tot_hist': self.hist_tot,
             'hist_hit_count': self.hist_hit_count,
             'hist_event_status': []
@@ -154,3 +169,4 @@ class Tpx3(Transceiver):
         self.hist_occ = np.zeros((256,256), dtype=np.uint32)
         self.hist_tot = np.zeros((16), dtype=np.uint32)
         self.hist_hit_count = np.zeros((256*256), dtype=np.uint32) #
+        self.scatter3d = np.zeros((0, 3), dtype = np.uint32)
