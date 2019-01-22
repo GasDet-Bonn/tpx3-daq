@@ -9,6 +9,10 @@ import matplotlib
 matplotlib.use('TKagg')
 import matplotlib.pyplot as plt
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 
 MASK_ON = 0
 MASK_OFF = 1
@@ -22,15 +26,15 @@ def pretty_print(string_val, bits=32):
     bits[:] = val
     lst = bits.toByteList(True)
     lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
+    print("Int ", lst)
+    print("Hex ", lst_hex)
+    print("Binary ", bits)
 
 def print_exp_recvd(name, exp_header, header, chipId = None):
-    print "\tExpected {}: {}".format(name, exp_header)
-    print "\tReceived {}: {}".format(name, header)
+    print("\tExpected {}: {}".format(name, exp_header))
+    print("\tReceived {}: {}".format(name, header))
     if chipId != None:
-        print "\tChipID:", chipId
+        print("\tChipID:", chipId)
 
 
 def print_cmp_commands(exp_header, header, chipId = None):
@@ -80,13 +84,13 @@ def run_test_pulses():
     chip['RX'].ENABLE = 1
     time.sleep(0.01)
 
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    print('RX ready:', chip['RX'].is_ready)
+    print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     print(chip.get_configuration())
 
@@ -95,14 +99,14 @@ def run_test_pulses():
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        print(ddout)
     except IndexError:
         print("no EoR found")
 
@@ -122,7 +126,7 @@ def run_test_pulses():
       
 
     # Step 5: Set general config
-    print "Set general config"
+    print("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
@@ -130,33 +134,33 @@ def run_test_pulses():
     
     # Step 6: Write to the test pulse registers
     # Step 6a: Write to period and phase tp registers
-    print "Write TP_period and TP_phase"
+    print("Write TP_period and TP_phase")
     data = chip.write_tp_period(1, 0, write=False)
     chip.write(data, True)
     
     # Step 6b: Write to pulse number tp register
-    print "Write TP_number"
+    print("Write TP_number")
     data = chip.write_tp_pulsenumber(104, write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     
-    print "Read TP config"
+    print("Read TP config")
     data = chip.read_tp_config(write=False)
     chip.write(data, True)
 
     
-    print "Set Vthreshold_coarse"
+    print("Set Vthreshold_coarse")
     data = chip.set_dac("Vthreshold_coarse", 8, write=False)
     chip.write(data, True)
 
     # Step 7: Set CTPR
-    print "Write CTPR"
+    print("Write CTPR")
     data = chip.write_ctpr([128], write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
-    print "\tGet EoC: "
+    print("\tGet EoC: ")
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
     print_cmp_commands("11001111", dout[0], dout[1])
 
@@ -172,18 +176,18 @@ def run_test_pulses():
         for tpc in [170]:
             # Step 4: Set TP DACs
             # Step 4a: Set VTP_coarse DAC (8-bit)
-            print "Set VTP_coarse"
+            print("Set VTP_coarse")
             data = chip.set_dac("VTP_coarse", tpc, write=False)
             chip.write(data, True)
     
             for tpf in range(512):
                 tpval = tpf * tp_fine + tpc * tp_coarse
                 print("Starting to work on tp val {} mV".format(tpval))
-                print "Set VTP_fine"
+                print("Set VTP_fine")
                 data = chip.set_dac("VTP_fine", tpf, write=False)
                 chip.write(data, True)
                 # Step 8: Send "read pixel matrix data driven" command
-                #print "Read pixel matrix data driven"
+                #print("Read pixel matrix data driven")
                 data = chip.read_pixel_matrix_datadriven(write=False)
                 chip.write(data, True)    
                 # Get the data, do the FPGA decode and do the decode ot the 0th element
@@ -195,15 +199,15 @@ def run_test_pulses():
 
                 # Step 10: Receive data
                 """ ??? """
-                #print "Acquisition"
+                #print("Acquisition")
                 time.sleep(0.05)
                 # Get the data and do the FPGA decoding
                 # dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
                 # for el in dout:
-                #    print "Decoded: ", el
+                #    print("Decoded: ", el)
 
                 # Step 11: Disable Shutter
-                #print "Receive 'TP_internalfinished' and 'End of Readout'"
+                #print("Receive 'TP_internalfinished' and 'End of Readout'")
                 chip['CONTROL']['SHUTTER'] = 0
                 chip['CONTROL'].write()
             
@@ -211,7 +215,7 @@ def run_test_pulses():
                 # Get the data, do the FPGA decode and do the decode ot the 0th element
                 # which should be EoR (header: 0x71)
                 dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
-                print dout
+                print(dout)
                 for i in range(len(dout)):
                     try:
                         ddout = chip.decode(dout[i], 0xB0)

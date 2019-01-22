@@ -14,6 +14,10 @@ import time
 
 from tpx3.tpx3 import TPX3
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 
 class TestSim(unittest.TestCase):
 
@@ -22,7 +26,7 @@ class TestSim(unittest.TestCase):
         extra_defines = []
 
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # ../
-        print root_dir
+        print(root_dir)
         cocotb_compile_and_run(
             sim_files=[root_dir + '/tests/tpx3_tb.v'],
             extra_defines=extra_defines,
@@ -68,7 +72,7 @@ class TestSim(unittest.TestCase):
 
         fdata = self.dut['FIFO'].get_data()
         for i in fdata:
-            print (i & 0x01000000) != 0, hex(i & 0xffffff)
+            print((i & 0x01000000) != 0, hex(i & 0xffffff))
 
     def tearDown(self):
         self.dut.close()

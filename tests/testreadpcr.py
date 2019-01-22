@@ -6,6 +6,10 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 
 def pretty_print(string_val, bits=32):
     val = int(string_val)
@@ -13,9 +17,9 @@ def pretty_print(string_val, bits=32):
     bits[:] = val
     lst = bits.toByteList(True)
     lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
+    print("Int ", lst)
+    print("Hex ", lst_hex)
+    print("Binary ", bits)
 
 
 def main(args_dict):
@@ -35,7 +39,7 @@ def main(args_dict):
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     chip['RX'].reset()
     chip['RX'].DATA_DELAY = 0
@@ -46,35 +50,35 @@ def main(args_dict):
         pass
 
     # Step 4d: Reset and start Timer
-    print "ReSet Timer"
+    print("ReSet Timer")
     data = chip.resetTimer(write=False)
     chip.write(data, True)
-    print "Start Timer"
+    print("Start Timer")
     data = chip.startTimer(write=False)
     chip.write(data, True)
 
     # Step 5: Set general config
-    print "Set general config"
+    print("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
-    print "\tGet EoC: "
+    print("\tGet EoC: ")
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print dout
+    print(dout)
 
     # Step 2a: reset sequential / resets pixels?!
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        print(ddout)
     except IndexError:
         print("no EoR found")
 
@@ -88,34 +92,34 @@ def main(args_dict):
     for i in range(256):
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
-    print "pixel config sent"
+    print("pixel config sent")
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
 
     # only read column x == 1
     data = chip.read_pixel_config_reg([1], write=False)
     chip.write(data, True)
-    print "read pixel config command sent"
+    print("read pixel config command sent")
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
 
     data = chip.read_pixel_matrix_sequential(0x02, False)
-    print "read matrix sequential command sent"
+    print("read matrix sequential command sent")
     chip.write(data, True)
-    print "waiting for packets received"
+    print("waiting for packets received")
     fdata = chip['FIFO'].get_data()
-    print type(fdata)
-    print fdata
+    print(type(fdata))
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print len(dout)
+    print(len(dout))
 
     counts = []
     count = 0
@@ -153,7 +157,7 @@ def main(args_dict):
     # print("{} / {}".format(xs[184], ys[184]))
     # print("{} / {}".format(xs[185], ys[185]))
     ddout = chip.decode(dout[-1], 0x90)
-    print ddout
+    print(ddout)
 
     print("Found the following counts: ", counts)
 
@@ -161,13 +165,13 @@ def main(args_dict):
     # data = chip.reset_sequential(False)
     # chip.write(data, True)
     # fdata = chip['FIFO'].get_data()
-    # print fdata
+    # print(fdata)
     # dout = chip.decode_fpga(fdata, True)
-    # print dout
+    # print(dout)
     # ddout = chip.decode(dout[0],0x71)
     # try:
     #     ddout = chip.decode(dout[1],0x71)
-    #     print ddout
+    #     print(ddout)
     # except IndexError:
     #     print("no EoR found")
 

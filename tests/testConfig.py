@@ -5,11 +5,16 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
+
 def print_exp_recvd(name, exp_header, header, chipId = None):
-    print "\tExpected {}: {}".format(name, exp_header)
-    print "\tReceived {}: {}".format(name, header)
+    print("\tExpected {}: {}".format(name, exp_header))
+    print("\tReceived {}: {}".format(name, header))
     if chipId != None:
-        print "\tChipID:", chipId
+        print("\tChipID:", chipId)
 
 
 def print_cmp_dacvals(exp_val, val):
@@ -55,13 +60,13 @@ def test_config():
     chip['RX'].ENABLE = 1
     time.sleep(0.01)
 
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    print('RX ready:', chip['RX'].is_ready)
+    print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     print(chip.get_configuration())
 
@@ -70,43 +75,43 @@ def test_config():
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        print(ddout)
     except IndexError:
         print("no EoR found")
 
     # now set some random config bits to different values than default
-    print "Switch Polarity"
+    print("Switch Polarity")
     chip.config["Polarity"] = 0
-    print "Enable Test pulses"
+    print("Enable Test pulses")
     chip.config["TP_en"] = 1
     # assert we wrote the value correctly to the dictionary
     assert(chip.config["TP_en"] == 1, "We wrote 1 but received {}".format(chip.config["TP_en"]))
     data = chip.write_general_config(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x30)
-    print ddout
+    print(ddout)
     # now read them back
     # NOTE: this check needs to be done by eye for now
     # TODO: fix that!
     data = chip.read_general_config(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x31)
-    print ddout
+    print(ddout)
 
 
 if __name__ == "__main__":

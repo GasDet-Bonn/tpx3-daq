@@ -5,6 +5,10 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 
 def pretty_print(string_val, bits=32):
     val = int(string_val)
@@ -12,15 +16,15 @@ def pretty_print(string_val, bits=32):
     bits[:] = val
     lst = bits.toByteList(True)
     lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
+    print("Int ", lst)
+    print("Hex ", lst_hex)
+    print("Binary ", bits)
 
 def print_exp_recvd(name, exp_header, header, chipId = None):
-    print "\tExpected {}: {}".format(name, exp_header)
-    print "\tReceived {}: {}".format(name, header)
+    print("\tExpected {}: {}".format(name, exp_header))
+    print("\tReceived {}: {}".format(name, header))
     if chipId != None:
-        print "\tChipID:", chipId
+        print("\tChipID:", chipId)
 
 
 def print_cmp_commands(exp_header, header, chipId = None):
@@ -70,13 +74,13 @@ def run_test_pulses():
     chip['RX'].ENABLE = 1
     time.sleep(0.01)
 
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    print('RX ready:', chip['RX'].is_ready)
+    print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     print(chip.get_configuration())
 
@@ -85,14 +89,14 @@ def run_test_pulses():
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        print(ddout)
     except IndexError:
         print("no EoR found")
 
@@ -113,15 +117,15 @@ def run_test_pulses():
 
     # Step 4: Set TP DACs
     # Step 4a: Set VTP_coarse DAC (8-bit)
-    print "Set VTP_coarse"
+    print("Set VTP_coarse")
     chip.dacs["VTP_coarse"] = 0b1000000
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
    
     # Step 4b: Set VTP_fine DAC (9-bit)
-    print "Set VTP_fine"
+    print("Set VTP_fine")
     chip.dacs["VTP_fine"] = 0b100000000
-    print chip.dacs["VTP_fine"]
+    print(chip.dacs["VTP_fine"])
 
     # after setting the DACs, write them
     chip.write_dacs()
@@ -131,7 +135,7 @@ def run_test_pulses():
     # Get the data, do the FPGA decode and do the decode ot the 0th element
    
     # Step 5: Set general config
-    print "Set general config"
+    print("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
@@ -139,34 +143,34 @@ def run_test_pulses():
     
     # Step 6: Write to the test pulse registers
     # Step 6a: Write to period and phase tp registers
-    print "Write TP_period and TP_phase"
+    print("Write TP_period and TP_phase")
     data = chip.write_tp_period(10, 0, write=False)
     chip.write(data, True)
     
     # Step 6b: Write to pulse number tp register
-    print "Write TP_number"
+    print("Write TP_number")
     data = chip.write_tp_pulsenumber(4, write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
     
-    print "Read TP config"
+    print("Read TP config")
     data = chip.read_tp_config(write=False)
     chip.write(data, True)
 
 
     # Step 7: Set CTPR
-    print "Write CTPR"
+    print("Write CTPR")
     data = chip.write_ctpr(range(128), write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
-    print "\tGet EoC: "
+    print("\tGet EoC: ")
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
     print_cmp_commands("11001111", dout[0], dout[1])
 
     # Step 8: Send "read pixel matrix data driven" command
-    print "Read pixel matrix data driven"
+    print("Read pixel matrix data driven")
     data = chip.read_pixel_matrix_datadriven(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
@@ -178,15 +182,15 @@ def run_test_pulses():
 
     # Step 10: Receive data
     """ ??? """
-    print "Acquisition"
+    print("Acquisition")
     time.sleep(1)
     # Get the data and do the FPGA decoding
     # dout = chip.decode_fpga(chip['FIFO'].get_data(), True)
     # for el in dout:
-    #    print "Decoded: ", el
+    #    print("Decoded: ", el)
 
     # Step 11: Disable Shutter
-    print "Receive 'TP_internalfinished' and 'End of Readout'"
+    print("Receive 'TP_internalfinished' and 'End of Readout'")
     chip['CONTROL']['SHUTTER'] = 0
     chip['CONTROL'].write()
     # Get the data, do the FPGA decode and do the decode ot the 0th element
@@ -197,33 +201,33 @@ def run_test_pulses():
     stop_readout_counter = 0
     reset_sequential_counter = 0
     unknown_counter = 0
-    print "Get data:"
+    print("Get data:")
     for el in dout:
         if el[47:44].tovalue() is 0xB:
             ddout = chip.decode(el, 0xB0)
-            print "\tX Pos:", chip.pixel_address_to_x(ddout[0])
-            print "\tY Pos:", chip.pixel_address_to_y(ddout[0])
-            print "\tiTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])]
-            print "\tEvent Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])]
-            print "\tHit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])]
+            print("\tX Pos:", chip.pixel_address_to_x(ddout[0]))
+            print("\tY Pos:", chip.pixel_address_to_y(ddout[0]))
+            print("\tiTOT:", chip.lfsr_14[BitLogic.tovalue(ddout[1])])
+            print("\tEvent Counter:", chip.lfsr_10[BitLogic.tovalue(ddout[2])])
+            print("\tHit Counter", chip.lfsr_4[BitLogic.tovalue(ddout[3])])
             pixel_counter += 1
         elif el[47:40].tovalue() is 0x71:
-            print "\tEoC/EoR/TP_Finished:", chip.decode(el,0x71)
+            print("\tEoC/EoR/TP_Finished:", chip.decode(el,0x71))
             EoR_counter +=1
         elif el[47:40].tovalue() is 0xF0:
-            print "\tStop Matrix Readout:", el
+            print("\tStop Matrix Readout:", el)
             stop_readout_counter +=1
         elif el[47:40].tovalue() is 0xE0:
-            print "\tReset Sequential:", el
+            print("\tReset Sequential:", el)
             reset_sequential_counter +=1
         else: 
-          print"\tUnknown Packet:", el  
+          print("\tUnknown Packet:", el)
           unknown_counter +=1   
-    print "Pixel counter:", pixel_counter
-    print "EoR counter:", EoR_counter
-    print "Stop Matrix Readout counter:", stop_readout_counter
-    print "Reset Sequential counter:", reset_sequential_counter
-    print "Unknown counter:", unknown_counter
+    print("Pixel counter:", pixel_counter)
+    print("EoR counter:", EoR_counter)
+    print("Stop Matrix Readout counter:", stop_readout_counter)
+    print("Reset Sequential counter:", reset_sequential_counter)
+    print("Unknown counter:", unknown_counter)
     
 
 

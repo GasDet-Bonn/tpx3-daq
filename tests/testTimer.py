@@ -5,6 +5,10 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 
 def pretty_print(string_val, bits=32):
     val = int(string_val)
@@ -12,16 +16,16 @@ def pretty_print(string_val, bits=32):
     bits[:] = val
     lst = bits.toByteList(True)
     lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
+    print("Int ", lst)
+    print("Hex ", lst_hex)
+    print("Binary ", bits)
 
 
 def print_exp_recvd(name, exp_header, header, chipId = None):
-    print "\tExpected {}: {}".format(name, exp_header)
-    print "\tReceived {}: {}".format(name, header)
+    print("\tExpected {}: {}".format(name, exp_header))
+    print("\tReceived {}: {}".format(name, header))
     if chipId != None:
-        print "\tChipID:", chipId
+        print("\tChipID:", chipId)
 
 
 def print_cmp_commands(exp_header, header, chipId = None):
@@ -65,13 +69,13 @@ def test_timer():
     chip['RX'].ENABLE = 1
     time.sleep(0.01)
 
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    print('RX ready:', chip['RX'].is_ready)
+    print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     print(chip.get_configuration())
 
@@ -80,14 +84,14 @@ def test_timer():
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        print(ddout)
     except IndexError:
         print("no EoR found")
 
@@ -105,14 +109,14 @@ def test_timer():
         chip.write(data, True)
 
     # Step 4: Set general config
-    print "Set general config"
+    print("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
 
     # Step 5: Reset the Timer
-    print "Set Timer Low"
+    print("Set Timer Low")
     chip['CONTROL']['TO_SYNC'] = 0
     chip['CONTROL'].write()
     data = chip.resetTimer(False)
@@ -124,7 +128,7 @@ def test_timer():
     fdata = chip['FIFO'].get_data()
     dout = chip.decode_fpga(fdata, True)
     ddout = chip.decode(dout[0], 0x44)
-    print ddout[0]
+    print(ddout[0])
 
     # Step 6: Start the Timer
     chip['CONTROL']['TO_SYNC'] = 0
@@ -133,7 +137,7 @@ def test_timer():
     chip.write(data)
 
     # Step 7: Set CTPR
-    print "Write CTPR"
+    print("Write CTPR")
     data = chip.write_ctpr(range(255), write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
@@ -143,17 +147,17 @@ def test_timer():
     fdata = chip['FIFO'].get_data()
     dout = chip.decode_fpga(fdata, True)
     ddout = chip.decode(dout[1], 0x44)
-    print "Timer Check:", BitLogic.tovalue(ddout[0])
+    print("Timer Check:", BitLogic.tovalue(ddout[0]))
 
     # Step 8: Send "read pixel matrix data driven" command
-    print "Read pixel matrix data driven"
+    print("Read pixel matrix data driven")
     data = chip.read_pixel_matrix_datadriven(write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)
 
     # Step 9: Enable Shutter
-    print "Shutter Open"
+    print("Shutter Open")
     chip['CONTROL']['SHUTTER'] = 1
     chip['CONTROL'].write()
 
@@ -169,10 +173,10 @@ def test_timer():
     d1out1 = chip.decode_fpga(fdata2, True)
     for i in range(15):
         dd1out1 = chip.decode(d1out1[2 * i], 0x44)
-        print "Timer Check:", BitLogic.tovalue(dd1out1[0])
+        print("Timer Check:", BitLogic.tovalue(dd1out1[0]))
 
     # Step 11: Disable Shutter
-    print "Shutter Closed'"
+    print("Shutter Closed'")
     chip['CONTROL']['SHUTTER'] = 0
     chip['CONTROL'].write()
 
@@ -183,25 +187,25 @@ def test_timer():
     fdata = chip['FIFO'].get_data()
     dout = chip.decode_fpga(fdata, True)
     ddout = chip.decode(dout[1], 0x46)
-    print "Timer Check Rising Low:", BitLogic.tovalue(ddout[0])
+    print("Timer Check Rising Low:", BitLogic.tovalue(ddout[0]))
     data = chip.requestTimerRisingShutterHigh(False)
     chip.write(data)
     fdata = chip['FIFO'].get_data()
     dout = chip.decode_fpga(fdata, True)
     ddout = chip.decode(dout[0], 0x47)
-    print "Timer Check Rising High:", BitLogic.tovalue(ddout[0])
+    print("Timer Check Rising High:", BitLogic.tovalue(ddout[0]))
     data = chip.requestTimerFallingShutterLow(False)
     chip.write(data)
     ftdata = chip['FIFO'].get_data()
     dtout = chip.decode_fpga(ftdata, True)
     ddout = chip.decode(dtout[0], 0x48)
-    print "Timer Check Falling Low:", BitLogic.tovalue(ddout[0])
+    print("Timer Check Falling Low:", BitLogic.tovalue(ddout[0]))
     data = chip.requestTimerFallingShutterHigh(False)
     chip.write(data)
     ftdata = chip['FIFO'].get_data()
     dtout = chip.decode_fpga(ftdata, True)
     ddout = chip.decode(dtout[0], 0x49)
-    print "Timer Check Falling Low:", BitLogic.tovalue(ddout[0])
+    print("Timer Check Falling Low:", BitLogic.tovalue(ddout[0]))
 
 
 if __name__ == "__main__":

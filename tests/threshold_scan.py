@@ -5,6 +5,10 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 
 def threshold_scan():
     # Step 1: Initialize chip & hardware
@@ -35,13 +39,13 @@ def threshold_scan():
     chip['RX'].ENABLE = 1
     time.sleep(0.01)
 
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    print('RX ready:', chip['RX'].is_ready)
+    print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     print(chip.get_configuration())
 
@@ -50,14 +54,14 @@ def threshold_scan():
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        print(ddout)
     except IndexError:
         print("no EoR found")
 
@@ -68,7 +72,7 @@ def threshold_scan():
             chip.set_pixel_pcr(x, y, 0, 7, 0)
 
     # Step 3b: Write PCR to chip
-    print "Write PCR"
+    print("Write PCR")
     for i in range(256):
         data = chip.write_pcr([i], write=False)
         chip.write(data, True)
@@ -85,7 +89,7 @@ def threshold_scan():
     data = chip.write_tp_pulsenumber(10, write=False)
     chip.write(data, True)
 
-    print "Start threshold scan"
+    print("Start threshold scan")
     # TODO: Full threshold scan is not possible yet because for low
     # thresholds 32 bit words keep missing. Maybe some problem with
     # the FIFO? A longer sleep before reading the fifo extends the
@@ -129,7 +133,7 @@ def threshold_scan():
                 if el[47:44].tovalue() is 0xB:
                     pixel_counter += 1
             threshold_voltage = fine * 0.5 + coarse * 80
-            print "Pixel counter for", threshold_voltage, "mV threshold:", pixel_counter
+            print("Pixel counter for", threshold_voltage, "mV threshold:", pixel_counter)
 
 
 if __name__ == "__main__":
