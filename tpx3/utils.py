@@ -1,5 +1,7 @@
 from basil.utils.BitLogic import BitLogic
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
 
 # this should really be a class method of BitLogic, but to stay compatible with
 # the current basil version, we add it at runtime
@@ -12,7 +14,7 @@ def toByteList(obj, bitwise=False):
     if obj.length() % 8 != 0:
         raise ValueError("""Cannot convert to array of bytes, if number of
         bits not a multiple of a byte""")
-    nbytes = obj.length() / 8
+    nbytes = obj.length() // 8
     byteList = []
 
     # range from 0 to 40, reversed to get MSB first
