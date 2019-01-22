@@ -20,6 +20,9 @@ from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 local_configuration = {
     # Scan parameters
     'wait_time': 0.1
@@ -69,7 +72,7 @@ class NoiseTune(ScanBase):
             time.sleep(0.2)
 
             mask_step_cmd = []
-            for i in range(256 / 4):
+            for i in range(256 // 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
             self.chip.write(mask_step_cmd)
@@ -115,7 +118,7 @@ class NoiseTune(ScanBase):
             self.logger.info('Vthreshold_fine = %d' % (Vthreshold_fine,))
 
             occ = take_data()
-            to_dis_p = (float(dis_pix_no + np.count_nonzero(occ)) / ((stop_column - start_column) * 256)) * 100.0
+            to_dis_p = ((dis_pix_no + np.count_nonzero(occ)) / ((stop_column - start_column) * 256)) * 100.0
 
             if to_dis_p > 0.1:
                 break
@@ -132,7 +135,7 @@ class NoiseTune(ScanBase):
             if disbaled_smt is False:
                 Vthreshold_fine -= 1
 
-            dis_pix_no_p = (float(dis_pix_no) / ((stop_column - start_column) * 256)) * 100.0
+            dis_pix_no_p = (dis_pix_no / ((stop_column - start_column) * 256)) * 100.0
 
             self.logger.info('dis_pix_no = %d %.3f %%' % (dis_pix_no, dis_pix_no_p))
 
