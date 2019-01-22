@@ -20,6 +20,9 @@ from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
 from utils import toByteList, bitword_to_byte_list
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
 
@@ -648,7 +651,7 @@ class TPX3(Dut):
 
         # determine number of 48bit words
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
-        nwords = len(data) / 2
+        nwords = len(data) // 2
         result = []
 
         for i in range(nwords):
@@ -780,8 +783,8 @@ class TPX3(Dut):
         Pixel = BitLogic(3)
 
         # calculate EoC, Superpixel and Pixel with the x and y position of the pixel
-        EoC = (x_pos - x_pos % 2) / 2
-        Superpixel = (y_pos - y_pos % 4) / 4
+        EoC = (x_pos - x_pos % 2) // 2
+        Superpixel = (y_pos - y_pos % 4) // 4
         Pixel = (x_pos % 2) * 4 + (y_pos % 4)
 
         # create a 16 bit variable for the address
