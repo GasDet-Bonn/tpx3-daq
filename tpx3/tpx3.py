@@ -23,6 +23,10 @@ from utils import toByteList, bitword_to_byte_list
 # Causes that the division in Python 2.7 behaves as in Python 3
 from __future__ import division
 
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
 
@@ -464,7 +468,7 @@ class TPX3(Dut):
             data = self.read_dac(dac, False)
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
-            print "\tGet DAC value, DAC code and EoC:"
+            print("\tGet DAC value, DAC code and EoC:")
             dout = self.decode_fpga(self['FIFO'].get_data(), True)
             b = BitLogic(9)
             b[:] = val
