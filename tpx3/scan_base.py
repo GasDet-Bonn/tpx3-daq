@@ -20,6 +20,9 @@ from tpx3 import TPX3
 from fifo_readout import FifoReadout
 from tables.exceptions import NoSuchNodeError
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
 loglevel = logging.getLogger('TPX3').getEffectiveLevel()
 
@@ -220,7 +223,7 @@ class ScanBase(object):
         self.configure(**kwargs) #TODO: all DACs set here
 
         # Step 3a: Produce needed PCR (Pixel conficuration)
-        for i in range(256 / 4):
+        for i in range(256 // 4):
             self.chip.write_pcr(range(4 * i, 4 * i + 4))
 
         # Setup files
