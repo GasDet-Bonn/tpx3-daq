@@ -25,6 +25,9 @@ _lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
 
 from numba import njit
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 @njit
 def scurve_hist(hit_data, param_range):
     scurves = np.zeros((256*256, len(param_range)), dtype=np.uint16)
@@ -82,9 +85,9 @@ def raw_data_to_dut(raw_data):
         logger.error("Missing one 32bit subword of a 48bit package!")
         return np.empty(0, dtype=np.uint64)
 
-    nwords = len(raw_data) / 2
+    nwords = len(raw_data) // 2
 
-    data_words = np.empty((raw_data.shape[0] / 2), dtype=np.uint64)
+    data_words = np.empty((raw_data.shape[0] // 2), dtype=np.uint64)
     k = (raw_data & 0xffffff)
     data_words[:] = k[1::2].view('>u4')
     data_words = (data_words << 16) + (k[0::2].view('>u4') >> 8)
