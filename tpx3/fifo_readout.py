@@ -59,7 +59,7 @@ class FifoReadout(object):
         self._moving_average_time_period = 10.0
         self._data_deque = deque()
         self._data_buffer = deque()
-        self._words_per_read = deque(maxlen = self._moving_average_time_period // self.readout_interval))
+        self._words_per_read = deque(maxlen = self._moving_average_time_period // self.readout_interval)
         self._result = Queue(maxsize=1)
         self._calculate = Event()
         self.stop_readout = Event()

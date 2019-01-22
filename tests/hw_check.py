@@ -164,7 +164,7 @@ def main(args_dict):
     ddout = chip.decode(dout[0], 0x31)
     print("Decoded 'Read GeneralConfig':")
     for el in ddout:
-        print("\tDecode: ", el
+        print("\tDecode: ", el)
     ddout = chip.decode(dout[1], 0x71)
     print("Decoded 'End of Command':")
     for el in ddout:
