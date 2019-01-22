@@ -6,6 +6,9 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 
 def pretty_print(string_val, bits=32):
     val = int(string_val)
@@ -236,7 +239,7 @@ def main(args_dict):
 
         ttime = etime - stime
         bits = count * 4 * 8
-        print ttime, 's ', bits, 'b ', (float(bits) / ttime) / (1024 * 1024), 'Mb/s'
+        print ttime, 's ', bits, 'b ', (bits / ttime) / (1024 * 1024), 'Mb/s'
 
     print('Happy day!')
 
