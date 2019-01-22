@@ -20,6 +20,9 @@ from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 local_configuration = {
     # Scan parameters
     'mask_step'        : 32,
@@ -79,7 +82,7 @@ class ThresholdScan(ScanBase):
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
             self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
 
-            for i in range(256 / 4):
+            for i in range(256 // 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
