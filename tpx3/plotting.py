@@ -31,6 +31,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import colors, cm
 from matplotlib.backends.backend_pdf import PdfPages
 
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 #import bdaq53.analysis.analysis_utils as au
 
 logging.basicConfig(
