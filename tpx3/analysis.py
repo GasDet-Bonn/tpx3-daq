@@ -108,7 +108,7 @@ def interpret_raw_data(raw_data, meta_data=[]):
         stops = meta_data['index_stop'][index]
         split = np.split(raw_data, stops)
         for i in range(len(split[:-1])):
-            # print param[i], stops[i], len(split[i]), split[i]
+            # print(param[i], stops[i], len(split[i]), split[i])
             int_pix_data = interpret_raw_data(split[i])
             int_pix_data['scan_param_id'][:] = param[i]
             if len(ret):

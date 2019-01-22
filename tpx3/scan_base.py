@@ -5,6 +5,7 @@
 # ------------------------------------------------------------
 #
 
+from __future__ import print_function
 import time
 import os
 import yaml
@@ -215,7 +216,7 @@ class ScanBase(object):
         ddout = self.chip.decode(dout[0], 0x71)
         try:
             ddout = self.chip.decode(dout[1], 0x71)
-            # print ddout
+            # print(ddout)
         except IndexError:
             self.logger.warning("no EoR found")
 
