@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
 from tpx3.tpx3 import TPX3
 import time
 from basil.utils.BitLogic import BitLogic

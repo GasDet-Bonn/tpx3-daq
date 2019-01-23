@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from basil.utils.BitLogic import BitLogic
 
 # Causes that the division in Python 2.7 behaves as in Python 3

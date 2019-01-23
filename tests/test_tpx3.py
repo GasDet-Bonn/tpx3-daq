@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 from tpx3.tpx3 import TPX3
 
 # Causes that the print statement in Python 2.7 is deactivated and

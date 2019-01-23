@@ -9,6 +9,7 @@
     Script to convert raw data
 '''
 from __future__ import print_function
+from __future__ import absolute_import
 import numpy as np
 from basil.utils.BitLogic import BitLogic
 import logging

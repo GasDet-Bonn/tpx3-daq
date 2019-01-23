@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from online_monitor.receiver.receiver import Receiver
 from zmq.utils import jsonapi
 import numpy as np

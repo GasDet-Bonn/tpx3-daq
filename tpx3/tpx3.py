@@ -5,6 +5,7 @@
 # ------------------------------------------------------------
 #
 
+from __future__ import absolute_import
 import zlib  # workaround
 import yaml
 import logging
@@ -18,7 +19,7 @@ import basil
 
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
-from utils import toByteList, bitword_to_byte_list
+from .utils import toByteList, bitword_to_byte_list
 
 # Causes that the division in Python 2.7 behaves as in Python 3
 from __future__ import division

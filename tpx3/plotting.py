@@ -9,6 +9,7 @@
     Plotting class
 '''
 
+from __future__ import absolute_import
 import zlib  # workaround for segmentation fault on tables import
 import numpy as np
 import math

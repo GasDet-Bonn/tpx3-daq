@@ -5,6 +5,7 @@
 # ------------------------------------------------------------
 #
 
+from __future__ import absolute_import
 import unittest
 import os
 from basil.utils.sim.utils import cocotb_compile_and_run, cocotb_compile_clean

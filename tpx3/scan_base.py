@@ -6,6 +6,7 @@
 #
 
 from __future__ import print_function
+from __future__ import absolute_import
 import time
 import os
 import yaml
@@ -17,8 +18,8 @@ import numpy as np
 import zmq
 
 from contextlib import contextmanager
-from tpx3 import TPX3
-from fifo_readout import FifoReadout
+from .tpx3 import TPX3
+from .fifo_readout import FifoReadout
 from tables.exceptions import NoSuchNodeError
 
 # Causes that the division in Python 2.7 behaves as in Python 3
