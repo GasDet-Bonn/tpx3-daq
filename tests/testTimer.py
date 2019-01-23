@@ -8,6 +8,7 @@ import argparse
 # Causes that the print statement in Python 2.7 is deactivated and
 # only the print() function is available
 from __future__ import print_function
+from six.moves import map
 
 
 def pretty_print(string_val, bits=32):
@@ -15,7 +16,7 @@ def pretty_print(string_val, bits=32):
     bits = BitLogic(bits)
     bits[:] = val
     lst = bits.toByteList(True)
-    lst_hex = map(hex, bits.toByteList(False))
+    lst_hex = list(map(hex, bits.toByteList(False)))
     print("Int ", lst)
     print("Hex ", lst_hex)
     print("Binary ", bits)

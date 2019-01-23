@@ -311,34 +311,34 @@ class FifoReadout(object):
     def reset_rx(self, channels=None):
         self.logger.debug('Resetting RX')
         if channels:
-            filter(lambda channel: self.chip[channel].RESET, channels)
+            [channel for channel in channels if self.chip[channel].RESET]
         else:
-            filter(lambda channel: channel.RESET, self.chip.get_modules('tpx3_rx'))
+            [channel for channel in self.chip.get_modules('tpx3_rx') if channel.RESET]
         sleep(0.1)  # sleep here for a while
 
     def get_rx_sync_status(self, channels=None):
         if channels:
-            return map(lambda channel: True if self.chip[channel].READY else False, channels)
+            return [True if self.chip[channel].READY else False for channel in channels]
         else:
-            return map(lambda channel: True if channel.READY else False, self.chip.get_modules('tpx3_rx'))
+            return [True if channel.READY else False for channel in self.chip.get_modules('tpx3_rx')]
 
     def get_rx_en_status(self, channels=None):
         if channels:
-            return map(lambda channel: True if self.chip[channel].ENABLE else False, channels)
+            return [True if self.chip[channel].ENABLE else False for channel in channels]
         else:
-            return map(lambda channel: True if channel.ENABLE else False, self.chip.get_modules('tpx3_rx'))
+            return [True if channel.ENABLE else False for channel in self.chip.get_modules('tpx3_rx')]
 
     def get_rx_fifo_discard_count(self, channels=None):
         if channels:
-            return map(lambda channel: self.chip[channel].LOST_DATA_COUNTER, channels)
+            return [self.chip[channel].LOST_DATA_COUNTER for channel in channels]
         else:
-            return map(lambda channel: channel.LOST_DATA_COUNTER, self.chip.get_modules('tpx3_rx'))
+            return [channel.LOST_DATA_COUNTER for channel in self.chip.get_modules('tpx3_rx')]
 
     def get_rx_decode_error_count(self, channels=None):
         if channels:
-            return map(lambda channel: self.chip[channel].DECODER_ERROR_COUNTER, channels)
+            return [self.chip[channel].DECODER_ERROR_COUNTER for channel in channels]
         else:
-            return map(lambda channel: channel.DECODER_ERROR_COUNTER, self.chip.get_modules('tpx3_rx'))
+            return [channel.DECODER_ERROR_COUNTER for channel in self.chip.get_modules('tpx3_rx')]
 
     def get_float_time(self):
         '''
