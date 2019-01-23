@@ -33,6 +33,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 # Causes that the division in Python 2.7 behaves as in Python 3
 from __future__ import division
+from six.moves import range
 
 #import bdaq53.analysis.analysis_utils as au
 
@@ -321,7 +322,7 @@ class Plotting(object):
 
         hist = np.array(hist)
         if plot_range is None:
-            plot_range = range(0, len(hist))
+            plot_range = list(range(0, len(hist)))
         plot_range = np.array(plot_range)
         plot_range = plot_range[plot_range < len(hist)]
         if yerr is not None:
@@ -364,8 +365,8 @@ class Plotting(object):
             else:
                 title = ('Time-over-Threshold distribution' +
                          r' ($\Sigma$ = %d)' % (np.sum(hist)))
-        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=range(
-            0, 16), x_axis_title='ToT code', y_axis_title='# of hits', color='b', suffix='tot')
+        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=list(range(
+            0, 16)), x_axis_title='ToT code', y_axis_title='# of hits', color='b', suffix='tot')
 
     def _plot_relative_bcid(self, hist, title=None):
         if title is None:
@@ -374,15 +375,15 @@ class Plotting(object):
             else:
                 title = ('Relative BCID' + r' ($\Sigma$ = %d)' %
                          (np.sum(hist)))
-        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=range(
-            0, 32), x_axis_title='Relative BCID [25 ns]', y_axis_title='# of hits', suffix='rel_bcid')
+        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=list(range(
+            0, 32)), x_axis_title='Relative BCID [25 ns]', y_axis_title='# of hits', suffix='rel_bcid')
 
     def _plot_event_status(self, hist, title=None):
         self._plot_1d_hist(hist=hist,
                            title=('Event status' + r' ($\Sigma$ = %d)' %
                                   (np.sum(hist))) if title is None else title,
                            log_y=True,
-                           plot_range=range(0, 10),
+                           plot_range=list(range(0, 10)),
                            x_ticks=('User K\noccured', 'Ext\ntrigger', 'TDC\nword', 'BCID\nerror', 'TRG ID\nerror',
                                     'TDC\nambig.', 'Event\nTruncated', 'Unknown\nword', 'Wrong\nstructure', 'Ext. Trig.\nerror'),
                            color='g', y_axis_title='Number of events', suffix='event_status')
@@ -392,7 +393,7 @@ class Plotting(object):
                            title=('BCID error' + r' ($\Sigma$ = %d)' %
                                   (np.sum(hist))) if title is None else title,
                            log_y=True,
-                           plot_range=range(0, 32),
+                           plot_range=list(range(0, 32)),
                            x_axis_title='Trigger ID',
                            y_axis_title='Number of event header', color='g',
                            suffix='bcid_error')
@@ -400,18 +401,18 @@ class Plotting(object):
     def _plot_cl_size(self, hist):
         ''' Create 1D cluster size plot w/wo log y-scale '''
         self._plot_1d_hist(hist=hist, title='Cluster size',
-                           log_y=False, plot_range=range(0, 10),
+                           log_y=False, plot_range=list(range(0, 10)),
                            x_axis_title='Cluster size',
                            y_axis_title='# of hits', suffix='cluster_size')
         self._plot_1d_hist(hist=hist, title='Cluster size (log)',
-                           log_y=True, plot_range=range(0, 100),
+                           log_y=True, plot_range=list(range(0, 100)),
                            x_axis_title='Cluster size',
                            y_axis_title='# of hits', suffix='cluster_size_log')
 
     def _plot_cl_tot(self, hist):
         ''' Create 1D cluster size plot w/wo log y-scale '''
         self._plot_1d_hist(hist=hist, title='Cluster ToT',
-                           log_y=False, plot_range=range(0, 96),
+                           log_y=False, plot_range=list(range(0, 96)),
                            x_axis_title='Cluster ToT [25 ns]',
                            y_axis_title='# of hits', suffix='cluster_tot')
 
@@ -733,7 +734,7 @@ class Plotting(object):
         setp(axHistx.get_xticklabels() + axHisty.get_yticklabels(), visible=False)
         hight = np.ma.sum(hist, axis=0)
 
-        axHistx.bar(x=range(1, 401), height=hight, align='center', linewidth=0)
+        axHistx.bar(x=list(range(1, 401)), height=hight, align='center', linewidth=0)
         axHistx.set_xlim((0.5, 400.5))
         if hist.all() is np.ma.masked:
             axHistx.set_ylim((0, 1))
@@ -742,7 +743,7 @@ class Plotting(object):
         axHistx.set_ylabel('#')
         width = np.ma.sum(hist, axis=1)
 
-        axHisty.barh(y=range(1, 193), width=width, align='center', linewidth=0)
+        axHisty.barh(y=list(range(1, 193)), width=width, align='center', linewidth=0)
         axHisty.set_ylim((192.5, 0.5))
         if hist.all() is np.ma.masked:
             axHisty.set_xlim((0, 1))

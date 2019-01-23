@@ -10,6 +10,7 @@ import argparse
 # only the print() function is available
 from __future__ import print_function
 from six.moves import map
+from six.moves import range
 
 
 def pretty_print(string_val, bits=32):
@@ -51,7 +52,7 @@ def main(args_dict):
         pass
   
     print("Test write CTPR")
-    data = chip.write_ctpr(range(128), False)
+    data = chip.write_ctpr(list(range(128)), False)
     chip['FIFO'].reset()
     time.sleep(0.01)
     chip.write(data)

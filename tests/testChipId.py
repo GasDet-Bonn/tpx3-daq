@@ -9,6 +9,7 @@ import argparse
 # only the print() function is available
 from __future__ import print_function
 from six.moves import map
+from six.moves import range
 
 
 def pretty_print(string_val, bits=32):

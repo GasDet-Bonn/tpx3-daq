@@ -22,6 +22,7 @@ import tpx3.plotting as plotting
 
 # Causes that the division in Python 2.7 behaves as in Python 3
 from __future__ import division
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -73,7 +74,7 @@ class NoiseTune(ScanBase):
 
             mask_step_cmd = []
             for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
             self.chip.write(mask_step_cmd)
 

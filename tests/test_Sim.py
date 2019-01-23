@@ -17,6 +17,7 @@ from tpx3.tpx3 import TPX3
 # Causes that the print statement in Python 2.7 is deactivated and
 # only the print() function is available
 from __future__ import print_function
+from six.moves import range
 
 
 class TestSim(unittest.TestCase):
@@ -53,7 +54,7 @@ class TestSim(unittest.TestCase):
 
         self.dut['SPI'].set_size(125)  # in bits
 
-        self.dut['SPI'].set_data(range(64))
+        self.dut['SPI'].set_data(list(range(64)))
         self.dut['SPI'].start()
         while(not self.dut['SPI'].is_ready):
             pass

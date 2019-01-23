@@ -18,6 +18,7 @@ from functools import partial
 from scipy.optimize import curve_fit
 from scipy.special import erf
 from numba import njit
+from six.moves import range
 
 logger = logging.getLogger('Analysis')
 

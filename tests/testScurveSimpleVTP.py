@@ -7,6 +7,7 @@ import argparse
 
 import matplotlib
 from six.moves import map
+from six.moves import range
 matplotlib.use('TKagg')
 import matplotlib.pyplot as plt
 
