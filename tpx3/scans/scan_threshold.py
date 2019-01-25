@@ -12,6 +12,10 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
 from tqdm import tqdm
 import numpy as np
 import time
@@ -21,8 +25,6 @@ from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
-# Causes that the division in Python 2.7 behaves as in Python 3
-from __future__ import division
 from six.moves import range
 
 local_configuration = {

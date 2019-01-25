@@ -6,6 +6,11 @@
 #
 
 from __future__ import absolute_import
+
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 import unittest
 import os
 from basil.utils.sim.utils import cocotb_compile_and_run, cocotb_compile_clean
@@ -14,10 +19,6 @@ import yaml
 import time
 
 from tpx3.tpx3 import TPX3
-
-# Causes that the print statement in Python 2.7 is deactivated and
-# only the print() function is available
-from __future__ import print_function
 from six.moves import range
 
 

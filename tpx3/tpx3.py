@@ -6,6 +6,14 @@
 #
 
 from __future__ import absolute_import
+
+# Causes that the division in Python 2.7 behaves as in Python 3
+from __future__ import division
+
+# Causes that the print statement in Python 2.7 is deactivated and
+# only the print() function is available
+from __future__ import print_function
+
 import zlib  # workaround
 import yaml
 import logging
@@ -21,12 +29,6 @@ from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
 from .utils import toByteList, bitword_to_byte_list
 
-# Causes that the division in Python 2.7 behaves as in Python 3
-from __future__ import division
-
-# Causes that the print statement in Python 2.7 is deactivated and
-# only the print() function is available
-from __future__ import print_function
 from six.moves import range
 
 # add toByteList() method to BitLogic

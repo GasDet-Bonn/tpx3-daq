@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import absolute_import
-from tpx3.tpx3 import TPX3
-import time
-from basil.utils.BitLogic import BitLogic
-import array
-import argparse
 
 # Causes that the division in Python 2.7 behaves as in Python 3
 from __future__ import division
@@ -13,6 +8,13 @@ from __future__ import division
 # Causes that the print statement in Python 2.7 is deactivated and
 # only the print() function is available
 from __future__ import print_function
+
+from tpx3.tpx3 import TPX3
+import time
+from basil.utils.BitLogic import BitLogic
+import array
+import argparse
+
 from six.moves import map
 from six.moves import range
 
