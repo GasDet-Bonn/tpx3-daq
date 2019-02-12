@@ -1,0 +1,128 @@
+
+
+CONFIG PART = xc6vlx130t-1FFG784C;
+
+NET "CLK200_P" LOC = "AF10";
+NET "CLK200_N" LOC = "AE10";
+NET "CLK200_P" TNM_NET = "sys_clk_pin";
+TIMESPEC "TS_SYS_CLK200" = PERIOD "sys_clk_pin" 200000 kHz;
+
+##	
+#NET "A_PRSNT_N" LOC = "AB24";
+#NET "A_PWGOOD_N" LOC = "AH23";
+#NET "NIM_TO_TTL" LOC = "AE23";
+#NET "TTL_TO_NIM" LOC = "AD23";
+NET "LED<0>" LOC = "AB22";
+NET "LED<1>" LOC = "AA22";
+
+##	# Bank 23
+#NET "SFP0_RX_LOS" LOC = "W21";
+#NET "SFP1_RX_LOS" LOC = "AD22";
+#NET "SELF_RSTN" LOC = "V19";
+#NET "SFP0_TX_FAULT" LOC = "AF22";
+#NET "SFP1_TX_FAULT" LOC = "AA21";
+
+#NET "GOE" LOC = "AG21";
+#NET "CLKUWIRE" LOC = "AF20";
+#NET "LEUWIRE" LOC = "AD20";
+#NET "PLL_SYNC" LOC = "AE20";
+#NET "DATAUWIRE" LOC = "AD21";
+#NET "SELF_RSTN" LOC = "V19";
+#NET "GBTSW" LOC = "U22";
+#NET "GBTSW" IOSTANDARD = "LVCMOS15";
+#NET "PLL_LOCK" LOC = "AC20";
+
+#NET "B_PWGOOD_N" LOC = "AE9";
+#NET "B_PRSNT_N" LOC = "AF9";
+
+#NET "SFP_SCL1" LOC = "AH19";
+#NET "SFP_SDA1" LOC = "AG19";
+#NET "SFP1_TX_N" LOC = "AD2";
+#NET "SFP1_RX_N" LOC = "AG4";
+#NET "SFP1_TX_P" LOC = "AD1";
+#NET "SFP1_RX_P" LOC = "AG3";
+
+
+#NET "LEMODIFF_P" LOC = "AH11";
+#NET "LEMODIFF_N" LOC = "AG12";
+##	
+##	# IC 15
+NET "SFP_CLK_P" LOC = "W4";
+NET "SFP_CLK_N" LOC = "W3";
+
+NET "SFP_CLK_P" TNM_NET = "TMM_CLKSFP";
+TIMESPEC "TS_CLKSFP" = PERIOD "TMM_CLKSFP" 8 ns HIGH 50 %;
+
+NET "SFP0_SCL" LOC = "AG18";
+NET "SFP0_SDA" LOC = "AH18";
+#SFP0 -> J11
+NET "SFP0_TX_N" LOC = "AF2";
+NET "SFP0_RX_N" LOC = "AH2";
+NET "SFP0_TX_P" LOC = "AF1";
+NET "SFP0_RX_P" LOC = "AH1";
+
+## Signals for A-CARD
+##	I2C
+#NET "I2C_SCL" LOC = "AE25";
+#NET "I2C_SDA" LOC = "AF25";
+
+###
+### TPX3
+###
+
+#Input
+#NET "TPX3_1_ClkOut_N"               LOC = "E10";   
+#NET "TPX3_1_ClkOut_P"               LOC = "F11";   
+#NET "TPX3_1_ClkInRefPLL_N"          LOC = "";
+#NET "TPX3_1_ClkInRefPLL_P"          LOC = "";
+
+NET "TPX3_1_DataOut_N[0]"      LOC = "C8";   
+NET "TPX3_1_DataOut_P[0]"      LOC = "B8";  
+NET "TPX3_1_DataOut_N[1]"      LOC = "A9";  
+NET "TPX3_1_DataOut_P[1]"      LOC = "A10";   
+NET "TPX3_1_DataOut_N[2]"      LOC = "B7";   
+NET "TPX3_1_DataOut_P[2]"      LOC = "A7";  
+NET "TPX3_1_DataOut_N[3]"      LOC = "J13";  
+NET "TPX3_1_DataOut_P[3]"      LOC = "H13"; 
+NET "TPX3_1_DataOut_N[4]"      LOC = "E9"; 
+NET "TPX3_1_DataOut_P[4]"      LOC = "D8";   
+NET "TPX3_1_DataOut_N[5]"      LOC = "F10";   
+NET "TPX3_1_DataOut_P[5]"      LOC = "G11";   
+NET "TPX3_1_DataOut_N[6]"      LOC = "F9";   
+NET "TPX3_1_DataOut_P[6]"      LOC = "E8"; 
+NET "TPX3_1_DataOut_N[7]"      LOC = "C10";  
+NET "TPX3_1_DataOut_P[7]"      LOC = "D10";  
+
+#Output
+NET "TPX3_1_T0_Sync_N"              LOC = "G7";   
+NET "TPX3_1_T0_Sync_P"              LOC = "F7";   
+NET "TPX3_1_ClkIn40_N"              LOC = "H10"; 
+NET "TPX3_1_ClkIn40_P"              LOC = "H11";
+NET "TPX3_1_Reset_P"                LOC = "J12";   
+NET "TPX3_1_Reset_N"                LOC = "K13";   
+NET "TPX3_1_Shutter_P"              LOC = "B9"; 
+NET "TPX3_1_Shutter_N"              LOC = "C9"; 
+NET "TPX3_1_ExtTPulse_P"            LOC = "G8";
+NET "TPX3_1_ExtTPulse_N"            LOC = "G9";
+NET "TPX3_1_EnableIn_P"             LOC = "D7";
+NET "TPX3_1_EnableIn_N"             LOC = "E7";
+NET "TPX3_1_DataIn_P"               LOC = "H8";
+NET "TPX3_1_DataIn_N"               LOC = "H9";
+NET "TPX3_1_ENPowerPulsing_N"       LOC = "J10"; 
+NET "TPX3_1_ENPowerPulsing_P"       LOC = "J11";
+
+###
+###
+###
+
+NET "tpx3_sfp/CLK125_PHY" TNM_NET = "TNM_CLK125";
+TIMESPEC "TS_CLK125" = PERIOD "TNM_CLK125" 8 ns HIGH 50 %;
+
+NET "tpx3_sfp/CLK40" TNM_NET = "TNM_CLK40";
+NET "tpx3_sfp/CLK32" TNM_NET = "TNM_CLK32";
+
+TIMESPEC TS_FALSE_40_BUS = FROM "TNM_CLK40" TO "TNM_CLK125" TIG;
+TIMESPEC TS_FALSE_BUS_40 = FROM "TNM_CLK125" TO "TNM_CLK40" TIG; 
+
+TIMESPEC TS_FALSE_64_BUS = FROM "TNM_CLK32" TO "TNM_CLK125" TIG;
+TIMESPEC TS_FALSE_BUS_64 = FROM "TNM_CLK125" TO "TNM_CLK32" TIG;

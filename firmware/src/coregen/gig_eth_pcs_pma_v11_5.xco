@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 14.7
-# Date: Tue Feb 27 10:42:30 2018
+# Date: Fri Feb  8 22:30:51 2019
 #
 ##############################################################
 #
@@ -22,13 +22,13 @@ SET asysymbol = true
 SET busformat = BusFormatAngleBracketNotRipped
 SET createndf = false
 SET designentry = Verilog
-SET device = xc6vlx240t
+SET device = xc6vlx130t
 SET devicefamily = virtex6
 SET flowvendor = Other
 SET formalverification = false
 SET foundationsym = false
 SET implementationfiletype = Ngc
-SET package = ff1156
+SET package = ff784
 SET removerpms = false
 SET simulationfiles = Behavioral
 SET speedgrade = -1
@@ -46,7 +46,7 @@ CSET management_interface=false
 CSET physical_interface=Transceiver
 CSET sgmii_mode=10_100_1000
 CSET sgmii_phy_mode=false
-CSET standard=SGMII
+CSET standard=BOTH
 CSET timing_sim=false
 CSET transceiver_tile=A
 # END Parameters
@@ -54,4 +54,4 @@ CSET transceiver_tile=A
 MISC pkg_timestamp=2012-07-11T07:25:50Z
 # END Extra information
 GENERATE
-# CRC: f27a795e
+# CRC: 9820f78f

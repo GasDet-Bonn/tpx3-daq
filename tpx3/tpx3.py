@@ -123,12 +123,16 @@ class CustomDict(dict):
 
 class TPX3(Dut):
 
-    # '' Map hardware IDs for board identification '''
-    # hw_map = {
-    #    0: 'SIMULATION',
-    #    1: 'MIO2',
-    # }
+    ''' Map hardware IDs for board identification '''
+    hw_map = {
+        1: 'SIMULATION',
+        2: 'FECv6',
+        3: 'ML605',
+    }
 
+    ''' Compatible firware version '''
+    fw_version_required = 1
+    
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########
     ################################################################################
@@ -224,11 +228,13 @@ class TPX3(Dut):
     def init(self, config_file=None, dac_file=None, outputBlock_file=None):
         super(TPX3, self).init()
 
-        # self.fw_version, self.board_version = self.get_daq_version()
-        # logger.info('Found board %s running firmware version %s' % (self.hw_map[self.board_version], self.fw_version))
-        #
-        # if self.fw_version != VERSION[:3]:     #Compare only the first two digits
-        #    raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
+        self.fw_version = self['intf'].read(0x0000, 1)[0]
+        self.board_version = self.hw_map[self['intf'].read(0x0001, 1)[0]]
+
+        logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
+        
+        if self.fw_version != self.fw_version_required:
+            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
 
         # self['CONF_SR'].set_size(3924)
 
