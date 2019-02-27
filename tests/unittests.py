@@ -203,5 +203,33 @@ class Test(unittest.TestCase):
         for i in range(len(broken_pixels)):
             print("Pixel %i/%i is broken" % (chip.pixel_address_to_x(broken_pixels[i]), chip.pixel_address_to_y(broken_pixels[i])))
 
+
+    def test_set_ctpr(self):
+        self.startUp()
+        print("Test CTPR")
+        # Test for errors
+        with self.assertRaises(ValueError):
+            chip.write_ctpr(list(range(257)), False)
+        with self.assertRaises(ValueError):
+            chip.write_ctpr(list(range(257, 256, -1)), False)
+        
+        # Test values
+        pbar = tqdm(total = 256)
+        for column in range(256):
+            data = chip.write_ctpr([column], False)
+            chip.write(data, True)
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            data = chip.read_ctpr(False)
+            chip.write(data, True)
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            pbar.update(1)
+            for j in range(len(dout)):
+                if(dout[j][47:44].tovalue() == 0xD):
+                    if dout[j][1:0].tovalue() != 0:
+                        self.assertEquals(column, dout[j][43:37].tovalue() * 2 + int(dout[j][1]))
+        pbar.close()
+
 if __name__ == "__main__":
     unittest.main()
