@@ -128,7 +128,7 @@ class TPX3(Dut):
     #    0: 'SIMULATION',
     #    1: 'MIO2',
     # }
-
+    
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########
     ################################################################################
@@ -882,12 +882,12 @@ class TPX3(Dut):
         pcr = BitLogic(6)
 
         # fill the pcr with test, thr and mask
-        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos], 4)
+        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos])
         pcr[5] = np.int(self.test_matrix[x_pos, y_pos])
-        pcr[4] = thr[0]
-        pcr[3] = thr[1]
-        pcr[2] = thr[2]
-        pcr[1] = thr[3]
+        pcr[4] = thr[3]
+        pcr[3] = thr[2]
+        pcr[2] = thr[1]
+        pcr[1] = thr[0]
         pcr[0] = np.int(self.mask_matrix[x_pos, y_pos])
 
         return pcr
@@ -1307,7 +1307,7 @@ class TPX3(Dut):
         Writes the column test pulse register to the chip (see manual v1.9 p.50) and returns
         the written data. The masked columns can be selected with the `columns` variable.
         """
-        if len(columns) > 256 and np.all(np.asarray(columns) < 256):
+        if len(columns) > 256 or np.all(np.asarray(columns) > 256):
             # check if the columns list has a valid length and no elements larger than
             # number of columns
             raise ValueError("""The columns list must not contain more than 256 entries and
