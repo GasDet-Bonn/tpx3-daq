@@ -97,5 +97,30 @@ class Test(unittest.TestCase):
             pbar.update(1)
         pbar.close()
 
+
+    def test_pixel_address_functions(self):
+        self.startUp()
+        print("Test pixel address function errors")
+        # Test for errors
+        with self.assertRaises(ValueError):
+            chip.xy_to_pixel_address(256, 0)
+        with self.assertRaises(ValueError):
+            chip.xy_to_pixel_address(0, 256)
+        with self.assertRaises(ValueError):
+            chip.pixel_address_to_x(BitLogic.from_value(0b10000000000000000))
+        with self.assertRaises(ValueError):
+            chip.pixel_address_to_y(BitLogic.from_value(0b10000000000000000))
+        
+        print("Test pixel address functions")
+        # Test for valid addresses
+        pbar = tqdm(total=256*256)
+        for x in range(256):
+            for y in range(256):
+                address = chip.xy_to_pixel_address(x, y)
+                self.assertEquals(x, chip.pixel_address_to_x(address))
+                self.assertEquals(y, chip.pixel_address_to_y(address))
+                pbar.update(1)
+        pbar.close()
+
 if __name__ == "__main__":
     unittest.main()
