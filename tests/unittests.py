@@ -12,6 +12,9 @@ import numpy as np
 
 dac_list = ["Ibias_Preamp_ON", "Ibias_Preamp_OFF", "VPreamp_NCAS", "Ibias_Ikrum", "Vfbk", "Vthreshold_fine", "Vthreshold_coarse", "Ibias_DiscS1_ON", "Ibias_DiscS1_OFF", "Ibias_DiscS2_ON", "Ibias_DiscS2_OFF", "Ibias_PixelDAC", "Ibias_TPbufferIn", "Ibias_TPbufferOut", "VTP_coarse", "VTP_fine", "Ibias_CP_PLL", "PLL_Vcntrl"]
 dac_size_list = [256, 16, 256, 256, 256, 512, 16, 256, 16, 256, 16, 256, 256, 256, 256, 512, 256, 256]
+config_list = ["Polarity", "Op_mode", "Gray_count_en", "AckCommand_en", "TP_en", "Fast_Io_en", "TimerOverflowControl", "SelectTP_Dig_Analog", "SelectTP_Ext_Int", "SelectTP_ToA_Clk"]
+config_size_list = [2, 4, 2, 2, 2, 2, 2, 2, 2, 2]
+config_bit_list = [0, 1, 3, 4, 5, 6, 7, 9, 10, 11]
 chip = TPX3()
 chip.init()
 
@@ -229,6 +232,60 @@ class Test(unittest.TestCase):
                 if(dout[j][47:44].tovalue() == 0xD):
                     if dout[j][1:0].tovalue() != 0:
                         self.assertEquals(column, dout[j][43:37].tovalue() * 2 + int(dout[j][1]))
+        pbar.close()
+
+    
+    def test_general_config(self):
+        self.startUp()
+
+        print("Test general config")
+        # Test errors
+        with self.assertRaises(KeyError):
+            chip.configs["WrongConfig"] = 1
+        # Test ValueErrors
+        for config in range(10):
+            with self.assertRaises(ValueError):
+                chip.configs[config_list[config]] = -1
+            with self.assertRaises(ValueError):
+                chip.configs[config_list[config]] = config_size_list[config]
+
+        # Test values
+        pbar = tqdm(total = 4 * 10)
+        for value in range(4):
+            for config in range(10):
+                if value < config_size_list[config]:
+                    chip.configs[config_list[config]] = value
+            data = chip.write_general_config(False)
+            chip.write(data)
+            data = chip.read_general_config(False)
+            chip.write(data)
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            for config in range(10):
+                if value < config_size_list[config]:
+                    self.assertEquals(value, chip.configs[config_list[config]])
+                if config == 1:
+                    self.assertEquals(chip.configs[config_list[config]], dout[len(dout) - 2][2:1].tovalue())
+                else:
+                    self.assertEquals(chip.configs[config_list[config]], int(dout[len(dout) - 2][config_bit_list[config]]))
+                pbar.update(1)
+        pbar.close()
+
+        # Test defaults
+        chip.reset_config_attributes(to_default = True)
+        data = chip.write_general_config(False)
+        chip.write(data)
+        data = chip.read_general_config(False)
+        chip.write(data)
+        fdata = chip['FIFO'].get_data()
+        dout = chip.decode_fpga(fdata, True)
+        pbar = tqdm(total=10)
+        for config in range(10):
+            if config == 1:
+                self.assertEquals(chip.configs[config_list[config]], dout[len(dout) - 2][2:1].tovalue())
+            else:
+                self.assertEquals(chip.configs[config_list[config]], int(dout[len(dout) - 2][config_bit_list[config]]))
+            pbar.update(1)
         pbar.close()
 
 if __name__ == "__main__":
