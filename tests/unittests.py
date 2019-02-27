@@ -288,5 +288,56 @@ class Test(unittest.TestCase):
             pbar.update(1)
         pbar.close()
 
+    
+    def test_testpulse(self):
+        self.startUp()
+
+        print("Test testpulse config")
+        # Test errors
+        with self.assertRaises(ValueError):
+            chip.write_tp_pulsenumber(65536, False)
+        with self.assertRaises(ValueError):
+            chip.write_tp_period(256, 0, False)
+        with self.assertRaises(ValueError):
+            chip.write_tp_period(0, 16, False)
+
+        # Test default (@reset)
+        data = chip.read_tp_config(False)
+        chip.write(data)
+        fdata = chip['FIFO'].get_data()
+        dout = chip.decode_fpga(fdata, True)
+        self.assertEquals(0, dout[len(dout) - 2][27:0].tovalue())
+
+        # Test values
+        pbar = tqdm(total = 65536 + 256 + 16)
+        for i in range(65536):
+            data = chip.write_tp_pulsenumber(i, False)
+            chip.write(data)
+            data = chip.read_tp_config(False)
+            chip.write(data)
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            self.assertEquals(i, dout[len(dout) - 2][15:0].tovalue())
+            pbar.update(1)
+        for i in range(256):
+            data = chip.write_tp_period(i, 0, False)
+            chip.write(data)
+            data = chip.read_tp_config(False)
+            chip.write(data)
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            self.assertEquals(i, dout[len(dout) - 2][23:16].tovalue())
+            pbar.update(1)
+        for i in range(16):
+            data = chip.write_tp_period(0, i, False)
+            chip.write(data)
+            data = chip.read_tp_config(False)
+            chip.write(data)
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            self.assertEquals(i, dout[len(dout) - 2][27:24].tovalue())
+            pbar.update(1)
+        pbar.close()
+
 if __name__ == "__main__":
     unittest.main()
