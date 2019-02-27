@@ -10,6 +10,8 @@ import unittest
 import random
 import numpy as np
 
+dac_list = ["Ibias_Preamp_ON", "Ibias_Preamp_OFF", "VPreamp_NCAS", "Ibias_Ikrum", "Vfbk", "Vthreshold_fine", "Vthreshold_coarse", "Ibias_DiscS1_ON", "Ibias_DiscS1_OFF", "Ibias_DiscS2_ON", "Ibias_DiscS2_OFF", "Ibias_PixelDAC", "Ibias_TPbufferIn", "Ibias_TPbufferOut", "VTP_coarse", "VTP_fine", "Ibias_CP_PLL", "PLL_Vcntrl"]
+dac_size_list = [256, 16, 256, 256, 256, 512, 16, 256, 16, 256, 16, 256, 256, 256, 256, 512, 256, 256]
 chip = TPX3()
 chip.init()
 
@@ -42,6 +44,58 @@ class Test(unittest.TestCase):
         data = chip.reset_sequential(False)
         chip.write(data, True)
         fdata = chip['FIFO'].get_data()
+
+
+    def test_set_DACs_Global(self):
+        self.startUp()
+
+        print("Test DAC errors")
+        # Test KeyError
+        with self.assertRaises(KeyError):
+            chip.dacs["WrongDac"] = 1
+        with self.assertRaises(KeyError):
+            chip.read_dac("WrongDac")
+        # Test ValueErrors
+        for dac in range(18):
+            with self.assertRaises(ValueError):
+                chip.dacs[dac_list[dac]] = -1
+            with self.assertRaises(ValueError):
+                chip.dacs[dac_list[dac]] = dac_size_list[dac]
+
+        # Test setting DAC values
+        print("Test reading and writing DACs")
+        pbar = tqdm(total=512*2*18)
+        for value in range(512):
+            for dac in range(18):
+                if value < dac_size_list[dac]:
+                    chip.dacs[dac_list[dac]] = value
+                    self.assertEqual(value, chip.dacs[dac_list[dac]])
+                pbar.update(1)
+            chip.write_dacs()
+            for dac in range(18):
+                if value < dac_size_list[dac]:
+                    chip.read_dac(dac_list[dac])
+                    fdata = chip['FIFO'].get_data()
+                    dout = chip.decode_fpga(fdata, True)
+                    self.assertEqual(dac_list[dac], dac_list[dout[len(dout) - 2][4:0].tovalue() - 1])
+                    self.assertEqual(value, dout[len(dout) - 2][13:5].tovalue())
+                    self.assertEqual(chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
+                pbar.update(1)
+           
+        pbar.close()
+                
+        # Test defaults
+        chip.reset_dac_attributes(to_default = True)
+        chip.write_dacs()
+        pbar = tqdm(total=18)
+        for dac in range(18):
+            chip.read_dac(dac_list[dac])
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            self.assertEqual(dac_list[dac], dac_list[dout[len(dout) - 2][4:0].tovalue() - 1])
+            self.assertEqual(chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
+            pbar.update(1)
+        pbar.close()
 
 if __name__ == "__main__":
     unittest.main()
