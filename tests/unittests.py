@@ -35,19 +35,20 @@ class Test(unittest.TestCase):
         chip.write(data)
 
         chip['RX'].reset()
-        chip['RX'].DATA_DELAY = 0
+        chip['RX'].DATA_DELAY = 21
         chip['RX'].ENABLE = 1
+        chip['RX'].INVERT = 0
+        chip['RX'].SAMPLING_EDGE = 0
         time.sleep(0.01)
 
-        data = chip.write_outputBlock_config(write=False)
-        chip.write(data)
         data = chip.write_pll_config(bypass=0, reset=1, selectVctl=1, dualedge=1, clkphasediv=1, clkphasenum=0, PLLOutConfig=0, write=False)
         chip.write(data)
-
+        data = chip.write_outputBlock_config(write=False)
+        chip.write(data)
+        
         data = chip.reset_sequential(False)
         chip.write(data, True)
         fdata = chip['FIFO'].get_data()
-
 
     def test_set_DACs_Global(self):
         self.startUp()
@@ -67,15 +68,16 @@ class Test(unittest.TestCase):
 
         # Test setting DAC values
         print("Test reading and writing DACs")
-        pbar = tqdm(total=512*2*18)
+        dac_number_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
+        pbar = tqdm(total=512*2*len(dac_number_list))
         for value in range(512):
-            for dac in range(18):
+            for dac in dac_number_list:
                 if value < dac_size_list[dac]:
                     chip.dacs[dac_list[dac]] = value
                     self.assertEqual(value, chip.dacs[dac_list[dac]])
                 pbar.update(1)
             chip.write_dacs()
-            for dac in range(18):
+            for dac in dac_number_list:
                 if value < dac_size_list[dac]:
                     chip.read_dac(dac_list[dac])
                     fdata = chip['FIFO'].get_data()
@@ -147,6 +149,7 @@ class Test(unittest.TestCase):
             chip.set_pixel_pcr(0, 0, 0, 0, 2)
 
         # Test writing PCR columnwise
+        print("Test reading and writing PCRs")
         iterations = 5
         pbar = tqdm(total = iterations * (2 * 256 * 256 + 2 * 256))
         test = np.zeros((256, 256), dtype=int)
@@ -209,7 +212,7 @@ class Test(unittest.TestCase):
 
     def test_set_ctpr(self):
         self.startUp()
-        print("Test CTPR")
+        print("Test CTPR errors")
         # Test for errors
         with self.assertRaises(ValueError):
             chip.write_ctpr(list(range(257)), False)
@@ -217,6 +220,7 @@ class Test(unittest.TestCase):
             chip.write_ctpr(list(range(257, 256, -1)), False)
         
         # Test values
+        print("Test reading and writing CTPR")
         pbar = tqdm(total = 256)
         for column in range(256):
             data = chip.write_ctpr([column], False)
