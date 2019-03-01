@@ -15,6 +15,10 @@ dac_size_list = [256, 16, 256, 256, 256, 512, 16, 256, 16, 256, 16, 256, 256, 25
 config_list = ["Polarity", "Op_mode", "Gray_count_en", "AckCommand_en", "TP_en", "Fast_Io_en", "TimerOverflowControl", "SelectTP_Dig_Analog", "SelectTP_Ext_Int", "SelectTP_ToA_Clk"]
 config_size_list = [2, 4, 2, 2, 2, 2, 2, 2, 2, 2]
 config_bit_list = [0, 1, 3, 4, 5, 6, 7, 9, 10, 11]
+
+bypass_pll = 0
+reset_pll = 1
+
 chip = TPX3()
 chip.init()
 
@@ -41,7 +45,7 @@ class Test(unittest.TestCase):
         chip['RX'].SAMPLING_EDGE = 0
         time.sleep(0.01)
 
-        data = chip.write_pll_config(bypass=0, reset=1, selectVctl=1, dualedge=1, clkphasediv=1, clkphasenum=0, PLLOutConfig=0, write=False)
+        data = chip.write_pll_config(bypass=bypass_pll, reset=reset_pll, selectVctl=1, dualedge=1, clkphasediv=1, clkphasenum=0, PLLOutConfig=0, write=False)
         chip.write(data)
         data = chip.write_outputBlock_config(write=False)
         chip.write(data)
@@ -68,7 +72,10 @@ class Test(unittest.TestCase):
 
         # Test setting DAC values
         print("Test reading and writing DACs")
-        dac_number_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
+        if bypass_pll == 0 and reset_pll == 1:
+            dac_number_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
+        else:
+            dac_number_list = range(18)
         pbar = tqdm(total=512*2*len(dac_number_list))
         for value in range(512):
             for dac in dac_number_list:
