@@ -45,7 +45,7 @@ class Test(unittest.TestCase):
         chip['RX'].SAMPLING_EDGE = 0
         time.sleep(0.01)
 
-        data = chip.write_pll_config(bypass=bypass_pll, reset=reset_pll, selectVctl=1, dualedge=1, clkphasediv=1, clkphasenum=0, PLLOutConfig=0, write=False)
+        data = chip.write_pll_config(write=False)
         chip.write(data)
         data = chip.write_outputBlock_config(write=False)
         chip.write(data)
@@ -85,7 +85,7 @@ class Test(unittest.TestCase):
 
         # Test setting DAC values
         print("Test reading and writing DACs")
-        if bypass_pll == 0 and reset_pll == 1:
+        if chip.PLLConfigs["bypass"] == 0 and chip.PLLConfigs["reset"] == 1:
             dac_number_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
         else:
             dac_number_list = range(18)
@@ -107,19 +107,6 @@ class Test(unittest.TestCase):
                     self.assertEqual(chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
                 pbar.update(1)
            
-        pbar.close()
-
-        # Test defaults
-        chip.reset_dac_attributes(to_default = True)
-        chip.write_dacs()
-        pbar = tqdm(total=18)
-        for dac in range(18):
-            chip.read_dac(dac_list[dac])
-            fdata = chip['FIFO'].get_data()
-            dout = chip.decode_fpga(fdata, True)
-            self.assertEqual(dac_list[dac], dac_list[dout[len(dout) - 2][4:0].tovalue() - 1])
-            self.assertEqual(chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
-            pbar.update(1)
         pbar.close()
 
 

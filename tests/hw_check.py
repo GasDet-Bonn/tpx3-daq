@@ -36,7 +36,7 @@ def main(args_dict):
     print 'RX ready:', chip['RX'].is_ready
     print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
 
-    data = chip.write_pll_config(bypass=0, reset=1, selectVctl=1, dualedge=1, clkphasediv=1, clkphasenum=0, PLLOutConfig=0, write=False)
+    data = chip.write_pll_config(write=False)
     chip.write(data)
 
     data = chip.write_outputBlock_config(write=False)

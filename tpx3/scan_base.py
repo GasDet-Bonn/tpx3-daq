@@ -197,7 +197,7 @@ class ScanBase(object):
         self.chip['RX'].DATA_DELAY = 21
 
         # Step 2b: Set PLL Config
-        data = self.chip.write_pll_config(bypass=0, reset=1, selectVctl=1, dualedge=1, clkphasediv=1, clkphasenum=0, PLLOutConfig=0, write=False)
+        data = self.chip.write_pll_config(write=False)
         self.chip.write(data)
 
         # Step 2c: Reset the Timer
