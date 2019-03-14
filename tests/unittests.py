@@ -70,6 +70,19 @@ class Test(unittest.TestCase):
             with self.assertRaises(ValueError):
                 chip.dacs[dac_list[dac]] = dac_size_list[dac]
 
+        # Test defaults
+        chip.reset_dac_attributes(to_default = True)
+        chip.write_dacs()
+        pbar = tqdm(total=18)
+        for dac in range(18):
+            chip.read_dac(dac_list[dac])
+            fdata = chip['FIFO'].get_data()
+            dout = chip.decode_fpga(fdata, True)
+            self.assertEqual(dac_list[dac], dac_list[dout[len(dout) - 2][4:0].tovalue() - 1])
+            self.assertEqual(chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
+            pbar.update(1)
+        pbar.close()
+
         # Test setting DAC values
         print("Test reading and writing DACs")
         if bypass_pll == 0 and reset_pll == 1:
@@ -95,7 +108,7 @@ class Test(unittest.TestCase):
                 pbar.update(1)
            
         pbar.close()
-                
+
         # Test defaults
         chip.reset_dac_attributes(to_default = True)
         chip.write_dacs()
