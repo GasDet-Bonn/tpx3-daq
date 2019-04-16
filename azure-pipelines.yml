@@ -1,0 +1,60 @@
+
+name: $(TeamProject)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+jobs:
+- job: hardware_test
+  displayName: 'Hardware tests'
+  pool: SelfHost Ubuntu 1804 - With TPX3 Hardware
+  steps:
+  - script: |
+      echo Install miniconda
+      curl https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
+      bash miniconda.sh -b -p $HOME/miniconda
+      export PATH=$HOME/miniconda/bin:$PATH
+      conda update --yes conda
+      conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
+    displayName: 'Install miniconda'
+  - script: |
+      echo Install Tpx3-DAQ
+      export PATH=$HOME/miniconda/bin:$PATH
+      python setup.py develop
+    displayName: 'Install Tpx3-DAQ'
+  - script: echo Compile firmware
+    displayName: 'Compile firmware'
+  - script: echo Flash firmware
+    displayName: 'Flash firmware'
+  - script: |
+      echo Run tests
+      export PATH=$HOME/miniconda/bin:$PATH
+      pytest -v tests/unittests.py --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
+    displayName: 'Run tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testResultsFormat: JUnit
+      testRunTitle: 'Publish test results for Python 2'
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+- job: simulation_test
+  displayName: 'Simulation tests'
+  pool: SelfHost Ubuntu 1804 - With TPX3 Simulation
+  steps:
+  - script: echo Install miniconda
+    displayName: 'Install miniconda'
+  - script: echo Prepare simulation
+    displayName: 'Prepare simulation'
+  - script: echo Install Tpx3-DAQ
+    displayName: 'Install Tpx3-DAQ'
+  - script: echo Start simulation
+    displayName: 'Start simulation'
+  - script: echo Run tests
+    displayName: 'Run tests'
+- job: software_test
+  displayName: 'Software tests'
+  pool: SelfHost Ubuntu 1804
+  steps:
+  - script: echo Run tests
+    displayName: 'Run tests'
