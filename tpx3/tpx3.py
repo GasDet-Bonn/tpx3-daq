@@ -68,8 +68,14 @@ customDictErrors = {
     "OutputBlockDict" :
     {
         "invalidKey"  : "OutputBlock with name {} does not exist!",
-        "invalidSize" : "Config value of {} for OutputBlock {} is too large for size of {}",
-        "negativeVal" : "Config value for {} OutputBlock may not be negative!"
+        "invalidSize" : "OutputBlock value of {} for OutputBlock {} is too large for size of {}",
+        "negativeVal" : "OutputBlock value for {} OutputBlock may not be negative!"
+    },
+    "PLLConfigDict" :
+    {
+        "invalidKey"  : "PLLConfig with name {} does not exist!",
+        "invalidSize" : "PLLConfig value of {} for PLLConfig {} is too large for size of {}",
+        "negativeVal" : "PLLConfig value for {} PLLConfig may not be negative!"
     }
 }
 
@@ -94,6 +100,12 @@ dictNames = {
         "YamlContent" : "outputBlock",
         "Filename" : "outputBlock.yml",
         "FnameVar" : "outputBlock_file"
+    },
+    "PLLConfigDict" : {
+        "CustomDict" : "_PLLConfigs",
+        "YamlContent" : "PLLConfigDict",
+        "Filename" : "PLLConfig.yml",
+        "FnameVar" : "PLLConfig_file"
     }
 }
 
@@ -134,12 +146,16 @@ class CustomDict(dict):
 
 class TPX3(Dut):
 
-    # '' Map hardware IDs for board identification '''
-    # hw_map = {
-    #    0: 'SIMULATION',
-    #    1: 'MIO2',
-    # }
+    ''' Map hardware IDs for board identification '''
+    hw_map = {
+        1: 'SIMULATION',
+        2: 'FECv6',
+        3: 'ML605',
+    }
 
+    ''' Compatible firware version '''
+    fw_version_required = 1
+    
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########
     ################################################################################
@@ -232,14 +248,16 @@ class TPX3(Dut):
         logger.info("Loading configuration file from %s" % conf)
         super(TPX3, self).__init__(conf)
 
-    def init(self, config_file=None, dac_file=None, outputBlock_file=None):
+    def init(self, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
         super(TPX3, self).init()
 
-        # self.fw_version, self.board_version = self.get_daq_version()
-        # logger.info('Found board %s running firmware version %s' % (self.hw_map[self.board_version], self.fw_version))
-        #
-        # if self.fw_version != VERSION[:3]:     #Compare only the first two digits
-        #    raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
+        self.fw_version = self['intf'].read(0x0000, 1)[0]
+        self.board_version = self.hw_map[self['intf'].read(0x0001, 1)[0]]
+
+        logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
+        
+        if self.fw_version != self.fw_version_required:
+            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
 
         # self['CONF_SR'].set_size(3924)
 
@@ -264,6 +282,7 @@ class TPX3(Dut):
         self.config_file = config_file
         self.dac_file = dac_file
         self.outputBlock_file = outputBlock_file
+        self.PLLConfig_file = PLLConfig_file
 
         for dict_type, type_dict in dictNames.iteritems():
             setattr(self, type_dict["YamlContent"], {})
@@ -347,6 +366,9 @@ class TPX3(Dut):
 
     def reset_dac_attributes(self, to_default=False):
         self.reset_attributes("DacsDict", to_default)
+
+    def reset_PLLConfig_attributes(self, to_default=False):
+        self.reset_attributes("PLLConfigDict", to_default)
 
     def read_yaml(self, filename, dict_type):
         """
@@ -440,6 +462,16 @@ class TPX3(Dut):
         dictionary _outputBlocks
         """
         return self._outputBlocks
+
+    @property
+    def PLLConfigs(self):
+        """
+        Getter function for the `PLLConfig` dictionary of the Tpx3 class.
+        With this a `self.PLLConfig[<PLLConfig name>]` statement will
+        return the value of the PLLConfig register stored in the `PLLConfigkDict`
+        dictionary _PLLConfigs
+        """
+        return self._PLLConfigs
 
     def write_dacs(self):
         """
@@ -893,12 +925,12 @@ class TPX3(Dut):
         pcr = BitLogic(6)
 
         # fill the pcr with test, thr and mask
-        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos], 4)
+        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos])
         pcr[5] = np.int(self.test_matrix[x_pos, y_pos])
-        pcr[4] = thr[0]
-        pcr[3] = thr[1]
-        pcr[2] = thr[2]
-        pcr[1] = thr[3]
+        pcr[4] = thr[3]
+        pcr[3] = thr[2]
+        pcr[2] = thr[1]
+        pcr[1] = thr[0]
         pcr[0] = np.int(self.mask_matrix[x_pos, y_pos])
 
         return pcr
@@ -1318,7 +1350,7 @@ class TPX3(Dut):
         Writes the column test pulse register to the chip (see manual v1.9 p.50) and returns
         the written data. The masked columns can be selected with the `columns` variable.
         """
-        if len(columns) > 256 and np.all(np.asarray(columns) < 256):
+        if len(columns) > 256 or np.all(np.asarray(columns) > 256):
             # check if the columns list has a valid length and no elements larger than
             # number of columns
             raise ValueError("""The columns list must not contain more than 256 entries and
@@ -1424,50 +1456,30 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def write_pll_config(self, bypass, reset, selectVctl, dualedge, clkphasediv, clkphasenum, PLLOutConfig, write=True):
-        """
-        Writes the new values to the PLL config registers (see manual v1.9 p.37) and returns
-        the written data. 'bypass', 'reset', 'selectVctl' and 'dualedge' are 1-bit values,
-        'clkphasediv' is a 2-bit value, 'clkphasenum' a 3-bit value and 'PLLOutConfig' a
-        5-bit value
-        """
-        if bypass > 1:
-            # check if the ByPassPLL is allowed
-            raise ValueError("The ByPassPLL must not be bigger than 1!")
-        if reset > 1:
-            # check if the ResetPLL is allowed
-            raise ValueError("The ResetPLL must not be bigger than 1!")
-        if selectVctl > 1:
-            # check if the SelectVcntrl PLL DAC is allowed
-            raise ValueError("The SelectVcntrl PLL DAC must not be bigger than 1!")
-        if dualedge > 1:
-            # check if the Dual Edge Clock is allowed
-            raise ValueError("The Dual Edge Clock must not be bigger than 1!")
-        if clkphasediv > 3:
-            # check if the Clock Phase Shift Divider is allowed
-            raise ValueError("The Clock Phase Shift Divider must not be bigger than 3!")
-        if clkphasenum > 4:
-            # check if the Clock Phase Shift Number is allowed
-            raise ValueError("The Clock Phase Shift Number must not be bigger than 4!")
-        if PLLOutConfig > 22:
-            # check if the PLL Output Configuration is allowed
-            raise ValueError("The PLL Output Configuration must not be bigger than 22!")
 
-        data = self.read_periphery_template("PLLConfig", True)
-        # create a 16 bit variable for the PLL config registers
-        bits = BitLogic(16)
+    def write_pll_config(self, write=True):
+        """
+        reads the values for the PLLConfig registers (see manual v1.9 p.37) from a yaml file
+        and writes them to the chip. Furthermore the sent data is returned.
+        """
+        data = []
+        configuration_bits = BitLogic(16)
 
-        # fill the 16-bit variable with values for the PLL config register
-        bits[0] = bypass
-        bits[1] = reset
-        bits[2] = selectVctl
-        bits[3] = dualedge
-        bits[5:4] = clkphasediv
-        bits[8:6] = clkphasenum
-        bits[13:9] = PLLOutConfig
-        bits[15:14] = 0
-        # append the PLL config variable to the data
-        data += bits.toByteList()
+        data = self.read_periphery_template("PLLConfig", header_only=True)
+
+        # create a 16 bit variable for the values of the PLLConfig registers based
+        # on the read YAML file storing the PLL configuration
+        configuration_bits[0] = self._PLLConfigs["bypass"]
+        configuration_bits[1] = self._PLLConfigs["reset"]
+        configuration_bits[2] = self._PLLConfigs["selectVctl"]
+        configuration_bits[3] = self._PLLConfigs["dualedge"]
+        configuration_bits[5:4] = self._PLLConfigs["clkphasediv"]
+        configuration_bits[8:6] = self._PLLConfigs["clkphasenum"]
+        configuration_bits[13:9] = self._PLLConfigs["PLLOutConfig"]
+        configuration_bits[15:14] = 0
+
+        # append the the outputBlock register
+        data += (configuration_bits).toByteList()
 
         data += [0x00]
 

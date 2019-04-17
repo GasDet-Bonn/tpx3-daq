@@ -48,6 +48,9 @@ def main(args_dict):
     print('RX ready:', chip['RX'].is_ready)
     print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
+    data = chip.write_pll_config(write=False)
+    chip.write(data)
+
     data = chip.write_outputBlock_config(write=False)
     # data = [0xAA,0x00,0x00,0x00,0x00,0x10, 0b10101100, 0x01]
     # data = [0xAA,0x00,0x00,0x00,0x00,0x10, 0xAD, 0x01] #org
@@ -68,7 +71,9 @@ def main(args_dict):
 
     if delay_scan is True:
         for i in range(32):
-            chip['RX'].reset()
+            chip['RX'].reset()            
+            chip['RX'].INVERT = 0
+            chip['RX'].SAMPLING_EDGE = 0                   
             chip['RX'].DATA_DELAY = i  # i
             chip['RX'].ENABLE = 1
             chip['FIFO'].reset()
@@ -91,7 +96,7 @@ def main(args_dict):
                 # print('FIFO_SIZE', chip['FIFO'].FIFO_SIZE)
 
             fdata = chip['FIFO'].get_data()
-            print(i, 'len', len(fdata), chip['RX'].get_decoder_error_counter(), chip['RX'].is_ready)
+            print('i =', i, '\tlen =', len(fdata), '\terror =', chip['RX'].get_decoder_error_counter(), "\tready =", chip['RX'].is_ready)
 
         print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
         print('RX ready:', chip['RX'].is_ready)
@@ -104,10 +109,10 @@ def main(args_dict):
             pretty_print(i)
 
     chip['RX'].reset()
-    chip['RX'].DATA_DELAY = 0
+    chip['RX'].DATA_DELAY = 20
     chip['RX'].ENABLE = 1
     time.sleep(0.01)
-
+        
     while(not chip['RX'].is_ready):
         pass
     print(chip.get_configuration())

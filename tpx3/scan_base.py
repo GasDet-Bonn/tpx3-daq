@@ -197,9 +197,14 @@ class ScanBase(object):
         self.fifo_readout.enable_rx(True)
         self.fifo_readout.print_readout_status()
 
-        # Step 2b: Enable power pulsing
+        # Step 2a: Enable power pulsing
         self.chip['CONTROL']['EN_POWER_PULSING'] = 1
         self.chip['CONTROL'].write()
+        self.chip['RX'].DATA_DELAY = 21
+
+        # Step 2b: Set PLL Config
+        data = self.chip.write_pll_config(write=False)
+        self.chip.write(data)
 
         # Step 2c: Reset the Timer
         data = self.chip.getGlobalSyncHeader() + [0x40] + [0x0]

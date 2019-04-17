@@ -56,7 +56,7 @@ def main(args_dict):
     print(dout)
 
     # Step 3b: Write PLL to chip
-    data=chip.write_pll_config(1,0,1,1,1,0,0,False)
+    data=chip.write_pll_config(False)
     chip.write(data)
     print("pll config sent")
     fdata = chip['FIFO'].get_data()
