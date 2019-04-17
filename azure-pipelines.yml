@@ -1,7 +1,7 @@
 name: $(TeamProject)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 jobs:
-- job: hardware_test
-  displayName: 'Hardware tests'
+- job: hardware_test_py2
+  displayName: 'Hardware tests - Python 2'
   pool: SelfHost Ubuntu 1804 - With TPX3 Hardware
   steps:
   - script: |
@@ -32,6 +32,43 @@ jobs:
       testResultsFiles: '**/test-*.xml'
       testResultsFormat: JUnit
       testRunTitle: 'Publish test results for Python 2'
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+- job: hardware_test_py3
+  displayName: 'Hardware tests - Python 3'
+  pool: SelfHost Ubuntu 1804 - With TPX3 Hardware
+  steps:
+  - script: |
+      echo Install miniconda3
+      curl https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
+      bash miniconda.sh -b -p $HOME/miniconda3
+      export PATH=$HOME/miniconda3/bin:$PATH
+      conda update --yes conda
+      conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
+    displayName: 'Install miniconda3'
+  - script: |
+      echo Install Tpx3-DAQ
+      export PATH=$HOME/miniconda3/bin:$PATH
+      python setup.py develop
+    displayName: 'Install Tpx3-DAQ'
+  - script: echo Compile firmware
+    displayName: 'Compile firmware'
+  - script: echo Flash firmware
+    displayName: 'Flash firmware'
+  - script: |
+      echo Run tests
+      export PATH=$HOME/miniconda3/bin:$PATH
+      pytest -v tests/unittests.py --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
+    displayName: 'Run tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testResultsFormat: JUnit
+      testRunTitle: 'Publish test results for Python 3'
   - task: PublishCodeCoverageResults@1
     inputs:
       codeCoverageTool: Cobertura
