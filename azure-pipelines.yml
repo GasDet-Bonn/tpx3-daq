@@ -19,7 +19,10 @@ jobs:
     displayName: 'Install Tpx3-DAQ'
   - script: echo Compile firmware
     displayName: 'Compile firmware'
-  - script: echo Flash firmware
+  - script: |
+      echo Flash firmware
+      source $XILINX/opt/Xilinx/14.7/ISE_DS/settings64.sh
+      impact -batch firmware/flash_firmware.cmd
     displayName: 'Flash firmware'
   - script: |
       echo Run tests
