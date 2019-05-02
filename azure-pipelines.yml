@@ -22,7 +22,7 @@ jobs:
   - script: |
       echo Flash firmware
       source $XILINX/opt/Xilinx/14.7/ISE_DS/settings64.sh
-      impact -batch firmware/flash_firmware.cmd
+      LD_PRELOAD=/opt/Xilinx/usb-driver/libusb-driver.so impact -batch firmware/flash_firmware.cmd
     displayName: 'Flash firmware'
   - script: |
       echo Run tests
