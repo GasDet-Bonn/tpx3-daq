@@ -22,6 +22,8 @@ jobs:
   - script: |
       echo Flash firmware
       source $XILINX/opt/Xilinx/14.7/ISE_DS/settings64.sh
+      LC_NUMERIC=en_US.UTF-8
+      export LC_NUMERIC
       LD_PRELOAD=/opt/Xilinx/usb-driver/libusb-driver.so impact -batch firmware/flash_firmware.cmd
     displayName: 'Flash firmware'
   - script: |
