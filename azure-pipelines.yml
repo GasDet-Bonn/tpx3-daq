@@ -12,6 +12,7 @@ jobs:
       conda update --yes conda
       conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
     displayName: 'Install miniconda'
+    continueOnError: true
   - script: |
       echo Install Tpx3-DAQ
       export PATH=$HOME/miniconda/bin:$PATH
