@@ -10,7 +10,7 @@ registers:
   address: 8
   size: 3
   default: 0b001
-  value: 0b010
+  value: 0b011
 - name: 8b_10b_en
   description: Enables the 8b to 10b data clock encoding
   address: 11

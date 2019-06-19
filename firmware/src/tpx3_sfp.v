@@ -130,7 +130,7 @@ module tpx3_sfp (
     // Divide by 8 to get output frequency of 125 MHz
     MMCM_BASE #(
         .BANDWIDTH         ("OPTIMIZED"),
-        .CLKOUT0_DIVIDE_F  (3          ),
+        .CLKOUT0_DIVIDE_F  (6          ),
         .CLKOUT0_DUTY_CYCLE(0.5        ),
         .CLKOUT0_PHASE     (0          ),
         .CLKOUT1_DIVIDE    (24         ),
