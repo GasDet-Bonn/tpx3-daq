@@ -41,16 +41,44 @@ jobs:
   displayName: 'Simulation tests'
   pool: SelfHost Ubuntu 1804 - With TPX3 Simulation
   steps:
-  - script: echo Install miniconda
+  - script: |
+      echo Install miniconda
+      curl https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
+      bash miniconda.sh -b -p $HOME/miniconda
+      export PATH=$HOME/miniconda/bin:$PATH
+      conda update --yes conda
+      conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
     displayName: 'Install miniconda'
-  - script: echo Prepare simulation
+  - script: |
+      echo Prepare simulation
+      export PATH=$HOME/miniconda/bin:$PATH
+      pip install cocotb==1.0.dev3
+      git clone -b development --depth 1 https://github.com/SiLab-Bonn/basil.git; cd basil; python setup.py develop; cd ..;
     displayName: 'Prepare simulation'
-  - script: echo Install Tpx3-DAQ
+  - script: |
+      echo Install Tpx3-DAQ
+      export PATH=$HOME/miniconda/bin:$PATH
+      python setup.py develop
     displayName: 'Install Tpx3-DAQ'
-  - script: echo Start simulation
-    displayName: 'Start simulation'
-  - script: echo Run tests
+  - script: |
+      echo Run simulation
+      export PATH=$HOME/miniconda/bin:$PATH
+      export PATH=$HOME/Software/questa-2019.1/questasim/bin:$PATH
+      export SIM=questa
+      export TPX3_SRC=$HOME/Readout/Timepix3/Timepix3-Code
+      SIM=questa WAVES=1 pytest tests/test_Sim.py --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
     displayName: 'Run tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testResultsFormat: JUnit
+      testRunTitle: 'Publish test results for Python 2'
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 - job: software_test
   displayName: 'Software tests'
   pool: SelfHost Ubuntu 1804
