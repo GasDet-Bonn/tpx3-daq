@@ -53,7 +53,7 @@ jobs:
       echo Prepare simulation
       export PATH=$HOME/miniconda/bin:$PATH
       pip install cocotb==1.0.dev3
-      git clone -b development --depth 1 https://github.com/SiLab-Bonn/basil.git; cd basil; python setup.py develop; cd ..;
+      pip install basil_daq==3.0.0
     displayName: 'Prepare simulation'
   - script: |
       echo Install Tpx3-DAQ
