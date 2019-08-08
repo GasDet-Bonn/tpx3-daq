@@ -220,13 +220,11 @@ class TestSim(unittest.TestCase):
                     pbar.update(1)
             for i in range(256):
                 data = self.chip.write_pcr([i], write=False)
-                self.wait_sim()
                 self.chip.write(data, True)
                 pbar.update(1)
             for i in range(256):
                 data = self.chip.read_pixel_config_reg([i], write=False)
                 self.chip.write(data, True)
-                self.wait_sim()
                 data = self.chip.read_pixel_matrix_sequential(i, False)
                 self.chip.write(data, True)
                 self.wait_sim()
