@@ -81,6 +81,7 @@ jobs:
       codeCoverageTool: Cobertura
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+  timeoutInMinutes: 120
 - job: software_test
   displayName: 'Software tests'
   pool: SelfHost Ubuntu 1804
