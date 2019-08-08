@@ -131,8 +131,8 @@ class TestSim(unittest.TestCase):
             dac_number_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
         else:
             dac_number_list = range(18)
-        pbar = tqdm(total=512/2*len(dac_number_list))
-        for value in range(0, 512, 4):
+        pbar = tqdm(total=512/4*len(dac_number_list))
+        for value in range(0, 512, 8):
             for dac in dac_number_list:
                 if value < dac_size_list[dac]:
                     self.chip.dacs[dac_list[dac]] = value
@@ -199,7 +199,7 @@ class TestSim(unittest.TestCase):
         # Test writing PCR columnwise
         logging.info("Test reading and writing PCRs")
         iterations = 1
-        pbar = tqdm(total = iterations * (2 * 256 * 256 + 2 * 256))
+        pbar = tqdm(total = iterations * (2 * 256))
         test = np.zeros((256, 256), dtype=int)
         thr = np.zeros((256, 256), dtype=int)
         mask = np.zeros((256, 256), dtype=int)
@@ -210,14 +210,12 @@ class TestSim(unittest.TestCase):
                     thr[x, y] = random.randint(0, 15)
                     mask[x, y] = random.randint(0, 1)
                     self.chip.set_pixel_pcr(x, y, test[x, y], thr[x, y], mask[x, y])
-                    pbar.update(1)
             for x in range(256):
                 for y in range(256):
                     pcr = self.chip.matrices_to_pcr(x, y)
                     self.assertEquals(test[x, y], int(pcr[5]))
                     self.assertEquals(thr[x, y], pcr[4:1].tovalue())
                     self.assertEquals(mask[x, y], int(pcr[0]))
-                    pbar.update(1)
             for i in range(256):
                 data = self.chip.write_pcr([i], write=False)
                 self.chip.write(data, True)
@@ -293,7 +291,6 @@ class TestSim(unittest.TestCase):
                     self.chip.configs[config_list[config]] = value
             data = self.chip.write_general_config(False)
             self.chip.write(data)
-            self.wait_sim(10)
             data = self.chip.read_general_config(False)
             self.chip.write(data)
             self.wait_sim(10)
@@ -313,7 +310,6 @@ class TestSim(unittest.TestCase):
         self.chip.reset_config_attributes(to_default = True)
         data = self.chip.write_general_config(False)
         self.chip.write(data)
-        self.wait_sim(10)
         data = self.chip.read_general_config(False)
         self.chip.write(data)
         self.wait_sim(10)
@@ -349,11 +345,10 @@ class TestSim(unittest.TestCase):
         self.assertEquals(0, dout[len(dout) - 2][27:0].tovalue())
 
         # Test values
-        pbar = tqdm(total = 65536/64 + 256 + 16)
-        for i in range(0, 65536, 64):
+        pbar = tqdm(total = 65536/128 + 256 + 16)
+        for i in range(0, 65536, 128):
             data = self.chip.write_tp_pulsenumber(i, False)
             self.chip.write(data)
-            self.wait_sim()
             data = self.chip.read_tp_config(False)
             self.chip.write(data)
             self.wait_sim()
@@ -364,7 +359,6 @@ class TestSim(unittest.TestCase):
         for i in range(256):
             data = self.chip.write_tp_period(i, 0, False)
             self.chip.write(data)
-            self.wait_sim()
             data = self.chip.read_tp_config(False)
             self.chip.write(data)
             self.wait_sim()
@@ -375,7 +369,6 @@ class TestSim(unittest.TestCase):
         for i in range(16):
             data = self.chip.write_tp_period(0, i, False)
             self.chip.write(data)
-            self.wait_sim()
             data = self.chip.read_tp_config(False)
             self.chip.write(data)
             self.wait_sim()
