@@ -46,7 +46,8 @@ class TestSim(unittest.TestCase):
             extra_defines=extra_defines,
             # sim_bus = 'basil.utils.sim.SiLibUsbBusDriver',
             include_dirs=(root_dir, root_dir + "/firmware/src", tpx3_src),
-            extra="\nVSIM_ARGS += -t 1ps -wlf /tmp/tpx3-daq.wlf\n",
+            extra="\nVSIM_ARGS += -t 1ps",
+            #extra="\nVSIM_ARGS += -t 1ps -wlf /tmp/tpx3-daq.wlf\n",
         )
 
         with open(root_dir + "/tpx3/tpx3.yaml", "r") as f:
@@ -197,46 +198,51 @@ class TestSim(unittest.TestCase):
             self.chip.set_pixel_pcr(0, 0, 0, 0, 2)
 
         # Test writing PCR columnwise
-        logging.info("Test reading and writing PCRs")
-        iterations = 1
-        pbar = tqdm(total = iterations * (2 * 256))
+        logging.info("Test reading and writing PCRs internally")
         test = np.zeros((256, 256), dtype=int)
         thr = np.zeros((256, 256), dtype=int)
         mask = np.zeros((256, 256), dtype=int)
-        for i in range(iterations):
-            for x in range(256):
-                for y in range(256):
-                    test[x, y] = random.randint(0, 1)
-                    thr[x, y] = random.randint(0, 15)
-                    mask[x, y] = random.randint(0, 1)
-                    self.chip.set_pixel_pcr(x, y, test[x, y], thr[x, y], mask[x, y])
-            for x in range(256):
-                for y in range(256):
-                    pcr = self.chip.matrices_to_pcr(x, y)
-                    self.assertEquals(test[x, y], int(pcr[5]))
-                    self.assertEquals(thr[x, y], pcr[4:1].tovalue())
-                    self.assertEquals(mask[x, y], int(pcr[0]))
-            for i in range(256):
-                data = self.chip.write_pcr([i], write=False)
-                self.chip.write(data, True)
+        pbar = tqdm(total = 2*256*256)
+        for x in range(256):
+            for y in range(256):
+                test[x, y] = random.randint(0, 1)
+                thr[x, y] = random.randint(0, 15)
+                mask[x, y] = random.randint(0, 1)
+                self.chip.set_pixel_pcr(x, y, test[x, y], thr[x, y], mask[x, y])
                 pbar.update(1)
-            for i in range(256):
-                data = self.chip.read_pixel_config_reg([i], write=False)
-                self.chip.write(data, True)
-                data = self.chip.read_pixel_matrix_sequential(i, False)
-                self.chip.write(data, True)
-                self.wait_sim()
-                fdata = self.chip['FIFO'].get_data()
-                dout = self.chip.decode_fpga(fdata, True)
+        for x in range(256):
+            for y in range(256):
+                pcr = self.chip.matrices_to_pcr(x, y)
+                self.assertEquals(test[x, y], int(pcr[5]))
+                self.assertEquals(thr[x, y], pcr[4:1].tovalue())
+                self.assertEquals(mask[x, y], int(pcr[0]))
                 pbar.update(1)
-                for j in range(len(dout)):
-                    if(dout[j][47:44].tovalue() == 0x9):
-                        x = self.chip.pixel_address_to_x(dout[j][43:28])
-                        y = self.chip.pixel_address_to_y(dout[j][43:28])
-                        pcr_read = dout[j][19:14]
-                        self.assertEquals(test[x, y], int(pcr_read[5]))
-                        self.assertEquals(thr[x, y], pcr_read[4] + pcr_read[3] * 2 + pcr_read[2] * 4 + pcr_read[1] * 8)
-                        self.assertEquals(mask[x, y], int(pcr_read[0]))
+        pbar.close()
+        pbar = tqdm(total = 64)
+        logging.info("Test writing PCRs to chip")
+        for i in range(0, 256, 4):
+            data = self.chip.write_pcr(range(i, i+4), write=True)
+            pbar.update(1)
+        pbar.close()
+        logging.info("Test reading PCRs from chip")
+        pbar = tqdm(total = 256)
+        for i in range(256):
+            data = self.chip.read_pixel_config_reg([i], write=False)
+            self.chip.write(data, True)
+            data = self.chip.read_pixel_matrix_sequential(i, False)
+            self.chip.write(data, True)
+            self.wait_sim(8)
+            fdata = self.chip['FIFO'].get_data()
+            dout = self.chip.decode_fpga(fdata, True)
+            pbar.update(1)
+            for j in range(len(dout)):
+                if(dout[j][47:44].tovalue() == 0x9):
+                    x = self.chip.pixel_address_to_x(dout[j][43:28])
+                    y = self.chip.pixel_address_to_y(dout[j][43:28])
+                    pcr_read = dout[j][19:14]
+                    self.assertEquals(test[x, y], int(pcr_read[5]))
+                    self.assertEquals(thr[x, y], pcr_read[4] + pcr_read[3] * 2 + pcr_read[2] * 4 + pcr_read[1] * 8)
+                    self.assertEquals(mask[x, y], int(pcr_read[0]))
         pbar.close()
 
     def test_set_ctpr(self):
