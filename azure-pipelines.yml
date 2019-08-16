@@ -87,6 +87,8 @@ jobs:
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
       pip install cocotb==1.0.dev3
       pip install basil_daq==3.0.0
+      # Fix for wrong questa Makefile in cocotb
+      sed -e 's/ -o pipefail//g' -i ./$(Agent.BuildDirectory)/miniconda/lib/python2.7/site-packages/cocotb/share/makefiles/simulators/Makefile.questa
     displayName: 'Prepare simulation'
   - script: |
       echo Install Tpx3-DAQ
