@@ -3,7 +3,19 @@ jobs:
 - job: hardware_test
   displayName: 'Hardware tests'
   strategy:
-    parallel: 6
+    matrix: 
+      DAC_Global:
+        Test: test_set_DACs_Global
+      Pixel_Address_functions:
+        Test: test_pixel_address_functions
+      PCR:
+        Test: test_set_matrix
+      CTPR:
+        Test: test_set_ctpr
+      General_Config:
+        Test: test_general_config
+      TestPulse_Config:
+        Test: test_testpulse
   pool: 
     name: TPC
     demands: TPX3-Hardware -equals True
@@ -31,26 +43,7 @@ jobs:
   - script: |
       echo Run tests
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
-      case $(System.JobPositionInPhase) in
-        1)
-          pytest -v tests/unittests.py -k test_set_DACs_Global --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        2)
-          pytest -v tests/unittests.py -k test_pixel_address_functions --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        3)
-          pytest -v tests/unittests.py -k test_set_matrix --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        4)
-          pytest -v tests/unittests.py -k test_set_ctpr --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        5)
-          pytest -v tests/unittests.py -k test_general_config --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        6)
-          pytest -v tests/unittests.py -k test_testpulse --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-      esac
+      pytest -v tests/unittests.py -k $(Test) --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
     displayName: 'Run tests'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
@@ -66,7 +59,19 @@ jobs:
 - job: simulation_test
   displayName: 'Simulation tests'
   strategy:
-    parallel: 6
+    matrix: 
+      DAC_Global:
+        Test: test_set_DACs_Global
+      Pixel_Address_functions:
+        Test: test_pixel_address_functions
+      PCR:
+        Test: test_set_matrix
+      CTPR:
+        Test: test_set_ctpr
+      General_Config:
+        Test: test_general_config
+      TestPulse_Config:
+        Test: test_testpulse
   pool: 
     name: TPC
     demands: TPX3-Simulation -equals True
@@ -101,26 +106,7 @@ jobs:
       export PATH=$HOME/Software/questa-2019.1/questasim/bin:$PATH
       export SIM=questa
       export TPX3_SRC=$HOME/Readout/Timepix3/Timepix3-Code/source
-      case $(System.JobPositionInPhase) in
-        1)
-          SIM=questa WAVES=1 pytest tests/test_Sim.py -k test_set_DACs_Global --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        2)
-          SIM=questa WAVES=1 pytest tests/test_Sim.py -k test_pixel_address_functions --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        3)
-          SIM=questa WAVES=1 pytest tests/test_Sim.py -k test_set_matrix --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        4)
-          SIM=questa WAVES=1 pytest tests/test_Sim.py -k test_set_ctpr --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        5)
-          SIM=questa WAVES=1 pytest tests/test_Sim.py -k test_general_config --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-        6)
-          SIM=questa WAVES=1 pytest tests/test_Sim.py -k test_testpulse --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
-          ;;
-      esac
+      SIM=questa WAVES=1 pytest tests/test_Sim.py -k $(Test) --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
     env:
       LM_LICENSE_FILE: $(LM_LICENSE_FILE)
     displayName: 'Run tests'
