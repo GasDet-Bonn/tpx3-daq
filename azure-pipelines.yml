@@ -43,14 +43,14 @@ jobs:
   - script: |
       echo Run tests
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
-      pytest -v tests/unittests.py -k $(Test) --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
+      pytest -v tests/unittests.py -k $(Test) --doctest-modules --junitxml=junit/test-$(Test)-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
     displayName: 'Run tests'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:
       testResultsFiles: '**/test-*.xml'
       testResultsFormat: JUnit
-      testRunTitle: 'Publish test results for Python 2'
+      testRunTitle: 'Publish test results for Hardware test $(Test)'
   - task: PublishCodeCoverageResults@1
     inputs:
       codeCoverageTool: Cobertura
@@ -106,7 +106,7 @@ jobs:
       export PATH=$HOME/Software/questa-2019.1/questasim/bin:$PATH
       export SIM=questa
       export TPX3_SRC=$HOME/Readout/Timepix3/Timepix3-Code/source
-      SIM=questa WAVES=1 pytest tests/test_Sim.py -k $(Test) --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
+      SIM=questa WAVES=1 pytest tests/test_Sim.py -k $(Test) --doctest-modules --junitxml=junit/test-$(Test)-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
     env:
       LM_LICENSE_FILE: $(LM_LICENSE_FILE)
     displayName: 'Run tests'
@@ -115,7 +115,7 @@ jobs:
     inputs:
       testResultsFiles: '**/test-*.xml'
       testResultsFormat: JUnit
-      testRunTitle: 'Publish test results for Python 2'
+      testRunTitle: 'Publish test results for Simulation test $(Test)'
   - task: PublishCodeCoverageResults@1
     inputs:
       codeCoverageTool: Cobertura
