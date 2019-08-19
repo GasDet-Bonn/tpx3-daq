@@ -2,19 +2,38 @@ name: $(TeamProject)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 jobs:
 - job: hardware_test
   displayName: 'Hardware tests'
-  pool: SelfHost Ubuntu 1804 - With TPX3 Hardware
+  strategy:
+    matrix: 
+      DAC_Global:
+        Test: test_set_DACs_Global
+      Pixel_Address_functions:
+        Test: test_pixel_address_functions
+      PCR:
+        Test: test_set_matrix
+      CTPR:
+        Test: test_set_ctpr
+      General_Config:
+        Test: test_general_config
+      TestPulse_Config:
+        Test: test_testpulse
+  pool: 
+    name: TPC
+    demands: TPX3-Hardware -equals True
+  workspace:
+    clean: all
   steps:
   - script: |
       echo Install miniconda
+      mkdir miniconda
       curl https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
-      bash miniconda.sh -b -p $HOME/miniconda
-      export PATH=$HOME/miniconda/bin:$PATH
+      bash miniconda.sh -u -b -p $(Agent.BuildDirectory)/miniconda
+      export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
       conda update --yes conda
       conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
     displayName: 'Install miniconda'
   - script: |
       echo Install Tpx3-DAQ
-      export PATH=$HOME/miniconda/bin:$PATH
+      export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
       python setup.py develop
     displayName: 'Install Tpx3-DAQ'
   - script: echo Compile firmware
@@ -23,15 +42,15 @@ jobs:
     displayName: 'Flash firmware'
   - script: |
       echo Run tests
-      export PATH=$HOME/miniconda/bin:$PATH
-      pytest -v tests/unittests.py --doctest-modules --junitxml=junit/test-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
+      export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
+      pytest -v tests/unittests.py -k $(Test) --doctest-modules --junitxml=junit/test-$(Test)-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
     displayName: 'Run tests'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:
       testResultsFiles: '**/test-*.xml'
       testResultsFormat: JUnit
-      testRunTitle: 'Publish test results for Python 2'
+      testRunTitle: 'Publish test results for Hardware test $(Test)'
   - task: PublishCodeCoverageResults@1
     inputs:
       codeCoverageTool: Cobertura
@@ -39,21 +58,77 @@ jobs:
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 - job: simulation_test
   displayName: 'Simulation tests'
-  pool: SelfHost Ubuntu 1804 - With TPX3 Simulation
+  strategy:
+    matrix: 
+      DAC_Global:
+        Test: test_set_DACs_Global
+      Pixel_Address_functions:
+        Test: test_pixel_address_functions
+      PCR:
+        Test: test_set_matrix
+      CTPR:
+        Test: test_set_ctpr
+      General_Config:
+        Test: test_general_config
+      TestPulse_Config:
+        Test: test_testpulse
+  pool: 
+    name: TPC
+    demands: TPX3-Simulation -equals True
+  workspace:
+    clean: all
   steps:
-  - script: echo Install miniconda
+  - script: |
+      echo Install miniconda
+      mkdir miniconda
+      curl https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
+      bash miniconda.sh -u -b -p $(Agent.BuildDirectory)/miniconda
+      export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
+      conda update --yes conda
+      conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
     displayName: 'Install miniconda'
-  - script: echo Prepare simulation
+  - script: |
+      echo Prepare simulation
+      export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
+      pip install cocotb==1.0.dev3
+      pip install basil_daq==3.0.0
+      # Fix for wrong questa Makefile in cocotb
+      sed -e 's/ -o pipefail//g' -i /$(Agent.BuildDirectory)/miniconda/lib/python2.7/site-packages/cocotb/share/makefiles/simulators/Makefile.questa
     displayName: 'Prepare simulation'
-  - script: echo Install Tpx3-DAQ
+  - script: |
+      echo Install Tpx3-DAQ
+      export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
+      python setup.py develop
     displayName: 'Install Tpx3-DAQ'
-  - script: echo Start simulation
-    displayName: 'Start simulation'
-  - script: echo Run tests
+  - script: |
+      echo Run simulation
+      export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
+      export PATH=$HOME/Software/questa-2019.1/questasim/bin:$PATH
+      export SIM=questa
+      export TPX3_SRC=$HOME/Readout/Timepix3/Timepix3-Code/source
+      SIM=questa WAVES=1 pytest tests/test_Sim.py -k $(Test) --doctest-modules --junitxml=junit/test-$(Test)-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
+    env:
+      LM_LICENSE_FILE: $(LM_LICENSE_FILE)
     displayName: 'Run tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testResultsFormat: JUnit
+      testRunTitle: 'Publish test results for Simulation test $(Test)'
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+  timeoutInMinutes: 120
 - job: software_test
   displayName: 'Software tests'
-  pool: SelfHost Ubuntu 1804
+  strategy:
+    parallel: 1
+  workspace:
+    clean: all
+  pool: TPC
   steps:
   - script: echo Run tests
     displayName: 'Run tests'

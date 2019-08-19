@@ -1322,6 +1322,35 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def burn_fuses(self, width, fuse, write=True):
+        """
+        Burns a selected fuse for a selected time (width). The sent bytes are also returned.
+        (see manual v1.9 p. 34)
+        """
+        if width > 63:
+            #  check if the width is allowed
+            raise ValueError("The program width must not be bigger than 63!")
+        if fuse > 31:
+            #  check if the fuse is allowed
+            raise ValueError("The selected fuse must not be bigger than 31!")
+        
+        data = self.read_periphery_template("EFuse_Burn", True)
+        # create a 11 bit variable for the program width (bits [5:0]) and the fuse selection (bits [10:6])
+        bits = BitLogic(11)
+
+        # fill the 11-bit variable with the width and the fuse selection
+        bits[5:0] = width
+        bits[10:6] = fuse
+
+        # append the variable to the data and add empty bits to create the complete data input
+        data += (bits + BitLogic(5)).toByteList()
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        return data
+
     def read_tp_config(self, write=True):
         """
         Sends the TPConfig_Read command (see manual v1.9 p.32) together with the
