@@ -45,9 +45,9 @@ jobs:
       LC_NUMERIC=en_US.UTF-8
       export LC_NUMERIC
       LD_PRELOAD=/opt/Xilinx/usb-driver/libusb-driver.so impact -batch firmware/flash_firmware.cmd
-      # Sleep 30 seconds to load Firmware on FPGA
-      echo sleep for 30 seconds
-      sleep 30
+      # Sleep 45 seconds to load Firmware on FPGA
+      echo sleep for 45 seconds
+      sleep 45
     displayName: 'Flash firmware'
   - script: |
       echo Run tests
