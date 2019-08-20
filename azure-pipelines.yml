@@ -67,23 +67,34 @@ jobs:
       reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 - job: simulation_test
   displayName: 'Simulation tests'
+  # Run several tests in parallel. The variable "Test" contains the name of the test.
+  # Additionally the variable "VM" states if the test is allowed to run on a VM
+  # (tests with a lot of simulation work are to slow on the VM)
   strategy:
     matrix: 
       DAC_Global:
         Test: test_set_DACs_Global
+        VM: False
       Pixel_Address_functions:
         Test: test_pixel_address_functions
+        VM: True
       PCR:
         Test: test_set_matrix
+        VM: False
       CTPR:
         Test: test_set_ctpr
+        VM: True
       General_Config:
         Test: test_general_config
+        VM: True
       TestPulse_Config:
         Test: test_testpulse
+        VM: False
   pool: 
     name: TPC
-    demands: TPX3-Simulation -equals True
+    demands: 
+      - TPX3-Simulation -equals True
+      - VM-Agent -equals $(VM)
   workspace:
     clean: all
   steps:
