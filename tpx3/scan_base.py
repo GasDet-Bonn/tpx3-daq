@@ -208,7 +208,9 @@ class ScanBase(object):
         data = self.chip.getGlobalSyncHeader() + [0x4A] + [0x0]
         self.chip.write(data)
 
-        # Step 2e: reset sequential / resets pixels?!
+        # Step 2f: Reset DACs
+        self.chip.reset_dac_attributes(to_default = True)
+        self.chip.write_dacs()
         # before setting PCR need to reset pixel matrix
         data = self.chip.reset_sequential(False)
         self.chip.write(data, True)
