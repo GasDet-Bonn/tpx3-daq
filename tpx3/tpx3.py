@@ -625,6 +625,28 @@ class TPX3(Dut):
         data += [0x00]
         return data
 
+    def sense_dac_sel(self, dac, write=True):
+        """
+        ...
+        """
+        # TODO: change to local sync header later
+        data = self.getGlobalSyncHeader()
+
+        data += [self.periphery_header_map["SenseDACsel"]]
+
+        # add DAC code to last 4 bit of final 16 bit
+        bits = BitLogic(16)
+        bits[4:0] = self.monitoring_map[dac]
+        # add 16 bits as list of byte to result
+        data += bits.toByteList()
+
+        data += [0x00]
+
+        if write is True:
+            self.write(data)
+        else:
+            return data
+
     def write(self, data, clear_fifo=False):
         """
         Performs a write of `data` on the SPI interface to the Tpx3.
