@@ -130,11 +130,27 @@ class ScanBase(object):
         row['value'] = get_software_version()
         row.append()
         row = run_config_table.row
-        row['attribute'] = 'chip_id'
-        row['value'] = kwargs.get('chip_id', '0x0000')
+        row['attribute'] = 'board_name'
+        row['value'] = self.board_name
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'firmware_version'
+        row['value'] = self.firmware_version
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'chip_wafer'
+        row['value'] = self.wafer_number
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'chip_x'
+        row['value'] = self.x_position
+        row.append()
+        row = run_config_table.row
+        row['attribute'] = 'chip_y'
+        row['value'] = self.y_position
         row.append()
 
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections']
+        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'Vthreshold_start', 'Vthreshold_stop']
         for kw, value in kwargs.iteritems():
             if kw in run_config_attributes:
                 row = run_config_table.row
@@ -174,6 +190,8 @@ class ScanBase(object):
 
         self.chip.init()
         self.fifo_readout = FifoReadout(self.chip)
+        self.board_name = self.chip.board_version
+        self.firmware_version = self.chip.fw_version
 
         # self.chip.init_communication()
 
@@ -208,9 +226,25 @@ class ScanBase(object):
         data = self.chip.getGlobalSyncHeader() + [0x4A] + [0x0]
         self.chip.write(data)
 
+        # Step 2e: Get ChipID
+        data = self.chip.read_periphery_template("EFuse_Read")
+        data += [0x00]*4
+        self.chip["FIFO"].reset()
+        time.sleep(0.1)
+        self.chip.write(data)
+        time.sleep(0.1)
+        fdata = self.chip['FIFO'].get_data()
+        dout = self.chip.decode_fpga(fdata, True)
+
+        self.wafer_number = dout[1][19:8].tovalue()
+        self.y_position = dout[1][7:4].tovalue()
+        self.x_position = chr(ord('a') + dout[1][3:0].tovalue() - 1).upper()
+
         # Step 2f: Reset DACs
         self.chip.reset_dac_attributes(to_default = True)
         self.chip.write_dacs()
+
+        # Step 2g: reset sequential / resets pixels?!
         # before setting PCR need to reset pixel matrix
         data = self.chip.reset_sequential(False)
         self.chip.write(data, True)
