@@ -30,16 +30,16 @@ local_configuration = {
 }
 
 
-class ThresholdScan(ScanBase):
+class TestpulseScan(ScanBase):
 
-    scan_id = "threshold_scan"
+    scan_id = "testpulse_scan"
     wafer_number = 0
     y_position = 0
     x_position = 'A'
 
     def scan(self,  start_column = 0, stop_column = 256, VTP_fine_start=100, VTP_fine_stop=200, n_injections=100, mask_step=32, **kwargs):
         '''
-        Threshold scan main loop
+        Testpulse scan main loop
 
         Parameters
         ----------
@@ -192,7 +192,7 @@ class ThresholdScan(ScanBase):
 
 
 if __name__ == "__main__":
-    scan = ThresholdScan()
+    scan = TestpulseScan()
     scan.start(**local_configuration)
     scan.analyze()
     scan.plot()
