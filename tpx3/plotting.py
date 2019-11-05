@@ -60,8 +60,6 @@ class ConfigDict(dict):
         return self._type_cast_value(k, val)
 
     def _type_cast_value(self, key, val):
-        if 'chip_id' in key:
-            return val
         try:
             return ast.literal_eval(val)
         except (ValueError, SyntaxError):  # fallback to return a string
@@ -159,15 +157,15 @@ class Plotting(object):
         if self.qualitative:
             fig.text(0.1, y_coord, 'TimePix3 qualitative',
                      fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config['chip_id'] is not None:
-                fig.text(0.7, y_coord, 'Chip S/N: 0x0000',
-                         fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+            if self.run_config['chip_wafer'] is not None:
+                fig.text(0.7, y_coord, 'Chip: W%s-%s%s',
+                         (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         else:
             fig.text(0.1, y_coord, 'TimePix3 %s' %
                      (self.level), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config['chip_id'] is not None:
-                fig.text(0.7, y_coord, 'Chip S/N: %s' %
-                         (self.run_config['chip_id']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+            if self.run_config['chip_wafer'] is not None:
+                fig.text(0.7, y_coord, 'Chip: W%s-%s%s' %
+                         (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         if self.internal:
             fig.text(0.1, 1, 'TimePix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
                 boxstyle='round', facecolor='white', edgecolor='red', alpha=0.7), transform=fig.transFigure)
@@ -212,17 +210,21 @@ class Plotting(object):
 
         scan_id = self.run_config['scan_id']
         run_name = self.run_config['run_name']
-        chip_id = self.run_config['chip_id']
+        chip_wafer = self.run_config['chip_wafer']
+        chip_x = self.run_config['chip_x']
+        chip_y = self.run_config['chip_y']
         sw_ver = self.run_config['software_version']
+        board_name = self.run_config['board_name']
+        fw_ver = self.run_config['firmware_version']
 
         if self.level is not '':
-            text = 'This is a tpx3-daq %s for chip %s.\nRun name: %s' % (
-                scan_id, chip_id, run_name)
+            text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
+                scan_id, chip_wafer, chip_x, chip_y, run_name)
         else:
-            text = 'This is a tpx3-daq %s for chip %s.\nRun name: %s' % (
-                scan_id, chip_id, run_name)
+            text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
+                scan_id, chip_wafer, chip_x, chip_y, run_name)
         ax.text(0.01, 1, text, fontsize=10)
-        ax.text(0.9, -0.11, 'Software version: %s' % (sw_ver), fontsize=3)
+        ax.text(0.8, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %d' % (sw_ver, board_name, fw_ver), fontsize=6)
 
         ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
 
@@ -232,7 +234,7 @@ class Plotting(object):
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
         for key, value in self.run_config.iteritems():
-            if key in ['scan_id', 'run_name', 'chip_id', 'software_version', 'disable', 'maskfile']:
+            if key in ['scan_id', 'run_name', 'chip_wafer', 'chip_x', 'chip_y', 'software_version', 'board_name', 'firmware_version', 'disable', 'maskfile']:
                 continue
             tb_dict[key] = value
 
@@ -829,7 +831,8 @@ class Plotting(object):
         hist, bins = np.histogram(np.ravel(data), bins=plot_range)
 
 
-        bin_centres = (bins[:-1] + bins[1:]) / 2
+        bin_centres = (bins[:-1] + bins[1:]) / 2.0
+        print(bin_centres)
         p0 = (np.amax(hist), np.mean(bins),
               (max(plot_range) - min(plot_range)) / 3)
 
@@ -858,7 +861,8 @@ class Plotting(object):
             ax.set_xlabel(x_axis_title)
         if y_axis_title is not None:
             ax.set_ylabel(y_axis_title)
-        ax.grid(True)
+        ax.grid(False)
+        #ax.set_xticklabels(range(0,16))
 
         if coeff is not None and not self.qualitative:
             if coeff[1] < 10:
