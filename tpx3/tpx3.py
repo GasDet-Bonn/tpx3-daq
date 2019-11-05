@@ -212,7 +212,7 @@ class TPX3(Dut):
 
     # monitoring voltage maps
     monitoring_map = {"PLL_Vcntrl": 0b10010,
-                      "BandGap output": 0b11100,
+                      "BandGap_output": 0b11100,
                       "BandGap_Temp": 0b11101,
                       "Ibias_dac": 0b11110,
                       "Ibias_dac_cas": 0b11111,
