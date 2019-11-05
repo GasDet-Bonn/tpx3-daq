@@ -112,6 +112,26 @@ def main(args_dict):
     # chip['FIFO'].reset()
     # chip.write(data)
 
+    print "Get ChipID"
+    data = chip.read_periphery_template("EFuse_Read")
+    data += [0x00]*4
+    print(data)
+    chip["FIFO"].reset()
+    time.sleep(0.1)
+    chip.write(data)
+    time.sleep(0.1)
+    fdata = chip['FIFO'].get_data()
+    print(fdata)
+    dout = chip.decode_fpga(fdata, True)
+    #for i in range(len(dout)):
+    #    print(dout[i])
+
+    if len(dout) == 2:
+        wafer_number = dout[1][19:8]
+        y_position = dout[1][7:4]
+        x_position = dout[1][3:0]
+        print("W{}-{}{}".format(wafer_number.tovalue(), chr(ord('a') + x_position.tovalue() - 1).upper(), y_position.tovalue()))
+
     print "Test set DAC"
     data = chip.set_dac("Vfbk", 0b10101011, write=False)
     chip['FIFO'].reset()
@@ -204,6 +224,12 @@ def main(args_dict):
     print "Decoded 'End of Command':"
     for el in ddout:
         print "\tDecode: ", el
+
+    chip['CONTROL']['RESET'] = 1
+    chip['CONTROL'].write()
+
+    chip['CONTROL']['RESET'] = 0
+    chip['CONTROL'].write()
 
     # data = chip.set_dac("Ibias_Preamp_ON", 0b1101, write = False)
     # chip['FIFO'].reset()
