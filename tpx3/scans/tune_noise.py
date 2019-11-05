@@ -38,18 +38,17 @@ class NoiseTune(ScanBase):
 
         '''
 
-        self.chip.write_ctpr([])  # ALL
+        self.chip.write_ctpr(range(256))  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
 
         #TODO: Move to configuration
-        Vthreshold_fine = 130
-        Vthreshold_coarse = 8
+        Vthreshold_fine = 450
+        Vthreshold_coarse = 6
 
 
         # TODO: Should be loaded from configuration and saved in rn_config
-        self.chip.set_dac("VTP_coarse", 128)
         self.chip.set_dac("Vthreshold_fine", Vthreshold_fine)
         self.chip.set_dac("Vthreshold_coarse", Vthreshold_coarse)
 
@@ -100,7 +99,7 @@ class NoiseTune(ScanBase):
                 self.logger.error('DATA ERROR')
 
             hit_data = hit_data[hit_data['data_header'] == 1]
-            self.logger.info('raw_data = %d, hit_data = %d' % (len(raw_data), len(hit_data)))
+            #self.logger.info('raw_data = %d, hit_data = %d' % (len(raw_data), len(hit_data)))
 
             bc = np.bincount(hit_data['x'].astype(np.uint16) * 256 + hit_data['y'], minlength=256 * 256)
             hist_occ = np.reshape(bc, (256, 256))
@@ -165,7 +164,7 @@ class NoiseTune(ScanBase):
                                     correct_smt += 1
 
                     tdac_dist = np.bincount(self.chip.thr_matrix[start_column:stop_column, :].flatten())
-                    self.logger.info(str((tdac_set, step, Vthreshold_fine, correct_smt, tdac_dist)))
+                    self.logger.info('tdac = %i step = %i VTH_fine = %i tdac_dist = %s' % (tdac_set, step, Vthreshold_fine, tdac_dist))
 
                     if step != step_inc - 1:
                         break
