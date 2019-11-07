@@ -38,6 +38,54 @@ def scurve_hist(hit_data, param_range):
 
     return scurves
 
+def vths(scurves, param_range, Vthreshold_start):
+    vths = np.zeros((256, 256), dtype=np.uint16)
+    for x in range(256):
+        for y in range(256):
+            sum_of_hits = 0
+            weighted_sum_of_hits = 0
+            for i in range(len(param_range)):
+                sum_of_hits += scurves[x*256+y, i]
+                weighted_sum_of_hits += scurves[x*256+y, i] * i
+            if(sum_of_hits > 0):
+                vths[x, y] = Vthreshold_start + weighted_sum_of_hits / (sum_of_hits * 1.0)
+    return vths
+
+def vth_hist(vths, Vthreshold_stop):
+    hist = np.zeros(Vthreshold_stop, dtype=np.uint16)
+    for x in range(256):
+        for y in range(256):
+            #if int(vths[x, y]) >= offset:
+            hist[int(vths[x, y])] += 1
+    return hist
+
+def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
+    matrix = np.zeros((256, 256), dtype=np.uint8)
+    sum_th0 = 0
+    entries_th0 = 0.
+    sum_th15 = 0
+    entries_th15 = 0.
+    for i in range(Vthreshold_start, Vthreshold_stop):
+        sum_th0 += hist_th0[i]
+        entries_th0 += hist_th0[i] / 100. * i
+        sum_th15 += hist_th15[i]
+        entries_th15 += hist_th15[i] / 100. * i
+    mean_th0 = entries_th0 / (sum_th0 / 100.)
+    mean_th15 = entries_th15 / (sum_th15 / 100.)
+    eq_step_size = int((mean_th15 - mean_th0) / 16)
+
+    for x in range(256):
+        for y in range(256):
+            eq_distance = (vths_th0[x, y] - mean_th0) / eq_step_size
+            if eq_distance >= 8:
+                matrix[x, y] = 0
+            elif eq_distance <= -8:
+                matrix[x, y] = 15
+            else:
+                matrix[x, y] = int(8 - eq_distance)
+
+    return matrix
+
 #TODO: This is bad should be njit
 def _interpret_raw_data(data):
 
