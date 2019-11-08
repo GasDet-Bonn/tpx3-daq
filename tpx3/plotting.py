@@ -830,6 +830,8 @@ class Plotting(object):
 
         hist, bins = np.histogram(np.ravel(data), bins=plot_range)
 
+        bin_centres = (bins[:-1] + bins[1:]) / 2.0
+
         p0 = (np.amax(hist), np.mean(bins),
               (max(plot_range) - min(plot_range)) / 3)
 
@@ -858,7 +860,7 @@ class Plotting(object):
             ax.set_xlabel(x_axis_title)
         if y_axis_title is not None:
             ax.set_ylabel(y_axis_title)
-        ax.set_xticklabels(range(0,16))
+        ax.grid(True)
 
         if coeff is not None and not self.qualitative:
             if coeff[1] < 10:

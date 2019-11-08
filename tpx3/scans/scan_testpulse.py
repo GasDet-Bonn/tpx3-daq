@@ -172,7 +172,7 @@ class TestpulseScan(ScanBase):
                 p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='median', suffix='occupancy')
 
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=range(0, 16), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
 
                 scurve_hist = h5_file.root.interpreted.HistSCurve[:].T
                 max_occ = n_injections + 10
@@ -182,7 +182,7 @@ class TestpulseScan(ScanBase):
                 mask[~chi2_sel] = True
 
                 hist = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap[:], mask)
-                p.plot_distribution(hist, plot_range=range(VTP_fine_start, VTP_fine_stop), x_axis_title='VTP_fine', title='Threshold distribution', suffix='threshold_distribution')
+                p.plot_distribution(hist, plot_range=np.arange((VTP_fine_start-0.5, VTP_fine_stop-0.5, 1), x_axis_title='VTP_fine', title='Threshold distribution', suffix='threshold_distribution')
 
                 p.plot_occupancy(hist, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=VTP_fine_start, z_max=VTP_fine_stop)
 

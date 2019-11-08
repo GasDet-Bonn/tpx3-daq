@@ -173,14 +173,14 @@ class Equalisation_Check_charge(ScanBase):
                 mask = h5_file.root.configuration.mask_matrix[:]
 
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=range(0, 16), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
 
                 vth_hist = h5_file.root.interpreted.HitDistribution[:].T
                 p.plot_scurves(vth_hist, range(Vthreshold_start, Vthreshold_stop), scan_parameter_name="Vthreshold")
 
                 vths = h5_file.root.interpreted.PixelThresholdMap[:]
                 p.plot_occupancy(vths, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=Vthreshold_start, z_max=Vthreshold_stop)
-                p.plot_distribution(vths, plot_range=range(Vthreshold_start, Vthreshold_stop), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution')
+                p.plot_distribution(vths, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution')
 
 
 if __name__ == "__main__":
