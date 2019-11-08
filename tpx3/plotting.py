@@ -271,12 +271,15 @@ class Plotting(object):
             row, col = key
             if row == 0:
                 cell.set_color('#ffb300')
+                cell.set_edgecolor('Black')
                 cell.set_fontsize(8)
             if col in [2, 5]:
-                cell.set_color('white')
+                cell.set_fill(False)
+                cell.visible_edges = 'vertical'
                 cell.set_fontsize(8)
             if col in [1, 4, 7]:
                 cell._loc = 'center'
+                cell.set_fontsize(8)                
 
         self._save_plots(fig, suffix='parameter_page')
 
