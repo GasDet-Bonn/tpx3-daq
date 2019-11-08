@@ -150,7 +150,7 @@ class ScanBase(object):
         row['value'] = self.y_position
         row.append()
 
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'Vthreshold_start', 'Vthreshold_stop']
+        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'Vthreshold_start', 'Vthreshold_stop', 'mask_step', 'maskfile']
         for kw, value in kwargs.iteritems():
             if kw in run_config_attributes:
                 row = run_config_table.row
