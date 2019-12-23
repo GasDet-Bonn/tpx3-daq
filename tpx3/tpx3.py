@@ -627,7 +627,9 @@ class TPX3(Dut):
 
     def sense_dac_sel(self, dac, write=True):
         """
-        ...
+        Sets the DAC which is connected to the DACout pad. One can select either the
+        DACs or the monitoring voltages. As default the DACout pad is not connected.
+        (see manual v1.9 p.34)
         """
         # TODO: change to local sync header later
         data = self.getGlobalSyncHeader()
