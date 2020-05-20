@@ -378,6 +378,8 @@ class GUI_PixelDAC_opt(Gtk.Window):
 		grid.set_row_spacing(2)
 		grid.set_column_spacing(10)
 		grid.set_border_width(10)
+		grid.set_column_homogeneous(True)
+		grid.set_row_homogeneous(True)
 		self.add(grid)
 		
 		Space = Gtk.Label()
@@ -404,17 +406,34 @@ class GUI_PixelDAC_opt(Gtk.Window):
 		Threshold_stop_label = Gtk.Label()
 		Threshold_stop_label.set_text("Stop ")
 		
+		#Buttons for number of iteration
+		Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, "4")
+		Iterationbutton1.connect("toggled", self.on_button_toggled, "4")
+		Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "16")
+		Iterationbutton2.connect("toggled", self.on_button_toggled, "16")
+		Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "64")
+		Iterationbutton3.connect("toggled", self.on_button_toggled, "64")
+		Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "256")
+		Iterationbutton4.connect("toggled", self.on_button_toggled, "256")
+		Number_of_iteration_label = Gtk.Label()
+		Number_of_iteration_label.set_text("Number of iterations")
+		
 		#Startbutton
 		self.Startbutton = Gtk.Button(label="Start")
 		self.Startbutton.connect("clicked", self.on_Startbutton_clicked)
 		
-		grid.attach(Threshold_label,0,0,4,1)
+		grid.attach(Threshold_label,0,0,6,1)
 		grid.attach(Threshold_start_label,0,1,1,1)
-		grid.attach(self.Threshold_start,1,1,1,1)
-		grid.attach(Threshold_stop_label,2,1,1,1)
-		grid.attach(self.Threshold_stop,3,1,1,1)
-		grid.attach(Space,0,2,1,1)
-		grid.attach(self.Startbutton,4,4,1,1)
+		grid.attach(self.Threshold_start,1,1,2,1)
+		grid.attach(Threshold_stop_label,3,1,1,1)
+		grid.attach(self.Threshold_stop,4,1,2,1)
+		grid.attach(Number_of_iteration_label,1,2,4,1)
+		grid.attach(Iterationbutton1,1,3,1,1)
+		grid.attach(Iterationbutton2,2,3,1,1)
+		grid.attach(Iterationbutton3,3,3,1,1)
+		grid.attach(Iterationbutton4,4,3,1,1)
+		grid.attach(Space,0,4,1,1)
+		grid.attach(self.Startbutton,4,5,2,1)
 
 		self.show_all()
 		
@@ -422,24 +441,153 @@ class GUI_PixelDAC_opt(Gtk.Window):
 		self.Threshold_start_value = self.Threshold_start.get_value_as_int()
 		temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
 		print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
-		print("Threshold_stop value is " + str(temp_Threshold_stop_value) + ".")
-		#new_adjustment_start = Gtk.Adjustment( 200, self.Threshold_start_value, 2800, 1, 0, 0)
-		#self.Threshold_stop.set_adjustment(adjustment=new_adjustment_start)
-		#self.Threshold_stop.set_value(temp_Threshold_stop_value)
+		new_adjustment_start = Gtk.Adjustment( 200, self.Threshold_start_value, 2800, 1, 0, 0)
+		self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
+		self.Threshold_stop.set_adjustment(adjustment=new_adjustment_start)
+		self.Threshold_stop.set_value(temp_Threshold_stop_value)
+		self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
 		
 	def Threshold_stop_set(self, event):
 		self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
 		temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
 		print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
-		#new_adjustment_stop = Gtk.Adjustment( 200, 0, self.Threshold_stop_value, 1, 0, 0)
-		#self.Threshold_start.set_adjustment(adjustment=new_adjustment_stop)
-		#self.Threshold_start.set_value(self.Threshold_start_value)
+		new_adjustment_stop = Gtk.Adjustment( 200, 0, self.Threshold_stop_value, 1, 0, 0)
+		self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
+		self.Threshold_start.set_adjustment(adjustment=new_adjustment_stop)
+		self.Threshold_start.set_value(temp_Threshold_start_value)
+		self.Threshold_start.connect("value-changed", self.Threshold_start_set)
+		
+	def on_button_toggled(self, button, name):
+		if button.get_active():
+			print( name, " iterations were choosen")
 		
 	def on_Startbutton_clicked(self, widget):
 		print("Start PixelDAC optimisation")
 	
 	def window_destroy(self, widget):
 		self.destroy()
+		
+class GUI_Equalisation(Gtk.Window):
+	def __init__(self):
+		Gtk.Window.__init__(self, title="Equalisation")
+		self.connect("delete-event", self.window_destroy)
+		
+		grid = Gtk.Grid()
+		grid.set_row_spacing(2)
+		grid.set_column_spacing(10)
+		grid.set_border_width(10)
+		grid.set_column_homogeneous(True)
+		grid.set_row_homogeneous(True)
+		self.add(grid)
+		
+		Space = Gtk.Label()
+		Space.set_text("")
+		
+		Threshold_label = Gtk.Label()
+		Threshold_label.set_text("Threshold")
+		
+		#Buttons for Typ of Equalisation
+		Equalisation_Type_label = Gtk.Label()
+		Equalisation_Type_label.set_text("Equalisation approach")
+		Equalisation_Type_button1 = Gtk.RadioButton.new_with_label_from_widget(None, "Noise ")
+		Equalisation_Type_button1.connect("toggled", self.on_Equalisation_Typebutton_toggled, "noise")
+		Equalisation_Type_button2 = Gtk.RadioButton.new_with_label_from_widget(Equalisation_Type_button1, "Testpulse ")
+		Equalisation_Type_button2.connect("toggled", self.on_Equalisation_Typebutton_toggled, "testpulse")
+		self.Equalisation_Type = "Noise"
+		
+		#Threshold_start
+		self.Threshold_start_value = 200
+		Threshold_start_adj = Gtk.Adjustment( 200, 0, 2800, 1, 0, 0)
+		self.Threshold_start = Gtk.SpinButton(adjustment=Threshold_start_adj, climb_rate=1, digits=0)
+		self.Threshold_start.set_value(self.Threshold_start_value) 
+		self.Threshold_start.connect("value-changed", self.Threshold_start_set)
+		Threshold_start_label = Gtk.Label()
+		Threshold_start_label.set_text("Start ")
+		
+		#Threshold_stop
+		self.Threshold_stop_value = 1600
+		Threshold_stop_adj = Gtk.Adjustment( 1600, 0, 2800, 1, 0, 0)
+		self.Threshold_stop = Gtk.SpinButton(adjustment=Threshold_stop_adj, climb_rate=1, digits=0)
+		self.Threshold_stop.set_value(self.Threshold_stop_value) 
+		self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
+		Threshold_stop_label = Gtk.Label()
+		Threshold_stop_label.set_text("Stop ")
+		
+		#Buttons for number of iteration
+		Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, "4")
+		Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "16")
+		Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "64")
+		Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "256")
+		Iterationbutton2.set_active(True)
+		Iterationbutton1.connect("toggled", self.on_Iterationbutton_toggled, "4")
+		Iterationbutton2.connect("toggled", self.on_Iterationbutton_toggled, "16")
+		Iterationbutton3.connect("toggled", self.on_Iterationbutton_toggled, "64")
+		Iterationbutton4.connect("toggled", self.on_Iterationbutton_toggled, "256")
+		
+		Number_of_iteration_label = Gtk.Label()
+		Number_of_iteration_label.set_text("Number of iterations")
+
+		self.Number_of_Iterations = 16
+		
+		#Startbutton
+		self.Startbutton = Gtk.Button(label="Start")
+		self.Startbutton.connect("clicked", self.on_Startbutton_clicked)
+		
+		grid.attach(Equalisation_Type_label,0,0,6,1)
+		grid.attach(Equalisation_Type_button1,1,1,2,1)
+		grid.attach(Equalisation_Type_button2,3,1,2,1)
+		grid.attach(Threshold_label,0,2,6,1)
+		grid.attach(Threshold_start_label,0,3,1,1)
+		grid.attach(self.Threshold_start,1,3,2,1)
+		grid.attach(Threshold_stop_label,3,3,1,1)
+		grid.attach(self.Threshold_stop,4,3,2,1)
+		grid.attach(Number_of_iteration_label,1,4,4,1)
+		grid.attach(Iterationbutton1,1,5,1,1)
+		grid.attach(Iterationbutton2,2,5,1,1)
+		grid.attach(Iterationbutton3,3,5,1,1)
+		grid.attach(Iterationbutton4,4,5,1,1)
+		grid.attach(Space,0,6,1,1)
+		grid.attach(self.Startbutton,4,7,2,1)
+
+		self.show_all()
+		
+	def Threshold_start_set(self, event):
+		self.Threshold_start_value = self.Threshold_start.get_value_as_int()
+		temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+		print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
+		new_adjustment_start = Gtk.Adjustment( 200, self.Threshold_start_value, 2800, 1, 0, 0)
+		self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
+		self.Threshold_stop.set_adjustment(adjustment=new_adjustment_start)
+		self.Threshold_stop.set_value(temp_Threshold_stop_value)
+		self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
+		
+	def Threshold_stop_set(self, event):
+		self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+		temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
+		print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
+		new_adjustment_stop = Gtk.Adjustment( 200, 0, self.Threshold_stop_value, 1, 0, 0)
+		self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
+		self.Threshold_start.set_adjustment(adjustment=new_adjustment_stop)
+		self.Threshold_start.set_value(temp_Threshold_start_value)
+		self.Threshold_start.connect("value-changed", self.Threshold_start_set)
+		
+	def on_Iterationbutton_toggled(self, button, name):
+		if button.get_active():
+			print( name, " iterations are choosen")
+		self.Number_of_Iterations = int(name)
+			
+	def on_Equalisation_Typebutton_toggled(self, button, name):
+		if button.get_active():
+			print( name, " based method is choosen")
+		self.Equalisation_Type = name
+	def on_Startbutton_clicked(self, widget):
+		print("Start " + self.Equalisation_Type + " based Equalisation from THL=" + str(self.Threshold_start_value) + " to THL=" + 
+		str(self.Threshold_stop_value) + " with " + str(self.Number_of_Iterations) + " iterations per threshold.")
+		self.window_destroy(self)
+	
+	def window_destroy(self, widget):
+		self.destroy()
+		
 class GUI_Main(Gtk.Window):
 	def __init__(self):
 		Gtk.Window.__init__(self, title="Gui_Test")
@@ -450,7 +598,7 @@ class GUI_Main(Gtk.Window):
 		
 		self.statusbar =Gtk.Statusbar()
 		self.context_id = self.statusbar.get_context_id("Ststus Main")
-		self.statusbar.push(self.context_id, "Statusbar for Markus...									")
+		self.statusbar.push(self.context_id, "Statusbar for Markus...")
 		
 		self.notebook = Gtk.Notebook()
 		self.grid.add(self.notebook)
@@ -498,12 +646,29 @@ class GUI_Main(Gtk.Window):
 		self.QuitCurrentFunctionbutton = Gtk.Button(label="Quit")
 		self.QuitCurrentFunctionbutton.connect("clicked", self.on_QuitCurrentFunctionbutton_clicked)
 		
+		Status = Gtk.Frame()
+		#Statusbox.set_border_width(1)
+		
+		self.Statusbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+		Status.add(self.Statusbox)
+		self.progressbar = Gtk.ProgressBar()
+		self.statuslabel = Gtk.Label()
+		self.statuslabel2 = Gtk.Label()
+		self.statuslabel.set_text("")
+		self.statuslabel2.set_text("")
+		self.statuslabel2.set_justify(Gtk.Justification.LEFT)
+		self.Statusbox.add(self.statuslabel)
+		self.Statusbox.add(self.statuslabel2)
+		self.Statusbox.add(self.progressbar)
+		self.progressbar.pulse()
+		
 		
 		page1.grid.attach(self.PixelDACbutton,0,0,2,1)
 		page1.grid.attach(self.Equalbutton,0,1,2,1)
 		page1.grid.attach(self.THLScanbutton,0,2,2,1)
 		page1.grid.attach(self.TOTScanbutton,0,3,2,1)
 		page1.grid.attach(self.Runbutton,0,4,2,2)
+		page1.grid.attach(Status,2,5,6,4)
 		page1.grid.attach(Space,0,6,2,2)
 		page1.grid.attach(self.Startupbutton,0,8,2,1)
 		page1.grid.attach(self.Resetbutton,0,9,2,1)
@@ -547,9 +712,13 @@ class GUI_Main(Gtk.Window):
 		
 	def on_Equalbutton_clicked(self, widget):
 		print("Function call Equalisation")
+		subw = GUI_Equalisation()
 		
 	def on_THLScanbutton_clicked(self, widget):
 		print("Function call THLScan")
+		self.statuslabel.set_text("THL Scan")
+		self.progressbar.show()
+		self.statuslabel2.set_text("Iteration1")
 		
 	def on_TOTScanbutton_clicked(self, widget):
 		print("Function call TOTScan")
@@ -578,4 +747,5 @@ class GUI_Main(Gtk.Window):
 win = GUI_Main()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
+win.progressbar.hide()
 Gtk.main()
