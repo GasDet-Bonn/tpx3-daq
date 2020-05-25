@@ -84,7 +84,6 @@ class Equalisation_charge(ScanBase):
             mask_step_cmd2 = []
 
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
-            self.chip.test_matrix[start_column:stop_column, j::mask_step] = self.chip.TP_ON
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
 
             self.chip.test_matrix[(j//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
