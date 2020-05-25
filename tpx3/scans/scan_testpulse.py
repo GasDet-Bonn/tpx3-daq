@@ -185,7 +185,7 @@ class TestpulseScan(ScanBase):
                 mask[~chi2_sel] = True
 
                 hist = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange((VTP_fine_start-0.5, VTP_fine_stop-0.5, 1), x_axis_title='VTP_fine', title='Threshold distribution', suffix='threshold_distribution')
+                p.plot_distribution(hist, plot_range=np.arange(VTP_fine_start-0.5, VTP_fine_stop-0.5, 1), x_axis_title='VTP_fine', title='Threshold distribution', suffix='threshold_distribution')
 
                 p.plot_occupancy(hist, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=VTP_fine_start, z_max=VTP_fine_stop)
 
