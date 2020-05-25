@@ -23,6 +23,10 @@ import tpx3.plotting as plotting
 local_configuration = {
     # Scan parameters
     'mask_step'        : 16,
+    'Vthreshold_start' : 1800,
+    'Vthreshold_stop'  : 2800,
+    'n_injections'     : 100,
+    'maskfile'         : './output_data/20200401_160123_mask.h5'
 }
 
 
@@ -76,8 +80,6 @@ class ThresholdScan(ScanBase):
             mask_step_cmd = []
 
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
-            #self.chip.test_matrix[start_column:stop_column, (i * 256 / mask_step):((i + 1) * 256 / mask_step)] = self.chip.TP_ON
-            self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
 
             self.chip.test_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
@@ -116,7 +118,8 @@ class ThresholdScan(ScanBase):
             time.sleep(0.001)
 
             with self.readout(scan_param_id=scan_param_id):
-                for mask_step_cmd in mask_cmds:
+                for i, mask_step_cmd in enumerate(mask_cmds):
+                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.001)
