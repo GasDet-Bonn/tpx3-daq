@@ -111,7 +111,8 @@ class TestpulseScan(ScanBase):
             time.sleep(0.001)
 
             with self.readout(scan_param_id=scan_param_id):
-                for mask_step_cmd in mask_cmds:
+                for i, mask_step_cmd in enumerate(mask_cmds):
+                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.001)

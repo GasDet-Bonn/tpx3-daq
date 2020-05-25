@@ -58,7 +58,7 @@ class Equalisation_charge(ScanBase):
         # ALL this should be set in set_configuration?
         #
 
-        self.chip.write_ctpr()  # ALL
+        #self.chip.write_ctpr()  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
@@ -132,7 +132,8 @@ class Equalisation_charge(ScanBase):
             time.sleep(0.001)
 
             with self.readout(scan_param_id=scan_param_id):
-                for mask_step_cmd in mask_cmds:
+                for i, mask_step_cmd in enumerate(mask_cmds):
+                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.01)

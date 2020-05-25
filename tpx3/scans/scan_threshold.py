@@ -51,7 +51,7 @@ class ThresholdScan(ScanBase):
         # ALL this should be set in set_configuration?
         #
 
-        self.chip.write_ctpr()  # ALL
+        #self.chip.write_ctpr()  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
