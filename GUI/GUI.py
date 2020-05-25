@@ -408,15 +408,18 @@ class GUI_PixelDAC_opt(Gtk.Window):
 		
 		#Buttons for number of iteration
 		Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, "4")
-		Iterationbutton1.connect("toggled", self.on_button_toggled, "4")
 		Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "16")
-		Iterationbutton2.connect("toggled", self.on_button_toggled, "16")
 		Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "64")
-		Iterationbutton3.connect("toggled", self.on_button_toggled, "64")
 		Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "256")
-		Iterationbutton4.connect("toggled", self.on_button_toggled, "256")
+		Iterationbutton2.set_active(True)
+		Iterationbutton1.connect("toggled", self.on_Iterationbutton_toggled, "4")
+		Iterationbutton2.connect("toggled", self.on_Iterationbutton_toggled, "16")
+		Iterationbutton3.connect("toggled", self.on_Iterationbutton_toggled, "64")
+		Iterationbutton4.connect("toggled", self.on_Iterationbutton_toggled, "256")
+		
 		Number_of_iteration_label = Gtk.Label()
 		Number_of_iteration_label.set_text("Number of iterations")
+		self.Number_of_Iterations = 16
 		
 		#Startbutton
 		self.Startbutton = Gtk.Button(label="Start")
@@ -457,13 +460,15 @@ class GUI_PixelDAC_opt(Gtk.Window):
 		self.Threshold_start.set_value(temp_Threshold_start_value)
 		self.Threshold_start.connect("value-changed", self.Threshold_start_set)
 		
-	def on_button_toggled(self, button, name):
+	def on_Iterationbutton_toggled(self, button, name):
 		if button.get_active():
-			print( name, " iterations were choosen")
+			print( name, " iterations are choosen")
+		self.Number_of_Iterations = int(name)
 		
 	def on_Startbutton_clicked(self, widget):
 		print("Start PixelDAC optimisation")
-	
+		GUI.Status_window_call(function="PixelDAC_opt", lowerTHL=self.Threshold_start_value, upperTHL=self.Threshold_stop_value, iterations=self.Number_of_Iterations)
+		self.destroy()
 	def window_destroy(self, widget):
 		self.destroy()
 		
@@ -580,11 +585,15 @@ class GUI_Equalisation(Gtk.Window):
 		if button.get_active():
 			print( name, " based method is choosen")
 		self.Equalisation_Type = name
+		
 	def on_Startbutton_clicked(self, widget):
 		print("Start " + self.Equalisation_Type + " based Equalisation from THL=" + str(self.Threshold_start_value) + " to THL=" + 
 		str(self.Threshold_stop_value) + " with " + str(self.Number_of_Iterations) + " iterations per threshold.")
+		
+		GUI.Status_window_call(function="Equalisation", subtype=self.Equalisation_Type, lowerTHL=self.Threshold_start_value, upperTHL=self.Threshold_stop_value, iterations=self.Number_of_Iterations)
+		
 		self.window_destroy(self)
-	
+		
 	def window_destroy(self, widget):
 		self.destroy()
 		
@@ -597,7 +606,7 @@ class GUI_Main(Gtk.Window):
 		self.add(self.grid)
 		
 		self.statusbar =Gtk.Statusbar()
-		self.context_id = self.statusbar.get_context_id("Ststus Main")
+		self.context_id = self.statusbar.get_context_id("Status Main")
 		self.statusbar.push(self.context_id, "Statusbar for Markus...")
 		
 		self.notebook = Gtk.Notebook()
@@ -654,11 +663,15 @@ class GUI_Main(Gtk.Window):
 		self.progressbar = Gtk.ProgressBar()
 		self.statuslabel = Gtk.Label()
 		self.statuslabel2 = Gtk.Label()
+		self.statuslabel3 = Gtk.Label()
 		self.statuslabel.set_text("")
 		self.statuslabel2.set_text("")
+		self.statuslabel3.set_text(" \n \n")
 		self.statuslabel2.set_justify(Gtk.Justification.LEFT)
+		self.statuslabel3.set_justify(Gtk.Justification.LEFT)
 		self.Statusbox.add(self.statuslabel)
 		self.Statusbox.add(self.statuslabel2)
+		self.Statusbox.add(self.statuslabel3)
 		self.Statusbox.add(self.progressbar)
 		self.progressbar.pulse()
 		
@@ -716,9 +729,6 @@ class GUI_Main(Gtk.Window):
 		
 	def on_THLScanbutton_clicked(self, widget):
 		print("Function call THLScan")
-		self.statuslabel.set_text("THL Scan")
-		self.progressbar.show()
-		self.statuslabel2.set_text("Iteration1")
 		
 	def on_TOTScanbutton_clicked(self, widget):
 		print("Function call TOTScan")
@@ -737,15 +747,38 @@ class GUI_Main(Gtk.Window):
 		
 	def on_QuitCurrentFunctionbutton_clicked(self, widget):
 		print("Function call Quit current function")
-	
-
+		self.progressbar.hide()
+		self.statuslabel.set_text("")
+		self.statuslabel2.set_text("")
+		
+	def Status_window_call(self, function="default", subtype="", lowerTHL=0, upperTHL=1023, iterations=0, statusstring="", progress=0):
+		if function == "Equalisation":
+			self.statuslabel.set_markup("<big><b>" + subtype + "-based Equalisation</b></big>")
+			self.progressbar.show()
+			self.statuslabel2.set_text("From THL=" + str(lowerTHL) + " to THL= " + str(upperTHL) + " with " + str(iterations) + " iterations per step")
+			self.statuslabel3.set_text(statusstring)
+		elif function == "PixelDAC_opt":
+			self.statuslabel.set_markup("<big><b>Pixel_DAC optimisation</b></big>")
+			self.progressbar.show()
+			self.statuslabel2.set_text("From THL=" + str(lowerTHL) + " to THL= " + str(upperTHL) + " with " + str(iterations) + " iterations per step")
+			self.statuslabel3.set_text(statusstring)
+		elif function=="status":
+			self.statuslabel3.set_text(statusstring)
+		elif function=="progress":
+			self.progressbar.set_fraction(progress)
+		else:
+			self.statuslabel.set_text("Error")
 
 	
 	def on_plotbutton_clicked(self, win):
 		subw = GUI_Plot()
+		
+	def write_statusbar(self, status):
+		self.statusbar.push(self.context_id, str(status))
+		
 
-win = GUI_Main()
-win.connect("destroy", Gtk.main_quit)
-win.show_all()
-win.progressbar.hide()
+GUI = GUI_Main()
+GUI.connect("destroy", Gtk.main_quit)
+GUI.show_all()
+GUI.progressbar.hide()
 Gtk.main()
