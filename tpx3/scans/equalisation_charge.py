@@ -16,6 +16,7 @@ import numpy as np
 import time
 import tables as tb
 import os
+import math
 
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
@@ -85,7 +86,15 @@ class Equalisation_charge(ScanBase):
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
             self.chip.test_matrix[start_column:stop_column, j::mask_step] = self.chip.TP_ON
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
-            self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
+
+            self.chip.test_matrix[(j//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
+                                  (j%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(j//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
+                                  (j%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+
+            #self.chip.test_matrix[start_column:stop_column, j::mask_step] = self.chip.TP_ON
+            #self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
+
             self.chip.thr_matrix[:, :] = 0
 
             for i in range(256 / 4):

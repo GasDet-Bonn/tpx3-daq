@@ -14,6 +14,7 @@ from tqdm import tqdm
 import numpy as np
 import time
 import tables as tb
+import math
 
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
@@ -21,11 +22,7 @@ import tpx3.plotting as plotting
 
 local_configuration = {
     # Scan parameters
-    'mask_step'        : 32,
-    'Vthreshold_start' : 1500,
-    'Vthreshold_stop'  : 2200,
-    'n_injections'     : 100#,
-    #'maskfile'         : './output_data/20191007_185825_mask.h5'
+    'mask_step'        : 16,
 }
 
 
@@ -82,9 +79,14 @@ class ThresholdScan(ScanBase):
             #self.chip.test_matrix[start_column:stop_column, (i * 256 / mask_step):((i + 1) * 256 / mask_step)] = self.chip.TP_ON
             self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
-            #self.chip.mask_matrix[start_column:stop_column, (i * 256 / mask_step):((i + 1) * 256 / mask_step)] = self.chip.MASK_ON
-            self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
-            self.chip.thr_matrix[:, :] = 15
+
+            self.chip.test_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
+                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
+                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+
+            #self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
+            #self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
 
             for i in range(256 / 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
