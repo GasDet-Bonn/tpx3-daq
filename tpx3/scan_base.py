@@ -241,7 +241,7 @@ class ScanBase(object):
         self.x_position = chr(ord('a') + dout[1][3:0].tovalue() - 1).upper()
 
         # Step 2f: Reset DACs
-        self.chip.reset_dac_attributes(to_default = True)
+        self.chip.reset_dac_attributes(to_default = False)
         self.chip.write_dacs()
 
         # Step 2g: reset sequential / resets pixels?!

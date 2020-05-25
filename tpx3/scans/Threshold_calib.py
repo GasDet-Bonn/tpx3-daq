@@ -68,13 +68,6 @@ class ThresholdCalib(ScanBase):
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
 
-        #TODO: Should be loaded from configuration and saved in rn_config
-        self.chip.set_dac("VTP_coarse", 75)
-        self.chip.set_dac("Ibias_Ikrum", 15)
-        self.chip.set_dac("Vfbk", 143) 
-        self.chip.set_dac("Ibias_Preamp_ON", 150)
-        self.chip.set_dac("Ibias_DiscS1_ON", 100)
-
         self.logger.info('Preparing injection masks...')
 
         mask_cmds = []

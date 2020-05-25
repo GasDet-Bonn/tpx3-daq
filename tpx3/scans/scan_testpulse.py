@@ -68,11 +68,6 @@ class TestpulseScan(ScanBase):
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
 
-        #TODO: Should be loaded from configuration and saved in rn_config
-        self.chip.set_dac("VTP_coarse", 128)
-        self.chip.set_dac("Vthreshold_fine", 88) #220)
-        self.chip.set_dac("Vthreshold_coarse", 8)
-
         self.logger.info('Preparing injection masks...')
 
         mask_cmds = []

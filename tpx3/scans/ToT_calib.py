@@ -70,18 +70,6 @@ class ToTCalib(ScanBase):
         self.chip.write_tp_pulsenumber(n_injections)
         #self.chip.write_tp_period(200,8)
 
-
-        #TODO: Should be loaded from configuration and saved in rn_config
-        self.chip.set_dac("VTP_coarse", 65)
-        self.chip.set_dac("Vthreshold_fine", 320) #220)
-        self.chip.set_dac("Vthreshold_coarse", 7)
-        self.chip.set_dac("Ibias_Ikrum", 10)
-        self.chip.set_dac("Vfbk", 127) 
-        self.chip.set_dac("Ibias_Preamp_ON", 127)
-        self.chip.set_dac("Ibias_DiscS1_ON", 127)
-        self.chip.set_dac("Ibias_DiscS2_ON", 50)
-        self.chip.set_dac("VPreamp_NCAS", 100)
-
         self.logger.info('Preparing injection masks...')
 
         mask_cmds = []
