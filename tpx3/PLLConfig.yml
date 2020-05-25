@@ -34,7 +34,7 @@ registers:
   address: 6
   size: 3
   default: 0b000
-  value: 0b000
+  value: 0b100
 - name: PLLOutConfig
   description: Selects the output of the PLLOut Pad
   address: 9

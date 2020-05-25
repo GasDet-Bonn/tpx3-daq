@@ -34,7 +34,7 @@ registers:
   address: 6
   size: 1
   default: 0
-  value: 1
+  value: 0
 - name: TimerOverflowControl
   description: Selects the overflow control mode for the 48bit timer (0 = will cycle through, 1 = stops at 0hFFFF_FFFF_FFFF)
   address: 7
