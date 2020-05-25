@@ -19,7 +19,7 @@ install_requires = ['basil-daq==2.4.11', 'bitarray>=0.8.1', 'matplotlib',
 setup(
     name='tpx3-daq',
     version=version,
-    description='DAQ for TimePix3 ASIC',
+    description='DAQ for Timepix3 ASIC',
     url='https://github.com/SiLab-Bonn/tpx3-daq',
     license='',
     long_description='',

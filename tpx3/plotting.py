@@ -155,19 +155,19 @@ class Plotting(object):
         fig.subplots_adjust(top=0.85)
         y_coord = 0.92
         if self.qualitative:
-            fig.text(0.1, y_coord, 'TimePix3 qualitative',
+            fig.text(0.1, y_coord, 'Timepix3 qualitative',
                      fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
             if self.run_config['chip_wafer'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s',
                          (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         else:
-            fig.text(0.1, y_coord, 'TimePix3 %s' %
+            fig.text(0.1, y_coord, 'Timepix3 %s' %
                      (self.level), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
             if self.run_config['chip_wafer'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s' %
                          (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         if self.internal:
-            fig.text(0.1, 1, 'TimePix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
+            fig.text(0.1, 1, 'Timepix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
                 boxstyle='round', facecolor='white', edgecolor='red', alpha=0.7), transform=fig.transFigure)
 
     def _convert_to_e(self, dac, use_offset=True):
@@ -224,7 +224,7 @@ class Plotting(object):
             text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
                 scan_id, chip_wafer, chip_x, chip_y, run_name)
         ax.text(0.01, 1, text, fontsize=10)
-        ax.text(0.8, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %d' % (sw_ver, board_name, fw_ver), fontsize=6)
+        ax.text(0.7, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %d' % (sw_ver, board_name, fw_ver), fontsize=6)
 
         ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
 
