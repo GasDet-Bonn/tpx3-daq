@@ -55,8 +55,10 @@ def vth_hist(vths, Vthreshold_stop):
     hist = np.zeros(Vthreshold_stop, dtype=np.uint16)
     for x in range(256):
         for y in range(256):
-            #if int(vths[x, y]) >= offset:
-            hist[int(vths[x, y])] += 1
+            if int(vths[x, y]) >= Vthreshold_stop:
+                logger.info("Scan for pixel %d / %d failed" % (x, y))
+            else:
+                hist[int(vths[x, y])] += 1
     return hist
 
 def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):

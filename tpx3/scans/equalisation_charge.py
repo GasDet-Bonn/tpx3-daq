@@ -16,6 +16,7 @@ import numpy as np
 import time
 import tables as tb
 import os
+import math
 
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
@@ -57,7 +58,7 @@ class Equalisation_charge(ScanBase):
         # ALL this should be set in set_configuration?
         #
 
-        self.chip.write_ctpr()  # ALL
+        #self.chip.write_ctpr()  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
@@ -69,10 +70,6 @@ class Equalisation_charge(ScanBase):
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
 
-        #TODO: Should be loaded from configuration and saved in rn_config
-        self.chip.set_dac("VTP_coarse", 100)
-        self.chip.set_dac("VTP_fine", 380)
-
         self.logger.info('Preparing injection masks...')
 
         mask_cmds = []
@@ -83,9 +80,16 @@ class Equalisation_charge(ScanBase):
             mask_step_cmd2 = []
 
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
-            self.chip.test_matrix[start_column:stop_column, j::mask_step] = self.chip.TP_ON
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
-            self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
+
+            self.chip.test_matrix[(j//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
+                                  (j%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(j//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
+                                  (j%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+
+            #self.chip.test_matrix[start_column:stop_column, j::mask_step] = self.chip.TP_ON
+            #self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
+
             self.chip.thr_matrix[:, :] = 0
 
             for i in range(256 / 4):
@@ -123,7 +127,8 @@ class Equalisation_charge(ScanBase):
             time.sleep(0.001)
 
             with self.readout(scan_param_id=scan_param_id):
-                for mask_step_cmd in mask_cmds:
+                for i, mask_step_cmd in enumerate(mask_cmds):
+                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.01)

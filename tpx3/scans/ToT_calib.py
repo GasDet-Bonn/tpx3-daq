@@ -24,21 +24,21 @@ import tpx3.plotting as plotting
 local_configuration = {
     # Scan parameters
     'mask_step'        : 16,
-    'VTP_fine_start'   : 256 + 0,
-    'VTP_fine_stop'    : 256 + 140,
-    'n_injections'     : 100,
-    #'maskfile'        : './output_data/?_mask.h5'
+    'VTP_fine_start'   : 20 + 0,
+    'VTP_fine_stop'    : 20 + 491,
+    'n_injections'     : 1,
+    'maskfile'        : './output_data/20200505_165149_mask.h5'
 }
 
 
-class TestpulseScan(ScanBase):
+class ToTCalib(ScanBase):
 
-    scan_id = "testpulse_scan"
+    scan_id = "ToT_calib"
     wafer_number = 0
     y_position = 0
     x_position = 'A'
 
-    def scan(self,  start_column = 0, stop_column = 256, VTP_fine_start=100, VTP_fine_stop=200, n_injections=100, mask_step=32, **kwargs):
+    def scan(self, start_column = 0, stop_column = 256, VTP_fine_start=100, VTP_fine_stop=200, n_injections=100, mask_step=32, **kwargs):
         '''
         Testpulse scan main loop
 
@@ -59,6 +59,7 @@ class TestpulseScan(ScanBase):
         #self.chip.write_ctpr()  # ALL
 
         # Step 5: Set general config
+        self.chip.configs["Op_mode"] = 0 # Change to ToT/ToA mode
         self.chip.write_general_config()
 
         # Step 6: Write to the test pulse registers
@@ -67,6 +68,7 @@ class TestpulseScan(ScanBase):
 
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
+        #self.chip.write_tp_period(200,8)
 
         self.logger.info('Preparing injection masks...')
 
@@ -102,19 +104,19 @@ class TestpulseScan(ScanBase):
 
         for scan_param_id, vcal in enumerate(cal_high_range):
             self.chip.set_dac("VTP_fine", vcal)
-            time.sleep(0.001)
+            time.sleep(0.01)
 
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):
                     self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
-                        time.sleep(0.001)
+                        time.sleep(0.01)
                         pbar.update(1)
                     self.chip.stop_readout()
                     self.chip.reset_sequential()
-                    time.sleep(0.001)
-                time.sleep(0.001)
+                    time.sleep(0.01)
+                time.sleep(0.01)
         pbar.close()
 
         self.logger.info('Scan finished')
@@ -139,16 +141,16 @@ class TestpulseScan(ScanBase):
             VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_stop'][0]
 
             param_range = range(VTP_fine_start, VTP_fine_stop)
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections)
+            #thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections)
 
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
             h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve', obj=scurve)
-            h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
-            h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap', obj=thr2D.T)
-            h5_file.create_carray(h5_file.root.interpreted, name='NoiseMap', obj=sig2D.T)
+            #h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
+            #h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap', obj=thr2D.T)
+            #h5_file.create_carray(h5_file.root.interpreted, name='NoiseMap', obj=sig2D.T)
 
             pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
             hist_occ = np.reshape(pix_occ, (256, 256)).T
@@ -172,30 +174,17 @@ class TestpulseScan(ScanBase):
                 mask = h5_file.root.configuration.mask_matrix[:]
 
                 occ_masked = np.ma.masked_array(h5_file.root.interpreted.HistOcc[:], mask)
-                p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='median', suffix='occupancy')
+                p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='maximum', suffix='occupancy')
 
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
 
                 scurve_hist = h5_file.root.interpreted.HistSCurve[:].T
-                max_occ = n_injections + 10
-                p.plot_scurves(scurve_hist, range(VTP_fine_start, VTP_fine_stop), scan_parameter_name="VTP_fine", max_occ=max_occ)
-
-                chi2_sel = h5_file.root.interpreted.Chi2Map[:] > 0.  # Mask not converged fits (chi2 = 0)
-                mask[~chi2_sel] = True
-
-                hist = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(VTP_fine_start-0.5, VTP_fine_stop-0.5, 1), x_axis_title='VTP_fine', title='Threshold distribution', suffix='threshold_distribution')
-
-                p.plot_occupancy(hist, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=VTP_fine_start, z_max=VTP_fine_stop)
-
-                hist = np.ma.masked_array(h5_file.root.interpreted.NoiseMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(0.1, 4, 0.1), title='Noise distribution', suffix='noise_distribution')
-                p.plot_occupancy(hist, z_label='Noise', title='Noise', show_sum=False, suffix='noise_map', z_min=0.1, z_max=4.0)
+                p.plot_scurves(scurve_hist, range(VTP_fine_start, VTP_fine_stop), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles')
 
 
 if __name__ == "__main__":
-    scan = TestpulseScan()
+    scan = ToTCalib()
     scan.start(**local_configuration)
     scan.analyze()
     scan.plot()

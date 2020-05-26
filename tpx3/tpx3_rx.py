@@ -10,7 +10,7 @@ from basil.HL.RegisterHardwareLayer import RegisterHardwareLayer
 
 
 class tpx3_rx(RegisterHardwareLayer):
-    '''TimePix 3 receiver controller interface for tpx3_rx FPGA module
+    '''Timepix 3 receiver controller interface for tpx3_rx FPGA module
     '''
 
     _registers = {'RESET': {'descr': {'addr': 0, 'size': 8, 'properties': ['writeonly']}},

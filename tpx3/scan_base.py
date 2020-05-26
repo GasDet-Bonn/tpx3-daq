@@ -150,7 +150,7 @@ class ScanBase(object):
         row['value'] = self.y_position
         row.append()
 
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'Vthreshold_start', 'Vthreshold_stop', 'mask_step', 'maskfile']
+        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'mask_step', 'maskfile']
         for kw, value in kwargs.iteritems():
             if kw in run_config_attributes:
                 row = run_config_table.row
@@ -241,7 +241,7 @@ class ScanBase(object):
         self.x_position = chr(ord('a') + dout[1][3:0].tovalue() - 1).upper()
 
         # Step 2f: Reset DACs
-        self.chip.reset_dac_attributes(to_default = True)
+        self.chip.reset_dac_attributes(to_default = False)
         self.chip.write_dacs()
 
         # Step 2g: reset sequential / resets pixels?!
