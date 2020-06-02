@@ -7,62 +7,58 @@ from numpy import arange, pi, random, linspace
 import matplotlib.cm as cm
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 from gi.repository import GObject
+from PlotWidget import plotwidget
+import time
+
 
 class GUI_Plot(Gtk.Window):
 	def __init__(self):
+		self.active="False"
 		Gtk.Window.__init__(self, title="Plot")
 		self.connect("delete-event", self.window_destroy)
 		self.set_default_size(400, 400)
-
-
-		fig = Figure(figsize=(5,5), dpi=100)
-		ax = fig.add_subplot(111, projection='polar')
-	
-		N = 20
-		theta = linspace(0.0, 2 * pi, N, endpoint=False)
-		radii = 10 * random.rand(N)
-		width = pi / 4 * random.rand(N)
-	
-		bars = ax.bar(theta, radii, width=width, bottom=0.0)
-	
-		for r, bar in zip(radii, bars):
-			bar.set_facecolor(cm.jet(r / 10.))
-			bar.set_alpha(0.5)
 		
-		ax.plot()
-	
-		self.box = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL)
+		self.box = Gtk.Box(spacing=6, orientation=Gtk.Orientation.HORIZONTAL)
 		self.add(self.box)
-		#sw = Gtk.ScrolledWindow()
-		#self.add(sw)
-	
-		canvas = FigureCanvas(fig)
-		canvas.set_size_request(400,400)
-		#sw.add_with_viewport(canvas)
-		self.box.pack_start(canvas, True, True, 0)
+		
+		self.plotwidget = plotwidget()
+		self.box.pack_start(self.plotwidget.canvas, True, True, 0)
+
+
+		self.box.grid = Gtk.Grid()
+		self.box.add(self.box.grid)
+		self.box.grid.set_row_spacing(10)
+		self.box.grid.set_column_spacing(10)
+		
+		self.Stopbutton = Gtk.Button(label="Stop_Plot")
+		self.Stopbutton.connect("clicked", self.on_Stopbutton_clicked)
+		self.Slowbutton = Gtk.Button(label="Slow")
+		self.Slowbutton.connect("clicked", self.on_Slowbutton_clicked)
+		self.Fastbutton = Gtk.Button(label="Fast Plot")
+		self.Fastbutton.connect("clicked", self.on_Fastbutton_clicked)
+		self.box.grid.attach(self.Stopbutton,0,0,1,1)
+		self.box.grid.attach(self.Slowbutton,0,1,1,1)
+		self.box.grid.attach(self.Fastbutton,0,2,1,1)
+		
 		self.show_all()
 		
-		def update_graph():
-			ax.cla()
-			N = 20
-			theta = linspace(0.0, 2 * pi, N, endpoint=False)
-			radii = 10 * random.rand(N)
-			width = pi / 4 * random.rand(N)
+		#GObject.idle_add(self.plotwidget.update_plot)
+		self.Tag=GObject.idle_add(self.plotwidget.update_plot)
+	def on_Stopbutton_clicked(self, widget):
+		#self.plotwidget.stop_update_plot()
+		GObject.source_remove(self.Tag)
+	def on_Slowbutton_clicked(self, widget):
+		GObject.source_remove(self.Tag)
+		self.Tag=GObject.timeout_add(500,self.plotwidget.update_plot)
+	def on_Fastbutton_clicked(self, widget):
+		GObject.source_remove(self.Tag)
+		self.Tag=GObject.idle_add(self.plotwidget.update_plot)
 		
-			bars = ax.bar(theta, radii, width=width, bottom=0.0)
-	
-			for r, bar in zip(radii, bars):
-				bar.set_facecolor(cm.jet(r / 10.))
-				bar.set_alpha(0.5)
-
-			canvas.draw()
-			return True
-	
-		GObject.idle_add(update_graph)
-	
-	def window_destroy(self, widget):
+	def window_destroy(event, self, widget):
+		GObject.source_remove(self.Tag)
 		self.destroy()
 		
+
 class GUI_SetDAC(Gtk.Window):
 	def __init__(self):
 		Gtk.Window.__init__(self, title="DAC settings")
@@ -494,14 +490,14 @@ class GUI_Equalisation(Gtk.Window):
 		#Buttons for Typ of Equalisation
 		Equalisation_Type_label = Gtk.Label()
 		Equalisation_Type_label.set_text("Equalisation approach")
-		Equalisation_Type_button1 = Gtk.RadioButton.new_with_label_from_widget(None, "Noise ")
-		Equalisation_Type_button1.connect("toggled", self.on_Equalisation_Typebutton_toggled, "noise")
-		Equalisation_Type_button2 = Gtk.RadioButton.new_with_label_from_widget(Equalisation_Type_button1, "Testpulse ")
-		Equalisation_Type_button2.connect("toggled", self.on_Equalisation_Typebutton_toggled, "testpulse")
+		Equalisation_Type_button1 = Gtk.RadioButton.new_with_label_from_widget(None, "Noise")
+		Equalisation_Type_button1.connect("toggled", self.on_Equalisation_Typebutton_toggled, "Noise")
+		Equalisation_Type_button2 = Gtk.RadioButton.new_with_label_from_widget(Equalisation_Type_button1, "Testpulse")
+		Equalisation_Type_button2.connect("toggled", self.on_Equalisation_Typebutton_toggled, "Testpulse")
 		self.Equalisation_Type = "Noise"
 		
 		#Threshold_start
-		self.Threshold_start_value = 200
+		self.Threshold_start_value = 1500
 		Threshold_start_adj = Gtk.Adjustment( 200, 0, 2800, 1, 0, 0)
 		self.Threshold_start = Gtk.SpinButton(adjustment=Threshold_start_adj, climb_rate=1, digits=0)
 		self.Threshold_start.set_value(self.Threshold_start_value) 
@@ -510,7 +506,7 @@ class GUI_Equalisation(Gtk.Window):
 		Threshold_start_label.set_text("Start ")
 		
 		#Threshold_stop
-		self.Threshold_stop_value = 1600
+		self.Threshold_stop_value = 2500
 		Threshold_stop_adj = Gtk.Adjustment( 1600, 0, 2800, 1, 0, 0)
 		self.Threshold_stop = Gtk.SpinButton(adjustment=Threshold_stop_adj, climb_rate=1, digits=0)
 		self.Threshold_stop.set_value(self.Threshold_stop_value) 
@@ -578,12 +574,12 @@ class GUI_Equalisation(Gtk.Window):
 		
 	def on_Iterationbutton_toggled(self, button, name):
 		if button.get_active():
-			print( name, " iterations are choosen")
+			print( name," iterations are choosen")
 		self.Number_of_Iterations = int(name)
 			
 	def on_Equalisation_Typebutton_toggled(self, button, name):
 		if button.get_active():
-			print( name, " based method is choosen")
+			print( name," based method is choosen")
 		self.Equalisation_Type = name
 		
 	def on_Startbutton_clicked(self, widget):
@@ -591,7 +587,13 @@ class GUI_Equalisation(Gtk.Window):
 		str(self.Threshold_stop_value) + " with " + str(self.Number_of_Iterations) + " iterations per threshold.")
 		
 		GUI.Status_window_call(function="Equalisation", subtype=self.Equalisation_Type, lowerTHL=self.Threshold_start_value, upperTHL=self.Threshold_stop_value, iterations=self.Number_of_Iterations)
-		
+		if self.Equalisation_Type == "Noise":
+			print("Start Noise Equal")
+			#Equalisation.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations)
+		elif self.Equalisation_Type == "Testpulse":
+			print("Start Charge Equal")
+			#Equalisation_charge.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations)
+			
 		self.window_destroy(self)
 		
 	def window_destroy(self, widget):
@@ -599,7 +601,7 @@ class GUI_Equalisation(Gtk.Window):
 		
 class GUI_Main(Gtk.Window):
 	def __init__(self):
-		Gtk.Window.__init__(self, title="Gui_Test")
+		Gtk.Window.__init__(self, title="Gui")
 		self.set_icon_from_file(r"GasDet3.png")
 		#self.set_default_size(800, 600)
 		self.grid = Gtk.Grid()
@@ -613,7 +615,10 @@ class GUI_Main(Gtk.Window):
 		self.grid.add(self.notebook)
 		self.grid.attach(self.statusbar, 0, 1, 1, 1)
 		
+		### Page 1
+		
 		page1 = Gtk.Box()
+		self.notebook.append_page(page1, Gtk.Label("Basic Funktion"))
 		page1.set_border_width(10)
 		page1.grid = Gtk.Grid()
 		page1.grid.set_row_spacing(2)
@@ -655,9 +660,8 @@ class GUI_Main(Gtk.Window):
 		self.QuitCurrentFunctionbutton = Gtk.Button(label="Quit")
 		self.QuitCurrentFunctionbutton.connect("clicked", self.on_QuitCurrentFunctionbutton_clicked)
 		
-		Status = Gtk.Frame()
-		#Statusbox.set_border_width(1)
 		
+		Status = Gtk.Frame()
 		self.Statusbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
 		Status.add(self.Statusbox)
 		self.progressbar = Gtk.ProgressBar()
@@ -666,14 +670,13 @@ class GUI_Main(Gtk.Window):
 		self.statuslabel3 = Gtk.Label()
 		self.statuslabel.set_text("")
 		self.statuslabel2.set_text("")
-		self.statuslabel3.set_text(" \n \n")
+		self.statuslabel3.set_text("")
 		self.statuslabel2.set_justify(Gtk.Justification.LEFT)
 		self.statuslabel3.set_justify(Gtk.Justification.LEFT)
 		self.Statusbox.add(self.statuslabel)
 		self.Statusbox.add(self.statuslabel2)
 		self.Statusbox.add(self.statuslabel3)
-		self.Statusbox.add(self.progressbar)
-		self.progressbar.pulse()
+		self.Statusbox.pack_end(self.progressbar, True, True, 5)
 		
 		
 		page1.grid.attach(self.PixelDACbutton,0,0,2,1)
@@ -689,13 +692,15 @@ class GUI_Main(Gtk.Window):
 		page1.grid.attach(self.SetDACbutton,8,0,2,1)
 		page1.grid.attach(self.QuitCurrentFunctionbutton,8,9,2,1)
 	
-		self.notebook.append_page(page1, Gtk.Label("Basic Funktion"))
 		
+		### Page 2 
 		
+
 		
 		ChipName = "Chip1"
 		TestString = "Enter Something"
 		self.page2 = Gtk.Box()
+		self.notebook.append_page(self.page2, Gtk.Label(ChipName))
 		self.page2.set_border_width(10)
 		self.page2.grid = Gtk.Grid()
 		self.page2.grid.set_row_spacing(10)
@@ -705,76 +710,91 @@ class GUI_Main(Gtk.Window):
 		self.page2.entry.connect('activate', self.entered_text)
 
 		self.page2.label = Gtk.Label(TestString)
-		
 		self.plotbutton = Gtk.Button(label="Show Plot")
 		self.plotbutton.connect("clicked", self.on_plotbutton_clicked)
 		self.page2.grid.attach(self.page2.entry,0,0,1,1)
 		self.page2.grid.attach(self.page2.label,0,1,1,1)
 		self.page2.grid.attach(self.plotbutton,0,2,1,1)
-		self.notebook.append_page(self.page2, Gtk.Label(ChipName))
 		
-
-	def entered_text(self, widget):
-		ChipName= self.page2.entry.get_text()
-		print(ChipName)
-		self.notebook.set_tab_label_text(self.page2,ChipName)
-		
+		self.plotwidget = plotwidget()
+		self.page2.pack_end(self.plotwidget.canvas, True, True, 0)
+		GObject.timeout_add(250,self.plotwidget.update_plot)
+	### Functions Page 1
+	
 	def on_PixelDACbutton_clicked(self, widget):
-		print("Function call PixelDac")
+		print("Function call: PixelDac_opt")
 		subw = GUI_PixelDAC_opt()
 		
 	def on_Equalbutton_clicked(self, widget):
-		print("Function call Equalisation")
+		print("Function call: Equalisation")
 		subw = GUI_Equalisation()
 		
 	def on_THLScanbutton_clicked(self, widget):
-		print("Function call THLScan")
+		print("Function call: THLScan")
 		
 	def on_TOTScanbutton_clicked(self, widget):
-		print("Function call TOTScan")
+		print("Function call: TOTScan")
 		
 	def on_Runbutton_clicked(self, widget):
-		print("Function call Run")
+		print("Function call: Run")
 		
 	def on_Startupbutton_clicked(self, widget):
-		print("Function call Startup")
+		print("Function call: Startup")
 		
 	def on_Resetbutton_clicked(self, widget):
-		print("Function call Reset")
+		print("Function call: Reset")
 		
 	def on_SetDACbutton_clicked(self, widget):
 		subw = GUI_SetDAC()
 		
 	def on_QuitCurrentFunctionbutton_clicked(self, widget):
-		print("Function call Quit current function")
+		print("Function call: Quit current function")
 		self.progressbar.hide()
 		self.statuslabel.set_text("")
 		self.statuslabel2.set_text("")
+		self.statuslabel3.set_text("")
+		self.progressbar.set_fraction(0.0)
 		
 	def Status_window_call(self, function="default", subtype="", lowerTHL=0, upperTHL=1023, iterations=0, statusstring="", progress=0):
-		if function == "Equalisation":
+
+		if function == "PixelDAC_opt":
+			self.statuslabel.set_markup("<big><b>PixelDAC optimisation</b></big>")
+			self.progressbar.show()
+			self.progressbar.set_fraction(progress)
+			self.statuslabel2.set_text("From THL=" + str(lowerTHL) + " to THL= " + str(upperTHL) + " with " + str(iterations) + " iterations per step")
+			self.statuslabel3.set_text(statusstring)
+		elif function == "Equalisation":
 			self.statuslabel.set_markup("<big><b>" + subtype + "-based Equalisation</b></big>")
 			self.progressbar.show()
 			self.statuslabel2.set_text("From THL=" + str(lowerTHL) + " to THL= " + str(upperTHL) + " with " + str(iterations) + " iterations per step")
 			self.statuslabel3.set_text(statusstring)
-		elif function == "PixelDAC_opt":
-			self.statuslabel.set_markup("<big><b>Pixel_DAC optimisation</b></big>")
-			self.progressbar.show()
-			self.statuslabel2.set_text("From THL=" + str(lowerTHL) + " to THL= " + str(upperTHL) + " with " + str(iterations) + " iterations per step")
-			self.statuslabel3.set_text(statusstring)
+			self.progressbar.set_fraction(progress)
 		elif function=="status":
 			self.statuslabel3.set_text(statusstring)
 		elif function=="progress":
 			self.progressbar.set_fraction(progress)
+		elif function=="default":
+			self.statuslabel.set_text("Error: Call without functionname")
+			print("Error: Call without functionname")
 		else:
-			self.statuslabel.set_text("Error")
+			self.statuslabel.set_text("Error: " + function + " is not known!")
+			print("Error: " + function + " is not known")
 
-	
-	def on_plotbutton_clicked(self, win):
-		subw = GUI_Plot()
-		
+
 	def write_statusbar(self, status):
 		self.statusbar.push(self.context_id, str(status))
+
+	### Functions Page2
+	
+	def on_plotbutton_clicked(self, widget):
+		subw = GUI_Plot()
+		subw.update()
+		
+		
+	def entered_text(self, widget):
+		ChipName= self.page2.entry.get_text()
+		print(ChipName)
+		self.notebook.set_tab_label_text(self.page2,ChipName)
 		
 
 GUI = GUI_Main()
