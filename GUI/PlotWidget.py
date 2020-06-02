@@ -122,10 +122,7 @@ class plotwidget(object):
 		
 		#Add to plot and change intensity
 		self.scatter.set_offsets(np.c_[self.x_vals,self.y_vals])
-
 		self.intensity = np.concatenate((np.array(self.intensity)-(1/self.colorsteps), new_tvals))
-
-		print (self.intensity)
 		self.scatter.set_array(self.intensity)
 		
 		self.canvas.draw()
