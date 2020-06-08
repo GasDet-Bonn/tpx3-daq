@@ -1,10 +1,11 @@
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk,Gdk
 from matplotlib.figure import Figure
 from numpy import arange, pi, random, linspace
 import matplotlib.cm as cm
+import numpy as np
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 from gi.repository import GObject
 from PlotWidget import plotwidget
@@ -22,15 +23,17 @@ class GUI_Plot(Gtk.Window):
 		self.add(self.box)
 		
 		self.plotwidget = plotwidget()
-		self.box.pack_start(self.plotwidget.canvas, True, True, 0)
-
+		self.plotbox = Gtk.EventBox()
+		self.plotbox.add(self.plotwidget.canvas)
+		self.plotbox.connect("button_press_event", self.plot_right_clicked)
+		self.box.pack_start(self.plotbox, True, True, 0)
 
 		self.box.grid = Gtk.Grid()
 		self.box.add(self.box.grid)
 		self.box.grid.set_row_spacing(10)
 		self.box.grid.set_column_spacing(10)
 		
-		self.Stopbutton = Gtk.Button(label="Stop_Plot")
+		self.Stopbutton = Gtk.Button(label="Occ_Plot")
 		self.Stopbutton.connect("clicked", self.on_Stopbutton_clicked)
 		self.Slowbutton = Gtk.Button(label="Slow")
 		self.Slowbutton.connect("clicked", self.on_Slowbutton_clicked)
@@ -43,22 +46,99 @@ class GUI_Plot(Gtk.Window):
 		self.show_all()
 		
 		#GObject.idle_add(self.plotwidget.update_plot)
+		
 		self.Tag=GObject.idle_add(self.plotwidget.update_plot)
+		
 	def on_Stopbutton_clicked(self, widget):
-		#self.plotwidget.stop_update_plot()
 		GObject.source_remove(self.Tag)
+		self.plotwidget.change_colormap(colormap=cm.viridis, vmax=self.plotwidget.get_iteration_depth("occupancy.color"))
+		self.plotwidget.reset_occupancy()
+		self.Tag=GObject.idle_add(self.plotwidget.update_occupancy_plot)
+		
 	def on_Slowbutton_clicked(self, widget):
 		GObject.source_remove(self.Tag)
+		self.plotwidget.change_colormap(colormap=self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
 		self.Tag=GObject.timeout_add(500,self.plotwidget.update_plot)
+		
 	def on_Fastbutton_clicked(self, widget):
 		GObject.source_remove(self.Tag)
+		self.plotwidget.change_colormap(colormap=self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
 		self.Tag=GObject.idle_add(self.plotwidget.update_plot)
+		
+	def plot_right_clicked(self, widget, event):
+		if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+			subw = GUI_Plot_settings(self.plotwidget)
 		
 	def window_destroy(event, self, widget):
 		GObject.source_remove(self.Tag)
 		self.destroy()
-		
 
+class GUI_Plot_settings(Gtk.Window):
+	def __init__(self,plotwidget):
+		Gtk.Window.__init__(self, title="Plot Settings")
+		self.connect("delete-event", self.window_destroy)
+		self.plotwidget = plotwidget
+		color_depth=1
+		grid = Gtk.Grid()
+		grid.set_row_spacing(2)
+		grid.set_column_spacing(10)
+		grid.set_border_width(10)
+		self.add(grid)
+		if self.plotwidget.get_plottype()=="normal":
+			nIteration=self.plotwidget.get_iteration_depth("normal")
+		elif self.plotwidget.get_plottype()=="occupancy":
+			nIteration=self.plotwidget.get_iteration_depth("occupancy")
+			color_depth=self.plotwidget.get_iteration_depth("occupancy.color")
+		self.OKbutton = Gtk.Button(label="OK")
+		self.OKbutton.connect("clicked", self.on_OKbutton_clicked)
+		
+		plot_depth_label = Gtk.Label()
+		plot_depth_label.set_text("Plot Depth")
+		self.plot_depth_value = nIteration
+		plot_depth_adj = Gtk.Adjustment( nIteration, 0, 1000, 1, 0, 0)
+		self.plot_depth = Gtk.SpinButton(adjustment=plot_depth_adj, climb_rate=1, digits=0)
+		self.plot_depth.set_value(self.plot_depth_value) 
+		self.plot_depth.connect("value-changed", self.plot_depth_set)
+		
+		color_depth_label = Gtk.Label()
+		color_depth_label.set_text("Color Depth")
+		self.color_depth_value = color_depth
+		color_depth_adj = Gtk.Adjustment( color_depth, 0, 255, 1, 0, 0)
+		self.color_depth = Gtk.SpinButton(adjustment=color_depth_adj, climb_rate=1, digits=0)
+		self.color_depth.set_value(self.color_depth_value) 
+		self.color_depth.connect("value-changed", self.color_depth_set)
+		
+		grid.attach(plot_depth_label,0,0,3,1)
+		grid.attach(self.plot_depth,0,1,3,1)
+		grid.attach(color_depth_label,0,2,3,1)
+		grid.attach(self.color_depth,0,3,3,1)
+		grid.attach(self.OKbutton,3,4,1,1)
+		
+		self.show_all()
+		if self.plotwidget.get_plottype()=="normal":
+			color_depth_label.hide()
+			self.color_depth.hide()
+			
+	def plot_depth_set(self, event):
+		self.plot_depth_value = self.plot_depth.get_value_as_int()
+		print(self.plot_depth_value)
+	def color_depth_set(self, event):
+		self.color_depth_value = self.color_depth.get_value_as_int()
+	
+	def on_OKbutton_clicked(self, widget):
+		if self.plotwidget.get_plottype()=="normal":
+			#self.plot_depth_value = self.plot_depth.get_value_as_int()
+			self.plotwidget.change_colormap(colormap=self.plotwidget.fading_colormap(self.plot_depth_value))
+			self.destroy()
+		elif self.plotwidget.get_plottype()=="occupancy":
+			self.plotwidget.change_colormap(colormap=cm.viridis, vmax=self.color_depth_value)
+			self.plotwidget.set_occupancy_length(self.plot_depth_value)
+			self.plotwidget.reset_occupancy()
+			self.destroy()
+		
+	def window_destroy(self, widget, event):
+		self.destroy()
+		
 class GUI_SetDAC(Gtk.Window):
 	def __init__(self):
 		Gtk.Window.__init__(self, title="DAC settings")
@@ -717,10 +797,10 @@ class GUI_Main(Gtk.Window):
 		self.page2.grid.attach(self.plotbutton,0,2,1,1)
 		
 		self.plotwidget = plotwidget()
-		self.page2.pack_end(self.plotwidget.canvas, True, True, 0)
+		self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
 		GObject.timeout_add(250,self.plotwidget.update_plot)
-	### Functions Page 1
-	
+	### Functions Page 1	
+		
 	def on_PixelDACbutton_clicked(self, widget):
 		print("Function call: PixelDac_opt")
 		subw = GUI_PixelDAC_opt()
@@ -788,8 +868,6 @@ class GUI_Main(Gtk.Window):
 	
 	def on_plotbutton_clicked(self, widget):
 		subw = GUI_Plot()
-		subw.update()
-		
 		
 	def entered_text(self, widget):
 		ChipName= self.page2.entry.get_text()
