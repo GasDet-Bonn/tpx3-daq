@@ -203,6 +203,9 @@ def scurve(x, A, mu, sigma):
 def zcurve(x, A, mu, sigma):
     return -0.5 * A * erf((x - mu) / (np.sqrt(2) * sigma)) + 0.5 * A
 
+def totcurve(x, a, b, c, t):
+    return a*x + b - c / (x-t)
+
 
 def get_threshold(x, y, n_injections, invert_x=False):
     ''' Fit less approximation of threshold from s-curve.
@@ -380,6 +383,62 @@ def fit_scurves_multithread(scurves, scan_param_range,
     sig2D = np.reshape(sig, (256, 256))
     chi2ndf2D = np.reshape(chi2ndf, (256, 256))
     return thr2D, sig2D, chi2ndf2D
+
+
+def fit_ToT(tot_data, scan_param_range):
+    '''
+        Fit one pixel data with totcurve.
+        Has to be global function for the multiprocessing module.
+
+        Returns:
+            (a, b, c, t, chi2/ndf)
+    '''
+
+    tot_data = np.array(tot_data, dtype=np.float)
+
+    # Deselect masked values (== nan)
+    x = ((scan_param_range[~np.isnan(tot_data)])/2)*2.5
+    y = (tot_data[~np.isnan(tot_data)])*25
+
+    # Only fit data that is fittable
+    if np.all(y == 0) or np.all(np.isnan(y)) or x.shape[0] < 3:
+        return (0., 0., 0., 0., 0.)
+
+    p0 = [10, -1300, 13000, 230]
+
+    try:
+        popt = curve_fit(f=totcurve, xdata=x, ydata=y, p0=p0)[0]
+        chi2 = np.sum((y - totcurve(x, *popt)) ** 2)
+    except RuntimeError:  # fit failed
+        return (0., 0., 0., 0., 0.)
+
+    return (popt[0], popt[1], popt[2], popt[3], chi2 / (y.shape[0] - 3 - 1))
+
+
+def fit_totcurves_multithread(totcurves, scan_param_range):
+    totcurves = np.ma.masked_array(totcurves)
+    scan_param_range = np.array(scan_param_range)
+
+    logger.info("Start ToT-curve fit on %d CPU core(s)", mp.cpu_count())
+
+    partialfit_totcurves = partial(fit_ToT, scan_param_range=scan_param_range)
+
+    result_list = imap_bar(partialfit_totcurves, totcurves.tolist())
+    result_array = np.array(result_list)
+    logger.info("ToT-curve fit finished")
+
+    a = result_array[:, 0]
+    b = result_array[:, 1]
+    c = result_array[:, 2]
+    t = result_array[:, 3]
+    chi2ndf = result_array[:, 4]
+
+    a2D = np.reshape(a, (256, 256))
+    b2D = np.reshape(b, (256, 256))
+    c2D = np.reshape(c, (256, 256))
+    t2D = np.reshape(t, (256, 256))
+    chi2ndf2D = np.reshape(chi2ndf, (256, 256))
+    return a2D, b2D, c2D, t2D, chi2ndf2D
 
 
 # init LUTs
