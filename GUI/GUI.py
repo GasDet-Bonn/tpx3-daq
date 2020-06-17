@@ -9,6 +9,7 @@ import numpy as np
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 from gi.repository import GObject
 from PlotWidget import plotwidget
+from utils import utils
 #import time
 
 
@@ -49,17 +50,20 @@ class GUI_Plot(Gtk.Window):
 		
 	def on_Stopbutton_clicked(self, widget):
 		GObject.source_remove(self.Tag)
+		self.plotwidget.set_plottype("occupancy")
 		self.plotwidget.change_colormap(colormap = cm.viridis, vmax = self.plotwidget.get_iteration_depth("occupancy.color"))
 		self.plotwidget.reset_occupancy()
 		self.Tag = GObject.idle_add(self.plotwidget.update_occupancy_plot)
 		
 	def on_Slowbutton_clicked(self, widget):
 		GObject.source_remove(self.Tag)
+		self.plotwidget.set_plottype("normal")
 		self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
 		self.Tag = GObject.timeout_add(500, self.plotwidget.update_plot)
 		
 	def on_Fastbutton_clicked(self, widget):
 		GObject.source_remove(self.Tag)
+		self.plotwidget.set_plottype("normal")
 		self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
 		self.Tag = GObject.idle_add(self.plotwidget.update_plot)
 		
@@ -446,7 +450,7 @@ class GUI_SetDAC(Gtk.Window):
 		print("Save DAC settings")
 	
 	
-	def window_destroy(self, widget):
+	def window_destroy(self, widget, event):
 		self.destroy()
 		
 class GUI_PixelDAC_opt(Gtk.Window):
@@ -550,7 +554,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
 		print("Start PixelDAC optimisation")
 		GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations)
 		self.destroy()
-	def window_destroy(self, widget):
+	def window_destroy(self, widget, event):
 		self.destroy()
 		
 class GUI_Equalisation(Gtk.Window):
@@ -681,7 +685,7 @@ class GUI_Equalisation(Gtk.Window):
 			
 		self.window_destroy(self)
 		
-	def window_destroy(self, widget):
+	def window_destroy(self, widget, event):
 		self.destroy()
 		
 class GUI_ToT_Calib(Gtk.Window):
@@ -794,7 +798,7 @@ class GUI_ToT_Calib(Gtk.Window):
 		
 		self.window_destroy(self)
 		
-	def window_destroy(self, widget):
+	def window_destroy(self, widget, event):
 		self.destroy()
 				
 class GUI_Main(Gtk.Window):
@@ -837,10 +841,10 @@ class GUI_Main(Gtk.Window):
 		self.Equalbutton = Gtk.Button(label = "Equalisation")
 		self.Equalbutton.connect("clicked", self.on_Equalbutton_clicked)
 		
-		self.THLScanbutton = Gtk.Button(label = "THLScan")
+		self.THLScanbutton = Gtk.Button(label = "THL Calibration")
 		self.THLScanbutton.connect("clicked", self.on_THLScanbutton_clicked)
 		
-		self.TOTScanbutton = Gtk.Button(label = "TOTScan")
+		self.TOTScanbutton = Gtk.Button(label = "TOT Calibration")
 		self.TOTScanbutton.connect("clicked", self.on_TOTScanbutton_clicked)
 		
 		self.Runbutton = Gtk.Button(label = "Start readout")
@@ -906,7 +910,11 @@ class GUI_Main(Gtk.Window):
 		self.page2.add(self.page2.grid)
 		self.page2.entry = Gtk.Entry()
 		self.page2.entry.connect('activate', self.entered_text)
-
+		self.page2.space =Gtk.Label()
+		self.page2.space.set_text(" 		")
+		self.page2.space1 =Gtk.Label()
+		self.page2.space1.set_text("	")
+		
 		self.page2.label = Gtk.Label(TestString)
 		self.plotbutton = Gtk.Button(label = "Show Plot")
 		self.plotbutton.connect("clicked", self.on_plotbutton_clicked)
@@ -916,6 +924,8 @@ class GUI_Main(Gtk.Window):
 		
 		self.plotwidget = plotwidget()
 		self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
+		self.page2.pack_end(self.page2.space, True, False, 0)
+		self.page2.pack_end(self.page2.space1, True, False, 0)
 		GObject.timeout_add(250, self.plotwidget.update_plot)
 		
 	### Functions Page 1	
@@ -955,8 +965,7 @@ class GUI_Main(Gtk.Window):
 		self.statuslabel3.set_text("")
 		self.progressbar.set_fraction(0.0)
 		
-	def Status_window_call(self, function = "default", subtype = "", lowerTHL = 0, upperTHL = 1023, iterations = 0, statusstring = "", progress = 0):
-
+	def Status_window_call(self, function = "default", subtype = "", lowerTHL = 0, upperTHL = 0, iterations = 0, statusstring = "", progress = 0):
 		if function == "PixelDAC_opt":
 			self.statuslabel.set_markup("<big><b>PixelDAC optimisation</b></big>")
 			self.progressbar.show()
@@ -972,7 +981,7 @@ class GUI_Main(Gtk.Window):
 		elif function == "ToT_Calib":
 			self.statuslabel.set_markup("<big><b>ToT calibration</b></big>")
 			self.progressbar.show()
-			self.statuslabel2.set_text("For testpulses ranging from " + str(lowerTHL * 0.5) + "\u200AmV to " + str(upperTHL * 0.5) + "\u200AmV with " + str(iterations) + " iterations per step")
+			self.statuslabel2.set_text("For testpulses ranging from " + utils.print_nice(lowerTHL * 0.5) + "\u200AmV to " + utils.print_nice(upperTHL * 0.5) + "\u200AmV with " + str(iterations) + " iterations per step")
 			self.statuslabel3.set_text(statusstring)
 			self.progressbar.set_fraction(progress)
 		elif function == "status":
