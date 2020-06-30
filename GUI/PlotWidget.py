@@ -272,10 +272,18 @@ class plotwidget(object):
 		
 	def set_plottype(self, plottype):
 		self.plottype = plottype
+		return True
 		
 	def set_occupancy_length(self, length):
 		self.integration_length = length
+		return True
 		
+	def set_color_depth(self, color_depth):
+		self.color_depth = color_depth
+		return True
+		
+	def set_color_steps(self, color_steps):
+		self.colorsteps = color_steps
 		return True
 
 	
