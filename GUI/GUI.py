@@ -10,6 +10,8 @@ from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCa
 from gi.repository import GObject
 from PlotWidget import plotwidget
 from utils import utils
+from logger import data_logger, file_logger, datalogger
+
 #import time
 
 
@@ -28,7 +30,8 @@ class GUI_Plot(Gtk.Window):
 		self.plotbox.add(self.plotwidget.canvas)
 		self.plotbox.connect("button_press_event", self.plot_right_clicked)
 		self.box.pack_start(self.plotbox, True, True, 0)
-
+		
+		
 		self.box.grid = Gtk.Grid()
 		self.box.add(self.box.grid)
 		self.box.grid.set_row_spacing(10)
@@ -44,9 +47,20 @@ class GUI_Plot(Gtk.Window):
 		self.box.grid.attach(self.Slowbutton, 0, 1, 1, 1)
 		self.box.grid.attach(self.Fastbutton, 0, 2, 1, 1)
 		
-		self.show_all()
+		self.plotwidget.set_plottype(file_logger.get_backup_value("plottype"))
+		self.plotwidget.set_occupancy_length(file_logger.get_backup_value("integration_length"))
+		self.plotwidget.set_color_depth(file_logger.get_backup_value("color_depth"))
+		self.plotwidget.set_color_steps(file_logger.get_backup_value("colorsteps"))
 		
-		self.Tag = GObject.idle_add(self.plotwidget.update_plot)
+		if file_logger.get_backup_value("plottype") == "normal":
+			self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(file_logger.get_backup_value("colorsteps")))
+			self.Tag = GObject.idle_add(self.plotwidget.update_plot)
+		elif file_logger.get_backup_value("plottype") == "occupancy":
+			self.plotwidget.change_colormap(colormap = cm.viridis, vmax = file_logger.get_backup_value("color_depth"))
+			self.plotwidget.reset_occupancy()
+			self.Tag = GObject.idle_add(self.plotwidget.update_occupancy_plot)
+		
+		self.show_all()
 		
 	def on_Stopbutton_clicked(self, widget):
 		GObject.source_remove(self.Tag)
@@ -72,6 +86,10 @@ class GUI_Plot(Gtk.Window):
 			subw = GUI_Plot_settings(self.plotwidget)
 		
 	def window_destroy(event, self, widget):
+		datalogger.write_data(type = "plottype", value = self.plotwidget.get_plottype())
+		datalogger.write_data(type = "colorsteps", value = self.plotwidget.get_iteration_depth("normal"))
+		datalogger.write_data(type = "integration_length", value = self.plotwidget.get_iteration_depth("occupancy"))
+		datalogger.write_data(type = "color_depth", value = self.plotwidget.get_iteration_depth("occupancy.color"))
 		GObject.source_remove(self.Tag)
 		self.destroy()
 
@@ -800,14 +818,86 @@ class GUI_ToT_Calib(Gtk.Window):
 		
 	def window_destroy(self, widget, event):
 		self.destroy()
-				
-class GUI_Main(Gtk.Window):
+
+class GUI_Main_Settings(Gtk.Window):
 	def __init__(self):
+		Gtk.Window.__init__(self, title = "Edit")
+		self.connect("delete-event", self.window_destroy)
+			
+		self.input_window = None
+		
+		grid = Gtk.Grid()
+		grid.set_row_spacing(2)
+		self.add(grid)
+		
+		self.load_backup_button = Gtk.Button(label = "Load Backup")
+		self.load_backup_button.connect("clicked", self.on_load_backup_button_clicked)
+		
+		self.load_default_button = Gtk.Button(label = "Load Default")
+		self.load_default_button.connect("clicked", self.on_load_default_button_clicked)
+		
+		grid.attach(self.load_backup_button, 0, 0, 1, 1)
+		grid.attach(self.load_default_button, 0, 1, 1, 1)
+		
+		self.show_all()
+		
+		
+	def on_load_backup_button_clicked(self, widget):
+		print("Load backup")
+		self.input_window = GUI_Main_Settings_Backup_Input()
+		self.input_window.connect("delete-event", self.window_destroy)
+		
+	def on_load_default_button_clicked(self, widget):
+		print("Load Default")
+		
+	def window_destroy(self, widget, event):
+		GUI.set_destroyed()
+		if self.input_window is not None:
+			self.input_window.window_destroy(widget, event)
+		self.destroy()
+		
+class GUI_Main_Settings_Backup_Input(Gtk.Window):
+
+	def __init__(self):
+		Gtk.Window.__init__(self, title = "")
+		self.connect("delete-event", self.window_destroy)
+		self.set_decorated(False)
+		grid = Gtk.Grid()
+		grid.set_row_spacing(2)
+		self.add(grid)
+		label = Gtk.Label()
+		label.set_text("Enter backup file name")
+		self.entry = Gtk.Entry()
+		self.entry.connect('activate', self.entered_text)
+		
+		grid.attach(label, 0, 0, 1, 1)
+		grid.attach(self.entry, 0, 1, 1, 1)
+		
+		self.show_all()
+		
+	def entered_text(self, widget):
+		filename = self.entry.get_text()
+		print(filename)
+		self.destroy()
+		
+	def window_destroy(self, widget, event):
+		self.destroy()
+		
+		
+		
+class GUI_Main(Gtk.Window):
+	
+	def __init__(self):
+		self.open = False
+		
 		Gtk.Window.__init__(self, title = "Gui")
 		self.set_icon_from_file(r"GasDet3.png")
 		#self.set_default_size(800, 600)
+		self.connect("button_press_event", self.window_on_button_press_event)
+		
 		self.grid = Gtk.Grid()
 		self.add(self.grid)
+		
 		
 		self.statusbar = Gtk.Statusbar()
 		self.context_id = self.statusbar.get_context_id("Status Main")
@@ -816,7 +906,8 @@ class GUI_Main(Gtk.Window):
 		self.notebook = Gtk.Notebook()
 		self.grid.add(self.notebook)
 		self.grid.attach(self.statusbar, 0, 1, 1, 1)
-		
+
+#########################################################################################################
 		### Page 1
 		
 		page1 = Gtk.Box()
@@ -894,10 +985,8 @@ class GUI_Main(Gtk.Window):
 		page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
 		page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 9, 2, 1)
 	
-		
+#######################################################################################################		
 		### Page 2 
-		
-
 		
 		ChipName = "Chip1"
 		TestString = "Enter Something"
@@ -928,6 +1017,22 @@ class GUI_Main(Gtk.Window):
 		self.page2.pack_end(self.page2.space1, True, False, 0)
 		GObject.timeout_add(250, self.plotwidget.update_plot)
 		
+	
+###################################################################################################	
+	### Overall window event
+	
+	def window_on_button_press_event(self, widget, event):
+		if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3 and self.open == False:
+			print("Setings")
+			self.open = True
+			self.settingwindow = GUI_Main_Settings()
+		elif event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1 and self.open == True:
+			self.settingwindow.window_destroy(widget = widget, event = event)
+			
+	def set_destroyed(self):
+		self.open = False
+
+####################################################################################################		
 	### Functions Page 1	
 		
 	def on_PixelDACbutton_clicked(self, widget):
@@ -947,7 +1052,7 @@ class GUI_Main(Gtk.Window):
 		
 	def on_Runbutton_clicked(self, widget):
 		print("Function call: Run")
-		
+
 	def on_Startupbutton_clicked(self, widget):
 		print("Function call: Startup")
 		
@@ -999,6 +1104,8 @@ class GUI_Main(Gtk.Window):
 	def write_statusbar(self, status):
 		self.statusbar.push(self.context_id, str(status))
 
+
+########################################################################################################################
 	### Functions Page2
 	
 	def on_plotbutton_clicked(self, widget):
@@ -1009,9 +1116,24 @@ class GUI_Main(Gtk.Window):
 		print(ChipName)
 		self.notebook.set_tab_label_text(self.page2, ChipName)
 		
+		
+########################################################################################################################		
+	### Functions right click menu
+	
+	def on_load_backup_clicked(self, widget):
+		print("Load Backup")
+		
+	def on_load_default_clicked(self, widget):
+		print("Set to default")
+		
+		
+def quit_procedure(gui):
+	file = file_logger.create_file()
+	file_logger.write_backup(file)
+	Gtk.main_quit()
 
 GUI = GUI_Main()
-GUI.connect("destroy", Gtk.main_quit)
+GUI.connect("destroy", quit_procedure)
 GUI.show_all()
 GUI.progressbar.hide()
 Gtk.main()
