@@ -157,6 +157,7 @@ class Equalisation_charge(ScanBase):
 
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
                 for mask_step_cmd in mask_cmds2:
+                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.01)
