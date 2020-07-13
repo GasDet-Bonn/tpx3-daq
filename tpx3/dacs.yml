@@ -1,113 +1,109 @@
 registers:
-- name: Ibias_Preamp_ON
+- address: 1
+  default: 128
   description: Selects PreAmplifier Bias on
-  address: 0b00001
+  name: Ibias_Preamp_ON
   size: 8
-  default: 0b10000000
   value: 150
-- name: Ibias_Preamp_OFF
+- address: 2
+  default: 8
   description: Sets PreAmplifier Bias off
-  address: 0b00010
+  name: Ibias_Preamp_OFF
   size: 4
-  default: 0b1000
   value: 8
-- name: VPreamp_NCAS
-  description: Sets the PreAmplifier voltage  
-  address: 0b00011
+- address: 3
+  default: 128
+  description: Sets the PreAmplifier voltage
+  name: VPreamp_NCAS
   size: 8
-  default: 0b10000000
   value: 128
-- name: Ibias_Ikrum
+- address: 4
+  default: 128
   description: Control of krum current
-  address: 0b00100
+  name: Ibias_Ikrum
   size: 8
-  default: 0b10000000
-  value: 15
-- name: Vfbk
-  description:  Vfbk
-  address: 0b00101
+  value: 5
+- address: 5
+  default: 128
+  description: Vfbk
+  name: Vfbk
   size: 8
-  default: 0b10000000
-  value: 143
-- name: Vthreshold_fine
+  value: 132
+- address: 6
+  default: 256
   description: Fine control of Pixel Threshold
-  address: 0b00110
+  name: Vthreshold_fine
   size: 9
-  default: 0b100000000
   value: 270
-- name: Vthreshold_coarse
+- address: 7
+  default: 8
   description: Coarse Control of Pixel Threshold
-  address: 0b00111
+  name: Vthreshold_coarse
   size: 4
-  default: 0b1000
   value: 8
-- name: Ibias_DiscS1_ON
+- address: 8
+  default: 128
   description: Ibias_DiscS1 switched on
-  address: 0b01000
+  name: Ibias_DiscS1_ON
   size: 8
-  default: 0b10000000
   value: 100
-- name: Ibias_DiscS1_OFF
+- address: 9
+  default: 8
   description: Ibias_DiscS1 switched OFF
-  address: 0b01001
+  name: Ibias_DiscS1_OFF
   size: 4
-  default: 0b1000
   value: 8
-- name: Ibias_DiscS2_ON
-  description: SIbias_DiscS2 switched on 
-  address: 0b01010
+- address: 10
+  default: 128
+  description: SIbias_DiscS2 switched on
+  name: Ibias_DiscS2_ON
   size: 8
-  default: 0b10000000
   value: 128
-- name: Ibias_DiscS2_OFF
-  description: Ibias_DiscS2 switched oFF 
-  address: 0b01011
+- address: 11
+  default: 8
+  description: Ibias_DiscS2 switched oFF
+  name: Ibias_DiscS2_OFF
   size: 4
-  default: 0b1000
   value: 8
-- name: Ibias_PixelDAC
-  description: Ibias Pixel DAC value 
-  address: 0b01100
+- address: 12
+  default: 128
+  description: Ibias Pixel DAC value
+  name: Ibias_PixelDAC
   size: 8
-  default: 0b10000000
   value: 128
-- name: Ibias_TPbufferIn
-  description: Test Pulse Buffer input 
-  address: 0b01101
+- address: 13
+  default: 128
+  description: Test Pulse Buffer input
+  name: Ibias_TPbufferIn
   size: 8
-  default: 0b10000000
   value: 128
-- name: Ibias_TPbufferOut
-  description: Test Pulse Buffer output 
-  address: 0b01110
+- address: 14
+  default: 128
+  description: Test Pulse Buffer output
+  name: Ibias_TPbufferOut
   size: 8
-  default: 0b10000000
   value: 128
-- name: VTP_coarse
+- address: 15
+  default: 128
   description: Coarse control of V TestPulse
-  address: 0b01111
+  name: VTP_coarse
   size: 8
-  default: 0b10000000
   value: 100
-- name: VTP_fine
+- address: 16
+  default: 256
   description: Fine control of V TestPulse
-  address: 0b10000
+  name: VTP_fine
   size: 9
-  default: 0b100000000
-  value: 400
-- name: Ibias_CP_PLL
-  description: Ibias_CP_PLL value 
-  address: 0b10001
+  value: 300
+- address: 17
+  default: 128
+  description: Ibias_CP_PLL value
+  name: Ibias_CP_PLL
   size: 8
-  default: 0b10000000
   value: 128
-- name: PLL_Vcntrl
+- address: 18
+  default: 128
   description: PLL voltage
-  address: 0b10010
+  name: PLL_Vcntrl
   size: 8
-  default: 0b10000000
   value: 128
-
-
-
-
