@@ -14,6 +14,12 @@
 `include "utils/generic_fifo.v"
 `include "utils/cdc_reset_sync.v"
 
+`include "pulse_gen/pulse_gen.v"
+`include "pulse_gen/pulse_gen_core.v"
+
+`include "timestamp/timestamp.v"
+`include "timestamp/timestamp_core.v"
+
 `include "bram_fifo/bram_fifo_core.v"
 `include "bram_fifo/bram_fifo.v"
 
@@ -26,7 +32,7 @@
 `include "../lib/tpx3_rx/decode_8b10b.v"
 `include "utils/flag_domain_crossing.v"
 
-`define FW_VERSION 1
+`define FW_VERSION 2
 
 module tpx3_core (
         input  wire        BUS_CLK,
@@ -88,8 +94,14 @@ module tpx3_core (
     localparam SPI_BASEADDR = 32'h2000;   //0x1000
     localparam SPI_HIGHADDR = 32'h3000-1; //0x300f
 
-    localparam RX_BASEADDR = 16'h6000;
-    localparam RX_HIGHADDR = 16'h7000-1;
+    localparam TIMESTAMP_BASEADDR = 32'h3000; 
+    localparam TIMESTAMP_HIGHADDR = 32'h4000-1; 
+
+    localparam TS_PULSE_BASEADDR = 32'h4000;
+    localparam TS_PULSE_HIGHADDR = 32'h5000-1;;
+
+    localparam RX_BASEADDR = 32'h6000;
+    localparam RX_HIGHADDR = 32'h7000-1;
 
     localparam FIFO_BASEADDR = 32'h8000;
     localparam FIFO_HIGHADDR = 32'h9000-1;
@@ -198,6 +210,54 @@ module tpx3_core (
         .BUS_WR              ( BUS_WR          )
     );
 
+    wire PULSE;
+    pulse_gen
+    #(
+        .BASEADDR(TS_PULSE_BASEADDR),
+        .HIGHADDR(TS_PULSE_HIGHADDR),
+        .ABUSWIDTH(ABUSWIDTH)
+    ) ts_pulse_gen
+    (
+        .BUS_CLK(BUS_CLK),
+        .BUS_RST(BUS_RST),
+        .BUS_ADD(BUS_ADD),
+        .BUS_DATA(BUS_DATA[7:0]),
+        .BUS_RD(BUS_RD),
+        .BUS_WR(BUS_WR),
+
+        .PULSE_CLK(CLK40),
+        .EXT_START(1'b0),
+        .PULSE(PULSE)
+    );
+
+    wire TS_FIFO_READ, TS_FIFO_EMPTY;
+    wire [31:0] TS_FIFO_DATA;
+
+    timestamp
+    #(
+        .BASEADDR(TIMESTAMP_BASEADDR),
+        .HIGHADDR(TIMESTAMP_HIGHADDR),
+        .ABUSWIDTH(ABUSWIDTH),
+        .IDENTIFIER(4'b0101)
+    ) timestamp
+    (
+        .BUS_CLK(BUS_CLK),
+        .BUS_RST(BUS_RST),
+        .BUS_ADD(BUS_ADD),
+        .BUS_DATA(BUS_DATA[7:0]),
+        .BUS_RD(BUS_RD),
+        .BUS_WR(BUS_WR),
+
+        .CLK(CLK40),
+        .DI(PULSE),
+        //.EXT_TIMESTAMP(TIMESTAMP),
+        //.TIMESTAMP_OUT(TIMESTAMP_OUT),
+
+        .FIFO_READ(TS_FIFO_READ),
+        .FIFO_EMPTY(TS_FIFO_EMPTY),
+        .FIFO_DATA(TS_FIFO_DATA)
+    );
+
 
     wire CNT_FIFO_READ;
     reg [31:0] CNT_FIFO_DATA;
@@ -217,9 +277,9 @@ module tpx3_core (
         .RST       (BUS_RST                         ),
         .CLK       (BUS_CLK                         ),
 
-        .WRITE_REQ ({~TPX_0_FIFO_EMPTY, CNT_FIFO_EN}),
-        .HOLD_REQ  ({2'b0}                          ),
-        .DATA_IN   ({TPX_0_FIFO_DATA, CNT_FIFO_DATA}),
+        .WRITE_REQ ({~TPX_0_FIFO_EMPTY, ~TS_FIFO_EMPTY, CNT_FIFO_EN}),
+        .HOLD_REQ  ({10'b0}                          ),
+        .DATA_IN   ({TPX_0_FIFO_DATA, TS_FIFO_DATA, CNT_FIFO_DATA}),
         .READ_GRANT(READ_GRANT                      ),
 
         .READY_OUT (ARB_READY_OUT                   ),

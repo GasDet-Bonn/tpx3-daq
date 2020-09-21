@@ -20,6 +20,16 @@ hw_drivers:
     type      : spi
     interface : intf
     base_addr : 0x2000
+
+  - name      : timestamp
+    type      : timestamp
+    interface : intf
+    base_addr : 0x3000
+
+  - name      : PULSE_GEN
+    type      : pulse_gen
+    interface : intf
+    base_addr : 0x4000
     
   - name      : FIFO
     type      : bram_fifo

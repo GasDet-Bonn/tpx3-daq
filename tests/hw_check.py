@@ -225,6 +225,31 @@ def main(args_dict):
     for el in ddout:
         print "\tDecode: ", el
 
+
+    print "Test Timestamp extension"
+    chip['timestamp'].reset()
+    chip['timestamp']["ENABLE"] = 1
+    chip['gpio'].reset()
+
+    chip['FIFO'].reset()
+
+    chip['PULSE_GEN'].set_delay(0x105)
+    chip['PULSE_GEN'].set_width(10)
+    chip['PULSE_GEN'].set_repeat(1)
+    print "\t Delay = ", chip['PULSE_GEN'].get_delay()
+    print "\t Width = ", chip['PULSE_GEN'].get_width()
+    print "\t Repeat = ", chip['PULSE_GEN'].get_repeat()
+
+    chip['PULSE_GEN'].start()
+
+    ret = chip['FIFO'].get_data()
+    print "\t Length of FIFO data: ", len(ret)
+
+    print "\t FIFO data: "
+    for i, r in enumerate(ret):
+        print "\t\t", bin(r & 0xffffffff)
+
+
     chip['CONTROL']['RESET'] = 1
     chip['CONTROL'].write()
 
