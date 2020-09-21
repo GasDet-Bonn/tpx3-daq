@@ -40,7 +40,42 @@ hw_drivers:
   - name      : RX
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x6000 
+    base_addr : 0x6000
+
+  - name      : RX1
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6100
+
+  - name      : RX2
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6200
+
+  - name      : RX3
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6300
+
+  - name      : RX4
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6400
+
+  - name      : RX5
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6500
+
+  - name      : RX6
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6600
+
+  - name      : RX7
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6700
     
 registers:
   - name        : CONTROL

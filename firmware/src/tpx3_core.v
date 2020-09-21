@@ -176,39 +176,49 @@ module tpx3_core (
     assign SDO = SDI;
     assign EnableIn = ~SEN;
 
-    wire TPX_0_FIFO_READ;
-    wire TPX_0_FIFO_EMPTY;
-    wire [31:0] TPX_0_FIFO_DATA;
+    wire [7:0] TPX_FIFO_READ;
+    wire [7:0] TPX_FIFO_EMPTY;
+    wire [31:0] TPX_FIFO_DATA [7:0];
+    wire [7:0] RX_READY_RX;
+    
+    genvar ch;
+    generate
+        for (ch = 0; ch < 8; ch = ch + 1) begin: tpx3rx_gen
 
-    tpx3_rx #(
-        .BASEADDR       (RX_BASEADDR),
-        .HIGHADDR       (RX_HIGHADDR),
-        .DATA_IDENTIFIER(0          ),
-        .ABUSWIDTH      (ABUSWIDTH  )
-    ) tpx3_rx (
+        tpx3_rx #(
+            .BASEADDR       (RX_BASEADDR + ch*32'h100),
+            .HIGHADDR       (RX_BASEADDR + 32'h100 + ch*32'h100 - 1),
+            .DATA_IDENTIFIER(         ch),
+            .ABUSWIDTH      (ABUSWIDTH  )
+        ) tpx3_rx (
 
-        .RX_CLKX2            ( CLK320          ),
-        .RX_CLKW             ( CLK32           ),
-        .RX_DATA             ( RX_DATA[0]      ),
+            .RX_CLKX2            ( CLK320          ),
+            .RX_CLKW             ( CLK32           ),
+            .RX_DATA             ( RX_DATA[ch]     ),
 
-        .RX_READY            ( RX_READY        ),
-        .RX_8B10B_DECODER_ERR(                 ),
-        .RX_FIFO_OVERFLOW_ERR(                 ),
+            .RX_READY            ( RX_READY_RX[ch]  ),
+            .RX_8B10B_DECODER_ERR(                 ),
+            .RX_FIFO_OVERFLOW_ERR(                 ),
 
-        .FIFO_READ           ( TPX_0_FIFO_READ ),
-        .FIFO_EMPTY          ( TPX_0_FIFO_EMPTY),
-        .FIFO_DATA           ( TPX_0_FIFO_DATA ),
+            .FIFO_READ           ( TPX_FIFO_READ[ch] ),
+            .FIFO_EMPTY          ( TPX_FIFO_EMPTY[ch] ),
+            .FIFO_DATA           ( TPX_FIFO_DATA[ch] ),
 
-        .RX_FIFO_FULL        (                 ),
-        .RX_ENABLED          (                 ),
+            .RX_FIFO_FULL        (                 ),
+            .RX_ENABLED          (                 ),
 
-        .BUS_CLK             ( BUS_CLK         ),
-        .BUS_RST             ( BUS_RST         ),
-        .BUS_ADD             ( BUS_ADD         ),
-        .BUS_DATA            ( BUS_DATA[7:0]   ),
-        .BUS_RD              ( BUS_RD          ),
-        .BUS_WR              ( BUS_WR          )
-    );
+            .BUS_CLK             ( BUS_CLK         ),
+            .BUS_RST             ( BUS_RST         ),
+            .BUS_ADD             ( BUS_ADD         ),
+            .BUS_DATA            ( BUS_DATA[7:0]   ),
+            .BUS_RD              ( BUS_RD          ),
+            .BUS_WR              ( BUS_WR          )
+        );
+
+    end
+    endgenerate
+
+    assign RX_READY = RX_READY_RX[0];
 
     wire PULSE;
     pulse_gen
@@ -269,17 +279,17 @@ module tpx3_core (
 
     wire ARB_READY_OUT, ARB_WRITE_OUT;
     wire [31:0] ARB_DATA_OUT;
-    wire [1:0] READ_GRANT;
+    wire [9:0] READ_GRANT;
 
     rrp_arbiter #(
-        .WIDTH(2)
+        .WIDTH(10)
     ) rrp_arbiter (
         .RST       (BUS_RST                         ),
         .CLK       (BUS_CLK                         ),
 
-        .WRITE_REQ ({~TPX_0_FIFO_EMPTY, ~TS_FIFO_EMPTY, CNT_FIFO_EN}),
+        .WRITE_REQ ({~TPX_FIFO_EMPTY, ~TS_FIFO_EMPTY, CNT_FIFO_EN}),
         .HOLD_REQ  ({10'b0}                          ),
-        .DATA_IN   ({TPX_0_FIFO_DATA, TS_FIFO_DATA, CNT_FIFO_DATA}),
+        .DATA_IN   ({TPX_FIFO_DATA[7], TPX_FIFO_DATA[6], TPX_FIFO_DATA[5], TPX_FIFO_DATA[4], TPX_FIFO_DATA[3], TPX_FIFO_DATA[2], TPX_FIFO_DATA[1], TPX_FIFO_DATA[0], TS_FIFO_DATA, CNT_FIFO_DATA}),
         .READ_GRANT(READ_GRANT                      ),
 
         .READY_OUT (ARB_READY_OUT                   ),
@@ -288,7 +298,8 @@ module tpx3_core (
     );
 
     assign CNT_FIFO_READ = READ_GRANT[0];
-    assign TPX_0_FIFO_READ = READ_GRANT[1];
+    assign TS_FIFO_READ = READ_GRANT[1];
+    assign TPX_FIFO_READ = READ_GRANT[9:2];
 
     bram_fifo
     #(
