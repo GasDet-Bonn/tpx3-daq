@@ -158,7 +158,7 @@ class PixelDAC_opt(ScanBase):
             time.sleep(0.001)
 
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
-                for mask_step_cmd in mask_cmds2:
+                for i, mask_step_cmd in enumerate(mask_cmds2):
                     # Only active CTPR for active columns in this iteration
                     self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
