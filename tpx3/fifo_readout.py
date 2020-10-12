@@ -13,7 +13,7 @@ import numpy as np
 from time import sleep, time, mktime
 from threading import Thread, Event
 from collections import deque
-from Queue import Queue, Empty
+from six.moves.queue import Queue, Empty
 
 loglevel = logging.getLogger('RD53A').getEffectiveLevel()
 
