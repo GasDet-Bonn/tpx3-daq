@@ -8,6 +8,7 @@ import array
 import argparse
 
 import matplotlib
+from six.moves import map
 matplotlib.use('TKagg')
 import matplotlib.pyplot as plt
 
@@ -23,7 +24,7 @@ def pretty_print(string_val, bits=32):
     bits = BitLogic(bits)
     bits[:] = val
     lst = bits.toByteList(True)
-    lst_hex = map(hex, bits.toByteList(False))
+    lst_hex = list(map(hex, bits.toByteList(False)))
     print("Int ", lst)
     print("Hex ", lst_hex)
     print("Binary ", bits)

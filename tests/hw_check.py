@@ -8,6 +8,7 @@ import time
 from basil.utils.BitLogic import BitLogic
 import array
 import argparse
+from six.moves import map
 
 
 def pretty_print(string_val, bits=32):
@@ -15,7 +16,7 @@ def pretty_print(string_val, bits=32):
     bits = BitLogic(bits)
     bits[:] = val
     lst = bits.toByteList(True)
-    lst_hex = map(hex, bits.toByteList(False))
+    lst_hex = list(map(hex, bits.toByteList(False)))
     print("Int ", lst)
     print("Hex ", lst_hex)
     print("Binary ", bits)
