@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import division
 from six.moves import range
 from tpx3.tpx3 import TPX3
 from basil.utils.BitLogic import BitLogic

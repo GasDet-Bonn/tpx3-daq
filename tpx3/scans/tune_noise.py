@@ -10,8 +10,8 @@
     to find the effective threshold of the enabled pixels.
 '''
 from __future__ import print_function
-
 from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -69,7 +69,7 @@ class NoiseTune(ScanBase):
             time.sleep(0.2)
 
             mask_step_cmd = []
-            for i in range(256 / 4):
+            for i in range(256 // 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
             self.chip.write(mask_step_cmd)

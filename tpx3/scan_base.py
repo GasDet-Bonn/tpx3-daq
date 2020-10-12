@@ -6,6 +6,7 @@
 #
 
 from __future__ import absolute_import
+from __future__ import division
 import time
 import os
 import yaml
@@ -262,7 +263,7 @@ class ScanBase(object):
         self.configure(**kwargs) #TODO: all DACs set here
 
         # Step 3a: Produce needed PCR (Pixel conficuration)
-        for i in range(256 / 4):
+        for i in range(256 // 4):
             self.chip.write_pcr(range(4 * i, 4 * i + 4))
 
         # Setup files

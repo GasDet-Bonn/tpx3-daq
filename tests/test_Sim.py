@@ -6,6 +6,7 @@
 #
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import division
 from six.moves import range
 import unittest
 import os
@@ -132,7 +133,7 @@ class TestSim(unittest.TestCase):
             dac_number_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
         else:
             dac_number_list = range(18)
-        pbar = tqdm(total=512/4*len(dac_number_list))
+        pbar = tqdm(total = 512 // 4 * len(dac_number_list))
         for value in range(0, 512, 8):
             for dac in dac_number_list:
                 if value < dac_size_list[dac]:
@@ -351,7 +352,7 @@ class TestSim(unittest.TestCase):
         self.assertEquals(0, dout[len(dout) - 2][27:0].tovalue())
 
         # Test values
-        pbar = tqdm(total = 65536/128 + 256 + 16)
+        pbar = tqdm(total = 65536 // 128 + 256 + 16)
         for i in range(0, 65536, 128):
             data = self.chip.write_tp_pulsenumber(i, False)
             self.chip.write(data)

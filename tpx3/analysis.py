@@ -10,6 +10,7 @@
 '''
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 import numpy as np
 from basil.utils.BitLogic import BitLogic
 import logging
@@ -169,9 +170,9 @@ def raw_data_to_dut(raw_data):
         logger.error("Missing one 32bit subword of a 48bit package!")
         return np.empty(0, dtype=np.uint64)
 
-    nwords = len(raw_data) / 2
+    nwords = len(raw_data) // 2
 
-    data_words = np.empty((raw_data.shape[0] / 2), dtype=np.uint64)
+    data_words = np.empty((raw_data.shape[0] // 2), dtype=np.uint64)
     k = (raw_data & 0xffffff)
     data_words[:] = k[1::2].view('>u4')
     data_words = (data_words << 16) + (k[0::2].view('>u4') >> 8)

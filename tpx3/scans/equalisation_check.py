@@ -10,8 +10,8 @@
     to valitate the equalisation.
 '''
 from __future__ import print_function
-
 from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -78,7 +78,7 @@ class Equalisation_Check(ScanBase):
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
             self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
 
-            for i in range(256 / 4):
+            for i in range(256 // 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
@@ -98,7 +98,7 @@ class Equalisation_Check(ScanBase):
                 fine_threshold = vcal
             else:
                 relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) / 160) + 1
+                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
                 fine_threshold = relative_fine_threshold + 352
             self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
             self.chip.set_dac("Vthreshold_fine", fine_threshold)

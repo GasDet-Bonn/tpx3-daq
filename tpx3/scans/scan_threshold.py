@@ -9,8 +9,8 @@
     This script scans over different thresholds for one testpulse height
 '''
 from __future__ import print_function
-
 from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -78,15 +78,15 @@ class ThresholdScan(ScanBase):
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
 
-            self.chip.test_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
-            self.chip.mask_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+            self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
 
             #self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
             #self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
 
-            for i in range(256 / 4):
+            for i in range(256 // 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
@@ -106,7 +106,7 @@ class ThresholdScan(ScanBase):
                 fine_threshold = vcal
             else:
                 relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) / 160) + 1
+                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
                 fine_threshold = relative_fine_threshold + 352
                 #print("rel: %i coarse: %i fine: %i" % (relative_fine_threshold, coarse_threshold, fine_threshold))
             self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
@@ -115,7 +115,7 @@ class ThresholdScan(ScanBase):
 
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):
-                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
+                    self.chip.write_ctpr(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.001)

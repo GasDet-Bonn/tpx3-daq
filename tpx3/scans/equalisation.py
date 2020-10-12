@@ -10,8 +10,8 @@
     with noise.
 '''
 from __future__ import print_function
-
 from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -79,21 +79,21 @@ class Equalisation(ScanBase):
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
             
-            self.chip.test_matrix[(j//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (j%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
-            self.chip.mask_matrix[(j//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (j%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+            self.chip.test_matrix[(j//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (j%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(j//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (j%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
             
             #self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
             
             self.chip.thr_matrix[:, :] = 0
 
-            for i in range(256 / 4):
+            for i in range(256 // 4):
                 mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
 
             self.chip.thr_matrix[:, :] = 15
 
-            for i in range(256 / 4):
+            for i in range(256 // 4):
                 mask_step_cmd2.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
@@ -115,7 +115,7 @@ class Equalisation(ScanBase):
                 fine_threshold = vcal
             else:
                 relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) / 160) + 1
+                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
                 fine_threshold = relative_fine_threshold + 352
                 #print("rel: %i coarse: %i fine: %i" % (relative_fine_threshold, coarse_threshold, fine_threshold))
             self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
@@ -143,7 +143,7 @@ class Equalisation(ScanBase):
                 fine_threshold = vcal
             else:
                 relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) / 160) + 1
+                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
                 fine_threshold = relative_fine_threshold + 352
                 #print("rel: %i coarse: %i fine: %i" % (relative_fine_threshold, coarse_threshold, fine_threshold))
             self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
@@ -182,9 +182,9 @@ class Equalisation(ScanBase):
 
             hit_data = hit_data[hit_data['data_header'] == 1]
             param_range = np.unique(meta_data['scan_param_id'])
-            hit_data_th0 = hit_data[hit_data['scan_param_id'] < len(param_range) / 2]
+            hit_data_th0 = hit_data[hit_data['scan_param_id'] < len(param_range) // 2]
             param_range_th0 = np.unique(hit_data_th0['scan_param_id'])
-            hit_data_th15 = hit_data[hit_data['scan_param_id'] >= len(param_range) / 2]
+            hit_data_th15 = hit_data[hit_data['scan_param_id'] >= len(param_range) // 2]
             param_range_th15 = np.unique(hit_data_th15['scan_param_id'])
             
             self.logger.info('Get the global threshold distributions for all pixels...')

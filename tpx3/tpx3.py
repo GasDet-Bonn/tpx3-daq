@@ -7,6 +7,7 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 import zlib  # workaround
 import yaml
 import logging
@@ -706,7 +707,7 @@ class TPX3(Dut):
 
         # determine number of 48bit words
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
-        nwords = len(data) / 2
+        nwords = len(data) // 2
         result = []
 
         for i in range(nwords):
@@ -838,8 +839,8 @@ class TPX3(Dut):
         Pixel = BitLogic(3)
 
         # calculate EoC, Superpixel and Pixel with the x and y position of the pixel
-        EoC = (x_pos - x_pos % 2) / 2
-        Superpixel = (y_pos - y_pos % 4) / 4
+        EoC = (x_pos - x_pos % 2) // 2
+        Superpixel = (y_pos - y_pos % 4) // 4
         Pixel = (x_pos % 2) * 4 + (y_pos % 4)
 
         # create a 16 bit variable for the address

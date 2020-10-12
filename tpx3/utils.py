@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from basil.utils.BitLogic import BitLogic
 
 
@@ -13,7 +14,7 @@ def toByteList(obj, bitwise=False):
     if obj.length() % 8 != 0:
         raise ValueError("""Cannot convert to array of bytes, if number of
         bits not a multiple of a byte""")
-    nbytes = obj.length() / 8
+    nbytes = obj.length() // 8
     byteList = []
 
     # range from 0 to 40, reversed to get MSB first
