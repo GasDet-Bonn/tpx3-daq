@@ -5,6 +5,7 @@
 # ------------------------------------------------------------
 #
 
+from __future__ import absolute_import
 import time
 import os
 import yaml
@@ -16,8 +17,8 @@ import numpy as np
 import zmq
 
 from contextlib import contextmanager
-from tpx3 import TPX3
-from fifo_readout import FifoReadout
+from .tpx3 import TPX3
+from .fifo_readout import FifoReadout
 from tables.exceptions import NoSuchNodeError
 
 VERSION = pkg_resources.get_distribution("tpx3-daq").version

@@ -7,6 +7,7 @@
 # A transfer layer for SUdp Ethernet.
 #
 
+from __future__ import absolute_import
 import logging
 import socket
 import struct

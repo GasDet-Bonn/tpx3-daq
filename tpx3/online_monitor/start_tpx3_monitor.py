@@ -3,6 +3,7 @@
 the online_monitor with bdaq53 plugins. Not really needed
 start_online_monitor config.yaml would also work...
 '''
+from __future__ import absolute_import
 import sys
 import os
 import subprocess

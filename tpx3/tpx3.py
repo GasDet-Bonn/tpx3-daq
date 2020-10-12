@@ -6,6 +6,7 @@
 #
 
 from __future__ import print_function
+from __future__ import absolute_import
 import zlib  # workaround
 import yaml
 import logging
@@ -19,7 +20,7 @@ import basil
 
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
-from utils import toByteList, bitword_to_byte_list
+from .utils import toByteList, bitword_to_byte_list
 
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import gi
 
 gi.require_version("Gtk", "3.0")
