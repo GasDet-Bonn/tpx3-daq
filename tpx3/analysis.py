@@ -112,8 +112,8 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
     for i in range(Vthreshold_start, Vthreshold_stop):
         sum_mean_difference_th0 += math.pow(i - mean_th0, 2) * hist_th0[i] / 100.
         sum_mean_difference_th15 += math.pow(i - mean_th15, 2) * hist_th15[i] / 100.
-	active_pixels_th0 += hist_th0[i] / 100.
-	active_pixels_th15 += hist_th15[i] / 100.
+        active_pixels_th0 += hist_th0[i] / 100.
+        active_pixels_th15 += hist_th15[i] / 100.
     var_th0 = sum_mean_difference_th0 / (active_pixels_th0 - 1)
     var_th15 = sum_mean_difference_th15 / (active_pixels_th15 - 1)
     rms_th0 = np.sqrt(var_th0)
