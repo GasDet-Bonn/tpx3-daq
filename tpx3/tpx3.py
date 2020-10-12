@@ -374,7 +374,7 @@ class TPX3(Dut):
         and assigns it to the correct attribute, taken from the dictNames global
         variable.
         """
-        data = yaml.load(open(filename, 'r'))
+        data = yaml.load(open(filename, 'r'), Loader=yaml.FullLoader)
 
         # map storing the allowed sizes of each value
         valsize_map = {}

@@ -53,7 +53,7 @@ class TestSim(unittest.TestCase):
         )
 
         with open(root_dir + "/tpx3/tpx3.yaml", "r") as f:
-            cnfg = yaml.load(f)
+            cnfg = yaml.load(f, Loader=yaml.FullLoader)
 
         cnfg["transfer_layer"][0]["type"] = "SiSim"
         cnfg["transfer_layer"][0]["init"]["port"] = 12345

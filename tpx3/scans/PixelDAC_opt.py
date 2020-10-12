@@ -287,7 +287,7 @@ if __name__ == "__main__":
 
     # Write new pixeldac into DAC YAML file
     with open('../dacs.yml') as f:
-        doc = yaml.load(f)
+        doc = yaml.load(f, Loader=yaml.FullLoader)
 
     for register in doc['registers']:
         if register['name'] == 'Ibias_PixelDAC':
