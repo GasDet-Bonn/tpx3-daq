@@ -32,6 +32,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import colors, cm
 from matplotlib.backends.backend_pdf import PdfPages
+import six
 
 #import bdaq53.analysis.analysis_utils as au
 
@@ -230,29 +231,29 @@ class Plotting(object):
 
         ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
 
-        if 'maskfile' in self.run_config.keys() and self.run_config['maskfile'] is not None and not self.run_config['maskfile'] == 'None':
+        if 'maskfile' in list(self.run_config.keys()) and self.run_config['maskfile'] is not None and not self.run_config['maskfile'] == 'None':
             ax.text(0.01, -0.05, 'Maskfile:\n%s' %
                     (self.run_config['maskfile']), fontsize=6)
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
-        for key, value in self.run_config.iteritems():
+        for key, value in six.iteritems(self.run_config):
             if key in ['scan_id', 'run_name', 'chip_wafer', 'chip_x', 'chip_y', 'software_version', 'board_name', 'firmware_version', 'disable', 'maskfile']:
                 continue
             tb_dict[key] = value
 
         tb_list = []
-        for i in range(0, len(tb_dict.keys()), 3):
+        for i in range(0, len(list(tb_dict.keys())), 3):
             try:
-                key1 = tb_dict.keys()[i]
+                key1 = list(tb_dict.keys())[i]
                 value1 = tb_dict[key1]
                 try:
-                    key2 = tb_dict.keys()[i + 1]
+                    key2 = list(tb_dict.keys())[i + 1]
                     value2 = tb_dict[key2]
                 except:
                     key2 = ''
                     value2 = ''
                 try:
-                    key3 = tb_dict.keys()[i + 2]
+                    key3 = list(tb_dict.keys())[i + 2]
                     value3 = tb_dict[key3]
                 except:
                     key3 = ''

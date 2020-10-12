@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from .tpx3 import TPX3
 from .fifo_readout import FifoReadout
 from tables.exceptions import NoSuchNodeError
+import six
 
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
 loglevel = logging.getLogger('TPX3').getEffectiveLevel()
@@ -153,7 +154,7 @@ class ScanBase(object):
         row.append()
 
         run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'maskfile']
-        for kw, value in kwargs.iteritems():
+        for kw, value in six.iteritems(kwargs):
             if kw in run_config_attributes:
                 row = run_config_table.row
                 row['attribute'] = kw
@@ -162,7 +163,7 @@ class ScanBase(object):
         run_config_table.flush()
 
         dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable)
-        for dac, value in self.chip.dacs.iteritems():
+        for dac, value in six.iteritems(self.chip.dacs):
             row = dac_table.row
             row['DAC'] = dac
             row['value'] = value
@@ -385,14 +386,14 @@ class ScanBase(object):
         self.fh = logging.FileHandler(self.output_filename + '.log')
         self.fh.setLevel(loglevel)
         self.fh.setFormatter(logging.Formatter("%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s"))
-        for lg in logging.Logger.manager.loggerDict.itervalues():
+        for lg in six.itervalues(logging.Logger.manager.loggerDict):
             if isinstance(lg, logging.Logger):
                 lg.addHandler(self.fh)
 
         return self.fh
 
     def close_logfile(self):
-        for lg in logging.Logger.manager.loggerDict.itervalues():
+        for lg in six.itervalues(logging.Logger.manager.loggerDict):
             if isinstance(lg, logging.Logger):
                 lg.removeHandler(self.fh)
 

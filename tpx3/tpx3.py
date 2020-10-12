@@ -23,6 +23,7 @@ from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
 from .utils import toByteList, bitword_to_byte_list
 from io import open
+import six
 
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
@@ -121,7 +122,7 @@ class CustomDict(dict):
         of the given value. Else raise a ValueError
         """
         # check if valid by checking size smaller than max value
-        isValidKey = True if key in self.valsize_map.keys() else False
+        isValidKey = True if key in list(self.valsize_map.keys()) else False
         if not isValidKey:
             raise KeyError(self.dictErrors['invalidKey'].format(key))
         isValid = True if value < 2 ** self.valsize_map[key] and value >= 0 else False
@@ -277,7 +278,7 @@ class TPX3(Dut):
         self.outputBlock_file = outputBlock_file
         self.PLLConfig_file = PLLConfig_file
 
-        for dict_type, type_dict in dictNames.iteritems():
+        for dict_type, type_dict in six.iteritems(dictNames):
             setattr(self, type_dict["YamlContent"], {})
             # get the name of the variable, which stores the filename, e.g. `config_file`
             var_name = type_dict["FnameVar"]
@@ -341,7 +342,7 @@ class TPX3(Dut):
 
         yaml_dict = getattr(self, dictNames[dict_type]["YamlContent"])
         c_dict = getattr(self, dictNames[dict_type]["CustomDict"])
-        for k, v in yaml_dict.iteritems():
+        for k, v in six.iteritems(yaml_dict):
             if to_default:
                 c_dict[k] = v['default']
             else:
@@ -392,7 +393,7 @@ class TPX3(Dut):
         c_dict = CustomDict(valsize_map, dict_type)
 
         # now write values to this dictionary
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             c_dict[k] = v['value']
 
         # set the (now filled) custom dict as attribute
@@ -473,7 +474,7 @@ class TPX3(Dut):
         """
         # Note: here we can now iterate over self.dacs instead of self._dacs
         # due to the `dacs` property!
-        for dac, val in self.dacs.iteritems():
+        for dac, val in six.iteritems(self.dacs):
             data = self.set_dac(dac, val, write = False)
             self.write(data, True)
 
@@ -493,7 +494,7 @@ class TPX3(Dut):
             print("The assertion in the following loop may fail, since we are not",
                   " may not have written the DAC values to the chip!")
 
-        for dac, val in self.dacs.iteritems():
+        for dac, val in six.iteritems(self.dacs):
             data = self.read_dac(dac, False)
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
