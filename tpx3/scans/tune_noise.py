@@ -20,6 +20,7 @@ import tables as tb
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -39,7 +40,7 @@ class NoiseTune(ScanBase):
 
         '''
 
-        self.chip.write_ctpr(range(256))  # ALL
+        self.chip.write_ctpr(list(range(256)))  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
@@ -70,7 +71,7 @@ class NoiseTune(ScanBase):
 
             mask_step_cmd = []
             for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
             self.chip.write(mask_step_cmd)
 

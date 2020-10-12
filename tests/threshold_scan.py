@@ -6,6 +6,7 @@ import time
 from basil.utils.BitLogic import BitLogic
 import array
 import argparse
+from six.moves import range
 
 
 def threshold_scan():

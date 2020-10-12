@@ -21,6 +21,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -88,7 +89,7 @@ class TestpulseScan(ScanBase):
             #self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
 
             for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
 
@@ -96,7 +97,7 @@ class TestpulseScan(ScanBase):
             pbar.update(1)
         pbar.close()
 
-        cal_high_range = range(VTP_fine_start, VTP_fine_stop, 1)
+        cal_high_range = list(range(VTP_fine_start, VTP_fine_stop, 1))
 
         self.logger.info('Starting scan...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
@@ -107,7 +108,7 @@ class TestpulseScan(ScanBase):
 
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):
-                    self.chip.write_ctpr(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step))))
+                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.001)
@@ -139,7 +140,7 @@ class TestpulseScan(ScanBase):
             VTP_fine_start = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_start'][0]
             VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_stop'][0]
 
-            param_range = range(VTP_fine_start, VTP_fine_stop)
+            param_range = list(range(VTP_fine_start, VTP_fine_stop))
             thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections)
 
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
@@ -180,7 +181,7 @@ class TestpulseScan(ScanBase):
 
                 scurve_hist = h5_file.root.interpreted.HistSCurve[:].T
                 max_occ = n_injections + 10
-                p.plot_scurves(scurve_hist, range(VTP_fine_start, VTP_fine_stop), scan_parameter_name="VTP_fine", max_occ=max_occ)
+                p.plot_scurves(scurve_hist, list(range(VTP_fine_start, VTP_fine_stop)), scan_parameter_name="VTP_fine", max_occ=max_occ)
 
                 chi2_sel = h5_file.root.interpreted.Chi2Map[:] > 0.  # Mask not converged fits (chi2 = 0)
                 mask[~chi2_sel] = True

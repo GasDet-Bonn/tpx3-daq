@@ -7,6 +7,7 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 from six.moves import map
+from six.moves import range
 
 
 def pretty_print(string_val, bits=32):

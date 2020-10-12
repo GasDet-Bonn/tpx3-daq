@@ -23,6 +23,7 @@ import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
 from tables.exceptions import NoSuchNodeError
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -84,7 +85,7 @@ class Equalisation_Check_charge(ScanBase):
             self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
 
             for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
 
@@ -92,7 +93,7 @@ class Equalisation_Check_charge(ScanBase):
             pbar.update(1)
         pbar.close()
 
-        cal_high_range = range(Vthreshold_start, Vthreshold_stop, 1)
+        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
         self.logger.info('Starting scan...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
@@ -145,7 +146,7 @@ class Equalisation_Check_charge(ScanBase):
             self.logger.info('Get the global threshold distributions for all pixels...')
             scurve = analysis.scurve_hist(hit_data, param_range)
             self.logger.info('Fit the scurves for all pixels...')
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=range(Vthreshold_start, Vthreshold_stop), n_injections=n_injections, invert_x=True)
+            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True)
 
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
@@ -173,7 +174,7 @@ class Equalisation_Check_charge(ScanBase):
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
 
                 vth_hist = h5_file.root.interpreted.HitDistribution[:].T
-                p.plot_scurves(vth_hist, range(Vthreshold_start, Vthreshold_stop), scan_parameter_name="Vthreshold")
+                p.plot_scurves(vth_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold")
 
                 vths = h5_file.root.interpreted.PixelThresholdMap[:]
                 p.plot_occupancy(vths, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=Vthreshold_start, z_max=Vthreshold_stop)

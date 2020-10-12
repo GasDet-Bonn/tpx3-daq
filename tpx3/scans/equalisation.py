@@ -24,6 +24,7 @@ import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
 from tables.exceptions import NoSuchNodeError
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -89,12 +90,12 @@ class Equalisation(ScanBase):
             self.chip.thr_matrix[:, :] = 0
 
             for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             self.chip.thr_matrix[:, :] = 15
 
             for i in range(256 // 4):
-                mask_step_cmd2.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd2.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
             mask_step_cmd2.append(self.chip.read_pixel_matrix_datadriven())
@@ -104,7 +105,7 @@ class Equalisation(ScanBase):
             pbar.update(1)
         pbar.close()
 
-        cal_high_range = range(Vthreshold_start, Vthreshold_stop, 1)
+        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
         self.logger.info('Starting scan for THR = 0...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))

@@ -21,6 +21,7 @@ from scipy.optimize import curve_fit
 from scipy.special import erf
 from numba import njit
 import math
+from six.moves import range
 
 logger = logging.getLogger('Analysis')
 

@@ -7,6 +7,7 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 from six.moves import map
+from six.moves import range
 
 
 def pretty_print(string_val, bits=32):
@@ -137,7 +138,7 @@ def test_timer():
 
     # Step 7: Set CTPR
     print("Write CTPR")
-    data = chip.write_ctpr(range(255), write=False)
+    data = chip.write_ctpr(list(range(255)), write=False)
     chip.write(data, True)
     # Get the data, do the FPGA decode and do the decode ot the 0th element
     # which should be EoC (header: 0x71)

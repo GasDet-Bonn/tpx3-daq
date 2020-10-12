@@ -8,6 +8,7 @@ from basil.utils.BitLogic import BitLogic
 import array
 import argparse
 from six.moves import map
+from six.moves import range
 
 
 def pretty_print(string_val, bits=32):
@@ -49,7 +50,7 @@ def main(args_dict):
         pass
   
     print("Test write CTPR")
-    data = chip.write_ctpr(range(128), False)
+    data = chip.write_ctpr(list(range(128)), False)
     chip['FIFO'].reset()
     time.sleep(0.01)
     chip.write(data)

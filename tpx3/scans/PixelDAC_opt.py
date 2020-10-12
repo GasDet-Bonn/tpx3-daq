@@ -26,6 +26,7 @@ import tpx3.plotting as plotting
 
 from tables.exceptions import NoSuchNodeError
 from io import open
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -94,12 +95,12 @@ class PixelDAC_opt(ScanBase):
             self.chip.thr_matrix[:, :] = 0
 
             for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             self.chip.thr_matrix[:, :] = 15
 
             for i in range(256 // 4):
-                mask_step_cmd2.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+                mask_step_cmd2.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
             mask_step_cmd2.append(self.chip.read_pixel_matrix_datadriven())
@@ -110,7 +111,7 @@ class PixelDAC_opt(ScanBase):
         pbar.close()
 
         # Scan with all masks over the given threshold range for pixelthreshold 0
-        cal_high_range = range(Vthreshold_start, Vthreshold_stop, 1)
+        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
         self.logger.info('Starting scan for THR = 0...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
 
@@ -130,7 +131,7 @@ class PixelDAC_opt(ScanBase):
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):
                     # Only active CTPR for active columns in this iteration
-                    self.chip.write_ctpr(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step))))
+                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
                     self.chip.write(mask_step_cmd)
                     # Opening the shutter triggers the internal testpulses
                     with self.shutter():
@@ -162,7 +163,7 @@ class PixelDAC_opt(ScanBase):
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
                 for i, mask_step_cmd in enumerate(mask_cmds2):
                     # Only active CTPR for active columns in this iteration
-                    self.chip.write_ctpr(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step))))
+                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
                     self.chip.write(mask_step_cmd)
                     # Opening the shutter triggers the internal testpulses
                     with self.shutter():
@@ -214,8 +215,8 @@ class PixelDAC_opt(ScanBase):
             scurve_th0 = analysis.scurve_hist(hit_data_th0, param_range_th0)
             scurve_th15 = analysis.scurve_hist(hit_data_th15, param_range_th15)
             self.logger.info('Fit the scurves for all pixels...')
-            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=range(Vthreshold_start, Vthreshold_stop), n_injections=n_injections, invert_x=True)
-            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=range(Vthreshold_start, Vthreshold_stop), n_injections=n_injections, invert_x=True)
+            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True)
+            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True)
 
             self.logger.info('Get the cumulated global threshold distributions...')
             hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)

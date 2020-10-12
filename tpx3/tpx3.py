@@ -24,6 +24,7 @@ from basil.utils.BitLogic import BitLogic
 from .utils import toByteList, bitword_to_byte_list
 from io import open
 import six
+from six.moves import range
 
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
@@ -953,7 +954,7 @@ class TPX3(Dut):
 
         return pcr
 
-    def produce_column_mask(self, columns=range(256), ctpr = False):
+    def produce_column_mask(self, columns=list(range(256)), ctpr = False):
         """
         returns the 256 bit column mask (see manual v1.9 p.44) based on a list of selected columns
         """
@@ -979,7 +980,7 @@ class TPX3(Dut):
         data += columnMask.toByteList()
         return data
 
-    def write_pcr(self, columns=range(256), write=True):
+    def write_pcr(self, columns=list(range(256)), write=True):
         """
         writes the pcr for all pixels in selected columns (see manual v1.9 p.44) and returns also
         the data
@@ -1392,7 +1393,7 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def write_ctpr(self, columns=range(256), write=True):
+    def write_ctpr(self, columns=list(range(256)), write=True):
         """
         Writes the column test pulse register to the chip (see manual v1.9 p.50) and returns
         the written data. The masked columns can be selected with the `columns` variable.
@@ -1571,7 +1572,7 @@ class TPX3(Dut):
         data = self.read_matrix_template("ReadMatrixDataDriven", True)
 
         # append the 256 bit column mask; TODO: make the columns selectable
-        data += self.produce_column_mask(range(256))
+        data += self.produce_column_mask(list(range(256)))
 
         data += [0x00]
 
