@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from tpx3.tpx3 import TPX3
 import time
 from basil.utils.BitLogic import BitLogic
@@ -13,9 +14,9 @@ def pretty_print(string_val, bits=32):
     bits[:] = val
     lst = bits.toByteList(True)
     lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
+    print("Int ", lst)
+    print("Hex ", lst_hex)
+    print("Binary ", bits)
 
 
 def main(args_dict):
@@ -33,8 +34,8 @@ def main(args_dict):
     chip['CONTROL']['RESET'] = 0
     chip['CONTROL'].write()
 
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    print('RX ready:', chip['RX'].is_ready)
+    print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
     data = chip.write_pll_config(write=False)
     chip.write(data)
@@ -55,7 +56,7 @@ def main(args_dict):
     #     pass
     chip.write(data)
     
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     if delay_scan is True:
         for i in range(32):
@@ -84,18 +85,18 @@ def main(args_dict):
                 # print 'FIFO_SIZE', chip['FIFO'].FIFO_SIZE
 
             fdata = chip['FIFO'].get_data()
-            print 'i =', i, '\tlen =', len(fdata), '\terror =', chip['RX'].get_decoder_error_counter(), "\tready =", chip['RX'].is_ready
+            print('i =', i, '\tlen =', len(fdata), '\terror =', chip['RX'].get_decoder_error_counter(), "\tready =", chip['RX'].is_ready)
 
 
 
-        print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
-        print 'RX ready:', chip['RX'].is_ready
+        print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
+        print('RX ready:', chip['RX'].is_ready)
 
         for i in fdata[:10]:
-            print hex(i), (i & 0x01000000) != 0, hex(i & 0xffffff)
+            print(hex(i), (i & 0x01000000) != 0, hex(i & 0xffffff))
             b = BitLogic(32)
             b[:] = int(i)
-            print b[:]
+            print(b[:])
             pretty_print(i)
 
     chip['RX'].reset()
@@ -105,14 +106,14 @@ def main(args_dict):
         
     while(not chip['RX'].is_ready):
         pass
-    print(chip.get_configuration())
+    print((chip.get_configuration()))
 
     # data = chip.getGlobalSyncHeader() + [0x02] + [0b11111111, 0x00000001] + [0x0]
     # data = chip.set_dac("Ibias_Preamp_ON", 0x00, write = False)
     # chip['FIFO'].reset()
     # chip.write(data)
 
-    print "Get ChipID"
+    print("Get ChipID")
     data = chip.read_periphery_template("EFuse_Read")
     data += [0x00]*4
     print(data)
@@ -132,7 +133,7 @@ def main(args_dict):
         x_position = dout[1][3:0]
         print("W{}-{}{}".format(wafer_number.tovalue(), chr(ord('a') + x_position.tovalue() - 1).upper(), y_position.tovalue()))
 
-    print "Test set DAC"
+    print("Test set DAC")
     data = chip.set_dac("Vfbk", 0b10101011, write=False)
     chip['FIFO'].reset()
     time.sleep(0.01)
@@ -147,20 +148,20 @@ def main(args_dict):
     fdata = chip['FIFO'].get_data()
     dout = chip.decode_fpga(fdata, True)
     for i, d in enumerate(fdata):
-        print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
+        print(i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff))
         pretty_print(d)
     for el in dout:
-        print "Decode_fpga: ", el
+        print("Decode_fpga: ", el)
     ddout = chip.decode(dout[0], 0x03)
-    print "Decoded 'Read DAC':"
+    print("Decoded 'Read DAC':")
     for el in ddout:
-        print "\tDecode: ", el
+        print("\tDecode: ", el)
     ddout = chip.decode(dout[1], 0x71)
-    print "Decoded 'End of Command':"
+    print("Decoded 'End of Command':")
     for el in ddout:
-        print "\tDecode: ", el
+        print("\tDecode: ", el)
 
-    print "Test set general config"
+    print("Test set general config")
     data = chip.write_general_config(write=False)
     chip['FIFO'].reset()
     time.sleep(0.01)
@@ -173,24 +174,24 @@ def main(args_dict):
     chip.write(data)
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     for i, d in enumerate(fdata):
-        print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
+        print(i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff))
         pretty_print(d)
     for el in dout:
-        print "Decode_fpga: ", el
+        print("Decode_fpga: ", el)
     ddout = chip.decode(dout[0], 0x31)
-    print "Decoded 'Read GeneralConfig':"
+    print("Decoded 'Read GeneralConfig':")
     for el in ddout:
-        print "\tDecode: ", el
+        print("\tDecode: ", el)
     ddout = chip.decode(dout[1], 0x71)
-    print "Decoded 'End of Command':"
+    print("Decoded 'End of Command':")
     for el in ddout:
-        print "\tDecode: ", el
+        print("\tDecode: ", el)
 
-    print "Test test pulse registers"
+    print("Test test pulse registers")
     data = chip.write_tp_period(100, 0, write=False)
     chip['FIFO'].reset()
     time.sleep(0.01)
@@ -208,25 +209,25 @@ def main(args_dict):
     chip.write(data)
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     for i, d in enumerate(fdata):
-        print i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff)
+        print(i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff))
         pretty_print(d)
     for el in dout:
-        print "Decode_fpga: ", el
+        print("Decode_fpga: ", el)
     ddout = chip.decode(dout[0], 0x0E)
-    print "Decoded 'Read TestPulse Config':"
+    print("Decoded 'Read TestPulse Config':")
     for el in ddout:
-        print "\tDecode: ", el
+        print("\tDecode: ", el)
     ddout = chip.decode(dout[1], 0x71)
-    print "Decoded 'End of Command':"
+    print("Decoded 'End of Command':")
     for el in ddout:
-        print "\tDecode: ", el
+        print("\tDecode: ", el)
 
 
-    print "Test Timestamp extension"
+    print("Test Timestamp extension")
     chip['timestamp'].reset()
     chip['timestamp']["ENABLE"] = 1
     chip['gpio'].reset()
@@ -236,18 +237,18 @@ def main(args_dict):
     chip['PULSE_GEN'].set_delay(0x105)
     chip['PULSE_GEN'].set_width(10)
     chip['PULSE_GEN'].set_repeat(1)
-    print "\t Delay = ", chip['PULSE_GEN'].get_delay()
-    print "\t Width = ", chip['PULSE_GEN'].get_width()
-    print "\t Repeat = ", chip['PULSE_GEN'].get_repeat()
+    print("\t Delay = ", chip['PULSE_GEN'].get_delay())
+    print("\t Width = ", chip['PULSE_GEN'].get_width())
+    print("\t Repeat = ", chip['PULSE_GEN'].get_repeat())
 
     chip['PULSE_GEN'].start()
 
     ret = chip['FIFO'].get_data()
-    print "\t Length of FIFO data: ", len(ret)
+    print("\t Length of FIFO data: ", len(ret))
 
-    print "\t FIFO data: "
+    print("\t FIFO data: ")
     for i, r in enumerate(ret):
-        print "\t\t", bin(r & 0xffffffff)
+        print("\t\t", bin(r & 0xffffffff))
 
 
     chip['CONTROL']['RESET'] = 1
@@ -294,7 +295,7 @@ def main(args_dict):
 
         ttime = etime - stime
         bits = count * 4 * 8
-        print ttime, 's ', bits, 'b ', (float(bits) / ttime) / (1024 * 1024), 'Mb/s'
+        print(ttime, 's ', bits, 'b ', (float(bits) / ttime) / (1024 * 1024), 'Mb/s')
 
     print('Happy day!')
 

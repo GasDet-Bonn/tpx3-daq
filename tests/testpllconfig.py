@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from tpx3.tpx3 import TPX3
 import time
 from basil.utils.BitLogic import BitLogic
@@ -23,7 +24,7 @@ def main(args_dict):
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     chip['RX'].reset()
     chip['RX'].DATA_DELAY = 0
@@ -39,29 +40,29 @@ def main(args_dict):
     fdata = chip['FIFO'].get_data()
     dout = chip.decode_fpga(fdata, True)
     ddout = chip.decode(dout[0],0x71)
-    print ddout
+    print(ddout)
     
     
     # Step 5: Set general config
-    print "Set general config"
+    print("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)
     dout = chip.decode(chip.decode_fpga(chip['FIFO'].get_data(), True)[0], 0x71)
-    print dout
+    print(dout)
 
 
     # Step 3b: Write PLL to chip
     data=chip.write_pll_config(False)
     chip.write(data)
-    print "pll config sent"
+    print("pll config sent")
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     # only read column x == 1
     data = chip.read_pll_config( write=False)
     chip.write(data)
-    print "read pll config command sent"
+    print("read pll config command sent")
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     
 
     

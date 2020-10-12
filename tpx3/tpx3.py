@@ -5,6 +5,7 @@
 # ------------------------------------------------------------
 #
 
+from __future__ import print_function
 import zlib  # workaround
 import yaml
 import logging
@@ -493,7 +494,7 @@ class TPX3(Dut):
             data = self.read_dac(dac, False)
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
-            print "\tGet DAC value, DAC code and EoC:"
+            print("\tGet DAC value, DAC code and EoC:")
             dout = self.decode_fpga(self['FIFO'].get_data(), True)
             b = BitLogic(9)
             b[:] = val
