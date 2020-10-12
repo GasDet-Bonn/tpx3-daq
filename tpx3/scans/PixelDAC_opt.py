@@ -25,6 +25,7 @@ import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
 from tables.exceptions import NoSuchNodeError
+from io import open
 
 local_configuration = {
     # Scan parameters

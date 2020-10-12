@@ -22,6 +22,7 @@ import basil
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
 from .utils import toByteList, bitword_to_byte_list
+from io import open
 
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
