@@ -760,7 +760,7 @@ class TPX3(Dut):
            v1.9 p.40). The composition of the list is independent of this, only the
            interpretation must change accordingly.
         """
-        if len(data) is not 48:
+        if len(data) != 48:
             raise ValueError("The data must contain 48 bits and not {}!".format(len(data)))
 
         # create a bitarray for the the header (8 bit)
@@ -780,7 +780,7 @@ class TPX3(Dut):
         if header.tovalue() is command_header:
             # If the header is a acquisition header dataout is the following list:
             # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
-            if header[7:5].tovalue() is 0b101:
+            if header[7:5].tovalue() == 0b101:
                 address = data[43:28]
                 TOA = data[27:14]
                 TOT = data[13:4]
@@ -788,24 +788,24 @@ class TPX3(Dut):
                 dataout = [address, TOA, TOT, HitCounter]
             # If the header is a Stop matrix readout or a reset sequential header dataout is the following list:
             # [dummy - 44 bit]
-            elif header[7:5].tovalue() is 0b111:
+            elif header[7:5].tovalue() == 0b111:
                 dataout = [data[43:0]]
             # If the header is the CTPR configuration header dataout is the following list:
             # [address - 7 bit, EoC - 18 bit, CTPR - 2 bit]
-            elif header[7:5].tovalue() is 0b110:
+            elif header[7:5].tovalue() == 0b110:
                 address = data[43:37]
                 EoC = data[27:10]
                 CTPR = data[1:0]
                 dataout = [address, EoC, CTPR]
             # If the header is the pixel configuration header dataout is the following list:
             # [address - 14 bit, Config - 6 bit]
-            elif header[7:5].tovalue() is 0b100:
+            elif header[7:5].tovalue() == 0b100:
                 address = data[43:28]
                 Config = data[19:14]
                 dataout = [address, Config]
             # If the header is a control command header dataout is the following list:
             # [H1H2H3 - 8 bit, ChipID - 32 bit]
-            elif header[7:5].tovalue() is 0b011:
+            elif header[7:5].tovalue() == 0b011:
                 ReturnedHeader = data[39:32]
                 ChipID = data[31:0]
                 dataout = [ReturnedHeader, ChipID]
