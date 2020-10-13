@@ -221,7 +221,7 @@ class Plotting(object):
         board_name = self.run_config['board_name']
         fw_ver = self.run_config['firmware_version']
 
-        if self.level is not '':
+        if self.level != '':
             text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
                 scan_id, chip_wafer, chip_x, chip_y, run_name)
         else:
