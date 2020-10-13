@@ -13,7 +13,7 @@ author = ''
 author_email = ''
 
 # Requirements
-install_requires = ['basil-daq==2.4.11', 'bitarray>=0.8.1', 'matplotlib',
+install_requires = ['basil-daq==3.0.1', 'bitarray>=0.8.1', 'matplotlib',
                     'numpy', 'online_monitor>=0.4.0<0.5',
                     'pixel_clusterizer==3.1.3', 'tables', 'pyyaml', 'pyzmq',
                     'scipy', 'numba', 'tqdm']
@@ -29,6 +29,7 @@ setup(
     author_email=author_email,
     maintainer_email=author_email,
     install_requires=install_requires,
+    python_requires=">=3.0",
     packages=find_packages(),
     setup_requires=['online_monitor>=0.4.0<0.5'],
     include_package_data=True,
