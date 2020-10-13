@@ -81,7 +81,7 @@ class SiUdp(SiTransferLayer):
         request = array('B', struct.pack('>BII', self.CMD_RD, size, addr))
         self._sock_udp.sendto(request, (self._init['host'], self._init['port']))
 
-        ack = ''
+        ack = bytearray()
         try:
             while len(ack) != size:
                 ack += self._sock_udp.recv(size)
@@ -96,7 +96,7 @@ class SiUdp(SiTransferLayer):
     def read(self, addr, size):
 
         ret = array('B')
-
+        
         if size > 0:
             with self._udp_lock:
                 if size > self.MAX_RD_SIZE:
