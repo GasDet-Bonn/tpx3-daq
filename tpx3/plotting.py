@@ -764,7 +764,7 @@ class Plotting(object):
         if max_occ is None:
             max_occ = np.max(scurves) + 5
 
-        x_bins = scan_parameters  # np.arange(-0.5, max(scan_parameters) + 1.5)
+        x_bins = np.arange(min(scan_parameters) - 1, max(scan_parameters) + 1)
         y_bins = np.arange(-0.5, max_occ + 0.5)
         n_pixel = 256 * 256
 
