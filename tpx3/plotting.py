@@ -19,6 +19,7 @@ import shutil
 import os
 import matplotlib
 import ast
+import copy
 
 import tables as tb
 import matplotlib.pyplot as plt
@@ -485,7 +486,7 @@ class Plotting(object):
         ax.set_adjustable('box')
         extent = [0.5, 256.5, 256.5, 0.5]
         bounds = np.linspace(start=z_min, stop=z_max, num=255, endpoint=True)
-        cmap = cm.get_cmap('plasma')
+        cmap = copy.copy(cm.get_cmap('plasma'))
         cmap.set_bad('w', 1.0)
         norm = colors.BoundaryNorm(bounds, cmap.N)
 
@@ -559,7 +560,7 @@ class Plotting(object):
                 z_max = 2 * np.ma.median(hist2d)
         bounds = np.linspace(start=z_min, stop=z_max, num=255, endpoint=True)
         if cmap is None:
-            cmap = cm.get_cmap('coolwarm')
+            cmap = copy.copy(cm.get_cmap('coolwarm'))
         cmap.set_bad('w', 1.0)
         norm = colors.BoundaryNorm(bounds, cmap.N)
         im = ax.imshow(hist2d, interpolation='none', aspect="auto", cmap=cmap, norm=norm, extent=extent)
@@ -576,9 +577,9 @@ class Plotting(object):
     def _plot_three_way(self, hist, title, filename=None, x_axis_title=None, minimum=None, maximum=None, bins=101, cmap=None):  # the famous 3 way plot (enhanced)
         if cmap is None:
             if maximum == 'median' or maximum is None:
-                cmap = cm.get_cmap('coolwarm')
+                cmap = copy.copy(cm.get_cmap('coolwarm'))
             else:
-                cmap = cm.get_cmap('cool')
+                cmap = copy.copy(cm.get_cmap('cool'))
         # TODO: set color for bad pixels
         # set nan to special value
         # masked_array = np.ma.array (a, mask=np.isnan(a))
@@ -713,9 +714,9 @@ class Plotting(object):
         extent = [0.5, 400.5, 192.5, 0.5]
         bounds = np.linspace(start=0, stop=z_max, num=255, endpoint=True)
         if z_max == 'median':
-            cmap = cm.get_cmap('coolwarm')
+            cmap = copy.copy(cm.get_cmap('coolwarm'))
         else:
-            cmap = cm.get_cmap('cool')
+            cmap = copy.copy(cm.get_cmap('cool'))
         cmap.set_bad('w', 1.0)
         norm = colors.BoundaryNorm(bounds, cmap.N)
 
@@ -781,7 +782,7 @@ class Plotting(object):
         self._add_text(fig)
 
         fig.patch.set_facecolor('white')
-        cmap = cm.get_cmap('cool')
+        cmap = copy.copy(cm.get_cmap('cool'))
         if np.allclose(hist, 0.0) or hist.max() <= 1:
             z_max = 1.0
         else:
@@ -935,7 +936,7 @@ class Plotting(object):
         ax = fig.add_subplot(111)
         self._add_text(fig)
 
-        cmap = cm.get_cmap('viridis', (range_tdac - 1))
+        cmap = copy.copy(cm.get_cmap('viridis', (range_tdac - 1)))
         # create dicts for tdac data
         data_thres_tdac = {}
         hist_tdac = {}
