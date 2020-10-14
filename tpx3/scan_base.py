@@ -30,8 +30,8 @@ loglevel = logging.getLogger('TPX3').getEffectiveLevel()
 
 def get_software_version():
     try:
-        rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
-        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip()
+        rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
+        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
         return branch + '@' + rev
     except:
         return VERSION
