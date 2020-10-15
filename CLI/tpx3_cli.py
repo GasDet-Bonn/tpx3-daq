@@ -1,6 +1,7 @@
 import readline
 import sys
 from multiprocessing import Process
+from tpx3.scans.ToT_calib import ToTCalib
 
 #In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToA', 'ToT_Calibration', 'tot_Calibration', 'ToA_Calibration', 'toa_Calibration', 'Help', 'help', 'h', 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
@@ -18,18 +19,12 @@ class TPX3_CLI_multiprocess_start(object):
     def process_call(function, **kwargs):
         
         def startup_func(function, **kwargs):
-            
-            def Test_func(VTP_fine_start, VTP_fine_stop, mask_step):
-                print ('Test with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
-                while 1:
-                    pass
             try:  
-                args =", ".join(f"{key}={value}" for key, value in kwargs.items())
-                call_func = (function+'('+args+')')
+                call_func = (function+'()')
                 scan = eval(call_func)
-                #scan.start(**kwargs)
-                #scan.analyze()
-                #scan.plot()
+                scan.start(**kwargs)
+                scan.analyze()
+                scan.plot()
             except KeyboardInterrupt:
                 sys.exit(1)
             
@@ -48,16 +43,15 @@ class TPX3_CLI_TOP(object):
         def ToT_Calibration(VTP_fine_start = None, VTP_fine_stop = None, mask_step = None):
             if VTP_fine_start == None:
                 print('> Please Enter the VTP_fine_start value (0-511):')
-                VTP_fine_start = input('>> ')
+                VTP_fine_start = int(input('>> '))
                 print('> Please Enter the VTP_fine_stop value (0-511):')
-                VTP_fine_stop = input('>> ')
+                VTP_fine_stop = int(input('>> '))
                 print('> Please Enter the number of steps(4, 16, 64, 256):')
-                mask_step = input('>> ')
+                mask_step = int(input('>> '))
                 
                 print ('ToT with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
             print('Start')
-            #ToTCalib.start(VTP_fine_start = l[1], VTP_fine_stop = l[2], mask_step = l[3])
-            TPX3_CLI_multiprocess_start.process_call(function = 'Test_func', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, mask_step = mask_step)
+            TPX3_CLI_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, mask_step = mask_step)
         
         a = input('> ')
         if a == '':
@@ -87,7 +81,7 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                     elif len(inputlist) == 4:
                         try:
-                            ToT_Calibration(VTP_fine_start = inputlist[1],VTP_fine_stop = inputlist[2],mask_step = inputlist[3])
+                            ToT_Calibration(VTP_fine_start = int(inputlist[1]),VTP_fine_stop = int(inputlist[2]),mask_step = int(inputlist[3]))
                         except KeyboardInterrupt:
                            print('User quit')
                     elif len(inputlist) > 4:
