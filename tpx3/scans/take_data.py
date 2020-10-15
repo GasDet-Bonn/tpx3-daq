@@ -39,7 +39,7 @@ class DataTake(ScanBase):
         '''
 
 
-        self.chip.write_ctpr([])  # ALL
+        self.chip.write_ctpr(range(256))  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()
