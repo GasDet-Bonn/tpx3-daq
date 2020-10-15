@@ -136,9 +136,9 @@ class Equalisation_Check_charge(ScanBase):
             # TODO: TMP this should go to analysis function with chunking
             self.logger.info('Interpret raw data...')
             hit_data = analysis.interpret_raw_data(raw_data, meta_data)
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_stop'][0]
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
 
             hit_data = hit_data[hit_data['data_header'] == 1]
             param_range = np.unique(meta_data['scan_param_id'])
@@ -163,8 +163,8 @@ class Equalisation_Check_charge(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                Vthreshold_start = p.run_config['Vthreshold_start']
-                Vthreshold_stop = p.run_config['Vthreshold_stop']
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
 
                 p.plot_parameter_page()
 

@@ -146,10 +146,10 @@ class ThresholdCalib(ScanBase):
             meta_data = h5_file.root.meta_data[:]
             run_config = h5_file.root.configuration.run_config[:]
 
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
-            n_pulse_heights = [int(item[1]) for item in run_config if item[0] == 'n_pulse_heights'][0]
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            n_pulse_heights = [int(item[1]) for item in run_config if item[0] == b'n_pulse_heights'][0]
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
             # TODO: TMP this should go to analysis function with chunking
             hit_data = analysis.interpret_raw_data(raw_data, meta_data)
@@ -203,10 +203,10 @@ class ThresholdCalib(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                Vthreshold_start = p.run_config['Vthreshold_start']
-                Vthreshold_stop = p.run_config['Vthreshold_stop']
-                n_injections = p.run_config['n_injections']
-                n_pulse_heights = p.run_config['n_pulse_heights']
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                n_injections = int(p.run_config[b'n_injections'])
+                n_pulse_heights =int( p.run_config[b'n_pulse_heights'])
 
                 p.plot_parameter_page()
 

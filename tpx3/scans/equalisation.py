@@ -178,8 +178,8 @@ class Equalisation(ScanBase):
             #print('haeder1\t header2\t y\t x\t Hits\t Counter')
             self.logger.info('Interpret raw data...')
             hit_data = analysis.interpret_raw_data(raw_data, meta_data)
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_stop'][0]
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
             hit_data = hit_data[hit_data['data_header'] == 1]
             param_range = np.unique(meta_data['scan_param_id'])

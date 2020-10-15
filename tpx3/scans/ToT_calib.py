@@ -85,7 +85,7 @@ class ToTCalib(ScanBase):
             self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
                                   (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
             self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
-                                  (i%(mask_ste/p/int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
 
             #self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
             #self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
@@ -138,9 +138,9 @@ class ToTCalib(ScanBase):
             param_range = np.unique(meta_data['scan_param_id'])
             totcurve = analysis.scurve_hist(hit_data, param_range)
 
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
-            VTP_fine_start = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_start'][0]
-            VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
+            VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
 
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
             a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range)
@@ -171,10 +171,10 @@ class ToTCalib(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                VTP_fine_start = p.run_config['VTP_fine_start']
-                VTP_fine_stop = p.run_config['VTP_fine_stop']
-                VTP_coarse = p.dacs['VTP_coarse']
-                n_injections = p.run_config['n_injections']
+                VTP_fine_start = int(p.run_config[b'VTP_fine_start'])
+                VTP_fine_stop = int(p.run_config[b'VTP_fine_stop'])
+                VTP_coarse = int(p.dacs[b'VTP_coarse'])
+                n_injections = int(p.run_config[b'n_injections'])
 
                 p.plot_parameter_page()
 

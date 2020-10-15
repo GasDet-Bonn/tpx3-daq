@@ -164,13 +164,13 @@ class Plotting(object):
                      fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
             if self.run_config['chip_wafer'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s',
-                         (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                         (self.run_config['chip_wafer'].decode(), self.run_config['chip_x'].decode(), self.run_config['chip_y'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         else:
             fig.text(0.1, y_coord, 'Timepix3 %s' %
                      (self.level), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config['chip_wafer'] is not None:
+            if self.run_config[b'chip_wafer'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s' %
-                         (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                         (self.run_config[b'chip_wafer'].decode(), self.run_config[b'chip_x'].decode(), self.run_config[b'chip_y'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         if self.internal:
             fig.text(0.1, 1, 'Timepix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
                 boxstyle='round', facecolor='white', edgecolor='red', alpha=0.7), transform=fig.transFigure)
@@ -213,14 +213,14 @@ class Plotting(object):
         ax = fig.add_subplot(111)
         ax.axis('off')
 
-        scan_id = self.run_config['scan_id']
-        run_name = self.run_config['run_name']
-        chip_wafer = self.run_config['chip_wafer']
-        chip_x = self.run_config['chip_x']
-        chip_y = self.run_config['chip_y']
-        sw_ver = self.run_config['software_version']
-        board_name = self.run_config['board_name']
-        fw_ver = self.run_config['firmware_version']
+        scan_id = self.run_config[b'scan_id'].decode()
+        run_name = self.run_config[b'run_name'].decode()
+        chip_wafer = self.run_config[b'chip_wafer'].decode()
+        chip_x = self.run_config[b'chip_x'].decode()
+        chip_y = self.run_config[b'chip_y'].decode()
+        sw_ver = self.run_config[b'software_version'].decode()
+        board_name = self.run_config[b'board_name'].decode()
+        fw_ver = self.run_config[b'firmware_version'].decode()
 
         if self.level != '':
             text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
@@ -229,7 +229,7 @@ class Plotting(object):
             text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
                 scan_id, chip_wafer, chip_x, chip_y, run_name)
         ax.text(0.01, 1, text, fontsize=10)
-        ax.text(0.7, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %d' % (sw_ver, board_name, fw_ver), fontsize=6)
+        ax.text(0.7, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %s' % (sw_ver, board_name, fw_ver), fontsize=6)
 
         ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
 
@@ -239,9 +239,9 @@ class Plotting(object):
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
         for key, value in six.iteritems(self.run_config):
-            if key in ['scan_id', 'run_name', 'chip_wafer', 'chip_x', 'chip_y', 'software_version', 'board_name', 'firmware_version', 'disable', 'maskfile']:
+            if key in [b'scan_id', b'run_name', b'chip_wafer', b'chip_x', b'chip_y', b'software_version', b'board_name', b'firmware_version', b'disable', b'maskfile']:
                 continue
-            tb_dict[key] = value
+            tb_dict[key] = int(value)
 
         tb_list = []
         for i in range(0, len(list(tb_dict.keys())), 3):
@@ -252,16 +252,16 @@ class Plotting(object):
                     key2 = list(tb_dict.keys())[i + 1]
                     value2 = tb_dict[key2]
                 except:
-                    key2 = ''
+                    key2 = b''
                     value2 = ''
                 try:
                     key3 = list(tb_dict.keys())[i + 2]
                     value3 = tb_dict[key3]
                 except:
-                    key3 = ''
+                    key3 = b''
                     value3 = ''
                 tb_list.append(
-                    [key1, value1, '', key2, value2, '', key3, value3])
+                    [key1.decode(), value1, '', key2.decode(), value2, '', key3.decode(), value3])
             except:
                 pass
 

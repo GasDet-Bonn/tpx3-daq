@@ -136,9 +136,9 @@ class TestpulseScan(ScanBase):
             param_range = np.unique(meta_data['scan_param_id'])
             scurve = analysis.scurve_hist(hit_data, param_range)
 
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
-            VTP_fine_start = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_start'][0]
-            VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
+            VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
 
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
             thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections)
@@ -165,9 +165,9 @@ class TestpulseScan(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                VTP_fine_start = p.run_config['VTP_fine_start']
-                VTP_fine_stop = p.run_config['VTP_fine_stop']
-                n_injections = p.run_config['n_injections']
+                VTP_fine_start = int(p.run_config[b'VTP_fine_start'])
+                VTP_fine_stop = int(p.run_config[b'VTP_fine_stop'])
+                n_injections = int(p.run_config[b'n_injections'])
 
                 p.plot_parameter_page()
 
