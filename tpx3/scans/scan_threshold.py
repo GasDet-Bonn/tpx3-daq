@@ -9,7 +9,8 @@
     This script scans over different thresholds for one testpulse height
 '''
 from __future__ import print_function
-
+from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -19,6 +20,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -77,16 +79,16 @@ class ThresholdScan(ScanBase):
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
 
-            self.chip.test_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
-            self.chip.mask_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+            self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
 
             #self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
             #self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
 
-            for i in range(256 / 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+            for i in range(256 // 4):
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
 
@@ -94,7 +96,7 @@ class ThresholdScan(ScanBase):
             pbar.update(1)
         pbar.close()
 
-        cal_high_range = range(Vthreshold_start, Vthreshold_stop, 1)
+        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
         self.logger.info('Starting scan...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
@@ -105,7 +107,7 @@ class ThresholdScan(ScanBase):
                 fine_threshold = vcal
             else:
                 relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) / 160) + 1
+                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
                 fine_threshold = relative_fine_threshold + 352
                 #print("rel: %i coarse: %i fine: %i" % (relative_fine_threshold, coarse_threshold, fine_threshold))
             self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
@@ -114,7 +116,7 @@ class ThresholdScan(ScanBase):
 
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):
-                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
+                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.001)
@@ -142,11 +144,11 @@ class ThresholdScan(ScanBase):
             param_range = np.unique(meta_data['scan_param_id'])
             scurve = analysis.scurve_hist(hit_data, param_range)
 
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
-            param_range = range(Vthreshold_start, Vthreshold_stop)
+            param_range = list(range(Vthreshold_start, Vthreshold_stop))
             thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True)
 
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
@@ -171,9 +173,9 @@ class ThresholdScan(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                Vthreshold_start = p.run_config['Vthreshold_start']
-                Vthreshold_stop = p.run_config['Vthreshold_stop']
-                n_injections = p.run_config['n_injections']
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                n_injections = int(p.run_config[b'n_injections'])
 
                 p.plot_parameter_page()
 
@@ -187,7 +189,7 @@ class ThresholdScan(ScanBase):
 
                 scurve_hist = h5_file.root.interpreted.HistSCurve[:].T
                 max_occ = n_injections * 5
-                p.plot_scurves(scurve_hist, range(Vthreshold_start, Vthreshold_stop), scan_parameter_name="Vthreshold", max_occ=max_occ)
+                p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ)
 
                 chi2_sel = h5_file.root.interpreted.Chi2Map[:] > 0.  # Mask not converged fits (chi2 = 0)
                 mask[~chi2_sel] = True

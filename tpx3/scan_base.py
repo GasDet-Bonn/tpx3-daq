@@ -5,6 +5,8 @@
 # ------------------------------------------------------------
 #
 
+from __future__ import absolute_import
+from __future__ import division
 import time
 import os
 import yaml
@@ -16,9 +18,11 @@ import numpy as np
 import zmq
 
 from contextlib import contextmanager
-from tpx3 import TPX3
-from fifo_readout import FifoReadout
+from .tpx3 import TPX3
+from .fifo_readout import FifoReadout
 from tables.exceptions import NoSuchNodeError
+import six
+from six.moves import range
 
 VERSION = pkg_resources.get_distribution("tpx3-daq").version
 loglevel = logging.getLogger('TPX3').getEffectiveLevel()
@@ -26,8 +30,8 @@ loglevel = logging.getLogger('TPX3').getEffectiveLevel()
 
 def get_software_version():
     try:
-        rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
-        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip()
+        rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
+        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
         return branch + '@' + rev
     except:
         return VERSION
@@ -150,8 +154,8 @@ class ScanBase(object):
         row['value'] = self.y_position
         row.append()
 
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'mask_step', 'maskfile']
-        for kw, value in kwargs.iteritems():
+        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'maskfile']
+        for kw, value in six.iteritems(kwargs):
             if kw in run_config_attributes:
                 row = run_config_table.row
                 row['attribute'] = kw
@@ -160,7 +164,7 @@ class ScanBase(object):
         run_config_table.flush()
 
         dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable)
-        for dac, value in self.chip.dacs.iteritems():
+        for dac, value in six.iteritems(self.chip.dacs):
             row = dac_table.row
             row['DAC'] = dac
             row['value'] = value
@@ -261,8 +265,8 @@ class ScanBase(object):
         self.configure(**kwargs) #TODO: all DACs set here
 
         # Step 3a: Produce needed PCR (Pixel conficuration)
-        for i in range(256 / 4):
-            self.chip.write_pcr(range(4 * i, 4 * i + 4))
+        for i in range(256 // 4):
+            self.chip.write_pcr(list(range(4 * i, 4 * i + 4)))
 
         # Setup files
         filename = self.output_filename + '.h5'
@@ -383,14 +387,14 @@ class ScanBase(object):
         self.fh = logging.FileHandler(self.output_filename + '.log')
         self.fh.setLevel(loglevel)
         self.fh.setFormatter(logging.Formatter("%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s"))
-        for lg in logging.Logger.manager.loggerDict.itervalues():
+        for lg in six.itervalues(logging.Logger.manager.loggerDict):
             if isinstance(lg, logging.Logger):
                 lg.addHandler(self.fh)
 
         return self.fh
 
     def close_logfile(self):
-        for lg in logging.Logger.manager.loggerDict.itervalues():
+        for lg in six.itervalues(logging.Logger.manager.loggerDict):
             if isinstance(lg, logging.Logger):
                 lg.removeHandler(self.fh)
 

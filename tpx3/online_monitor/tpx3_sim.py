@@ -4,6 +4,7 @@
     This producer is needed for debugging and testing.
 '''
 
+from __future__ import absolute_import
 import time
 
 import tables as tb
@@ -11,6 +12,7 @@ import tables as tb
 from online_monitor.utils.producer_sim import ProducerSim
 
 from tpx3 import scan_base
+from six.moves import range
 
 
 class Tpx3Sim(ProducerSim):

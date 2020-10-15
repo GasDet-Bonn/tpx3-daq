@@ -10,7 +10,8 @@
     to find the effective threshold of the enabled pixels.
 '''
 from __future__ import print_function
-
+from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -20,12 +21,13 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
-    'mask_step'        : 16,
-    'VTP_fine_start'   : 20 + 0,
-    'VTP_fine_stop'    : 20 + 491,
+    'mask_step'        : 64,
+    'VTP_fine_start'   : 210 + 0,
+    'VTP_fine_stop'    : 210 + 300,
     'n_injections'     : 1,
     'maskfile'        : './output_data/20200505_165149_mask.h5'
 }
@@ -64,7 +66,7 @@ class ToTCalib(ScanBase):
 
         # Step 6: Write to the test pulse registers
         # Step 6a: Write to period and phase tp registers
-        data = self.chip.write_tp_period(1, 0)
+        data = self.chip.write_tp_period(3, 0)
 
         # Step 6b: Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
@@ -80,16 +82,16 @@ class ToTCalib(ScanBase):
             self.chip.test_matrix[:, :] = self.chip.TP_OFF
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
             
-            self.chip.test_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
-            self.chip.mask_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+            self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
 
             #self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
             #self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
 
-            for i in range(256 / 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+            for i in range(256 // 4):
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
 
@@ -97,7 +99,7 @@ class ToTCalib(ScanBase):
             pbar.update(1)
         pbar.close()
 
-        cal_high_range = range(VTP_fine_start, VTP_fine_stop, 1)
+        cal_high_range = list(range(VTP_fine_start, VTP_fine_stop, 1))
 
         self.logger.info('Starting scan...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
@@ -108,7 +110,7 @@ class ToTCalib(ScanBase):
 
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):
-                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
+                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.01)
@@ -134,23 +136,25 @@ class ToTCalib(ScanBase):
             hit_data = analysis.interpret_raw_data(raw_data, meta_data)
             hit_data = hit_data[hit_data['data_header'] == 1]
             param_range = np.unique(meta_data['scan_param_id'])
-            scurve = analysis.scurve_hist(hit_data, param_range)
+            totcurve = analysis.scurve_hist(hit_data, param_range)
 
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
-            VTP_fine_start = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_start'][0]
-            VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == 'VTP_fine_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
+            VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
 
-            param_range = range(VTP_fine_start, VTP_fine_stop)
-            #thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections)
+            param_range = list(range(VTP_fine_start, VTP_fine_stop))
+            a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range)
 
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
             h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
 
-            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve', obj=scurve)
-            #h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
-            #h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap', obj=thr2D.T)
-            #h5_file.create_carray(h5_file.root.interpreted, name='NoiseMap', obj=sig2D.T)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve', obj=totcurve)
+            h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
+            h5_file.create_carray(h5_file.root.interpreted, name='aMap', obj=a2D.T)
+            h5_file.create_carray(h5_file.root.interpreted, name='bMap', obj=b2D.T)
+            h5_file.create_carray(h5_file.root.interpreted, name='cMap', obj=c2D.T)
+            h5_file.create_carray(h5_file.root.interpreted, name='tMap', obj=t2D.T)
 
             pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
             hist_occ = np.reshape(pix_occ, (256, 256)).T
@@ -165,9 +169,10 @@ class ToTCalib(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                VTP_fine_start = p.run_config['VTP_fine_start']
-                VTP_fine_stop = p.run_config['VTP_fine_stop']
-                n_injections = p.run_config['n_injections']
+                VTP_fine_start = int(p.run_config[b'VTP_fine_start'])
+                VTP_fine_stop = int(p.run_config[b'VTP_fine_stop'])
+                VTP_coarse = int(p.dacs[b'VTP_coarse'])
+                n_injections = int(p.run_config[b'n_injections'])
 
                 p.plot_parameter_page()
 
@@ -180,7 +185,20 @@ class ToTCalib(ScanBase):
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
 
                 scurve_hist = h5_file.root.interpreted.HistSCurve[:].T
-                p.plot_scurves(scurve_hist, range(VTP_fine_start, VTP_fine_stop), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles')
+                p.plot_scurves(scurve_hist, list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves')
+
+                hist = np.ma.masked_array(h5_file.root.interpreted.aMap[:], mask)
+                p.plot_distribution(hist, plot_range=np.arange(0, 20, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution')
+
+                hist = np.ma.masked_array(h5_file.root.interpreted.bMap[:], mask)
+                p.plot_distribution(hist, plot_range=list(range(-5000, 0, 100)), x_axis_title='b', title='b distribution', suffix='b_distribution')
+
+                hist = np.ma.masked_array(h5_file.root.interpreted.cMap[:], mask)
+                p.plot_distribution(hist, plot_range=list(range(-10000, 0000, 200)), x_axis_title='c', title='c distribution', suffix='c_distribution')
+
+                hist = np.ma.masked_array(h5_file.root.interpreted.tMap[:], mask)
+                p.plot_distribution(hist, plot_range=list(range(200, 300, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution')
+                
 
 
 if __name__ == "__main__":

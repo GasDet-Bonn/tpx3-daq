@@ -1,4 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
 from basil.utils.BitLogic import BitLogic
+from six.moves import range
 
 
 # this should really be a class method of BitLogic, but to stay compatible with
@@ -12,12 +15,12 @@ def toByteList(obj, bitwise=False):
     if obj.length() % 8 != 0:
         raise ValueError("""Cannot convert to array of bytes, if number of
         bits not a multiple of a byte""")
-    nbytes = obj.length() / 8
+    nbytes = obj.length() // 8
     byteList = []
 
     # range from 0 to 40, reversed to get MSB first
     # for some reason list comprehension doesn't work here?
-    for i in reversed(range(0, obj.length(), 8)):
+    for i in reversed(list(range(0, obj.length(), 8))):
         if bitwise is False:
             byteList += [obj[i + 7:i].tovalue()]
         else:

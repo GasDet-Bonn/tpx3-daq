@@ -25,7 +25,7 @@ jobs:
   - script: |
       echo Install miniconda
       mkdir miniconda
-      curl https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
+      curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
       bash miniconda.sh -u -b -p $(Agent.BuildDirectory)/miniconda
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
       conda update --yes conda
@@ -34,7 +34,7 @@ jobs:
   - script: |
       echo Install Tpx3-DAQ
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
-      python setup.py develop
+      python3 setup.py develop
     displayName: 'Install Tpx3-DAQ'
   - script: echo Compile firmware
     displayName: 'Compile firmware'
@@ -43,7 +43,7 @@ jobs:
   - script: |
       echo Run tests
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
-      pytest -v tests/unittests.py -k $(Test) --doctest-modules --junitxml=junit/test-$(Test)-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
+      pytest -v tests/test_hardware.py -k $(Test) --doctest-modules --junitxml=junit/test-$(Test)-results.xml --cov=tpx3.tpx3 --cov-report=xml --cov-report=html
     displayName: 'Run tests'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
@@ -92,7 +92,7 @@ jobs:
   - script: |
       echo Install miniconda
       mkdir miniconda
-      curl https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh
+      curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
       bash miniconda.sh -u -b -p $(Agent.BuildDirectory)/miniconda
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
       conda update --yes conda
@@ -109,7 +109,7 @@ jobs:
   - script: |
       echo Install Tpx3-DAQ
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
-      python setup.py develop
+      python3 setup.py develop
     displayName: 'Install Tpx3-DAQ'
   - script: |
       echo Run simulation

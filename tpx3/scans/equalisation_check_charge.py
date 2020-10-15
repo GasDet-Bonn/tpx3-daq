@@ -10,7 +10,8 @@
     to valitate the equalisation.
 '''
 from __future__ import print_function
-
+from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -22,6 +23,7 @@ import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
 from tables.exceptions import NoSuchNodeError
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -82,8 +84,8 @@ class Equalisation_Check_charge(ScanBase):
             self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
             self.chip.mask_matrix[start_column:stop_column, j::mask_step] = self.chip.MASK_ON
 
-            for i in range(256 / 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+            for i in range(256 // 4):
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
 
@@ -91,7 +93,7 @@ class Equalisation_Check_charge(ScanBase):
             pbar.update(1)
         pbar.close()
 
-        cal_high_range = range(Vthreshold_start, Vthreshold_stop, 1)
+        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
         self.logger.info('Starting scan...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
@@ -102,7 +104,7 @@ class Equalisation_Check_charge(ScanBase):
                 fine_threshold = vcal
             else:
                 relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) / 160) + 1
+                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
                 fine_threshold = relative_fine_threshold + 352
             self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
             self.chip.set_dac("Vthreshold_fine", fine_threshold)
@@ -134,9 +136,9 @@ class Equalisation_Check_charge(ScanBase):
             # TODO: TMP this should go to analysis function with chunking
             self.logger.info('Interpret raw data...')
             hit_data = analysis.interpret_raw_data(raw_data, meta_data)
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_stop'][0]
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
 
             hit_data = hit_data[hit_data['data_header'] == 1]
             param_range = np.unique(meta_data['scan_param_id'])
@@ -144,7 +146,7 @@ class Equalisation_Check_charge(ScanBase):
             self.logger.info('Get the global threshold distributions for all pixels...')
             scurve = analysis.scurve_hist(hit_data, param_range)
             self.logger.info('Fit the scurves for all pixels...')
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=range(Vthreshold_start, Vthreshold_stop), n_injections=n_injections, invert_x=True)
+            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True)
 
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
@@ -161,8 +163,8 @@ class Equalisation_Check_charge(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                Vthreshold_start = p.run_config['Vthreshold_start']
-                Vthreshold_stop = p.run_config['Vthreshold_stop']
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
 
                 p.plot_parameter_page()
 
@@ -172,7 +174,7 @@ class Equalisation_Check_charge(ScanBase):
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
 
                 vth_hist = h5_file.root.interpreted.HitDistribution[:].T
-                p.plot_scurves(vth_hist, range(Vthreshold_start, Vthreshold_stop), scan_parameter_name="Vthreshold")
+                p.plot_scurves(vth_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold")
 
                 vths = h5_file.root.interpreted.PixelThresholdMap[:]
                 p.plot_occupancy(vths, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=Vthreshold_start, z_max=Vthreshold_stop)

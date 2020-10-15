@@ -5,6 +5,9 @@
 # ------------------------------------------------------------
 #
 
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import zlib  # workaround
 import yaml
 import logging
@@ -18,7 +21,10 @@ import basil
 
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
-from utils import toByteList, bitword_to_byte_list
+from .utils import toByteList, bitword_to_byte_list
+from io import open
+import six
+from six.moves import range
 
 # add toByteList() method to BitLogic
 BitLogic.toByteList = toByteList
@@ -117,7 +123,7 @@ class CustomDict(dict):
         of the given value. Else raise a ValueError
         """
         # check if valid by checking size smaller than max value
-        isValidKey = True if key in self.valsize_map.keys() else False
+        isValidKey = True if key in list(self.valsize_map.keys()) else False
         if not isValidKey:
             raise KeyError(self.dictErrors['invalidKey'].format(key))
         isValid = True if value < 2 ** self.valsize_map[key] and value >= 0 else False
@@ -143,7 +149,7 @@ class TPX3(Dut):
     }
 
     ''' Compatible firware version '''
-    fw_version_required = 1
+    fw_version_required = 2
     
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########
@@ -273,7 +279,7 @@ class TPX3(Dut):
         self.outputBlock_file = outputBlock_file
         self.PLLConfig_file = PLLConfig_file
 
-        for dict_type, type_dict in dictNames.iteritems():
+        for dict_type, type_dict in six.iteritems(dictNames):
             setattr(self, type_dict["YamlContent"], {})
             # get the name of the variable, which stores the filename, e.g. `config_file`
             var_name = type_dict["FnameVar"]
@@ -337,7 +343,7 @@ class TPX3(Dut):
 
         yaml_dict = getattr(self, dictNames[dict_type]["YamlContent"])
         c_dict = getattr(self, dictNames[dict_type]["CustomDict"])
-        for k, v in yaml_dict.iteritems():
+        for k, v in six.iteritems(yaml_dict):
             if to_default:
                 c_dict[k] = v['default']
             else:
@@ -368,7 +374,7 @@ class TPX3(Dut):
         and assigns it to the correct attribute, taken from the dictNames global
         variable.
         """
-        data = yaml.load(open(filename, 'r'))
+        data = yaml.load(open(filename, 'r'), Loader=yaml.FullLoader)
 
         # map storing the allowed sizes of each value
         valsize_map = {}
@@ -388,7 +394,7 @@ class TPX3(Dut):
         c_dict = CustomDict(valsize_map, dict_type)
 
         # now write values to this dictionary
-        for k, v in outdict.iteritems():
+        for k, v in six.iteritems(outdict):
             c_dict[k] = v['value']
 
         # set the (now filled) custom dict as attribute
@@ -469,7 +475,7 @@ class TPX3(Dut):
         """
         # Note: here we can now iterate over self.dacs instead of self._dacs
         # due to the `dacs` property!
-        for dac, val in self.dacs.iteritems():
+        for dac, val in six.iteritems(self.dacs):
             data = self.set_dac(dac, val, write = False)
             self.write(data, True)
 
@@ -489,11 +495,11 @@ class TPX3(Dut):
             print("The assertion in the following loop may fail, since we are not",
                   " may not have written the DAC values to the chip!")
 
-        for dac, val in self.dacs.iteritems():
+        for dac, val in six.iteritems(self.dacs):
             data = self.read_dac(dac, False)
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
-            print "\tGet DAC value, DAC code and EoC:"
+            print("\tGet DAC value, DAC code and EoC:")
             dout = self.decode_fpga(self['FIFO'].get_data(), True)
             b = BitLogic(9)
             b[:] = val
@@ -704,7 +710,7 @@ class TPX3(Dut):
 
         # determine number of 48bit words
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
-        nwords = len(data) / 2
+        nwords = len(data) // 2
         result = []
 
         for i in range(nwords):
@@ -754,7 +760,7 @@ class TPX3(Dut):
            v1.9 p.40). The composition of the list is independent of this, only the
            interpretation must change accordingly.
         """
-        if len(data) is not 48:
+        if len(data) != 48:
             raise ValueError("The data must contain 48 bits and not {}!".format(len(data)))
 
         # create a bitarray for the the header (8 bit)
@@ -774,7 +780,7 @@ class TPX3(Dut):
         if header.tovalue() is command_header:
             # If the header is a acquisition header dataout is the following list:
             # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
-            if header[7:5].tovalue() is 0b101:
+            if header[7:5].tovalue() == 0b101:
                 address = data[43:28]
                 TOA = data[27:14]
                 TOT = data[13:4]
@@ -782,24 +788,24 @@ class TPX3(Dut):
                 dataout = [address, TOA, TOT, HitCounter]
             # If the header is a Stop matrix readout or a reset sequential header dataout is the following list:
             # [dummy - 44 bit]
-            elif header[7:5].tovalue() is 0b111:
+            elif header[7:5].tovalue() == 0b111:
                 dataout = [data[43:0]]
             # If the header is the CTPR configuration header dataout is the following list:
             # [address - 7 bit, EoC - 18 bit, CTPR - 2 bit]
-            elif header[7:5].tovalue() is 0b110:
+            elif header[7:5].tovalue() == 0b110:
                 address = data[43:37]
                 EoC = data[27:10]
                 CTPR = data[1:0]
                 dataout = [address, EoC, CTPR]
             # If the header is the pixel configuration header dataout is the following list:
             # [address - 14 bit, Config - 6 bit]
-            elif header[7:5].tovalue() is 0b100:
+            elif header[7:5].tovalue() == 0b100:
                 address = data[43:28]
                 Config = data[19:14]
                 dataout = [address, Config]
             # If the header is a control command header dataout is the following list:
             # [H1H2H3 - 8 bit, ChipID - 32 bit]
-            elif header[7:5].tovalue() is 0b011:
+            elif header[7:5].tovalue() == 0b011:
                 ReturnedHeader = data[39:32]
                 ChipID = data[31:0]
                 dataout = [ReturnedHeader, ChipID]
@@ -836,8 +842,8 @@ class TPX3(Dut):
         Pixel = BitLogic(3)
 
         # calculate EoC, Superpixel and Pixel with the x and y position of the pixel
-        EoC = (x_pos - x_pos % 2) / 2
-        Superpixel = (y_pos - y_pos % 4) / 4
+        EoC = (x_pos - x_pos % 2) // 2
+        Superpixel = (y_pos - y_pos % 4) // 4
         Pixel = (x_pos % 2) * 4 + (y_pos % 4)
 
         # create a 16 bit variable for the address
@@ -948,7 +954,7 @@ class TPX3(Dut):
 
         return pcr
 
-    def produce_column_mask(self, columns=range(256), ctpr = False):
+    def produce_column_mask(self, columns=list(range(256)), ctpr = False):
         """
         returns the 256 bit column mask (see manual v1.9 p.44) based on a list of selected columns
         """
@@ -974,7 +980,7 @@ class TPX3(Dut):
         data += columnMask.toByteList()
         return data
 
-    def write_pcr(self, columns=range(256), write=True):
+    def write_pcr(self, columns=list(range(256)), write=True):
         """
         writes the pcr for all pixels in selected columns (see manual v1.9 p.44) and returns also
         the data
@@ -1387,7 +1393,7 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def write_ctpr(self, columns=range(256), write=True):
+    def write_ctpr(self, columns=list(range(256)), write=True):
         """
         Writes the column test pulse register to the chip (see manual v1.9 p.50) and returns
         the written data. The masked columns can be selected with the `columns` variable.
@@ -1566,7 +1572,7 @@ class TPX3(Dut):
         data = self.read_matrix_template("ReadMatrixDataDriven", True)
 
         # append the 256 bit column mask; TODO: make the columns selectable
-        data += self.produce_column_mask(range(256))
+        data += self.produce_column_mask(list(range(256)))
 
         data += [0x00]
 

@@ -1,9 +1,13 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import absolute_import
 from tpx3.tpx3 import TPX3
 import time
 from basil.utils.BitLogic import BitLogic
 import array
 import argparse
+from six.moves import map
+from six.moves import range
 
 
 def pretty_print(string_val, bits=32):
@@ -11,10 +15,10 @@ def pretty_print(string_val, bits=32):
     bits = BitLogic(bits)
     bits[:] = val
     lst = bits.toByteList(True)
-    lst_hex = map(hex, bits.toByteList(False))
-    print "Int ", lst
-    print "Hex ", lst_hex
-    print "Binary ", bits
+    lst_hex = list(map(hex, bits.toByteList(False)))
+    print("Int ", lst)
+    print("Hex ", lst_hex)
+    print("Binary ", bits)
 
 
 def print_exp_recvd(name, exp_header, header, chipId = None):
@@ -22,10 +26,10 @@ def print_exp_recvd(name, exp_header, header, chipId = None):
     Printing function to print the expected and received header as well as the chipId
     (if available).
     """
-    print "\tExpected {}: {}".format(name, exp_header)
-    print "\tReceived {}: {}".format(name, header)
+    print("\tExpected {}: {}".format(name, exp_header))
+    print("\tReceived {}: {}".format(name, header))
     if chipId != None:
-        print "\tChipID:", chipId
+        print("\tChipID:", chipId)
 
 
 def print_cmp_commands(exp_header, header, chipId = None):
@@ -69,13 +73,13 @@ def test_chipID():
     chip['RX'].ENABLE = 1
     time.sleep(0.01)
 
-    print 'RX ready:', chip['RX'].is_ready
-    print 'get_decoder_error_counter', chip['RX'].get_decoder_error_counter()
+    print('RX ready:', chip['RX'].is_ready)
+    print('get_decoder_error_counter', chip['RX'].get_decoder_error_counter())
 
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print 'RX ready:', chip['RX'].is_ready
+    print('RX ready:', chip['RX'].is_ready)
 
     print(chip.get_configuration())
 
@@ -84,14 +88,14 @@ def test_chipID():
     data = chip.reset_sequential(False)
     chip.write(data, True)
     fdata = chip['FIFO'].get_data()
-    print fdata
+    print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    print dout
+    print(dout)
     ddout = chip.decode(dout[0], 0x71)
-    print ddout
+    print(ddout)
     try:
         ddout = chip.decode(dout[1], 0x71)
-        print ddout
+        print(ddout)
     except IndexError:
         print("no EoR found")
 
@@ -106,7 +110,7 @@ def test_chipID():
         chip.write(data, True)
 
     # Step 4: Set general config
-    print "Set general config"
+    print("Set general config")
     data = chip.write_general_config(write=False)
     chip.write(data, True)
 

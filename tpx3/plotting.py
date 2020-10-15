@@ -9,6 +9,8 @@
     Plotting class
 '''
 
+from __future__ import absolute_import
+from __future__ import division
 import zlib  # workaround for segmentation fault on tables import
 import numpy as np
 import math
@@ -17,6 +19,7 @@ import shutil
 import os
 import matplotlib
 import ast
+import copy
 
 import tables as tb
 import matplotlib.pyplot as plt
@@ -30,6 +33,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import colors, cm
 from matplotlib.backends.backend_pdf import PdfPages
+import six
+from six.moves import range
 
 #import bdaq53.analysis.analysis_utils as au
 
@@ -159,13 +164,13 @@ class Plotting(object):
                      fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
             if self.run_config['chip_wafer'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s',
-                         (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                         (self.run_config['chip_wafer'].decode(), self.run_config['chip_x'].decode(), self.run_config['chip_y'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         else:
             fig.text(0.1, y_coord, 'Timepix3 %s' %
                      (self.level), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config['chip_wafer'] is not None:
+            if self.run_config[b'chip_wafer'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s' %
-                         (self.run_config['chip_wafer'], self.run_config['chip_x'], self.run_config['chip_y']), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                         (self.run_config[b'chip_wafer'].decode(), self.run_config[b'chip_x'].decode(), self.run_config[b'chip_y'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         if self.internal:
             fig.text(0.1, 1, 'Timepix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
                 boxstyle='round', facecolor='white', edgecolor='red', alpha=0.7), transform=fig.transFigure)
@@ -208,55 +213,55 @@ class Plotting(object):
         ax = fig.add_subplot(111)
         ax.axis('off')
 
-        scan_id = self.run_config['scan_id']
-        run_name = self.run_config['run_name']
-        chip_wafer = self.run_config['chip_wafer']
-        chip_x = self.run_config['chip_x']
-        chip_y = self.run_config['chip_y']
-        sw_ver = self.run_config['software_version']
-        board_name = self.run_config['board_name']
-        fw_ver = self.run_config['firmware_version']
+        scan_id = self.run_config[b'scan_id'].decode()
+        run_name = self.run_config[b'run_name'].decode()
+        chip_wafer = self.run_config[b'chip_wafer'].decode()
+        chip_x = self.run_config[b'chip_x'].decode()
+        chip_y = self.run_config[b'chip_y'].decode()
+        sw_ver = self.run_config[b'software_version'].decode()
+        board_name = self.run_config[b'board_name'].decode()
+        fw_ver = self.run_config[b'firmware_version'].decode()
 
-        if self.level is not '':
+        if self.level != '':
             text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
                 scan_id, chip_wafer, chip_x, chip_y, run_name)
         else:
             text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
                 scan_id, chip_wafer, chip_x, chip_y, run_name)
         ax.text(0.01, 1, text, fontsize=10)
-        ax.text(0.7, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %d' % (sw_ver, board_name, fw_ver), fontsize=6)
+        ax.text(0.7, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %s' % (sw_ver, board_name, fw_ver), fontsize=6)
 
         ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
 
-        if 'maskfile' in self.run_config.keys() and self.run_config['maskfile'] is not None and not self.run_config['maskfile'] == 'None':
+        if 'maskfile' in list(self.run_config.keys()) and self.run_config['maskfile'] is not None and not self.run_config['maskfile'] == 'None':
             ax.text(0.01, -0.05, 'Maskfile:\n%s' %
                     (self.run_config['maskfile']), fontsize=6)
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
-        for key, value in self.run_config.iteritems():
-            if key in ['scan_id', 'run_name', 'chip_wafer', 'chip_x', 'chip_y', 'software_version', 'board_name', 'firmware_version', 'disable', 'maskfile']:
+        for key, value in six.iteritems(self.run_config):
+            if key in [b'scan_id', b'run_name', b'chip_wafer', b'chip_x', b'chip_y', b'software_version', b'board_name', b'firmware_version', b'disable', b'maskfile']:
                 continue
-            tb_dict[key] = value
+            tb_dict[key] = int(value)
 
         tb_list = []
-        for i in range(0, len(tb_dict.keys()), 3):
+        for i in range(0, len(list(tb_dict.keys())), 3):
             try:
-                key1 = tb_dict.keys()[i]
+                key1 = list(tb_dict.keys())[i]
                 value1 = tb_dict[key1]
                 try:
-                    key2 = tb_dict.keys()[i + 1]
+                    key2 = list(tb_dict.keys())[i + 1]
                     value2 = tb_dict[key2]
                 except:
-                    key2 = ''
+                    key2 = b''
                     value2 = ''
                 try:
-                    key3 = tb_dict.keys()[i + 2]
+                    key3 = list(tb_dict.keys())[i + 2]
                     value3 = tb_dict[key3]
                 except:
-                    key3 = ''
+                    key3 = b''
                     value3 = ''
                 tb_list.append(
-                    [key1, value1, '', key2, value2, '', key3, value3])
+                    [key1.decode(), value1, '', key2.decode(), value2, '', key3.decode(), value3])
             except:
                 pass
 
@@ -323,7 +328,7 @@ class Plotting(object):
 
         hist = np.array(hist)
         if plot_range is None:
-            plot_range = range(0, len(hist))
+            plot_range = list(range(0, len(hist)))
         plot_range = np.array(plot_range)
         plot_range = plot_range[plot_range < len(hist)]
         if yerr is not None:
@@ -366,8 +371,8 @@ class Plotting(object):
             else:
                 title = ('Time-over-Threshold distribution' +
                          r' ($\Sigma$ = %d)' % (np.sum(hist)))
-        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=range(
-            0, 16), x_axis_title='ToT code', y_axis_title='# of hits', color='b', suffix='tot')
+        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=list(range(
+            0, 16)), x_axis_title='ToT code', y_axis_title='# of hits', color='b', suffix='tot')
 
     def _plot_relative_bcid(self, hist, title=None):
         if title is None:
@@ -376,15 +381,15 @@ class Plotting(object):
             else:
                 title = ('Relative BCID' + r' ($\Sigma$ = %d)' %
                          (np.sum(hist)))
-        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=range(
-            0, 32), x_axis_title='Relative BCID [25 ns]', y_axis_title='# of hits', suffix='rel_bcid')
+        self._plot_1d_hist(hist=hist, title=title, log_y=True, plot_range=list(range(
+            0, 32)), x_axis_title='Relative BCID [25 ns]', y_axis_title='# of hits', suffix='rel_bcid')
 
     def _plot_event_status(self, hist, title=None):
         self._plot_1d_hist(hist=hist,
                            title=('Event status' + r' ($\Sigma$ = %d)' %
                                   (np.sum(hist))) if title is None else title,
                            log_y=True,
-                           plot_range=range(0, 10),
+                           plot_range=list(range(0, 10)),
                            x_ticks=('User K\noccured', 'Ext\ntrigger', 'TDC\nword', 'BCID\nerror', 'TRG ID\nerror',
                                     'TDC\nambig.', 'Event\nTruncated', 'Unknown\nword', 'Wrong\nstructure', 'Ext. Trig.\nerror'),
                            color='g', y_axis_title='Number of events', suffix='event_status')
@@ -394,7 +399,7 @@ class Plotting(object):
                            title=('BCID error' + r' ($\Sigma$ = %d)' %
                                   (np.sum(hist))) if title is None else title,
                            log_y=True,
-                           plot_range=range(0, 32),
+                           plot_range=list(range(0, 32)),
                            x_axis_title='Trigger ID',
                            y_axis_title='Number of event header', color='g',
                            suffix='bcid_error')
@@ -402,18 +407,18 @@ class Plotting(object):
     def _plot_cl_size(self, hist):
         ''' Create 1D cluster size plot w/wo log y-scale '''
         self._plot_1d_hist(hist=hist, title='Cluster size',
-                           log_y=False, plot_range=range(0, 10),
+                           log_y=False, plot_range=list(range(0, 10)),
                            x_axis_title='Cluster size',
                            y_axis_title='# of hits', suffix='cluster_size')
         self._plot_1d_hist(hist=hist, title='Cluster size (log)',
-                           log_y=True, plot_range=range(0, 100),
+                           log_y=True, plot_range=list(range(0, 100)),
                            x_axis_title='Cluster size',
                            y_axis_title='# of hits', suffix='cluster_size_log')
 
     def _plot_cl_tot(self, hist):
         ''' Create 1D cluster size plot w/wo log y-scale '''
         self._plot_1d_hist(hist=hist, title='Cluster ToT',
-                           log_y=False, plot_range=range(0, 96),
+                           log_y=False, plot_range=list(range(0, 96)),
                            x_axis_title='Cluster ToT [25 ns]',
                            y_axis_title='# of hits', suffix='cluster_tot')
 
@@ -481,7 +486,7 @@ class Plotting(object):
         ax.set_adjustable('box')
         extent = [0.5, 256.5, 256.5, 0.5]
         bounds = np.linspace(start=z_min, stop=z_max, num=255, endpoint=True)
-        cmap = cm.get_cmap('plasma')
+        cmap = copy.copy(cm.get_cmap('plasma'))
         cmap.set_bad('w', 1.0)
         norm = colors.BoundaryNorm(bounds, cmap.N)
 
@@ -555,7 +560,7 @@ class Plotting(object):
                 z_max = 2 * np.ma.median(hist2d)
         bounds = np.linspace(start=z_min, stop=z_max, num=255, endpoint=True)
         if cmap is None:
-            cmap = cm.get_cmap('coolwarm')
+            cmap = copy.copy(cm.get_cmap('coolwarm'))
         cmap.set_bad('w', 1.0)
         norm = colors.BoundaryNorm(bounds, cmap.N)
         im = ax.imshow(hist2d, interpolation='none', aspect="auto", cmap=cmap, norm=norm, extent=extent)
@@ -572,9 +577,9 @@ class Plotting(object):
     def _plot_three_way(self, hist, title, filename=None, x_axis_title=None, minimum=None, maximum=None, bins=101, cmap=None):  # the famous 3 way plot (enhanced)
         if cmap is None:
             if maximum == 'median' or maximum is None:
-                cmap = cm.get_cmap('coolwarm')
+                cmap = copy.copy(cm.get_cmap('coolwarm'))
             else:
-                cmap = cm.get_cmap('cool')
+                cmap = copy.copy(cm.get_cmap('cool'))
         # TODO: set color for bad pixels
         # set nan to special value
         # masked_array = np.ma.array (a, mask=np.isnan(a))
@@ -709,9 +714,9 @@ class Plotting(object):
         extent = [0.5, 400.5, 192.5, 0.5]
         bounds = np.linspace(start=0, stop=z_max, num=255, endpoint=True)
         if z_max == 'median':
-            cmap = cm.get_cmap('coolwarm')
+            cmap = copy.copy(cm.get_cmap('coolwarm'))
         else:
-            cmap = cm.get_cmap('cool')
+            cmap = copy.copy(cm.get_cmap('cool'))
         cmap.set_bad('w', 1.0)
         norm = colors.BoundaryNorm(bounds, cmap.N)
 
@@ -735,7 +740,7 @@ class Plotting(object):
         setp(axHistx.get_xticklabels() + axHisty.get_yticklabels(), visible=False)
         hight = np.ma.sum(hist, axis=0)
 
-        axHistx.bar(x=range(1, 401), height=hight, align='center', linewidth=0)
+        axHistx.bar(x=list(range(1, 401)), height=hight, align='center', linewidth=0)
         axHistx.set_xlim((0.5, 400.5))
         if hist.all() is np.ma.masked:
             axHistx.set_ylim((0, 1))
@@ -744,7 +749,7 @@ class Plotting(object):
         axHistx.set_ylabel('#')
         width = np.ma.sum(hist, axis=1)
 
-        axHisty.barh(y=range(1, 193), width=width, align='center', linewidth=0)
+        axHisty.barh(y=list(range(1, 193)), width=width, align='center', linewidth=0)
         axHisty.set_ylim((192.5, 0.5))
         if hist.all() is np.ma.masked:
             axHisty.set_xlim((0, 1))
@@ -759,7 +764,7 @@ class Plotting(object):
         if max_occ is None:
             max_occ = np.max(scurves) + 5
 
-        x_bins = scan_parameters  # np.arange(-0.5, max(scan_parameters) + 1.5)
+        x_bins = np.arange(min(scan_parameters) - 1, max(scan_parameters) + 1)
         y_bins = np.arange(-0.5, max_occ + 0.5)
         n_pixel = 256 * 256
 
@@ -777,7 +782,7 @@ class Plotting(object):
         self._add_text(fig)
 
         fig.patch.set_facecolor('white')
-        cmap = cm.get_cmap('cool')
+        cmap = copy.copy(cm.get_cmap('cool'))
         if np.allclose(hist, 0.0) or hist.max() <= 1:
             z_max = 1.0
         else:
@@ -931,7 +936,7 @@ class Plotting(object):
         ax = fig.add_subplot(111)
         self._add_text(fig)
 
-        cmap = cm.get_cmap('viridis', (range_tdac - 1))
+        cmap = copy.copy(cm.get_cmap('viridis', (range_tdac - 1)))
         # create dicts for tdac data
         data_thres_tdac = {}
         hist_tdac = {}

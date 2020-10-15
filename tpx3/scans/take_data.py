@@ -9,7 +9,7 @@
     This script ...
 '''
 from __future__ import print_function
-
+from __future__ import absolute_import
 from tqdm import tqdm
 import numpy as np
 import time
@@ -39,7 +39,7 @@ class DataTake(ScanBase):
         '''
 
 
-        self.chip.write_ctpr([])  # ALL
+        self.chip.write_ctpr(range(256))  # ALL
 
         # Step 5: Set general config
         self.chip.write_general_config()

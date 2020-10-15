@@ -23,6 +23,8 @@ THE SOFTWARE.
 
 """
 
+from __future__ import print_function
+from __future__ import absolute_import
 from myhdl import *
 import os
 import myhdl
@@ -298,7 +300,7 @@ def bench():
         check_eth_frame.parse_axis_fcs(rx_frame.data[8:])
         check_frame = udp_ep.UDPFrame()
         check_frame.parse_eth(check_eth_frame)
-        print '!Rec_size:', len(check_frame.payload.data), check_frame.payload
+        print('!Rec_size:', len(check_frame.payload.data), check_frame.payload)
         
         # WR
         test_frame = udp_ep.UDPFrame()
@@ -331,7 +333,7 @@ def bench():
         check_frame = udp_ep.UDPFrame()
         check_frame.parse_eth(check_eth_frame)
         
-        print '!Rec_size:', len(check_frame.payload.data), check_frame.payload
+        print('!Rec_size:', len(check_frame.payload.data), check_frame.payload)
         
         
         #RD 32
@@ -365,7 +367,7 @@ def bench():
         check_frame = udp_ep.UDPFrame()
         check_frame.parse_eth(check_eth_frame)
         
-        print '!Rec_size:', len(check_frame.payload.data), check_frame.payload
+        print('!Rec_size:', len(check_frame.payload.data), check_frame.payload)
         
         
         assert gmii_source.empty()

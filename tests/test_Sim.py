@@ -6,6 +6,7 @@
 #
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import division
 from six.moves import range
 import unittest
 import os
@@ -20,6 +21,7 @@ import numpy as np
 
 from tpx3.tpx3 import TPX3
 import logging
+from io import open
 
 dac_list = ["Ibias_Preamp_ON", "Ibias_Preamp_OFF", "VPreamp_NCAS", "Ibias_Ikrum", "Vfbk", "Vthreshold_fine", "Vthreshold_coarse", "Ibias_DiscS1_ON", "Ibias_DiscS1_OFF", "Ibias_DiscS2_ON", "Ibias_DiscS2_OFF", "Ibias_PixelDAC", "Ibias_TPbufferIn", "Ibias_TPbufferOut", "VTP_coarse", "VTP_fine", "Ibias_CP_PLL", "PLL_Vcntrl"]
 dac_size_list = [256, 16, 256, 256, 256, 512, 16, 256, 16, 256, 16, 256, 256, 256, 256, 512, 256, 256]
@@ -51,7 +53,7 @@ class TestSim(unittest.TestCase):
         )
 
         with open(root_dir + "/tpx3/tpx3.yaml", "r") as f:
-            cnfg = yaml.load(f)
+            cnfg = yaml.load(f, Loader=yaml.FullLoader)
 
         cnfg["transfer_layer"][0]["type"] = "SiSim"
         cnfg["transfer_layer"][0]["init"]["port"] = 12345
@@ -132,7 +134,7 @@ class TestSim(unittest.TestCase):
             dac_number_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]
         else:
             dac_number_list = range(18)
-        pbar = tqdm(total=512/4*len(dac_number_list))
+        pbar = tqdm(total = 512 // 4 * len(dac_number_list))
         for value in range(0, 512, 8):
             for dac in dac_number_list:
                 if value < dac_size_list[dac]:
@@ -351,7 +353,7 @@ class TestSim(unittest.TestCase):
         self.assertEquals(0, dout[len(dout) - 2][27:0].tovalue())
 
         # Test values
-        pbar = tqdm(total = 65536/128 + 256 + 16)
+        pbar = tqdm(total = 65536 // 128 + 256 + 16)
         for i in range(0, 65536, 128):
             data = self.chip.write_tp_pulsenumber(i, False)
             self.chip.write(data)

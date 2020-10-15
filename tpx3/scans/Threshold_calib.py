@@ -9,7 +9,8 @@
     This script scans over different thresholds for one testpulse height
 '''
 from __future__ import print_function
-
+from __future__ import absolute_import
+from __future__ import division
 from tqdm import tqdm
 import numpy as np
 import time
@@ -19,6 +20,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+from six.moves import range
 
 local_configuration = {
     # Scan parameters
@@ -81,15 +83,15 @@ class ThresholdCalib(ScanBase):
             #self.chip.test_matrix[start_column:stop_column, i::mask_step] = self.chip.TP_ON
             #self.chip.mask_matrix[start_column:stop_column, i::mask_step] = self.chip.MASK_ON
 
-            self.chip.test_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.TP_ON
-            self.chip.mask_matrix[(i//(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step))),
-                                  (i%(mask_step/int(math.sqrt(mask_step))))::(mask_step/int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+            self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
 
             self.chip.thr_matrix[:, :] = 0
 
-            for i in range(256 / 4):
-                mask_step_cmd.append(self.chip.write_pcr(range(4 * i, 4 * i + 4), write=False))
+            for i in range(256 // 4):
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
             mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
 
@@ -97,13 +99,13 @@ class ThresholdCalib(ScanBase):
             pbar.update(1)
         pbar.close()
 
-        cal_high_range = range(0, (Vthreshold_stop-Vthreshold_start) * n_pulse_heights, 1)
+        cal_high_range = list(range(0, (Vthreshold_stop-Vthreshold_start) * n_pulse_heights, 1))
 
         self.logger.info('Starting scan...')
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
 
         for scan_param_id, vcal in enumerate(cal_high_range):
-            self.chip.set_dac("VTP_fine", 250 + (300 / n_pulse_heights) * (vcal / (Vthreshold_stop-Vthreshold_start)))
+            self.chip.set_dac("VTP_fine", 250 + (300 // n_pulse_heights) * (vcal // (Vthreshold_stop-Vthreshold_start)))
 
             vcal_step = vcal % (Vthreshold_stop-Vthreshold_start) + Vthreshold_start
             if(vcal_step <= 511):
@@ -111,17 +113,17 @@ class ThresholdCalib(ScanBase):
                 fine_threshold = vcal_step
             else:
                 relative_fine_threshold = (vcal_step - 512) % 160
-                coarse_threshold = (((vcal_step - 512) - relative_fine_threshold) / 160) + 1
+                coarse_threshold = (((vcal_step - 512) - relative_fine_threshold) // 160) + 1
                 fine_threshold = relative_fine_threshold + 352
                 #print("rel: %i coarse: %i fine: %i" % (relative_fine_threshold, coarse_threshold, fine_threshold))
             self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
             self.chip.set_dac("Vthreshold_fine", fine_threshold)
-            #print("ID: %i VTP_fine: %i coarse: %i fine: %i" % (scan_param_id, 200 + (300 / n_pulse_heights) * (vcal / (Vthreshold_stop-Vthreshold_start)), coarse_threshold, fine_threshold))
+            #print("ID: %i VTP_fine: %i coarse: %i fine: %i" % (scan_param_id, 200 + (300 // n_pulse_heights) * (vcal // (Vthreshold_stop-Vthreshold_start)), coarse_threshold, fine_threshold))
             time.sleep(0.001)
 
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):
-                    self.chip.write_ctpr(range(i//(mask_step/int(math.sqrt(mask_step))), 256, mask_step/int(math.sqrt(mask_step))))
+                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
                     self.chip.write(mask_step_cmd)
                     with self.shutter():
                         time.sleep(0.001)
@@ -144,10 +146,10 @@ class ThresholdCalib(ScanBase):
             meta_data = h5_file.root.meta_data[:]
             run_config = h5_file.root.configuration.run_config[:]
 
-            n_injections = [int(item[1]) for item in run_config if item[0] == 'n_injections'][0]
-            n_pulse_heights = [int(item[1]) for item in run_config if item[0] == 'n_pulse_heights'][0]
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == 'Vthreshold_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            n_pulse_heights = [int(item[1]) for item in run_config if item[0] == b'n_pulse_heights'][0]
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
             # TODO: TMP this should go to analysis function with chunking
             hit_data = analysis.interpret_raw_data(raw_data, meta_data)
@@ -172,7 +174,7 @@ class ThresholdCalib(ScanBase):
                 scurve = analysis.scurve_hist(hit_data_step, param_range_step)
                 #print(scurve[128*256+128])
 
-                param_range_step = range(Vthreshold_start, Vthreshold_stop)
+                param_range_step = list(range(Vthreshold_start, Vthreshold_stop))
                 thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range_step, n_injections=n_injections, invert_x=True)
                 #print(thr2D)
                 #quit()
@@ -201,10 +203,10 @@ class ThresholdCalib(ScanBase):
             # Q: Maybe Plotting should not know about the file?
             with plotting.Plotting(h5_filename) as p:
 
-                Vthreshold_start = p.run_config['Vthreshold_start']
-                Vthreshold_stop = p.run_config['Vthreshold_stop']
-                n_injections = p.run_config['n_injections']
-                n_pulse_heights = p.run_config['n_pulse_heights']
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                n_injections = int(p.run_config[b'n_injections'])
+                n_pulse_heights =int( p.run_config[b'n_pulse_heights'])
 
                 p.plot_parameter_page()
 
@@ -219,7 +221,7 @@ class ThresholdCalib(ScanBase):
                 #scurve_hist = scurve_hist_path
                 scurve_hist = h5_file.root.interpreted.HistSCurve_0[:].T
                 max_occ = n_injections * 5
-                p.plot_scurves(scurve_hist, range(Vthreshold_start, Vthreshold_stop), scan_parameter_name="Vthreshold", max_occ=max_occ)
+                p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ)
 
                 #chi2_sel_name = 'Chi2Map_' + str(pulse_height)
                 #chi2_sel_path = 'h5_file.root.interpreted.' + chi2_sel_name + '[:]'
@@ -236,7 +238,7 @@ class ThresholdCalib(ScanBase):
 
                 scurve_hist = h5_file.root.interpreted.HistSCurve_1[:].T
                 max_occ = n_injections * 5
-                p.plot_scurves(scurve_hist, range(Vthreshold_start, Vthreshold_stop), scan_parameter_name="Vthreshold", max_occ=max_occ)
+                p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ)
 
                 #chi2_sel_name = 'Chi2Map_' + str(pulse_height)
                 #chi2_sel_path = 'h5_file.root.interpreted.' + chi2_sel_name + '[:]'
@@ -253,7 +255,7 @@ class ThresholdCalib(ScanBase):
 
                 scurve_hist = h5_file.root.interpreted.HistSCurve_2[:].T
                 max_occ = n_injections * 5
-                p.plot_scurves(scurve_hist, range(Vthreshold_start, Vthreshold_stop), scan_parameter_name="Vthreshold", max_occ=max_occ)
+                p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ)
 
                 #chi2_sel_name = 'Chi2Map_' + str(pulse_height)
                 #chi2_sel_path = 'h5_file.root.interpreted.' + chi2_sel_name + '[:]'
