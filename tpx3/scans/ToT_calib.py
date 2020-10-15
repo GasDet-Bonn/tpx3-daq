@@ -145,8 +145,6 @@ class ToTCalib(ScanBase):
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
             a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range)
 
-            h5_file.remove_node(h5_file.root.interpreted, recursive=True)
-
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
             h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
