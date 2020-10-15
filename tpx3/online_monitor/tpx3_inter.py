@@ -52,7 +52,7 @@ class Tpx3(Transceiver):
                 shape = self.meta_data.pop('shape')
                 if self.meta_data:
                     try:
-                        raw_data = np.frombuffer(buffer(data),
+                        raw_data = np.frombuffer(memoryview(data),
                                                  dtype=dtype).reshape(shape)
                         return raw_data
                     # KeyError happens if meta data read is omitted
