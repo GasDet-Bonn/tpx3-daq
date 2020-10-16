@@ -38,6 +38,8 @@ class DataTake(ScanBase):
 
         '''
 
+        if scan_timeout < 0:
+            raise ValueError("Value {} for scan_timeout must be equal or bigger than 0".format(scan_timeout))
 
         self.chip.write_ctpr(range(256))  # ALL
 
