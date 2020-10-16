@@ -47,7 +47,7 @@ class PixelDAC_opt(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self,  start_column = 0, stop_column = 256, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
+    def scan(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
         '''
         Threshold scan main loop
 
