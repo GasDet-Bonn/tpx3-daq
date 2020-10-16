@@ -108,13 +108,21 @@ class TPX3_CLI_TOP(object):
     readline.parse_and_bind("tab: complete")
     funktion_call = TPX3_CLI_funktion_call()
     print ('\n Welcome to the Timepix3 control Software\n')
+
+    # Here the main part of the cli starts. Every usercomand needs to be processed here.
     while 1:
         
         a = input('> ')
+
+        #Catch if no input given
         if a == '':
-            print ('Something enter you must')
+            print ('Something enter you must!')
+
+        #Input is given
         else:
             inputlist = a.split()
+
+            #Help
             if inputlist[0] in {'Help', 'help', 'h', '-h'}:
                 print('If you need detailed help on a function type [functionname -h].\n Possible options are:')
                 for function in help_functions:
