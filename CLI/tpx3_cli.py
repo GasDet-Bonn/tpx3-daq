@@ -32,16 +32,14 @@ class TPX3_multiprocess_start(object):
                 call_func = (function+'()')
                 scan = eval(call_func)
                 scan.start(**kwargs)
-                try:
                 scan.analyze()
-                except NotImplementedError:
-                    pass
-                try:
                 scan.plot()
-                except NotImplementedError:
-                    pass
             except KeyboardInterrupt:
                 sys.exit(1)
+            except ValueError as e:
+                print(e)
+            except NotImplementedError:
+                pass
             
         p = Process(target=startup_func, args=(function,), kwargs=kwargs)
         p.start()
