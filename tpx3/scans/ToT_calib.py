@@ -28,7 +28,6 @@ local_configuration = {
     'mask_step'        : 64,
     'VTP_fine_start'   : 210 + 0,
     'VTP_fine_stop'    : 210 + 300,
-    'n_injections'     : 1,
     'maskfile'        : './output_data/20200505_165149_mask.h5'
 }
 
@@ -40,7 +39,7 @@ class ToTCalib(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, start_column = 0, stop_column = 256, VTP_fine_start=100, VTP_fine_stop=200, n_injections=100, mask_step=32, **kwargs):
+    def scan(self, VTP_fine_start=100, VTP_fine_stop=200, mask_step=64, **kwargs):
         '''
         Testpulse scan main loop
 
@@ -69,7 +68,7 @@ class ToTCalib(ScanBase):
         data = self.chip.write_tp_period(3, 0)
 
         # Step 6b: Write to pulse number tp register
-        self.chip.write_tp_pulsenumber(n_injections)
+        self.chip.write_tp_pulsenumber(1)
         #self.chip.write_tp_period(200,8)
 
         self.logger.info('Preparing injection masks...')
@@ -138,7 +137,6 @@ class ToTCalib(ScanBase):
             param_range = np.unique(meta_data['scan_param_id'])
             totcurve = analysis.scurve_hist(hit_data, param_range)
 
-            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
             VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
             VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
 
@@ -172,7 +170,6 @@ class ToTCalib(ScanBase):
                 VTP_fine_start = int(p.run_config[b'VTP_fine_start'])
                 VTP_fine_stop = int(p.run_config[b'VTP_fine_stop'])
                 VTP_coarse = int(p.dacs[b'VTP_coarse'])
-                n_injections = int(p.run_config[b'n_injections'])
 
                 p.plot_parameter_page()
 
