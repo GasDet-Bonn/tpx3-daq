@@ -53,6 +53,15 @@ class ToTCalib(ScanBase):
 
         '''
 
+        if VTP_fine_start < 0 or VTP_fine_start > 511:
+            raise ValueError("Value {} for VTP_fine_start is not in the allowed range (0-511)".format(VTP_fine_start))
+        if VTP_fine_stop < 0 or VTP_fine_stop > 511:
+            raise ValueError("Value {} for VTP_fine_stop is not in the allowed range (0-511)".format(VTP_fine_stop))
+        if VTP_fine_stop <= VTP_fine_start:
+            raise ValueError("Value for VTP_fine_stop must be bigger than value for VTP_fine_start")
+        if mask_step not in {4, 16, 64, 256}:
+            raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
+
         #
         # ALL this should be set in set_configuration?
         #
