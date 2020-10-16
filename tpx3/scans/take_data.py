@@ -60,7 +60,8 @@ class DataTake(ScanBase):
         self.chip.read_pixel_matrix_datadriven()
 
         self.logger.info('Starting data taking...')
-        pbar = tqdm(total=int(scan_timeout))  # [s]
+        if scan_timeout != 0:
+            pbar = tqdm(total=int(scan_timeout))  # [s]
 
         start_time = time.time()
 
@@ -73,10 +74,15 @@ class DataTake(ScanBase):
                     try:
                         time.sleep(1)
                         how_long = int(time.time() - start_time)
-                        pbar.n = how_long
-                        pbar.refresh()
-                        if how_long > scan_timeout:
-                            self.stop_scan = True
+                        if scan_timeout != 0:
+                            pbar.n = how_long
+                            pbar.refresh()
+                            if how_long > scan_timeout:
+                                self.stop_scan = True
+                        else:
+                            minutes, seconds = divmod(how_long, 60)
+                            hours, minutes = divmod(minutes, 60)
+                            print(f'Runtime: %d:%02d:%02d\r' % (hours, minutes, seconds), end="")
 
                     except KeyboardInterrupt:  # react on keyboard interupt
                         self.logger.info('Scan was stopped due to keyboard interrupt')
@@ -85,7 +91,8 @@ class DataTake(ScanBase):
 
             time.sleep(0.1)
 
-        pbar.clear()
+        if scan_timeout != 0:
+            pbar.clear()
 
         self.logger.info('Scan finished')
 
