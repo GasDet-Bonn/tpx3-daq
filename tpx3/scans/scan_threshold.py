@@ -39,7 +39,7 @@ class ThresholdScan(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start=1312, Vthreshold_stop=1471, n_injections=100, mask_step=32, **kwargs):
+    def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, n_injections=100, mask_step=16, **kwargs):
         '''
         Threshold scan main loop
 
