@@ -58,10 +58,8 @@ class TPX3_CLI_funktion_call(object):
             print('> Please enter the number of steps(4, 16, 64, 256):')
             mask_step = int(input('>> '))
             
-            print ('ToT with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
-        print('Start')
+        print ('ToT calibration with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, mask_step = mask_step)
-
 
     def Threshold_Scan(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:
@@ -75,7 +73,6 @@ class TPX3_CLI_funktion_call(object):
             mask_step = int(input('>> '))
             
             print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
-        print('Start')
         TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
@@ -142,7 +139,7 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                     elif len(inputlist) == 4:
                         try:
-                            funktion_call.ToT_Calibration(VTP_fine_start = int(inputlist[1]),VTP_fine_stop = int(inputlist[2]),mask_step = int(inputlist[3]))
+                            funktion_call.ToT_Calibration(VTP_fine_start = int(inputlist[1]), VTP_fine_stop = int(inputlist[2]), mask_step = int(inputlist[3]))
                         except KeyboardInterrupt:
                            print('User quit')
                     elif len(inputlist) > 4:
@@ -158,7 +155,7 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                 else:
                     if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                        print('This is the Threshold_Scan. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911), the number of testpulse injections (1-65535) and the number of steps (4, 16, 64, 256).')
+                        print('This is the Threshold scan. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911), the number of testpulse injections (1-65535) and the number of steps (4, 16, 64, 256).')
                     elif len(inputlist) < 5:
                         print ('Incomplete set of parameters:')
                         try:
@@ -217,10 +214,13 @@ class TPX3_CLI_TOP(object):
                     elif len(inputlist) > 2:
                         print ('To many parameters! The given function takes only one parameters:\n scan timeout (in seconds).')
                     
+            #Quit     
             elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
                 break
+
+            #Unknown command
             else:
-                print ('You entered', a)
+                print ('Unknown command: ', a, 'Use a language I understand.')
 
 if __name__ == "__main__":
     tpx3_cli = TPX3_CLI_TOP()
