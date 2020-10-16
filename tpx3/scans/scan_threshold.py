@@ -53,10 +53,10 @@ class ThresholdScan(ScanBase):
 
         '''
 
-        if Vthreshold_start < 0 or Vthreshold_start > 255:
-            raise ValueError("Value {} for Vthreshold_start is not in the allowed range (0-255)".format(Vthreshold_start))
-        if Vthreshold_stop < 0 or Vthreshold_stop > 255:
-            raise ValueError("Value {} for Vthreshold_stop is not in the allowed range (0-255)".format(Vthreshold_stop))
+        if Vthreshold_start < 0 or Vthreshold_start > 2911:
+            raise ValueError("Value {} for Vthreshold_start is not in the allowed range (0-2911)".format(Vthreshold_start))
+        if Vthreshold_stop < 0 or Vthreshold_stop > 2911:
+            raise ValueError("Value {} for Vthreshold_stop is not in the allowed range (0-2911)".format(Vthreshold_stop))
         if Vthreshold_stop <= Vthreshold_start:
             raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
         if n_injections < 1 or n_injections > 65535:
