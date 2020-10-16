@@ -41,16 +41,16 @@ class TPX3_CLI_TOP(object):
     readline.set_completer(completer)
     readline.parse_and_bind("tab: complete")
     TPX3_CLI_multiprocess_start = TPX3_CLI_multiprocess_start()
-    print ('\n Welcome to the Timepix3 controle Software\n')
+    print ('\n Welcome to the Timepix3 control Software\n')
     while 1:
         
         def ToT_Calibration(VTP_fine_start = None, VTP_fine_stop = None, mask_step = None):
             if VTP_fine_start == None:
-                print('> Please Enter the VTP_fine_start value (0-511):')
+                print('> Please enter the VTP_fine_start value (0-511):')
                 VTP_fine_start = int(input('>> '))
-                print('> Please Enter the VTP_fine_stop value (0-511):')
+                print('> Please enter the VTP_fine_stop value (0-511):')
                 VTP_fine_stop = int(input('>> '))
-                print('> Please Enter the number of steps(4, 16, 64, 256):')
+                print('> Please enter the number of steps(4, 16, 64, 256):')
                 mask_step = int(input('>> '))
                 
                 print ('ToT with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
@@ -59,13 +59,13 @@ class TPX3_CLI_TOP(object):
 
         def Threshold_Scan(Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
             if Vthreshold_start == None:
-                print('> Please Enter the Vthreshold_start value (0-2911):')
+                print('> Please enter the Vthreshold_start value (0-2911):')
                 Vthreshold_start = int(input('>> '))
-                print('> Please Enter the Vthreshold_stop value (0-2911):')
+                print('> Please enter the Vthreshold_stop value (0-2911):')
                 Vthreshold_stop = int(input('>> '))
-                print('> Please Enter the number of injections (1-65535):')
+                print('> Please enter the number of injections (1-65535):')
                 n_injections = int(input('>> '))
-                print('> Please Enter the number of steps(4, 16, 64, 256):')
+                print('> Please enter the number of steps(4, 16, 64, 256):')
                 mask_step = int(input('>> '))
                 
                 print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
@@ -91,7 +91,7 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                 else:
                     if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                        print('This is the ToT calibration. As arguments you can give the start testpulse value (0-511), the stop testpulse value (0-511) and the number of steps(4, 16, 64, 256).')
+                        print('This is the ToT calibration. As arguments you can give the start testpulse value (0-511), the stop testpulse value (0-511) and the number of steps (4, 16, 64, 256).')
                     elif len(inputlist) < 4:
                         print ('Incomplete set of parameters:')
                         try:
@@ -104,7 +104,7 @@ class TPX3_CLI_TOP(object):
                         except KeyboardInterrupt:
                            print('User quit')
                     elif len(inputlist) > 4:
-                        print ('To many parameters! The given function takes only three parameters:\n start testpulse value (0-511),\n stop testpulse value (0-511),\n number of steps(4, 16, 64, 256).')
+                        print ('To many parameters! The given function takes only three parameters:\n start testpulse value (0-511),\n stop testpulse value (0-511),\n number of steps (4, 16, 64, 256).')
 
             elif inputlist[0] in {'Threshold_Scan', 'Threshold_scan', 'threshold_scan'}:
                 if len(inputlist) == 1:
