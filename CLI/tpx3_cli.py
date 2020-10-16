@@ -14,9 +14,10 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp', 
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
                 'Set_DAC', 'set_dac',
+                'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq'
                 'Help', 'help', 'h', '-h'
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC' 'Help', 'Quit']
+help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Help', 'Quit']
 
 def completer(text, state):
     options = [function for function in functions if function.startswith(text)]
