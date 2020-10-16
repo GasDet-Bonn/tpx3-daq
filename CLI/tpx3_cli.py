@@ -3,6 +3,7 @@ import sys
 from multiprocessing import Process
 from tpx3.scans.ToT_calib import ToTCalib
 from tpx3.scans.scan_threshold import ThresholdScan
+from tpx3.scans.take_data import DataTake
 
 #In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot', 
@@ -79,6 +80,20 @@ class TPX3_CLI_funktion_call(object):
         TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
 
+
+    def Run_Datataking(object, scan_timeout = None):
+        if scan_timeout == None:
+            print('> Please enter the required run time in seconds (choose 0 for an infinite run):')
+            scan_timeout = int(input('>> '))
+        
+        if scan_timeout == 0:
+           print('Infinite data taking run started! You can close the run with "ctrl. c"') 
+        else:
+            print('{} s long data taking run started!'.format(scan_timeout))
+            
+        TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout)
+
+
 class TPX3_CLI_TOP(object):
     readline.set_completer(completer)
     readline.parse_and_bind("tab: complete")
@@ -145,6 +160,25 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                     elif len(inputlist) > 5:
                         print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+                    
+            #Data taking
+            elif inputlist[0] in {'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r'}:
+                if len(inputlist) == 1:
+                    print('Run_Datataking')
+                    try:
+                        funktion_call.Run_Datataking()
+                    except KeyboardInterrupt:
+                           print('User quit')
+                else:
+                    if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                        print('This is the datataking function. As argument you can give the scan timeout (in seconds, if 0 is entered the datataking will run infinitely')
+                    elif len(inputlist) == 2:
+                        try:
+                            funktion_call.Run_Datataking(scan_timeout = int(inputlist[1]))
+                        except KeyboardInterrupt:
+                           print('User quit')
+                    elif len(inputlist) > 2:
+                        print ('To many parameters! The given function takes only one parameters:\n scan timeout (in seconds).')
                     
             elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
                 break
