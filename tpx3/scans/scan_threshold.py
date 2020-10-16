@@ -53,6 +53,17 @@ class ThresholdScan(ScanBase):
 
         '''
 
+        if Vthreshold_start < 0 or Vthreshold_start > 255:
+            raise ValueError("Value {} for Vthreshold_start is not in the allowed range (0-255)".format(Vthreshold_start))
+        if Vthreshold_stop < 0 or Vthreshold_stop > 255:
+            raise ValueError("Value {} for Vthreshold_stop is not in the allowed range (0-255)".format(Vthreshold_stop))
+        if Vthreshold_stop <= Vthreshold_start:
+            raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
+        if n_injections < 1 or n_injections > 65535:
+            raise ValueError("Value {} for n_injections is not in the allowed range (1-65535)".format(n_injections))
+        if mask_step not in {4, 16, 64, 256}:
+            raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
+
         #
         # ALL this should be set in set_configuration?
         #
