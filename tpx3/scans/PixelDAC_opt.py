@@ -47,7 +47,35 @@ class PixelDAC_opt(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
+    def scan(self, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
+        last_delta = 1
+        last_rms_delta = 22
+        pixeldac = 150
+        last_pixeldac = pixeldac
+
+        # Repeat until optimization is done
+        while last_delta < last_rms_delta - 2 or last_delta > last_rms_delta + 2:
+            self.iterate_scan(pixeldac = int(pixeldac), last_pixeldac = int(last_pixeldac), last_delta = float(last_delta), mask_step = 16, Vthreshold_start=1600, Vthreshold_stop=2300, n_injections=100)
+            opt_results = self.analyze()
+            last_pixeldac = pixeldac
+
+            # Store results of iteration
+            pixeldac = opt_results[0]
+            last_delta = opt_results[1]
+            last_rms_delta = opt_results[2]
+
+        # Write new pixeldac into DAC YAML file
+        with open('../dacs.yml') as f:
+            doc = yaml.load(f, Loader=yaml.FullLoader)
+
+        for register in doc['registers']:
+            if register['name'] == 'Ibias_PixelDAC':
+                register['value'] = int(pixeldac)
+
+        with open('../dacs.yml', 'w') as f:
+            yaml.dump(doc, f)
+
+    def iterate_scan(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
         '''
         Threshold scan main loop
 
@@ -178,9 +206,7 @@ class PixelDAC_opt(ScanBase):
         self.logger.info('Scan finished')
 
     def analyze(self):
-        print(self.output_filename)
         h5_filename = self.output_filename + '.h5'
-        print(h5_filename)
 
         self.logger.info('Starting data analysis...')
         with tb.open_file(h5_filename, 'r+') as h5_file:
@@ -269,30 +295,6 @@ class PixelDAC_opt(ScanBase):
 
 if __name__ == "__main__":
     scan = PixelDAC_opt()
-    last_delta = 1
-    last_rms_delta = 22
-    pixeldac = 150
-    last_pixeldac = pixeldac
-
-    # Repeat until optimization is done
-    while last_delta < last_rms_delta - 2 or last_delta > last_rms_delta + 2:
-        scan.start(pixeldac = int(pixeldac), last_pixeldac = int(last_pixeldac), last_delta = float(last_delta), mask_step = 16, Vthreshold_start=1600, Vthreshold_stop=2300, n_injections=100)
-        opt_results = scan.analyze()
-        last_pixeldac = pixeldac
-
-        # Store results of iteration
-        pixeldac = opt_results[0]
-        last_delta = opt_results[1]
-        last_rms_delta = opt_results[2]
-
-    # Write new pixeldac into DAC YAML file
-    with open('../dacs.yml') as f:
-        doc = yaml.load(f, Loader=yaml.FullLoader)
-
-    for register in doc['registers']:
-        if register['name'] == 'Ibias_PixelDAC':
-            register['value'] = int(pixeldac)
-
-    with open('../dacs.yml', 'w') as f:
-        yaml.dump(doc, f)
+    scan.start(**local_configuration)
+    
     
