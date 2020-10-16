@@ -3,6 +3,7 @@ import sys
 from multiprocessing import Process
 from tpx3.scans.ToT_calib import ToTCalib
 from tpx3.scans.scan_threshold import ThresholdScan
+from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.take_data import DataTake
 
 #In this part all callable function names should be in the list functions
@@ -79,6 +80,19 @@ class TPX3_CLI_funktion_call(object):
         print('Start')
         TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
+    def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
+        if VTP_fine_start == None:
+            print('> Please enter the VTP_fine_start value (0-511):')
+            VTP_fine_start = int(input('>> '))
+            print('> Please enter the VTP_fine_stop value (0-511):')
+            VTP_fine_stop = int(input('>> '))
+            print('> Please enter the number of injections (1-65535):')
+            n_injections = int(input('>> '))
+            print('> Please enter the number of steps(4, 16, 64, 256):')
+            mask_step = int(input('>> '))
+            
+        print ('Testpulse scan with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
+        TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, n_injections = n_injections, mask_step = mask_step)
 
 
     def Run_Datataking(object, scan_timeout = None):
@@ -160,6 +174,31 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                     elif len(inputlist) > 5:
                         print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+                    
+            #Testpulse_Scan
+            elif inputlist[0] in {'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp'}:
+                if len(inputlist) == 1:
+                    print('Testpulse_Scan')
+                    try:
+                        funktion_call.Testpulse_Scan()
+                    except KeyboardInterrupt:
+                           print('User quit')
+                else:
+                    if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                        print('This is the Testpulse Scan. As arguments you can give the the start testpulse value (0-511), the stop testpulse value (0-511), the number of testpulse injections (1-65535) and the number of steps (4, 16, 64, 256).')
+                    elif len(inputlist) < 5:
+                        print ('Incomplete set of parameters:')
+                        try:
+                            funktion_call.Testpulse_Scan()
+                        except KeyboardInterrupt:
+                           print('User quit')
+                    elif len(inputlist) == 5:
+                        try:
+                            funktion_call.Testpulse_Scan(VTP_fine_start = int(inputlist[1]), VTP_fine_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
+                        except KeyboardInterrupt:
+                           print('User quit')
+                    elif len(inputlist) > 5:
+                        print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-511),\n stop testpulse value (0-511),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
                     
             #Data taking
             elif inputlist[0] in {'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r'}:
