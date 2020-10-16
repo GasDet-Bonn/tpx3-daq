@@ -48,6 +48,17 @@ class PixelDAC_opt(ScanBase):
     x_position = 'A'
 
     def scan(self, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
+        if Vthreshold_start < 0 or Vthreshold_start > 2911:
+            raise ValueError("Value {} for Vthreshold_start is not in the allowed range (0-2911)".format(Vthreshold_start))
+        if Vthreshold_stop < 0 or Vthreshold_stop > 2911:
+            raise ValueError("Value {} for Vthreshold_stop is not in the allowed range (0-2911)".format(Vthreshold_stop))
+        if Vthreshold_stop <= Vthreshold_start:
+            raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
+        if n_injections < 1 or n_injections > 65535:
+            raise ValueError("Value {} for n_injections is not in the allowed range (1-65535)".format(n_injections))
+        if mask_step not in {4, 16, 64, 256}:
+            raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
+
         last_delta = 1
         last_rms_delta = 22
         pixeldac = 150
