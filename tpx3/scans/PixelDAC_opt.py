@@ -33,10 +33,7 @@ local_configuration = {
     'mask_step'        : 16,
     'Vthreshold_start' : 1600,
     'Vthreshold_stop'  : 2300,
-    'n_injections'     : 100,
-    'pixeldac'         : 127,
-    'last_pixeldac'    : 127,
-    'last_delta'       : 127
+    'n_injections'     : 100
 }
 
 
@@ -61,19 +58,34 @@ class PixelDAC_opt(ScanBase):
 
         last_delta = 1
         last_rms_delta = 22
-        pixeldac = 150
+        pixeldac = 127
         last_pixeldac = pixeldac
+        iteration = 0
 
         # Repeat until optimization is done
         while last_delta < last_rms_delta - 2 or last_delta > last_rms_delta + 2:
-            self.iterate_scan(pixeldac = int(pixeldac), last_pixeldac = int(last_pixeldac), last_delta = float(last_delta), mask_step = 16, Vthreshold_start=1600, Vthreshold_stop=2300, n_injections=100)
-            opt_results = self.analyze()
+            args = {
+                'pixeldac'         : int(pixeldac),
+                'last_pixeldac'    : int(last_pixeldac),
+                'last_delta'       : float(last_delta),
+                'mask_step'        : mask_step,
+                'Vthreshold_start' : Vthreshold_start,
+                'Vthreshold_stop'  : Vthreshold_stop,
+                'n_injections'     : n_injections
+            }
+            if iteration != 0:
+                self.setup_files(iteration = iteration)
+                self.dump_configuration(iteration = iteration, **args)
+            self.iterate_scan(**args)
+            opt_results = self.analyze(iteration)
             last_pixeldac = pixeldac
 
             # Store results of iteration
             pixeldac = opt_results[0]
             last_delta = opt_results[1]
             last_rms_delta = opt_results[2]
+
+            iteration += 1
 
         # Write new pixeldac into DAC YAML file
         with open('../dacs.yml') as f:
@@ -216,19 +228,18 @@ class PixelDAC_opt(ScanBase):
 
         self.logger.info('Scan finished')
 
-    def analyze(self):
+    def analyze(self, iteration = 0):
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting data analysis...')
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Open raw, meta and config data
-            raw_data = h5_file.root.raw_data[:]
-            meta_data = h5_file.root.meta_data[:]
-            run_config = h5_file.root.configuration.run_config[:]
-            # Delete the coresponding nodes in the h5 file for the next iteration
-            h5_file.remove_node(h5_file.root.raw_data)
-            h5_file.remove_node(h5_file.root.meta_data)
-            h5_file.remove_node(h5_file.root.configuration, recursive=True)
+            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[:]')
+            raw_data = eval(raw_data_call)
+            meta_data_call = ('h5_file.root.' + 'meta_data_' + str(iteration) + '[:]')
+            meta_data = eval(meta_data_call)
+            run_config_call = ('h5_file.root.' + 'configuration.run_config_' + str(iteration) + '[:]')
+            run_config = eval(run_config_call)
 
             # TODO: TMP this should go to analysis function with chunking
             #print('haeder1\t header2\t y\t x\t Hits\t Counter')
@@ -306,6 +317,6 @@ class PixelDAC_opt(ScanBase):
 
 if __name__ == "__main__":
     scan = PixelDAC_opt()
-    scan.start(**local_configuration)
+    scan.start(iteration = 0, **local_configuration)
     
     

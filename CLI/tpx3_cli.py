@@ -102,7 +102,7 @@ class TPX3_CLI_funktion_call(object):
             print('> Please enter the number of steps(4, 16, 64, 256):')
             mask_step = int(input('>> '))
         print ('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
-        TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
+        TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
     def Run_Datataking(object, scan_timeout = None):
         if scan_timeout == None:
