@@ -29,6 +29,10 @@ loglevel = logging.getLogger('TPX3').getEffectiveLevel()
 
 
 def get_software_version():
+    '''
+        Tries to get the software version based on the git commit and branch. If this does not
+        work the version defined in __init__.py is used
+    '''
     try:
         rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
         branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
@@ -59,8 +63,8 @@ class DacTable(tb.IsDescription):
 
 
 def send_data(socket, data, scan_par_id, name='ReadoutData'):
-    '''Sends the data of every read out (raw data and meta data)
-
+    '''
+        Sends the data of every read out (raw data and meta data)
         via ZeroMQ to a specified socket
     '''
 
@@ -88,40 +92,62 @@ class ScanBase(object):
     '''
 
     def __init__(self, dut_conf=None):
-
+        # Get the project directory
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+        # Setup the output_data directory
         self.working_dir = os.path.join(os.getcwd(), "output_data")
         if not os.path.exists(self.working_dir):
             os.makedirs(self.working_dir)
 
+        # Create the filename for the HDF5 file and the logger by combining timestamp and run_name
         self.timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.run_name = self.timestamp + '_' + self.scan_id
         self.output_filename = os.path.join(self.working_dir, self.run_name)
 
+        # Setup the logger and the logfile
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(loglevel)
         self.setup_logfile()
-
         self.logger.info('Initializing %s...', self.__class__.__name__)
 
+        # Initialize the chip
         self.chip = TPX3(dut_conf)
 
     def get_basil_dir(self):
+        '''
+            Returns the directroy of the basil installation
+        '''
         return str(os.path.dirname(os.path.dirname(basil.__file__)))
 
     def get_chip(self):
+        '''
+            Returns the chip object
+        '''
         return self.chip
 
     def prepare_injection_masks(self, start_column, stop_column, start_row, stop_row, mask_step):
-        pass
+        '''
+            Prepares injection masks for scans
+        '''
+        raise NotImplementedError('ScanBase.prepare_injection_masks() not implemented')
 
 
     def dump_configuration(self, iteration = None, **kwargs):
+        '''
+            Dumps the current configuration in tables of the configuration group in the HDF5 file.
+            For scans with multiple iterations separate tables for each iteration will be created.
+        '''
+
+        # Save the scan/run configuration
+        # Scans without multiple iterations
         if iteration == None:
             run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config', title='Run config', description=RunConfigTable)
+        # Scans with multiple iterations
         else:
             run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config ' + str(iteration), description=RunConfigTable)
+
+        # Common scan/run configuration parameters
         row = run_config_table.row
         row['attribute'] = 'scan_id'
         row['value'] = self.scan_id
@@ -155,6 +181,7 @@ class ScanBase(object):
         row['value'] = self.y_position
         row.append()
 
+        # scan/run specific configuration parameters
         run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'maskfile']
         for kw, value in six.iteritems(kwargs):
             if kw in run_config_attributes:
@@ -164,8 +191,11 @@ class ScanBase(object):
                 row.append()
         run_config_table.flush()
 
+        # Save the dac settings
+        # Scans without multiple iterations
         if iteration == None:
             dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable)
+        # Scans with multiple iterations
         else:
             dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs_' + str(iteration), title='DACs ' + str(iteration), description=DacTable)
         for dac, value in six.iteritems(self.chip.dacs):
@@ -175,20 +205,46 @@ class ScanBase(object):
             row.append()
         dac_table.flush()
 
+        # Save the mask and the pixel threshold matrices
+        # Scans without multiple iterations
         if iteration == None:
             self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix', title='Mask Matrix', obj=self.chip.mask_matrix)
             self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix', title='Threshold Matrix', obj=self.chip.thr_matrix)
+        # Scans with multiple iterations
         else:
             self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix_' + str(iteration), title='Mask Matrix ' + str(iteration), obj=self.chip.mask_matrix)
             self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix_' + str(iteration), title='Threshold Matrix ' + str(iteration), obj=self.chip.thr_matrix)
+
+    def setup_files(self, iteration = None):
+        '''
+            Setup the HDF5 file by creating the earrays and tables for raw_data and meta_data
+            If a scan has multiple iterations individual earrays and tables can be created for
+            each iteration
+        '''
+
+        filter_raw_data = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
+        self.filter_tables = tb.Filters(complib='zlib', complevel=5, fletcher32=False)
+
+        # Scans without multiple iterations
+        if iteration == None:
+            self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data', atom=tb.UIntAtom(),
+                                                            shape=(0,), title='raw_data', filters=filter_raw_data)
+            self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data', description=MetaTable,
+                                                            title='meta_data', filters=self.filter_tables)
+        # Scans with multiple iterations
+        else:
+            self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data_' + str(iteration), atom=tb.UIntAtom(),
+                                                            shape=(0,), title='raw_data_' + str(iteration), filters=filter_raw_data)
+            self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data_' + str(iteration), description=MetaTable,
+                                                            title='meta_data_' + str(iteration), filters=self.filter_tables)
 
     def configure(self, **kwargs):
         '''
             Configuring step before scan start
         '''
         self.logger.info('Configuring chip...')
-        #self.chip.set_dacs(**kwargs)
 
+        # Load the mask and pixel threshold matrices
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
@@ -200,45 +256,47 @@ class ScanBase(object):
         self._first_read = False
         self.scan_param_id = 0
 
+        # Initialize the communication with the chip and read the board name and firmware version
         self.chip.init()
         self.fifo_readout = FifoReadout(self.chip)
         self.board_name = self.chip.board_version
         self.firmware_version = self.chip.fw_version
 
-        # self.chip.init_communication()
-
-        # Step 2: Chip start-up sequence
-        # Step 2a: Reset the chip
+        # Chip start-up sequence
+        # Reset the chip
         self.chip['CONTROL']['RESET'] = 1
         self.chip['CONTROL'].write()
         self.chip['CONTROL']['RESET'] = 0
         self.chip['CONTROL'].write()
 
-        # Init communication -> set ouput mode
+        # Set the output settings of the chip
         data = self.chip.write_outputBlock_config()
 
+        # Initialize communication with receiver
         self.fifo_readout.reset_rx()
         self.fifo_readout.enable_rx(True)
         self.fifo_readout.print_readout_status()
 
-        # Step 2a: Enable power pulsing
+        # Enable power pulsing
         self.chip['CONTROL']['EN_POWER_PULSING'] = 1
         self.chip['CONTROL'].write()
+
+        # Set data delay of receiver
         self.chip['RX'].DATA_DELAY = 21
 
-        # Step 2b: Set PLL Config
+        # Set PLL Config
         data = self.chip.write_pll_config(write=False)
         self.chip.write(data)
 
-        # Step 2c: Reset the Timer
+        # Reset the Timepix3 timer
         data = self.chip.getGlobalSyncHeader() + [0x40] + [0x0]
         self.chip.write(data)
 
-        # Step 2d: Start the Timer
+        # Start the Timepix3 timer
         data = self.chip.getGlobalSyncHeader() + [0x4A] + [0x0]
         self.chip.write(data)
 
-        # Step 2e: Get ChipID
+        # Get ChipID - Only readable after doing EFuse_Read once
         data = self.chip.read_periphery_template("EFuse_Read")
         data += [0x00]*4
         self.chip["FIFO"].reset()
@@ -252,12 +310,11 @@ class ScanBase(object):
         self.y_position = dout[1][7:4].tovalue()
         self.x_position = chr(ord('a') + dout[1][3:0].tovalue() - 1).upper()
 
-        # Step 2f: Reset DACs
+        # Reset DACs and set them to the values defined in dacs.yaml
         self.chip.reset_dac_attributes(to_default = False)
         self.chip.write_dacs()
 
-        # Step 2g: reset sequential / resets pixels?!
-        # before setting PCR need to reset pixel matrix
+        # Sequential reset of the pixel matrix
         data = self.chip.reset_sequential(False)
         self.chip.write(data, True)
         fdata = self.chip['FIFO'].get_data()
@@ -265,27 +322,26 @@ class ScanBase(object):
         ddout = self.chip.decode(dout[0], 0x71)
         try:
             ddout = self.chip.decode(dout[1], 0x71)
-            # print ddout
         except IndexError:
             self.logger.warning("no EoR found")
 
         self.maskfile = kwargs.get('maskfile', None)
-        self.configure(**kwargs) #TODO: all DACs set here
+        self.configure(**kwargs)
 
-        # Step 3a: Produce needed PCR (Pixel conficuration)
+        # Produce needed PCR (Pixel conficuration register)
         for i in range(256 // 4):
             self.chip.write_pcr(list(range(4 * i, 4 * i + 4)))
 
-        #setup files
+        # Setup HDF5 file
         filename = self.output_filename + '.h5'
         self.h5_file = tb.open_file(filename, mode='w', title=self.scan_id)
         self.setup_files(iteration = iteration)
 
-        #save configuration
+        # Save configuration to HDF5 file in configuration group
         self.h5_file.create_group(self.h5_file.root, 'configuration', 'Configuration')
         self.dump_configuration(iteration = iteration, **kwargs)
 
-        # Setup data sending
+        # Setup data sending - can be used eg. for an event Display
         socket_addr = kwargs.pop('send_data', 'tcp://127.0.0.2:5500')
         if socket_addr:
             try:
@@ -299,35 +355,22 @@ class ScanBase(object):
         else:
             self.socket = None
 
+        # Start the scan
         self.scan(**kwargs)
 
+        # Print the readout status and disable the receiver after the scan
         self.fifo_readout.print_readout_status()
         self.fifo_readout.enable_rx(False)
 
-        # Read all important chip values and dump to yaml
-        # TODO
-
+        # Close HDF5 file
         self.logger.info('Closing raw data file: %s', self.output_filename + '.h5')
         self.h5_file.close()
 
+        # Close the data socket
         if self.socket:
             self.logger.debug('Closing socket connection')
             self.socket.close()
             self.socket = None
-
-    def setup_files(self, iteration = None):
-        filter_raw_data = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
-        self.filter_tables = tb.Filters(complib='zlib', complevel=5, fletcher32=False)
-        if iteration == None:
-            self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data', atom=tb.UIntAtom(),
-                                                            shape=(0,), title='raw_data', filters=filter_raw_data)
-            self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data', description=MetaTable,
-                                                            title='meta_data', filters=self.filter_tables)
-        else:
-            self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data_' + str(iteration), atom=tb.UIntAtom(),
-                                                            shape=(0,), title='raw_data_' + str(iteration), filters=filter_raw_data)
-            self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data_' + str(iteration), description=MetaTable,
-                                                            title='meta_data_' + str(iteration), filters=self.filter_tables)
 
     def analyze(self):
         raise NotImplementedError('ScanBase.analyze() not implemented')
@@ -340,6 +383,9 @@ class ScanBase(object):
 
     @contextmanager
     def readout(self, *args, **kwargs):
+        '''
+           Start the readout and keep it running in the readout context
+        '''
         timeout = kwargs.pop('timeout', 30.0)
 
         self.start_readout(*args, **kwargs)
@@ -349,7 +395,10 @@ class ScanBase(object):
 
     @contextmanager
     def shutter(self):
-        self.chip['CONTROL']['SHUTTER'] = 1  # TODO with self.shutter:
+        '''
+            Open the external Timepix3 shutter and keep it open in context of a readout
+        '''
+        self.chip['CONTROL']['SHUTTER'] = 1
         self.chip['CONTROL'].write()
         yield
         self.chip['CONTROL']['SHUTTER'] = 0
@@ -369,15 +418,16 @@ class ScanBase(object):
 
     def handle_data(self, data_tuple):
         '''
-            Handling of the data.
+            Handling of a chunk of data.
         '''
-#         get_bin = lambda x, n: format(x, 'b').zfill(n)
 
         total_words = self.raw_data_earray.nrows
 
+        # Append the data to the raw data earray in the HDF5 file
         self.raw_data_earray.append(data_tuple[0])
         self.raw_data_earray.flush()
 
+        # Get the meta data of the raw data and create a new row with it
         len_raw_data = data_tuple[0].shape[0]
         self.meta_data_table.row['timestamp_start'] = data_tuple[1]
         self.meta_data_table.row['timestamp_stop'] = data_tuple[2]
@@ -388,13 +438,18 @@ class ScanBase(object):
         self.meta_data_table.row['index_stop'] = total_words
         self.meta_data_table.row['scan_param_id'] = self.scan_param_id
 
+        # Write the new meta data row to the meta data table in the HDF5 file
         self.meta_data_table.row.append()
         self.meta_data_table.flush()
 
+        # Send the data to the socket (eg. for the event display)
         if self.socket:
             send_data(self.socket, data=data_tuple, scan_par_id=self.scan_param_id)
 
     def handle_err(self, exc):
+        '''
+            Handle data error massages for the logger
+        '''
         msg = '%s' % exc[1]
         if msg:
             self.logger.error('%s Data Errors...', msg)
@@ -402,6 +457,9 @@ class ScanBase(object):
             self.logger.error(' Data Errors...')
 
     def setup_logfile(self):
+        '''
+            Setup the logfile
+        '''
         self.fh = logging.FileHandler(self.output_filename + '.log')
         self.fh.setLevel(loglevel)
         self.fh.setFormatter(logging.Formatter("%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s"))
@@ -412,11 +470,17 @@ class ScanBase(object):
         return self.fh
 
     def close_logfile(self):
+        '''
+            Close the logfile
+        '''
         for lg in six.itervalues(logging.Logger.manager.loggerDict):
             if isinstance(lg, logging.Logger):
                 lg.removeHandler(self.fh)
 
     def save_mask_matrix(self):
+        '''
+            Write the mask matrix to file
+        '''
         self.logger.info('Writing mask_matrix to file...')
         if not self.maskfile:
             self.maskfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
@@ -434,6 +498,9 @@ class ScanBase(object):
             self.logger.info('Closing mask file: %s' % (self.maskfile))
 
     def save_thr_mask(self):
+        '''
+            Write the pixel threshold matrix to file
+        '''
         self.logger.info('Writing TDAC mask to file...')
         if not self.maskfile:
             self.maskfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
@@ -452,6 +519,9 @@ class ScanBase(object):
 
 
     def load_mask_matrix(self, **kwargs):
+        '''
+            Load the mask matrix
+        '''
         if self.maskfile:
             self.logger.info('Loading mask_matrix file: %s' % (self.maskfile))
             try:
@@ -462,6 +532,9 @@ class ScanBase(object):
                 pass
 
     def load_thr_matrix(self, **kwargs):
+        '''
+            Load the pixel threshold matrix
+        '''
         if self.maskfile:
             self.logger.info('Loading thr_matrix file: %s' % (self.maskfile))
             try:
@@ -471,7 +544,9 @@ class ScanBase(object):
                 self.logger.debug('Specified maskfile does not include a thr_matrix!')
                 pass
 
-
     def close(self):
+        '''
+            Close the chip and the logfile
+        '''
         self.chip.close()
         self.close_logfile()
