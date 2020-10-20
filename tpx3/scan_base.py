@@ -117,10 +117,11 @@ class ScanBase(object):
         pass
 
 
-    def dump_configuration(self, **kwargs):
-        self.h5_file.create_group(self.h5_file.root, 'configuration', 'Configuration')
-
-        run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config', title='Run config', description=RunConfigTable)
+    def dump_configuration(self, iteration = None, **kwargs):
+        if iteration == None:
+            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config', title='Run config', description=RunConfigTable)
+        else:
+            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config ' + str(iteration), description=RunConfigTable)
         row = run_config_table.row
         row['attribute'] = 'scan_id'
         row['value'] = self.scan_id
@@ -163,7 +164,10 @@ class ScanBase(object):
                 row.append()
         run_config_table.flush()
 
-        dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable)
+        if iteration == None:
+            dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable)
+        else:
+            dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs_' + str(iteration), title='DACs ' + str(iteration), description=DacTable)
         for dac, value in six.iteritems(self.chip.dacs):
             row = dac_table.row
             row['DAC'] = dac
@@ -171,8 +175,12 @@ class ScanBase(object):
             row.append()
         dac_table.flush()
 
-        self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix',title='Mask Matrix', obj=self.chip.mask_matrix)
-        self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix',title='Threshold Matrix', obj=self.chip.thr_matrix)
+        if iteration == None:
+            self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix', title='Mask Matrix', obj=self.chip.mask_matrix)
+            self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix', title='Threshold Matrix', obj=self.chip.thr_matrix)
+        else:
+            self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix_' + str(iteration), title='Mask Matrix ' + str(iteration), obj=self.chip.mask_matrix)
+            self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix_' + str(iteration), title='Threshold Matrix ' + str(iteration), obj=self.chip.thr_matrix)
 
     def configure(self, **kwargs):
         '''
@@ -184,7 +192,7 @@ class ScanBase(object):
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
-    def start(self, **kwargs):
+    def start(self, iteration = None, **kwargs):
         '''
             Prepares the scan and starts the actual test routine
         '''
@@ -268,21 +276,17 @@ class ScanBase(object):
         for i in range(256 // 4):
             self.chip.write_pcr(list(range(4 * i, 4 * i + 4)))
 
-        # Setup files
+        #setup files
         filename = self.output_filename + '.h5'
-        filter_raw_data = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
-        self.filter_tables = tb.Filters(complib='zlib', complevel=5, fletcher32=False)
         self.h5_file = tb.open_file(filename, mode='w', title=self.scan_id)
-        self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data', atom=tb.UIntAtom(),
-                                                         shape=(0,), title='raw_data', filters=filter_raw_data)
-        self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data', description=MetaTable,
-                                                        title='meta_data', filters=self.filter_tables)
+        self.setup_files(iteration = iteration)
 
         #save configuration
-        self.dump_configuration(**kwargs)
+        self.h5_file.create_group(self.h5_file.root, 'configuration', 'Configuration')
+        self.dump_configuration(iteration = iteration, **kwargs)
 
         # Setup data sending
-        socket_addr = kwargs.pop('send_data', 'tcp://127.0.0.1:5500')
+        socket_addr = kwargs.pop('send_data', 'tcp://127.0.0.2:5500')
         if socket_addr:
             try:
                 self.context = zmq.Context()
@@ -310,6 +314,20 @@ class ScanBase(object):
             self.logger.debug('Closing socket connection')
             self.socket.close()
             self.socket = None
+
+    def setup_files(self, iteration = None):
+        filter_raw_data = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
+        self.filter_tables = tb.Filters(complib='zlib', complevel=5, fletcher32=False)
+        if iteration == None:
+            self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data', atom=tb.UIntAtom(),
+                                                            shape=(0,), title='raw_data', filters=filter_raw_data)
+            self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data', description=MetaTable,
+                                                            title='meta_data', filters=self.filter_tables)
+        else:
+            self.raw_data_earray = self.h5_file.create_earray(self.h5_file.root, name='raw_data_' + str(iteration), atom=tb.UIntAtom(),
+                                                            shape=(0,), title='raw_data_' + str(iteration), filters=filter_raw_data)
+            self.meta_data_table = self.h5_file.create_table(self.h5_file.root, name='meta_data_' + str(iteration), description=MetaTable,
+                                                            title='meta_data_' + str(iteration), filters=self.filter_tables)
 
     def analyze(self):
         raise NotImplementedError('ScanBase.analyze() not implemented')

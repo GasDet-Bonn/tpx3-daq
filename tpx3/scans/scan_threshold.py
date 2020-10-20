@@ -39,7 +39,7 @@ class ThresholdScan(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self,  start_column = 0, stop_column = 256, Vthreshold_start=1312, Vthreshold_stop=1471, n_injections=100, mask_step=32, **kwargs):
+    def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, n_injections=100, mask_step=16, **kwargs):
         '''
         Threshold scan main loop
 
@@ -52,6 +52,17 @@ class ThresholdScan(ScanBase):
             TODO
 
         '''
+
+        if Vthreshold_start < 0 or Vthreshold_start > 2911:
+            raise ValueError("Value {} for Vthreshold_start is not in the allowed range (0-2911)".format(Vthreshold_start))
+        if Vthreshold_stop < 0 or Vthreshold_stop > 2911:
+            raise ValueError("Value {} for Vthreshold_stop is not in the allowed range (0-2911)".format(Vthreshold_stop))
+        if Vthreshold_stop <= Vthreshold_start:
+            raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
+        if n_injections < 1 or n_injections > 65535:
+            raise ValueError("Value {} for n_injections is not in the allowed range (1-65535)".format(n_injections))
+        if mask_step not in {4, 16, 64, 256}:
+            raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
 
         #
         # ALL this should be set in set_configuration?
