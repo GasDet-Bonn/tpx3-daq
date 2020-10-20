@@ -42,7 +42,7 @@ class TPX3_multiprocess_start(object):
                 print(e)
             except NotImplementedError:
                 pass
-            
+
         p = Process(target=startup_func, args=(function,), kwargs=kwargs)
         p.start()
         p.join()
@@ -74,7 +74,7 @@ class TPX3_CLI_funktion_call(object):
             print('> Please enter the number of steps(4, 16, 64, 256):')
             mask_step = int(input('>> '))
             
-            print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
+        print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
@@ -125,7 +125,7 @@ class TPX3_CLI_TOP(object):
 
     # Here the main part of the cli starts. Every usercomand needs to be processed here.
     while 1:
-        
+
         a = input('> ')
 
         #Catch if no input given
@@ -241,7 +241,7 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                     elif len(inputlist) > 5:
                         print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
-                    
+
             #Data taking
             elif inputlist[0] in {'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r'}:
                 if len(inputlist) == 1:
@@ -260,7 +260,7 @@ class TPX3_CLI_TOP(object):
                            print('User quit')
                     elif len(inputlist) > 2:
                         print ('To many parameters! The given function takes only one parameters:\n scan timeout (in seconds).')
-                    
+
             #Quit     
             elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
                 break
