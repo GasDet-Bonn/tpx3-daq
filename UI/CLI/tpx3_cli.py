@@ -104,6 +104,43 @@ class TPX3_CLI_funktion_call(object):
         print ('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
+    def Set_DAC(object, DAC_Name = None, DAC_value = None):
+        if DAC_Name == None:
+            print('> Please enter the DAC-name (Possibilities:\n    Ibias_Preamp(0-255)\n    VPreamp_NCAS(0-255)\n    Ibias_Ikrum(0-255)\n    Vfbk(0-255)\n    Vthreshold_fine(0-511)\n    Vthreshold_coarse(0-15)\n    Ibias_DiscS1(0-255)\n    Ibias_DiscS2(0-255)\n    Ibias_PixelDAC(0-255)\n    Ibias_TPbufferIn(0-255)\n    Ibias_TPbufferOut(0-255)\n    VTP_coarse(0-255)\n    VTP_fine(0-511)\n    Ibias_CP_PLL(0-255)\n    PLL_Vcntrl(0-255)')
+            DAC_Name = input('>> ')
+            if DAC_Name in {Ibias_Preamp, VPreamp_NCAS, Ibias_Ikrum, Vfbk, Ibias_DiscS1, Ibias_DiscS2, Ibias_PixelDAC, Ibias_TPbufferIn, Ibias_TPbufferOut, VTP_coarse, Ibias_CP_PLL, PLL_Vcntrl}:
+                print('> Please enter the DAC value(0-255):')
+                Dac_value = int(input('>> '))
+            elif DAC_Name in {Vthreshold_coarse}:
+                print('> Please enter the DAC value(0-15):')
+                Dac_value = int(input('>> '))
+            elif DAC_Name in {Vthreshold_fine, VTP_fine}:
+                print('> Please enter the DAC value(0-511):')
+                Dac_value = int(input('>> '))
+            else:
+                print('Unknown DAC-name')
+
+        if DAC_Name in {Ibias_Preamp, VPreamp_NCAS, Ibias_Ikrum, Vfbk, Ibias_DiscS1, Ibias_DiscS2, Ibias_PixelDAC, Ibias_TPbufferIn, Ibias_TPbufferOut, VTP_coarse, Ibias_CP_PLL, PLL_Vcntrl}:
+            if DAC_value >= 0 and DAC_value <= 255:
+                #Set_DAC(DAC_Name = DAC_Name, DAC_value = DAC_value)
+                print('> Set ' + DAC_Name + ' to value' + DAC_value + '.')
+            else:
+                print('> Value ' + DAC_value + 'is not in range (0-255)')
+        elif DAC_Name in {Vthreshold_coarse}:
+            if DAC_value >= 0 and DAC_value <= 15:
+                #Set_DAC(DAC_Name = DAC_Name, DAC_value = DAC_value)
+                print('> Set ' + DAC_Name + ' to value' + DAC_value + '.')
+            else:
+                print('> Value ' + DAC_value + 'is not in range (0-15)')
+        elif DAC_Name in {Vthreshold_fine, VTP_fine}:
+            if DAC_value >= 0 and DAC_value <= 511:
+                #Set_DAC(DAC_Name = DAC_Name, DAC_value = DAC_value)
+                print('> Set ' + DAC_Name + ' to value' + DAC_value + '.')
+            else:
+                print('> Value ' + DAC_value + 'is not in range (0-511)')
+        else:
+            print('Unknown DAC-name')
+
     def Run_Datataking(object, scan_timeout = None):
         if scan_timeout == None:
             print('> Please enter the required run time in seconds (choose 0 for an infinite run):')
@@ -242,6 +279,104 @@ class TPX3_CLI_TOP(object):
                     elif len(inputlist) > 5:
                         print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
 
+            #Set_DAC
+            elif inputlist[0] in {'Set_DAC', 'set_dac'}:
+                if len(inputlist) == 1:
+                    print('Set_DAC')
+                    try:
+                        funktion_call.Set_DAC()
+                    except:
+                           print('User quit')
+                else:
+                    if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                        print('This is the Set DAC function. As arguments you can give the DAC-name/DAC-number  and the new value.\n The following DACs are aviable:\n    1.) Ibias_Preamp(0-255)\n     2.) VPreamp_NCAS(0-255)\n     3.) Ibias_Ikrum(0-255)\n     4.) Vfbk(0-255)\n     5.) Vthreshold_fine(0-511)\n     6.) Vthreshold_coarse(0-15)\n     7.) Ibias_DiscS1(0-255)\n     8.) Ibias_DiscS2(0-255)\n     9.) Ibias_PixelDAC(0-255)\n  10.) Ibias_TPbufferIn(0-255)\n     11.) Ibias_TPbufferOut(0-255)\n     12.) VTP_coarse(0-255)\n     13.) VTP_fine(0-511)\n     14.) Ibias_CP_PLL(0-255)\n     15.) PLL_Vcntrl(0-255)')                
+                    elif len(inputlist) < 3:
+                        print ('Incomplete set of parameters:')
+                        try:
+                            funktion_call.Set_DAC()
+                        except KeyboardInterrupt:
+                           print('User quit')
+                    elif len(inputlist) == 3:
+                        if inputlist[1] in {'1', 'Ibias_Preamp'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_Preamp', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'2', 'VPreamp_NCAS'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'VPreamp_NCAS', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'3', 'Ibias_Ikrum'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_Ikrum', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'4', 'Vfbk'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Vfbk', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'5', 'Vthreshold_fine'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Vthreshold_fine', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'6', 'Vthreshold_coarse'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Vthreshold_coarse', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'7', 'Ibias_DiscS1'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_DiscS1', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'8', 'Ibias_DiscS2'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_DiscS2', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'9', 'Ibias_PixelDAC'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_PixelDAC', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'10', 'Ibias_TPbufferIn'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_TPbufferIn', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'11', 'Ibias_TPbufferOut'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_TPbufferOut', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'12', 'VTP_coarse'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'VTP_coarse', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'13', 'VTP_fine'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'VTP_fine', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'14', 'Ibias_CP_PLL'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'Ibias_CP_PLL', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        elif inputlist[1] in {'15', 'PLL_Vcntrl'}:
+                            try:
+                                funktion_call.Set_DAC(DAC_Name = 'PLL_Vcntrl', DAC_value = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                               print('User quit')
+                        else:
+                            print ('Unknown DAC-name')                            
+                    elif len(inputlist) > 3:
+                        print ('To many parameters! The given function takes only two parameters:\n The DAC-name and its value.')
+            
             #Data taking
             elif inputlist[0] in {'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r'}:
                 if len(inputlist) == 1:
