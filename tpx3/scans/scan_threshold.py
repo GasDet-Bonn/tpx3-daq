@@ -158,7 +158,7 @@ class ThresholdScan(ScanBase):
 
         self.logger.info('Starting data analysis...')
 
-        # Open the HDF5 which contains all data of the equalisation
+        # Open the HDF5 which contains all data of the scan
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters
             raw_data = h5_file.root.raw_data[:]

@@ -149,7 +149,7 @@ class TestpulseScan(ScanBase):
 
         self.logger.info('Starting data analysis...')
 
-        # Open the HDF5 which contains all data of the equalisation
+        # Open the HDF5 which contains all data of the scan
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters
             raw_data = h5_file.root.raw_data[:]
@@ -165,7 +165,7 @@ class TestpulseScan(ScanBase):
             hit_data = hit_data[hit_data['data_header'] == 1]
             param_range = np.unique(meta_data['scan_param_id'])
 
-            # Create histograms for number of detected hits for individual thresholds
+            # Create histograms for number of detected hits for individual testpulses
             scurve = analysis.scurve_hist(hit_data, param_range)
 
             # Read needed configuration parameters
