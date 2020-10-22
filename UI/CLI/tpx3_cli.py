@@ -14,6 +14,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp', 
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
                 'Set_DAC', 'set_dac',
+                'GUI',
                 'Expert', 'expert',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Help', 'Quit']
@@ -404,6 +405,18 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n scan timeout (in seconds).')
+
+                #Start GUI
+                elif inputlist[0] in {'GUI'}:
+                    if len(inputlist) == 1:
+                        #Start GUI
+                        print('GUI started')
+                        break
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This will start the GUI')
+                        elif len(inputlist) > 1:
+                            print('GUI takes no parameters')
 
                 #Set expert mode
                 elif inputlist[0] in {'Expert', 'expert'}:
