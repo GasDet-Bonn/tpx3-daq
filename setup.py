@@ -7,6 +7,8 @@ from setuptools import find_packages
 import tpx3
 from symbol import except_clause
 
+import os
+
 version = tpx3.__version__
 
 author = ''
@@ -43,7 +45,6 @@ setup(
 )
 
 try:
-    import os
     from online_monitor.utils import settings
     # Get the absoulte path of this package
     package_path = os.path.dirname(tpx3.__file__)
@@ -56,3 +57,38 @@ try:
                                             'online_monitor'))
 except ImportError:
     pass
+
+# Setup folder structure in user home folder
+user_path = os.path.expanduser('~')
+user_path = os.path.join(user_path, 'Timepix3')
+if not os.path.exists(user_path):
+    os.makedirs(user_path)
+backup_path = os.path.join(user_path, 'backups')
+if not os.path.exists(backup_path):
+    os.makedirs(backup_path)
+scan_path = os.path.join(user_path, 'scans')
+if not os.path.exists(scan_path):
+    os.makedirs(scan_path)
+data_path = os.path.join(user_path, 'data')
+if not os.path.exists(data_path):
+    os.makedirs(data_path)
+tmp_path = os.path.join(user_path, 'tmp')
+if not os.path.exists(tmp_path):
+    os.makedirs(tmp_path)
+picture_path = os.path.join(user_path, 'pictures')
+if not os.path.exists(picture_path):
+    os.makedirs(picture_path)
+
+scan_hdf_path = os.path.join(scan_path, 'hdf')
+if not os.path.exists(scan_hdf_path):
+    os.makedirs(scan_hdf_path)
+scan_log_path = os.path.join(scan_path, 'logs')
+if not os.path.exists(scan_log_path):
+    os.makedirs(scan_log_path)
+
+data_hdf_path = os.path.join(data_path, 'hdf')
+if not os.path.exists(data_hdf_path):
+    os.makedirs(data_hdf_path)
+data_log_path = os.path.join(data_path, 'logs')
+if not os.path.exists(data_log_path):
+    os.makedirs(data_log_path)
