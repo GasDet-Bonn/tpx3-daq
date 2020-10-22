@@ -92,14 +92,24 @@ class ScanBase(object):
     '''
 
     def __init__(self, dut_conf=None):
+        # Initialize the chip
+        self.chip = TPX3(dut_conf)
+        self.set_directory()
+        self.make_files()
+
+    def set_directory(self,sub_dir=None):
         # Get the project directory
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
         # Setup the output_data directory
-        self.working_dir = os.path.join(os.getcwd(), "output_data")
+        if sub_dir:
+            self.working_dir = os.path.join(os.getcwd(), "output_data/"+sub_dir)
+        else:
+            self.working_dir = os.path.join(os.getcwd(), "output_data")
         if not os.path.exists(self.working_dir):
             os.makedirs(self.working_dir)
 
+    def make_files(self):
         # Create the filename for the HDF5 file and the logger by combining timestamp and run_name
         self.timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.run_name = self.timestamp + '_' + self.scan_id
@@ -110,9 +120,6 @@ class ScanBase(object):
         self.logger.setLevel(loglevel)
         self.setup_logfile()
         self.logger.info('Initializing %s...', self.__class__.__name__)
-
-        # Initialize the chip
-        self.chip = TPX3(dut_conf)
 
     def get_basil_dir(self):
         '''
@@ -262,6 +269,20 @@ class ScanBase(object):
         self.board_name = self.chip.board_version
         self.firmware_version = self.chip.fw_version
 
+        # read the chan_mask giving the activated links and writing the names of the activated ones in a list
+        rx_list_names = ['RX','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
+        rx_list = []
+        rx_antilist = []
+        activated_links = self.chip._outputBlocks["chan_mask"]
+        for i in range(8):
+            if ((2**i)&activated_links)!=0:
+                rx_list.append(rx_list_names[i])
+        for link in rx_list_names:
+            if not link in rx_list:
+                rx_antilist.append(link)
+
+        # self.chip.init_communication()
+
         # Chip start-up sequence
         # Reset the chip
         self.chip['CONTROL']['RESET'] = 1
@@ -275,6 +296,8 @@ class ScanBase(object):
         # Initialize communication with receiver
         self.fifo_readout.reset_rx()
         self.fifo_readout.enable_rx(True)
+        for antilink in rx_antilist:
+            self.chip[antilink].ENABLE = 0
         self.fifo_readout.print_readout_status()
 
         # Enable power pulsing
@@ -282,7 +305,9 @@ class ScanBase(object):
         self.chip['CONTROL'].write()
 
         # Set data delay of receiver
-        self.chip['RX'].DATA_DELAY = 21
+        # TODO delays can be different for different links, so check its OK to put the same for all
+        for rx_name in rx_list:
+            self.chip[rx_name].DATA_DELAY = 21
 
         # Set PLL Config
         data = self.chip.write_pll_config(write=False)

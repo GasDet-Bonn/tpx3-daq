@@ -823,7 +823,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='scurves')
 
-    def plot_distribution(self, data, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None):
+    def plot_distribution(self, data, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None):
 
         if plot_range is None:
             diff = np.amax(data) - np.amin(data)
@@ -843,11 +843,14 @@ class Plotting(object):
         p0 = (np.amax(hist), np.mean(bins),
               (max(plot_range) - min(plot_range)) / 3)
 
-        try:
-            coeff, _ = curve_fit(self._gauss, bin_centres, hist, p0=p0)
-        except:
+        if fit == True:
+            try:
+                coeff, _ = curve_fit(self._gauss, bin_centres, hist, p0=p0)
+            except:
+                coeff = None
+                self.logger.warning('Gauss fit failed!')
+        else: 
             coeff = None
-            self.logger.warning('Gauss fit failed!')
 
         if coeff is not None:
             points = np.linspace(min(plot_range), max(plot_range), 500)
