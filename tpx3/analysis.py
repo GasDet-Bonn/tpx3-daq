@@ -153,7 +153,7 @@ def _interpret_raw_data(data):
     pix_data['y'] = (super_pixel * 4) + (pixel - right_col * 4)
     pix_data['x'] = eoc * 2 + right_col * 1
     pix_data['HitCounter'] = data & nf
-    pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff]
+    pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff] # at the moment in ToA and ToT mode this gives you ToT
     # TODO
 
     return pix_data
@@ -184,16 +184,30 @@ def interpret_raw_data(raw_data, meta_data=[]):
     ret = []
 
     if len(meta_data):
+        # param = list of all occuring scan_param_ids
+        # index = positions of first occurence of each scan_param_ids
         param, index = np.unique(meta_data['scan_param_id'], return_index=True)
+        # remove first entry
         index = index[1:]
+        # append entry with total number of rows in meta_data
         index = np.append(index, meta_data.shape[0])
+        # substract one from each element; the indices are now marking the last element with a 
+        # specific scan_param_id (if they are not recuring).
         index = index - 1
+        # make list of the entries in 'index_stop' at the positions stored in index
         stops = meta_data['index_stop'][index]
+        # split raw_data according to these positions into sets that all consist of entries which belong to one scan_id
         split = np.split(raw_data, stops)
+        # remove the last element (WHY?) and process each chunk individually
         for i in range(len(split[:-1])):
             # print param[i], stops[i], len(split[i]), split[i]
+
+            # sends split[i] (i.e. part of data that is currently treated) recursively
+            # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
             int_pix_data = interpret_raw_data(split[i])
+            # reattach param_id TODO: good idea to also give timestamp here!
             int_pix_data['scan_param_id'][:] = param[i]
+            # append data we got back to return array or create new if this is the fist bunch of data treated
             if len(ret):
                 ret = np.hstack((ret, int_pix_data))
             else:
@@ -258,7 +272,7 @@ def get_threshold(x, y, n_injections, invert_x=False):
 
     # Sum over last dimension to support 1D and 2D hists
     M = y.sum(axis=len(y.shape) - 1)  # is total number of hits
-    d = np.diff(x)[0]  # Delta x
+    d = np.diff(x)[0]  # Delta x = step size in x
     if not np.all(np.diff(x) == d):
         raise NotImplementedError('Threshold can only be calculated for equidistant x values!')
     if invert_x:
