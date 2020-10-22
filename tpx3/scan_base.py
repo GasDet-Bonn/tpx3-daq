@@ -85,12 +85,21 @@ class ScanBase(object):
 
     def __init__(self, dut_conf=None):
 
+        self.chip = TPX3(dut_conf)
+        self.set_directory()
+        self.make_files()
+
+    def set_directory(self,sub_dir=None):
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-        self.working_dir = os.path.join(os.getcwd(), "output_data")
+        if sub_dir:
+            self.working_dir = os.path.join(os.getcwd(), "output_data/"+sub_dir)
+        else:
+            self.working_dir = os.path.join(os.getcwd(), "output_data")
         if not os.path.exists(self.working_dir):
             os.makedirs(self.working_dir)
 
+    def make_files(self):
         self.timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.run_name = self.timestamp + '_' + self.scan_id
         self.output_filename = os.path.join(self.working_dir, self.run_name)
@@ -100,8 +109,6 @@ class ScanBase(object):
         self.setup_logfile()
 
         self.logger.info('Initializing %s...', self.__class__.__name__)
-
-        self.chip = TPX3(dut_conf)
 
     def get_basil_dir(self):
         return str(os.path.dirname(os.path.dirname(basil.__file__)))
