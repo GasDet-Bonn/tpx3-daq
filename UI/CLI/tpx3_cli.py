@@ -14,8 +14,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp', 
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
                 'Set_DAC', 'set_dac',
-                'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq'
-                'Help', 'help', 'h', '-h'
+                'Expert', 'expert',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Help', 'Quit']
 
@@ -159,6 +158,7 @@ class TPX3_CLI_TOP(object):
         readline.set_completer(completer)
         readline.parse_and_bind("tab: complete")
         funktion_call = TPX3_CLI_funktion_call()
+        expertmode = False
         print ('\n Welcome to the Timepix3 control Software\n')
 
         # Here the main part of the cli starts. Every usercomand needs to be processed here.
@@ -405,8 +405,13 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n scan timeout (in seconds).')
 
-                #Quit
-            #Quit     
+                #Set expert mode
+                elif inputlist[0] in {'Expert', 'expert'}:
+                    if expertmode == False:
+                        expertmode = True
+                    elif expertmode == True:
+                        expertmode = False
+
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
                     print('Goodbye and have a nice day.')
