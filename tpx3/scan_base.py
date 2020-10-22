@@ -193,6 +193,18 @@ class ScanBase(object):
         self.board_name = self.chip.board_version
         self.firmware_version = self.chip.fw_version
 
+        # read the chan_mask giving the activated links and writing the names of the activated ones in a list
+        rx_list_names = ['RX','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
+        rx_list = []
+        rx_antilist = []
+        activated_links = self.chip._outputBlocks["chan_mask"]
+        for i in range(8):
+            if ((2**i)&activated_links)!=0:
+                rx_list.append(rx_list_names[i])
+        for link in rx_list_names:
+            if not link in rx_list:
+                rx_antilist.append(link)
+
         # self.chip.init_communication()
 
         # Step 2: Chip start-up sequence
@@ -207,12 +219,16 @@ class ScanBase(object):
 
         self.fifo_readout.reset_rx()
         self.fifo_readout.enable_rx(True)
+        for antilink in rx_antilist:
+            self.chip[antilink].ENABLE = 0
         self.fifo_readout.print_readout_status()
 
         # Step 2a: Enable power pulsing
         self.chip['CONTROL']['EN_POWER_PULSING'] = 1
         self.chip['CONTROL'].write()
-        self.chip['RX'].DATA_DELAY = 21
+        # TODO delays can be different for different links, so check its OK to put the same for all
+        for rx_name in rx_list:
+            self.chip[rx_name].DATA_DELAY = 21
 
         # Step 2b: Set PLL Config
         data = self.chip.write_pll_config(write=False)
