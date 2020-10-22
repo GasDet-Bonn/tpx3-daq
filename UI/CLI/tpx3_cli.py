@@ -14,6 +14,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp', 
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
                 'Set_DAC', 'set_dac',
+                'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq',
                 'GUI',
                 'Expert', 'expert',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
@@ -405,6 +406,25 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n scan timeout (in seconds).')
+
+                #Load equalisation
+                elif inputlist[0] in {'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq'}:
+                    if len(inputlist) == 1:
+                        print('Load_Equalisation')
+                        try:
+                            funktion_call.Load_Equalisation()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the load equlisation function. As argument you can give the path of the equalisation you like to load')
+                        elif len(inputlist) == 2:
+                            try:
+                                funktion_call.Load_Equalisation(equal_path = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n equalisation path.')
 
                 #Start GUI
                 elif inputlist[0] in {'GUI'}:
