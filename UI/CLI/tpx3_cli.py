@@ -6,6 +6,7 @@ from tpx3.scans.scan_threshold import ThresholdScan
 from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
+from UI.tpx3_logger import TPX3_datalogger  #TODO:check if already opened instance by GUI
 
 #In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot', 
@@ -16,9 +17,14 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Set_DAC', 'set_dac',
                 'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq',
                 'GUI',
+                'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol',
+                'Set_Mask', 'Mask', 'set_mask', 'mask', 
+                'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode',
+                'Set_Fast_Io', 'Fast_Io', 'set_fast_io', 'fast_io', 'Fast_Io_en', 'fast_io_en',
                 'Expert', 'expert',
+                'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Help', 'Quit']
+help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'GUI', 'Help', 'Quit']
 
 def completer(text, state):
     options = [function for function in functions if function.startswith(text)]
@@ -48,7 +54,7 @@ class TPX3_multiprocess_start(object):
         p.start()
         p.join()
 
-class TPX3_CLI_funktion_call(object):
+class TPX3_CLI_funktion_call(object):#TODO: change to function_call
 
     TPX3_multiprocess_start = TPX3_multiprocess_start()
 
@@ -100,47 +106,88 @@ class TPX3_CLI_funktion_call(object):
             Vthreshold_stop = int(input('>> '))
             print('> Please enter the number of injections (1-65535):')
             n_injections = int(input('>> '))
-            print('> Please enter the number of steps(4, 16, 64, 256):')
+            print('> Please enter the number of steps (4, 16, 64, 256):')
             mask_step = int(input('>> '))
         print ('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
     def Set_DAC(object, DAC_Name = None, DAC_value = None):
         if DAC_Name == None:
-            print('> Please enter the DAC-name (Possibilities:\n    Ibias_Preamp(0-255)\n    VPreamp_NCAS(0-255)\n    Ibias_Ikrum(0-255)\n    Vfbk(0-255)\n    Vthreshold_fine(0-511)\n    Vthreshold_coarse(0-15)\n    Ibias_DiscS1(0-255)\n    Ibias_DiscS2(0-255)\n    Ibias_PixelDAC(0-255)\n    Ibias_TPbufferIn(0-255)\n    Ibias_TPbufferOut(0-255)\n    VTP_coarse(0-255)\n    VTP_fine(0-511)\n    Ibias_CP_PLL(0-255)\n    PLL_Vcntrl(0-255)')
+            print('> Please enter the DAC-name from:\n    Ibias_Preamp_ON (0-255)\n    VPreamp_NCAS (0-255)\n    Ibias_Ikrum (0-255)\n    Vfbk (0-255)\n    Vthreshold_fine (0-511)\n    Vthreshold_coarse (0-15)\n    Ibias_DiscS1_ON (0-255)\n    Ibias_DiscS2_ON (0-255)\n    Ibias_PixelDAC (0-255)\n    Ibias_TPbufferIn (0-255)\n    Ibias_TPbufferOut (0-255)\n    VTP_coarse (0-255)\n    VTP_fine (0-511)\n    Ibias_CP_PLL (0-255)\n    PLL_Vcntrl (0-255)')
             DAC_Name = input('>> ')
-            if DAC_Name in {Ibias_Preamp, VPreamp_NCAS, Ibias_Ikrum, Vfbk, Ibias_DiscS1, Ibias_DiscS2, Ibias_PixelDAC, Ibias_TPbufferIn, Ibias_TPbufferOut, VTP_coarse, Ibias_CP_PLL, PLL_Vcntrl}:
-                print('> Please enter the DAC value(0-255):')
-                Dac_value = int(input('>> '))
-            elif DAC_Name in {Vthreshold_coarse}:
-                print('> Please enter the DAC value(0-15):')
-                Dac_value = int(input('>> '))
-            elif DAC_Name in {Vthreshold_fine, VTP_fine}:
-                print('> Please enter the DAC value(0-511):')
-                Dac_value = int(input('>> '))
-            else:
-                print('Unknown DAC-name')
+            if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
+                print('> Please enter the DAC value (0-255):')
+                DAC_value = int(input('>> '))
+            elif DAC_Name in {'Vthreshold_coarse'}:
+                print('> Please enter the DAC value ( 0-15):')
+                DAC_value = int(input('>> '))
+            elif DAC_Name in {'Vthreshold_fine', 'VTP_fine'}:
+                print('> Please enter the DAC value (0-511):')
+                DAC_value = int(input('>> '))
 
-        if DAC_Name in {Ibias_Preamp, VPreamp_NCAS, Ibias_Ikrum, Vfbk, Ibias_DiscS1, Ibias_DiscS2, Ibias_PixelDAC, Ibias_TPbufferIn, Ibias_TPbufferOut, VTP_coarse, Ibias_CP_PLL, PLL_Vcntrl}:
+        if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
             if DAC_value >= 0 and DAC_value <= 255:
-                #Set_DAC(DAC_Name = DAC_Name, DAC_value = DAC_value)
-                print('> Set ' + DAC_Name + ' to value' + DAC_value + '.')
+                TPX3_datalogger.write_value(name = DAC_Name, value = DAC_value)
+                TPX3_datalogger.write_to_yaml(name = DAC_Name)
+                print('> Set ' + DAC_Name + ' to value ' + str(DAC_value) + '.')
             else:
-                print('> Value ' + DAC_value + 'is not in range (0-255)')
-        elif DAC_Name in {Vthreshold_coarse}:
+                print('> Value ' + str(DAC_value) + ' is not in range (0-255)')
+        elif DAC_Name in {'Vthreshold_coarse'}:
             if DAC_value >= 0 and DAC_value <= 15:
-                #Set_DAC(DAC_Name = DAC_Name, DAC_value = DAC_value)
-                print('> Set ' + DAC_Name + ' to value' + DAC_value + '.')
+                TPX3_datalogger.write_value(name = DAC_Name, value = DAC_value)
+                TPX3_datalogger.write_to_yaml(name = DAC_Name)
+                print('> Set ' + DAC_Name + ' to value ' + str(DAC_value) + '.')
             else:
-                print('> Value ' + DAC_value + 'is not in range (0-15)')
-        elif DAC_Name in {Vthreshold_fine, VTP_fine}:
+                print('> Value ' + str(DAC_value) + ' is not in range (0-15)')
+        elif DAC_Name in {'Vthreshold_fine', 'VTP_fine'}:
             if DAC_value >= 0 and DAC_value <= 511:
-                #Set_DAC(DAC_Name = DAC_Name, DAC_value = DAC_value)
-                print('> Set ' + DAC_Name + ' to value' + DAC_value + '.')
+                TPX3_datalogger.write_value(name = DAC_Name, value = DAC_value)
+                TPX3_datalogger.write_to_yaml(name = DAC_Name)
+                print('> Set ' + DAC_Name + ' to value ' + str(DAC_value) + '.')
             else:
-                print('> Value ' + DAC_value + 'is not in range (0-511)')
+                print('> Value ' + str(DAC_value) + ' is not in range (0-511)')
         else:
             print('Unknown DAC-name')
+
+    def Load_Equalisation(object, equal_path = None):
+        if equal_path == None:
+            print('> Please enter the path of the equalisation you like to load:')
+            equal_path = input('>> ')
+        try:
+            #look if path exists
+            TPX3_datalogger.write_value(type = Equalisation_path, value = equal_path)
+        except:
+            print('Path does not exist')
+
+    def Set_Polarity(object, polarity = None):
+        if polarity == None:
+            print('> Please enter the polarity (0 for positive or 1 for negative):')
+            polarity = int(input('>> '))
+        if polarity == 1 or polarity == 0:
+            TPX3_datalogger.write_value(name = 'Polarity', value = polarity)
+            TPX3_datalogger.write_to_yaml(name = 'Polarity')
+        else:
+            print('Unknown polarity')
+    
+    def Set_operation_mode(object, Op_mode = None):
+        if Op_mode == None:
+            print('> Please enter the operation mode (0 for ToT and TOA, 1 for only TOA, 2 for Event Count & Integral ToT):')
+            Op_mode = int(input('>> '))
+        if Op_mode >= 0 and Op_mode <= 2:
+            TPX3_datalogger.write_value(name = 'Op_mode', value = Op_mode)
+            TPX3_datalogger.write_to_yaml(name = 'Op_mode')
+        else:
+            print('Unknown operation mode')
+
+    def Set_Fast_Io(object, Fast_Io_en = None):
+        if Fast_Io_en == None:
+            print('> Please enter the fast IO enable (0 for off or 1 for on):')
+            Fast_Io_en = int(input('>> '))
+        if Fast_Io_en == 1 or Fast_Io_en == 0:
+            TPX3_datalogger.write_value(name = 'Fast_Io_en', value = Fast_Io_en)
+            TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en')
+        else:
+            print('Unknown polarity')
 
     def Run_Datataking(object, scan_timeout = None):
         if scan_timeout == None:
@@ -148,7 +195,7 @@ class TPX3_CLI_funktion_call(object):
             scan_timeout = int(input('>> '))
         
         if scan_timeout == 0:
-           print('Infinite data taking run started! You can close the run with "ctrl. c"') 
+            print('Infinite data taking run started! You can close the run with "ctrl. c"')
         else:
             print('{} s long data taking run started!'.format(scan_timeout))
             
@@ -186,8 +233,6 @@ class TPX3_CLI_TOP(object):
                     for function in help_functions:
                         print (function)
 
-                #ToT_Calibration
-            #ToT_Calibration 
                 #ToT_Calibration
                 elif inputlist[0] in {'ToT', 'ToT_Calibration', 'tot_Calibration', 'tot'}:
                     if len(inputlist) == 1:
@@ -383,8 +428,6 @@ class TPX3_CLI_TOP(object):
                                     print('User quit')
                             else:
                                 print ('Unknown DAC-name')
-                            print ('Unknown DAC-name')                            
-                                print ('Unknown DAC-name')
                         elif len(inputlist) > 3:
                             print ('To many parameters! The given function takes only two parameters:\n The DAC-name and its value.')
 
@@ -426,6 +469,71 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n equalisation path.')
 
+                #Set polarity
+                elif inputlist[0] in {'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol'}:
+                    if len(inputlist) == 1:
+                        print('Set_Polarity')
+                        try:
+                            funktion_call.Set_Polarity()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the set polarity function. As argument you can give the polarity as {negative, neg, -, 1} or {positive, pos, +, 0}')
+                        elif len(inputlist) == 2:
+                            if inputlist[1] in {'negative', 'neg', '-', '1'}:
+                                try:
+                                    funktion_call.Set_Polarity(polarity = 1)
+                                except KeyboardInterrupt:
+                                    print('User quit')
+                            elif inputlist[1] in {'positive', 'pos', '+', '0'}:
+                                try:
+                                    funktion_call.Set_Polarity(polarity = 0)
+                                except KeyboardInterrupt:
+                                    print('User quit')
+                            else:
+                                print('Unknown polarity use {negative, neg, -, 1} or {positive, pos, +, 0}')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n polarity.')
+
+                #Set operation mode
+                elif inputlist[0] in {'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode'}:
+                    if len(inputlist) == 1:
+                        print('Set_operation_mode')
+                        try:
+                            funktion_call.Set_operation_mode()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the Set operation mode function. As argument you can give the operation mode as 0 for ToT & ToA, 1 for only ToA or 2 for Event Count & Integral ToT')
+                        elif len(inputlist) == 2:
+                                try:
+                                    funktion_call.Set_operation_mode(Op_mode = int(inputlist[1]))
+                                except KeyboardInterrupt:
+                                    print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n polarity.')
+                
+                #Set Fast Io mode
+                elif inputlist[0] in {'Set_Fast_Io', 'Fast_Io', 'Fast_Io_en', 'set_fast_io', 'fast_io', 'fast_io_en'}:
+                    if len(inputlist) == 1:
+                        print('Set_Fast_Io')
+                        try:
+                            funktion_call.Set_Fast_Io()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the Fast Io enable function. As argument you can give the enable as 0 (off) or 1 (on)')
+                        elif len(inputlist) == 2:
+                                try:
+                                    funktion_call.Set_Fast_Io(Fast_Io_en = int(inputlist[1]))
+                                except KeyboardInterrupt:
+                                    print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n Fast Io enable.')
+
                 #Start GUI
                 elif inputlist[0] in {'GUI'}:
                     if len(inputlist) == 1:
@@ -459,6 +567,5 @@ if __name__ == "__main__":
     ext_input_list.pop(0)
     if ext_input_list == []:
         tpx3_cli = TPX3_CLI_TOP()
-
     else:
         tpx3_cli = TPX3_CLI_TOP(ext_input_list = ext_input_list)
