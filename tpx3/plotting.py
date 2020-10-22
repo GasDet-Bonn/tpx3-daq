@@ -845,7 +845,7 @@ class Plotting(object):
 
         if fit == True:
             try:
-                coeff, _ = curve_fit(self._gauss, bin_centres, hist, p0=p0)
+                coeff, cov = curve_fit(self._gauss, bin_centres, hist, p0=p0)
             except:
                 coeff = None
                 self.logger.warning('Gauss fit failed!')
@@ -900,6 +900,9 @@ class Plotting(object):
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
         self._save_plots(fig, suffix=suffix)
+
+        if coeff is not None:
+            return coeff, np.sqrt(np.diag(cov))
 
     def plot_stacked_threshold(self, data, tdac_mask, plot_range=None, electron_axis=False, x_axis_title=None, y_axis_title=None,
                                 title=None, suffix=None, min_tdac=0, max_tdac=15, range_tdac=16):
