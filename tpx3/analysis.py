@@ -170,10 +170,22 @@ def raw_data_to_dut(raw_data):
 
     nwords = len(raw_data) / 2
 
-    data_words = np.empty((raw_data.shape[0] / 2), dtype=np.uint64)
+    # make a list of the header elements giving the link from where the data was received (h)
+    h = (raw_data & 0x1E000000) >> 25
+    # and a list of the data (k)
     k = (raw_data & 0xffffff)
-    data_words[:] = k[1::2].view('>u4')
-    data_words = (data_words << 16) + (k[0::2].view('>u4') >> 8)
+    data_words = np.empty(0, dtype=np.uint64) # empty list element to store the final data_words
+    # make a single list containing the data from each link
+    for i in range(8):
+        k_i = k[h == i] # gives a list of all data for the specific link number
+        if len(k_i) % 2 != 0: # did we receive all packages?
+            logger.error("Missing package(s) from Link "+str(i))
+        # initialize list with the needed length for temporal storage
+        data_words_i = np.empty((k_i.shape[0] / 2), dtype=np.uint64)
+        data_words_i[:] = k_i[1::2].view('>u4')
+        data_words_i = (data_words_i << 16) + (k_i[0::2].view('>u4') >> 8)
+        # append all data from this link to the list of all data
+        data_words = np.append(data_words,data_words_i)
 
     return data_words
 
