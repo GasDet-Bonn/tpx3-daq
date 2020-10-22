@@ -3,6 +3,7 @@ import json
 import os
 import time
 import glob
+import yaml
 
 
 class file_logger(object):
@@ -70,12 +71,12 @@ class file_logger(object):
         file = "backup/" + filename
         return file
         
-    def get_backup_value(type, file = None):
+    def get_backup_value(name, file = None):
         backup_data = file_logger.read_backup(file)
-        if datalogger.type_valid(type) == True:
-            value = backup_data[type]
+        if datalogger.name_valid(name) == True:
+            value = backup_data[name]
             return value
-        print("Error: Unknown data type")
+        print("Error: Unknown data name")
         return False    
         
         
@@ -84,7 +85,13 @@ class TPX3_data_logger(object):
  
 #here the data will be logged while the programm is running this function is called as global
     def __init__(self):
-        self.config_keys = ['plottype', 'colorsteps', 'integration_length', 'color_depth', 'Ibias_Preamp', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1', 'Ibias_DiscS2', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Equalisation_path']
+        self.config_keys = ['plottype', 'colorsteps', 'integration_length', 
+                            'color_depth', 'Ibias_Preamp_ON', 'VPreamp_NCAS', 
+                            'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
+                            'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
+                            'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 
+                            'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
+                            'Equalisation_path', 'Polarity', 'Op_mode', 'Fast_Io_en']
         self.data = self.default_config()
     
     def default_config(self):
@@ -92,14 +99,14 @@ class TPX3_data_logger(object):
                 'colorsteps' : 50, 
                 'integration_length' : 500, 
                 'color_depth' : 10, 
-                'Ibias_Preamp' : 127, 
+                'Ibias_Preamp_ON' : 127, 
                 'VPreamp_NCAS' : 127, 
                 'Ibias_Ikrum' : 5, 
                 'Vfbk' : 127, 
                 'Vthreshold_fine' : 255, 
                 'Vthreshold_coarse' : 7, 
-                'Ibias_DiscS1' : 127, 
-                'Ibias_DiscS2' : 127, 
+                'Ibias_DiscS1_ON' : 127, 
+                'Ibias_DiscS2_ON' : 127, 
                 'Ibias_PixelDAC' : 127, 
                 'Ibias_TPbufferIn' : 127, 
                 'Ibias_TPbufferOut' : 127, 
@@ -107,7 +114,10 @@ class TPX3_data_logger(object):
                 'VTP_fine' : 255, 
                 'Ibias_CP_PLL' : 127, 
                 'PLL_Vcntrl' : 127, 
-                'Equalisation_path' : None}
+                'Equalisation_path' : None,
+                'Polarity' : 1,
+                'Op_mode' : 0,
+                'Fast_Io_en' : 0}
         
     def is_valid(self, config):
         if not isinstance(config, dict):
@@ -115,24 +125,24 @@ class TPX3_data_logger(object):
             raise TypeError("Invalid type for configuration")
         return sorted(list(config)) == sorted(self.config_keys)
 
-    def type_valid(self, type):
+    def name_valid(self, name):
         for key in self.config_keys:
-            if key == type:
+            if key == name:
                 return True
         return False
         
-    def write_data(self, type, value):
-        if self.type_valid(type) == True:
-            self.data[type] = value
+    def write_value(self, name, value):#was write_data TODO: change in GUI
+        if self.name_valid(name) == True:
+            self.data[name] = value
             return True
-        print("Error: Unknown data type")
+        print("Error: Unknown data name")
         return False
         
-    def read_value(self, type):
-        if self.type_valid(type) == True:
-            value = self.data[type]
+    def read_value(self, name):
+        if self.name_valid(name) == True:
+            value = self.data[name]
             return value
-        print("Error: Unknown data type")
+        print("Error: Unknown data name")
         return False    
         
     def get_data(self):
@@ -144,6 +154,32 @@ class TPX3_data_logger(object):
             return True
         print("Error: Corrupted data")
         return False
-        
-datalogger = TPX3_data_logger()
     
+    def write_to_yaml(self, name):
+        current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
+            yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
+
+        #elif name in {}
+        #    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
+
+        elif name in {'Polarity', 'Op_mode', 'Fast_Io_en'}:
+            yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+
+        else:
+            yaml_file = None
+
+        if not yaml_file == None:
+            with open(yaml_file) as file:
+                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+            for register in yaml_data['registers']:
+                if register['name'] == name:
+                    register['value'] = self.data[name]
+            with open(yaml_file, 'w') as file:
+                yaml.dump(yaml_data, file)
+            return True
+        else:
+            print('No known .yml contains the asked name.')
+            return False
+    
+TPX3_datalogger = TPX3_data_logger()
