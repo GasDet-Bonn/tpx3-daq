@@ -128,8 +128,8 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
 def _interpret_raw_data(data):
 
     # TODO: fix types
-    data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id'],
-               'formats': ['uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16']}
+    data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id','chunk_start_time'],
+               'formats': ['uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'double']}
 
     pix_data = np.recarray((data.shape[0]), dtype=data_type)
 
@@ -177,41 +177,57 @@ def raw_data_to_dut(raw_data):
 
     return data_words
 
-def interpret_raw_data(raw_data, meta_data=[]):
+def interpret_raw_data(raw_data, meta_data=[], chunk_start_time=None, split_fine=False):
     '''
     Chunk the data based on scan_param and interpret
     '''
     ret = []
 
     if len(meta_data):
-        # param = list of all occuring scan_param_ids
-        # index = positions of first occurence of each scan_param_ids
-        param, index = np.unique(meta_data['scan_param_id'], return_index=True)
-        # remove first entry
-        index = index[1:]
-        # append entry with total number of rows in meta_data
-        index = np.append(index, meta_data.shape[0])
-        # substract one from each element; the indices are now marking the last element with a 
-        # specific scan_param_id (if they are not recuring).
-        index = index - 1
-        # make list of the entries in 'index_stop' at the positions stored in index
-        stops = meta_data['index_stop'][index]
-        # split raw_data according to these positions into sets that all consist of entries which belong to one scan_id
-        split = np.split(raw_data, stops)
-        # remove the last element (WHY?) and process each chunk individually
-        for i in range(len(split[:-1])):
-            # print param[i], stops[i], len(split[i]), split[i]
+        # standard case: only split into bunches which have the same param_id
+        if split_fine == False:
+            # param = list of all occuring scan_param_ids
+            # index = positions of first occurence of each scan_param_ids
+            param, index = np.unique(meta_data['scan_param_id'], return_index=True)
+            # remove first entry
+            index = index[1:]
+            # append entry with total number of rows in meta_data
+            index = np.append(index, meta_data.shape[0])
+            # substract one from each element; the indices are now marking the last element with a
+            # specific scan_param_id (if they are not recuring).
+            index = index - 1
+            # make list of the entries in 'index_stop' at the positions stored in index
+            stops = meta_data['index_stop'][index]
+            # split raw_data according to these positions into sets that all consist of entries which belong to one scan_id
+            split = np.split(raw_data, stops)
+            # remove the last element (WHY?) and process each chunk individually
+            for i in range(len(split[:-1])):
+                # print param[i], stops[i], len(split[i]), split[i]
 
-            # sends split[i] (i.e. part of data that is currently treated) recursively
-            # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
-            int_pix_data = interpret_raw_data(split[i])
-            # reattach param_id TODO: good idea to also give timestamp here!
-            int_pix_data['scan_param_id'][:] = param[i]
-            # append data we got back to return array or create new if this is the fist bunch of data treated
-            if len(ret):
-                ret = np.hstack((ret, int_pix_data))
-            else:
-                ret = int_pix_data
+                # sends split[i] (i.e. part of data that is currently treated) recursively
+                # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
+                int_pix_data = interpret_raw_data(split[i])
+                # reattach param_id TODO: good idea to also give timestamp here!
+                int_pix_data['scan_param_id'][:] = param[i]
+                # append data we got back to return array or create new if this is the fist bunch of data treated
+                if len(ret):
+                    ret = np.hstack((ret, int_pix_data))
+                else:
+                    ret = int_pix_data
+        # case used for clustering: split further into the time frames defined through one row in meta_data
+        else:
+            for l in range(meta_data.shape[0]):
+                index_start = meta_data['index_start'][l]
+                index_stop = meta_data['index_stop'][l]
+                if index_start<index_stop:
+                    int_pix_data = interpret_raw_data(raw_data[index_start:index_stop])
+                    # reattach timestamp
+                    int_pix_data['chunk_start_time'] = meta_data['timestamp_start'][l]
+                    # append data we got back to return array or create new if this is the fist bunch of data treated
+                    if len(ret):
+                        ret = np.hstack((ret, int_pix_data))
+                    else:
+                        ret = int_pix_data
     else:
 
         #it can be chunked and multithreaded here
