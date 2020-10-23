@@ -345,7 +345,7 @@ class PixelDAC_opt(ScanBase):
                 # Write the equalisation matrix and the mask matrix to a new HDF5 file
                 self.logger.info('Writing mask_matrix to file...')
                 output_path = os.path.join(self.working_dir, 'hdf')
-            maskfile = os.path.join(output_path, 'equal_W' + chip_wafer + '-' + chip_x + chip_y + '_' + self.timestamp + 'h5')
+                maskfile = os.path.join(output_path, 'equal_W' + chip_wafer + '-' + chip_x + chip_y + '_' + self.timestamp + 'h5')
 
                 with tb.open_file(maskfile, 'a') as out_file:
                     try:
