@@ -228,6 +228,9 @@ class Equalisation_charge(ScanBase):
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
             Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
             n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
+            chip_x = [int(item[1]) for item in run_config if item[0] == b'chip_x'][0]
+            chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
             # Select only data which is hit data
             hit_data = hit_data[hit_data['data_header'] == 1]
@@ -264,7 +267,8 @@ class Equalisation_charge(ScanBase):
 
             # Write the equalisation matrix and the mask matrix to a new HDF5 file
             self.logger.info('Writing mask_matrix to file...')
-            maskfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
+            output_path = os.path.join(self.working_dir, 'hdf')
+            maskfile = os.path.join(output_path, 'equal_W' + chip_wafer + '-' + chip_x + chip_y + '_' + self.timestamp + 'h5')
 
             with tb.open_file(maskfile, 'a') as out_file:
                 try:
