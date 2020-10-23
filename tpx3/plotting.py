@@ -71,7 +71,7 @@ class ConfigDict(dict):
             return val
 
 class Plotting(object):
-    def __init__(self, analyzed_data_file, pdf_file=None, level='draft', qualitative=False, internal=False, save_single_pdf=False, save_png=False):
+    def __init__(self, analyzed_data_file, pdf_file=None, level='draft', qualitative=False, internal=False, save_single_pdf=False, save_png=False, iteration = None):
         self.logger = logging.getLogger('Plotting')
         self.logger.setLevel(loglevel)
 
@@ -93,7 +93,7 @@ class Plotting(object):
 
         try:
             if isinstance(analyzed_data_file, str):
-                in_file = tb.open_file(analyzed_data_file, 'r')
+                in_file = tb.open_file(analyzed_data_file, 'r+')
                 root = in_file.root
             else:
                 root = analyzed_data_file
@@ -102,11 +102,19 @@ class Plotting(object):
             self.skip_plotting = True
             return
 
-        self.run_config = ConfigDict(root.configuration.run_config[:])
-
+        if iteration == None:
+            self.run_config = ConfigDict(root.configuration.run_config[:])
+        else:
+            run_config_call = ('root.' + 'configuration.run_config_' + str(iteration) + '[:]')
+            self.run_config = ConfigDict(eval(run_config_call))
+        
 
         try:
-            self.dacs = ConfigDict(root.configuration.dacs[:])
+            if iteration == None:
+                self.dacs = ConfigDict(root.configuration.dacs[:])
+            else:
+                dacs_call = ('root.' + 'configuration.dacs_' + str(iteration) + '[:]')
+                self.dacs = ConfigDict(eval(dacs_call))
         except tb.NoSuchNodeError:
             self.dacs = {}
 
