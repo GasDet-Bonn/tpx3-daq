@@ -58,8 +58,8 @@ class ThresholdCalib(ScanBase):
             raise ValueError("Value {} for n_injections is not in the allowed range (1-65535)".format(n_injections))
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
-        if n_pulse_heights < 2:
-            raise ValueError("Value {} for n_pulse_heights must be bigger than 1".format(n_pulse_heights))
+        if n_pulse_heights < 2 or n_pulse_heights > 100:
+            raise ValueError("Value {} for n_pulse_heights s not in the allowed range (2-100)".format(n_pulse_heights))
 
         for iteration in range(n_pulse_heights):
             # Create argument list for the current iteration step
