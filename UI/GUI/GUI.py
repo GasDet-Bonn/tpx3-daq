@@ -1141,8 +1141,9 @@ def quit_procedure(gui):
     file_logger.write_backup(file)
     Gtk.main_quit()
 
-GUI = GUI_Main()
-GUI.connect("destroy", quit_procedure)
-GUI.show_all()
-GUI.progressbar.hide()
-Gtk.main()
+if __name__ == "__main__":
+    GUI = GUI_Main()
+    GUI.connect("destroy", quit_procedure)
+    GUI.show_all()
+    GUI.progressbar.hide()
+    Gtk.main()
