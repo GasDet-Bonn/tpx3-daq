@@ -82,7 +82,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             print('> Please enter the number of steps(4, 16, 64, 256):')
             mask_step = int(input('>> '))
             
-        print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
+        print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step)
         TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
     def Threshold_Calib(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None, n_pulse_heights = None):
@@ -503,7 +503,7 @@ class TPX3_CLI_TOP(object):
                             print('User quit')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the load equlisation function. As argument you can give the path of the equalisation you like to load')
+                            print('This is the load equalisation function. As argument you can give the path of the equalisation you like to load')
                         elif len(inputlist) == 2:
                             try:
                                 funktion_call.Load_Equalisation(equal_path = inputlist[1])
