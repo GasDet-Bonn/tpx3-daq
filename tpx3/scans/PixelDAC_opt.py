@@ -89,10 +89,10 @@ class PixelDAC_opt(ScanBase):
                 self.dump_configuration(iteration = iteration, **args)
 
             # Start the scan for the current iteration
-            self.iterate_scan(**args)
+            self.scan_iteration(**args)
 
             # Analyse the data of the current iteration
-            opt_results = self.analyze(iteration)
+            opt_results = self.analyze_iteration(iteration)
             last_pixeldac = pixeldac
 
             # Store results of iteration
@@ -113,7 +113,7 @@ class PixelDAC_opt(ScanBase):
         with open('../dacs.yml', 'w') as f:
             yaml.dump(doc, f)
 
-    def iterate_scan(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
+    def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
         '''
             Takes data for one iteration of the optimization. Therefore a threshold scan is performed for all pixel thresholds at 0 and at 15.
         '''
@@ -266,7 +266,7 @@ class PixelDAC_opt(ScanBase):
 
         self.logger.info('Scan finished')
 
-    def analyze(self, iteration = 0):
+    def analyze_iteration(self, iteration = 0):
         '''
             Analyze the data of the iteration and calculate the new Ibias_PixelDAC value.
             In the last iteration the data is also used to calculate an equalisation matrix.
