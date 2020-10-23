@@ -11,22 +11,20 @@ class file_logger(object):
     
     def create_file(filename = None):
     #Creates backup folder and file if not existing
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'backups')
         if filename == None:
-            filename = "backup_" + time.strftime("%Y_%m_%d") + ".GUI"
-        if os.path.isdir("backup") == False:
-            os.mkdir("backup")
-            if os.path.isfile("backup/" + filename) == False:
-                backup_file = open("backup/" + filename, "w")
+            filename = "backup_" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".TPX3"
+        if os.path.isdir(user_path) == False:
+            os.mkdir(user_path)
+            if os.path.isfile(user_path + os.sep + filename) == False:
+                backup_file = open(user_path + os.sep + filename, "w")
                 return backup_file
-            elif os.path.isfile("backup/" + filename) == True:
-                backup_file = open("backup/" + "1" + filename, "w")
-                return backup_file
-        elif os.path.isdir("backup") == True:
-            if os.path.isfile("backup/" + filename) == False:
-                backup_file = open("backup/" + filename, "w")
-                return backup_file
-            elif os.path.isfile("backup/" + filename) == True:
-                backup_file = open("backup/" + "1" + filename, "w")
+        elif os.path.isdir(user_path) == True:
+            if os.path.isfile(user_path + os.sep + filename) == False:
+                backup_file = open(user_path + os.sep + filename, "w")
                 return backup_file
 
     def write_backup(file, data = None):
@@ -38,6 +36,10 @@ class file_logger(object):
         
     def read_backup(file = None):
         #reads backup and returns the data
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'backups')
         if file == None:
             #Get most recent file
             file = file_logger.get_newest_backup_file()
@@ -45,8 +47,8 @@ class file_logger(object):
             return data
         else:
             file = file
-            if os.path.isfile(file) == True:
-                data = json.load(open(file, "r"))
+            if os.path.isfile(user_path + os.sep + file) == True:
+                data = json.load(open(user_path + os.sep + file, "r"))
                 print(data)
                 return data
             else:
@@ -54,8 +56,12 @@ class file_logger(object):
                 return False
                 
     def get_newest_backup_file():
-        if os.path.isdir("backup") == True:
-            list_of_files = glob.glob("backup/*.GUI")
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'backups')
+        if os.path.isdir(user_path) == True:
+            list_of_files = glob.glob(user_path + os.sep + "*.TPX3")
             if list_of_files:
                 file = max(list_of_files, key=os.path.getctime)
                 return file
@@ -63,12 +69,16 @@ class file_logger(object):
         return file
             
     def create_default_file():
-        filename = "default.GUI"
-        if os.path.isdir("backup") == False:
-            os.mkdir("backup")
-        default_file = open("backup/" + filename, "w")
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'backups')
+        filename = "default.TPX3"
+        if os.path.isdir(user_path) == False:
+            os.mkdir(user_path)
+        default_file = open(user_path + os.sep + filename, "w")
         json.dump(datalogger.default_config(), default_file)
-        file = "backup/" + filename
+        file = user_path + os.sep + filename
         return file
         
     def get_backup_value(name, file = None):
