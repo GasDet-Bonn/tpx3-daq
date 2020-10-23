@@ -71,7 +71,7 @@ class ConfigDict(dict):
             return val
 
 class Plotting(object):
-    def __init__(self, analyzed_data_file, pdf_file=None, level='draft', qualitative=False, internal=False, save_single_pdf=False, save_png=False):
+    def __init__(self, analyzed_data_file, pdf_file=None, level='draft', qualitative=False, internal=False, save_single_pdf=False, save_png=False, iteration = None):
         self.logger = logging.getLogger('Plotting')
         self.logger.setLevel(loglevel)
 
@@ -93,7 +93,7 @@ class Plotting(object):
 
         try:
             if isinstance(analyzed_data_file, str):
-                in_file = tb.open_file(analyzed_data_file, 'r')
+                in_file = tb.open_file(analyzed_data_file, 'r+')
                 root = in_file.root
             else:
                 root = analyzed_data_file
@@ -102,11 +102,19 @@ class Plotting(object):
             self.skip_plotting = True
             return
 
-        self.run_config = ConfigDict(root.configuration.run_config[:])
-
+        if iteration == None:
+            self.run_config = ConfigDict(root.configuration.run_config[:])
+        else:
+            run_config_call = ('root.' + 'configuration.run_config_' + str(iteration) + '[:]')
+            self.run_config = ConfigDict(eval(run_config_call))
+        
 
         try:
-            self.dacs = ConfigDict(root.configuration.dacs[:])
+            if iteration == None:
+                self.dacs = ConfigDict(root.configuration.dacs[:])
+            else:
+                dacs_call = ('root.' + 'configuration.dacs_' + str(iteration) + '[:]')
+                self.dacs = ConfigDict(eval(dacs_call))
         except tb.NoSuchNodeError:
             self.dacs = {}
 
@@ -823,7 +831,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='scurves')
 
-    def plot_distribution(self, data, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None):
+    def plot_distribution(self, data, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None):
 
         if plot_range is None:
             diff = np.amax(data) - np.amin(data)
@@ -843,11 +851,14 @@ class Plotting(object):
         p0 = (np.amax(hist), np.mean(bins),
               (max(plot_range) - min(plot_range)) / 3)
 
-        try:
-            coeff, _ = curve_fit(self._gauss, bin_centres, hist, p0=p0)
-        except:
+        if fit == True:
+            try:
+                coeff, cov = curve_fit(self._gauss, bin_centres, hist, p0=p0)
+            except:
+                coeff = None
+                self.logger.warning('Gauss fit failed!')
+        else: 
             coeff = None
-            self.logger.warning('Gauss fit failed!')
 
         if coeff is not None:
             points = np.linspace(min(plot_range), max(plot_range), 500)
@@ -897,6 +908,52 @@ class Plotting(object):
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
         self._save_plots(fig, suffix=suffix)
+
+        if coeff is not None:
+            return coeff, np.sqrt(np.diag(cov))
+
+    def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None):
+        m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
+        b = y[0] - m * x[0]
+        p0 = (m, b)
+        try:
+            coeff, cov = curve_fit(self._lin, x, y, sigma = y_err, p0=p0)
+        except:
+            coeff = None
+            self.logger.warning('Linear fit failed!')
+
+        if coeff is not None:
+            points = np.linspace(min(x_plot_range), max(x_plot_range), 500)
+            lin = self._lin(points, *coeff)
+
+        fig = Figure()
+        FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        self._add_text(fig)
+
+        ax.errorbar(x, y, y_err, x_err, ls = 'None', marker = 'x', ms = 4)
+        if coeff is not None:
+            ax.plot(points, lin, "r-", label='Linear fit')
+
+        ax.set_xlim((min(x_plot_range), max(x_plot_range)))
+        ax.set_ylim((min(y_plot_range), max(y_plot_range)))
+        ax.set_title(title, color=TITLE_COLOR)
+        if x_axis_title is not None:
+            ax.set_xlabel(x_axis_title)
+        if y_axis_title is not None:
+            ax.set_ylabel(y_axis_title)
+        ax.grid(True)
+
+        if coeff is not None and not self.qualitative:
+            textright = '$m=%.3f$\n$n=%.1f$' % (abs(coeff[0]), abs(coeff[1]))
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            ax.text(0.05, 0.9, textright, transform=ax.transAxes,
+                    fontsize=8, verticalalignment='top', bbox=props)
+
+        self._save_plots(fig, suffix=suffix)
+
+        if coeff is not None:
+            return coeff, np.sqrt(np.diag(cov))
 
     def plot_stacked_threshold(self, data, tdac_mask, plot_range=None, electron_axis=False, x_axis_title=None, y_axis_title=None,
                                 title=None, suffix=None, min_tdac=0, max_tdac=15, range_tdac=16):

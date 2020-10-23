@@ -76,7 +76,7 @@ hw_drivers:
     type      : tpx3.tpx3_rx
     interface : intf
     base_addr : 0x6700
-    
+
 registers:
   - name        : CONTROL
     type        : StdRegister

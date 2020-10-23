@@ -131,8 +131,8 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
 def _interpret_raw_data(data):
 
     # TODO: fix types
-    data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id'],
-               'formats': ['uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16']}
+    data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id','chunk_start_time'],
+               'formats': ['uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'double']}
 
     pix_data = np.recarray((data.shape[0]), dtype=data_type)
 
@@ -156,7 +156,7 @@ def _interpret_raw_data(data):
     pix_data['y'] = (super_pixel * 4) + (pixel - right_col * 4)
     pix_data['x'] = eoc * 2 + right_col * 1
     pix_data['HitCounter'] = data & nf
-    pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff]
+    pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff] # at the moment in ToA and ToT mode this gives you ToT
     # TODO
 
     return pix_data
@@ -173,34 +173,76 @@ def raw_data_to_dut(raw_data):
 
     nwords = len(raw_data) // 2
 
-    data_words = np.empty((raw_data.shape[0] // 2), dtype=np.uint64)
+    # make a list of the header elements giving the link from where the data was received (h)
+    h = (raw_data & 0x1E000000) >> 25
+    # and a list of the data (k)
     k = (raw_data & 0xffffff)
-    data_words[:] = k[1::2].view('>u4')
-    data_words = (data_words << 16) + (k[0::2].view('>u4') >> 8)
+    data_words = np.empty(0, dtype=np.uint64) # empty list element to store the final data_words
+    # make a single list containing the data from each link
+    for i in range(8):
+        k_i = k[h == i] # gives a list of all data for the specific link number
+        if len(k_i) % 2 != 0: # did we receive all packages?
+            logger.error("Missing package(s) from Link "+str(i))
+        # initialize list with the needed length for temporal storage
+        data_words_i = np.empty((k_i.shape[0] / 2), dtype=np.uint64)
+        data_words_i[:] = k_i[1::2].view('>u4')
+        data_words_i = (data_words_i << 16) + (k_i[0::2].view('>u4') >> 8)
+        # append all data from this link to the list of all data
+        data_words = np.append(data_words,data_words_i)
 
     return data_words
 
-def interpret_raw_data(raw_data, meta_data=[]):
+def interpret_raw_data(raw_data, meta_data=[], chunk_start_time=None, split_fine=False):
     '''
     Chunk the data based on scan_param and interpret
     '''
     ret = []
 
     if len(meta_data):
-        param, index = np.unique(meta_data['scan_param_id'], return_index=True)
-        index = index[1:]
-        index = np.append(index, meta_data.shape[0])
-        index = index - 1
-        stops = meta_data['index_stop'][index]
-        split = np.split(raw_data, stops)
-        for i in range(len(split[:-1])):
-            # print param[i], stops[i], len(split[i]), split[i]
-            int_pix_data = interpret_raw_data(split[i])
-            int_pix_data['scan_param_id'][:] = param[i]
-            if len(ret):
-                ret = np.hstack((ret, int_pix_data))
-            else:
-                ret = int_pix_data
+        # standard case: only split into bunches which have the same param_id
+        if split_fine == False:
+            # param = list of all occuring scan_param_ids
+            # index = positions of first occurence of each scan_param_ids
+            param, index = np.unique(meta_data['scan_param_id'], return_index=True)
+            # remove first entry
+            index = index[1:]
+            # append entry with total number of rows in meta_data
+            index = np.append(index, meta_data.shape[0])
+            # substract one from each element; the indices are now marking the last element with a
+            # specific scan_param_id (if they are not recuring).
+            index = index - 1
+            # make list of the entries in 'index_stop' at the positions stored in index
+            stops = meta_data['index_stop'][index]
+            # split raw_data according to these positions into sets that all consist of entries which belong to one scan_id
+            split = np.split(raw_data, stops)
+            # remove the last element (WHY?) and process each chunk individually
+            for i in range(len(split[:-1])):
+                # print param[i], stops[i], len(split[i]), split[i]
+
+                # sends split[i] (i.e. part of data that is currently treated) recursively
+                # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
+                int_pix_data = interpret_raw_data(split[i])
+                # reattach param_id TODO: good idea to also give timestamp here!
+                int_pix_data['scan_param_id'][:] = param[i]
+                # append data we got back to return array or create new if this is the fist bunch of data treated
+                if len(ret):
+                    ret = np.hstack((ret, int_pix_data))
+                else:
+                    ret = int_pix_data
+        # case used for clustering: split further into the time frames defined through one row in meta_data
+        else:
+            for l in range(meta_data.shape[0]):
+                index_start = meta_data['index_start'][l]
+                index_stop = meta_data['index_stop'][l]
+                if index_start<index_stop:
+                    int_pix_data = interpret_raw_data(raw_data[index_start:index_stop])
+                    # reattach timestamp
+                    int_pix_data['chunk_start_time'] = meta_data['timestamp_start'][l]
+                    # append data we got back to return array or create new if this is the fist bunch of data treated
+                    if len(ret):
+                        ret = np.hstack((ret, int_pix_data))
+                    else:
+                        ret = int_pix_data
     else:
 
         #it can be chunked and multithreaded here
@@ -261,7 +303,7 @@ def get_threshold(x, y, n_injections, invert_x=False):
 
     # Sum over last dimension to support 1D and 2D hists
     M = y.sum(axis=len(y.shape) - 1)  # is total number of hits
-    d = np.diff(x)[0]  # Delta x
+    d = np.diff(x)[0]  # Delta x = step size in x
     if not np.all(np.diff(x) == d):
         raise NotImplementedError('Threshold can only be calculated for equidistant x values!')
     if invert_x:
