@@ -1,12 +1,15 @@
 import readline
 import sys
+import os
 from multiprocessing import Process
+from shutil import copy
 from tpx3.scans.ToT_calib import ToTCalib
 from tpx3.scans.scan_threshold import ThresholdScan
 from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
+from UI.tpx3_logger import TPX3_datalogger, file_logger  #TODO:check if already opened instance by GUI
 
 #In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot', 
@@ -17,6 +20,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
                 'Set_DAC', 'set_dac',
                 'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq',
+                'Save_Equalisation', 'Save_Equal', 'SEQ','save_equalisation', 'save_equal', 'seq',
+                'Save_Backup', 'Backup','save_backup', 'backup',
                 'GUI',
                 'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol',
                 'Set_Mask', 'Mask', 'set_mask', 'mask', 
@@ -168,14 +173,62 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             print('Unknown DAC-name')
 
     def Load_Equalisation(object, equal_path = None):
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'scans')
+        user_path = os.path.join(user_path, 'hdf')
+        
         if equal_path == None:
             print('> Please enter the path of the equalisation you like to load:')
             equal_path = input('>> ')
         try:
             #look if path exists
-            TPX3_datalogger.write_value(type = Equalisation_path, value = equal_path)
+            full_path = user_path + os.sep + equal_path
+            if os.path.isfile(full_path) == True:
+                TPX3_datalogger.write_value(type = Equalisation_path, value = full_path)
         except:
             print('Path does not exist')
+
+    def Save_Equalisation(object, file_name = None):
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'scans')
+        user_path = os.path.join(user_path, 'hdf')
+        
+        if file_name == None:
+            print('> Please enter the path of the name you like to save the equalisation under:')
+            file_name = input('>> ')
+        try:
+            #look if path exists
+            full_path = user_path + os.sep + file_name + '.h5'
+            if os.path.isfile(full_path) == True:
+                print('File already exists')
+            else:
+                current_equal = TPX3_datalogger.read_value(type = Equalisation_path)
+                copy(current_equal, full_path)
+        except:
+            print('Could not write file')
+
+    def Save_Backup(object, file_name = None):
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'backups')
+        
+        if file_name == None:
+            print('> Please enter the path of the equalisation  you like to save the backup under:')
+            file_name = input('>> ')
+        try:
+            #look if path exists
+            full_path = user_path + os.sep + file_name + '.TPX3'
+            if os.path.isfile(full_path) == True:
+                print('File already exists')
+            else:
+                file.logger.write_backup(file = full_path)
+        except:
+            print('Could not write file')
 
     def Set_Polarity(object, polarity = None):
         if polarity == None:
@@ -511,6 +564,45 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n equalisation path.')
+
+                #Save equalisation
+                elif inputlist[0] in {'Save_Equalisation', 'Save_Equal', 'SEQ','save_equalisation', 'save_equal', 'seq'}:
+                    if len(inputlist) == 1:
+                        print('Save_Equalisation')
+                        try:
+                            funktion_call.Save_Equalisation()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the save equalisation function. As argument you can give the name of the equalisation file')
+                        elif len(inputlist) == 2:
+                            try:
+                                funktion_call.Save_Equalisation(file_name = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n equalisation file name.')
+
+                #Save backup
+                elif inputlist[0] in {'Save_Backup', 'Backup','save_backup', 'backup'}:
+                    if len(inputlist) == 1:
+                        print('Save_Backup')
+                        try:
+                            funktion_call.Save_Backup()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the save backup function. As argument you can give the name of the backup file')
+                        elif len(inputlist) == 2:
+                            try:
+                                funktion_call.Save_Backup(file_name = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n backup file name.')
+
 
                 #Set polarity
                 elif inputlist[0] in {'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol'}:
