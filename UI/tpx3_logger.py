@@ -95,7 +95,7 @@ class TPX3_data_logger(object):
  
 #here the data will be logged while the programm is running this function is called as global
     def __init__(self):
-        self.config_keys = ['plottype', 'colorsteps', 'integration_length', 
+        self.config_keys = ['Chip_name', 'plottype', 'colorsteps', 'integration_length', 
                             'color_depth', 'Ibias_Preamp_ON', 'VPreamp_NCAS', 
                             'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
@@ -105,7 +105,8 @@ class TPX3_data_logger(object):
         self.data = self.default_config()
     
     def default_config(self):
-        return {'plottype' : 'normal', 
+        return {'Chip_name' : None,
+                'plottype' : 'normal', 
                 'colorsteps' : 50, 
                 'integration_length' : 500, 
                 'color_depth' : 10, 
