@@ -242,9 +242,9 @@ class Plotting(object):
 
         ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
 
-        if 'maskfile' in list(self.run_config.keys()) and self.run_config['maskfile'] is not None and not self.run_config['maskfile'] == 'None':
+        if b'maskfile' in list(self.run_config.keys()) and self.run_config[b'maskfile'] is not None and not self.run_config[b'maskfile'] == 'None':
             ax.text(0.01, -0.05, 'Maskfile:\n%s' %
-                    (self.run_config['maskfile']), fontsize=6)
+                    (self.run_config[b'maskfile']).decode(), fontsize=6)
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
         for key, value in six.iteritems(self.run_config):
