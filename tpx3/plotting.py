@@ -87,7 +87,7 @@ class Plotting(object):
         if pdf_file is None:
             path, name = os.path.split(analyzed_data_file)
             path = os.path.dirname(path)
-            self.filename = os.path.join(path, name + '.pdf')
+            self.filename = os.path.join(path, name.split('.')[0] + '.pdf')
         else:
             self.filename = pdf_file
         self.out_file = PdfPages(self.filename)
