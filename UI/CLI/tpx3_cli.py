@@ -180,13 +180,13 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
         user_path = os.path.join(user_path, 'hdf')
         
         if equal_path == None:
-            print('> Please enter the path of the equalisation you like to load:')
+            print('> Please enter the name of the equalisation you like to load:')
             equal_path = input('>> ')
         try:
             #look if path exists
             full_path = user_path + os.sep + equal_path
             if os.path.isfile(full_path) == True:
-                TPX3_datalogger.write_value(type = Equalisation_path, value = full_path)
+                TPX3_datalogger.write_value(name = 'Equalisation_path', value = full_path)
         except:
             print('Path does not exist')
 
@@ -206,7 +206,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             if os.path.isfile(full_path) == True:
                 print('File already exists')
             else:
-                current_equal = TPX3_datalogger.read_value(type = Equalisation_path)
+                current_equal = TPX3_datalogger.read_value(name = 'Equalisation_path')
                 copy(current_equal, full_path)
         except:
             print('Could not write file')
