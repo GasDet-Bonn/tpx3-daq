@@ -6,11 +6,12 @@ from tpx3.scans.scan_threshold import ThresholdScan
 from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
-from UI.tpx3_logger import TPX3_datalogger  #TODO:check if already opened instance by GUI
+from tpx3.scans.Threshold_calib import ThresholdCalib
 
 #In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot', 
                 'Threshold_Scan', 'THL_Scan', 'THL', 'threshold_scan', 'thl_scan', 'thl', 
+                'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',
                 'Pixel_DAC_Optimisation', 'Pixel_DAC', 'PDAC', 'pixel_dac_optimisation', 'pixel_dac', 'pdac', 
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp', 
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
@@ -24,7 +25,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Expert', 'expert',
                 'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'GUI', 'Help', 'Quit']
+help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup',  'GUI', 'Help', 'Quit']
 
 def completer(text, state):
     options = [function for function in functions if function.startswith(text)]
@@ -83,6 +84,23 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             
         print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
+
+    def Threshold_Calib(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None, n_pulse_heights = None):
+        if Vthreshold_start == None:
+            print('> Please enter the Vthreshold_start value (0-2911):')
+            Vthreshold_start = int(input('>> '))
+            print('> Please enter the Vthreshold_stop value (0-2911):')
+            Vthreshold_stop = int(input('>> '))
+            print('> Please enter the number of injections (1-65535):')
+            n_injections = int(input('>> '))
+            print('> Please enter the number of steps(4, 16, 64, 256):')
+            mask_step = int(input('>> '))
+            print('> Please enter the number of pulse height steps(2-100):')
+            n_pulse_heights = int(input('>> '))
+            
+        print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step, 'Number of pulse heights = ', n_pulse_heights)
+        TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, n_pulse_heights = n_pulse_heights)
+
 
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
         if VTP_fine_start == None:
@@ -282,6 +300,31 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 5:
                             print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+               
+                #Threshold_Calib
+                elif inputlist[0] in {'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',}:
+                    if len(inputlist) == 1:
+                        print('Threshold_Calibration')
+                        try:
+                            funktion_call.Threshold_Calib()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the Threshold calibration. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911), the number of testpulse injections (1-65535), the number of steps (4, 16, 64, 256) and the number of pulse height steps (2-100).')
+                        elif len(inputlist) < 6:
+                            print ('Incomplete set of parameters:')
+                            try:
+                                funktion_call.Threshold_Scan()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) == 6:
+                            try:
+                                funktion_call.Threshold_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]), n_pulse_height = int(inputlist[5]))
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 6:
+                            print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256),\n number of pulse height steps (2-100).')
 
                 #Testpulse_Scan
                 elif inputlist[0] in {'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp'}:
