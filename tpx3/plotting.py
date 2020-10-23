@@ -904,6 +904,49 @@ class Plotting(object):
         if coeff is not None:
             return coeff, np.sqrt(np.diag(cov))
 
+    def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None):
+        m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
+        b = y[0] - m * x[0]
+        p0 = (m, b)
+        try:
+            coeff, cov = curve_fit(self._lin, x, y, sigma = y_err, p0=p0)
+        except:
+            coeff = None
+            self.logger.warning('Linear fit failed!')
+
+        if coeff is not None:
+            points = np.linspace(min(x_plot_range), max(x_plot_range), 500)
+            lin = self._lin(points, *coeff)
+
+        fig = Figure()
+        FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        self._add_text(fig)
+
+        ax.errorbar(x, y, y_err, x_err, ls = 'None', marker = 'x', ms = 4)
+        if coeff is not None:
+            ax.plot(points, lin, "r-", label='Linear fit')
+
+        ax.set_xlim((min(x_plot_range), max(x_plot_range)))
+        ax.set_ylim((min(y_plot_range), max(y_plot_range)))
+        ax.set_title(title, color=TITLE_COLOR)
+        if x_axis_title is not None:
+            ax.set_xlabel(x_axis_title)
+        if y_axis_title is not None:
+            ax.set_ylabel(y_axis_title)
+        ax.grid(True)
+
+        if coeff is not None and not self.qualitative:
+            textright = '$m=%.3f$\n$n=%.1f$' % (abs(coeff[0]), abs(coeff[1]))
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            ax.text(0.05, 0.9, textright, transform=ax.transAxes,
+                    fontsize=8, verticalalignment='top', bbox=props)
+
+        self._save_plots(fig, suffix=suffix)
+
+        if coeff is not None:
+            return coeff, np.sqrt(np.diag(cov))
+
     def plot_stacked_threshold(self, data, tdac_mask, plot_range=None, electron_axis=False, x_axis_title=None, y_axis_title=None,
                                 title=None, suffix=None, min_tdac=0, max_tdac=15, range_tdac=16):
         start_column = self.run_config['start_column']
