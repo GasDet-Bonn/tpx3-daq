@@ -98,22 +98,29 @@ class ScanBase(object):
         self.make_files()
 
     def set_directory(self,sub_dir=None):
-        # Get the project directory
-        self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # Get the user directory
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        if not os.path.exists(user_path):
+            os.makedirs(user_path)
+        scan_path = os.path.join(user_path, 'scans')
+        if not os.path.exists(scan_path):
+            os.makedirs(scan_path)
 
         # Setup the output_data directory
         if sub_dir:
-            self.working_dir = os.path.join(os.getcwd(), "output_data/"+sub_dir)
+            self.working_dir = os.path.join(scan_path, sub_dir)
+            if not os.path.exists(self.working_dir):
+                os.makedirs(self.working_dir)
         else:
-            self.working_dir = os.path.join(os.getcwd(), "output_data")
-        if not os.path.exists(self.working_dir):
-            os.makedirs(self.working_dir)
+            self.working_dir = scan_path
 
     def make_files(self):
         # Create the filename for the HDF5 file and the logger by combining timestamp and run_name
-        self.timestamp = time.strftime("%Y%m%d_%H%M%S")
-        self.run_name = self.timestamp + '_' + self.scan_id
-        self.output_filename = os.path.join(self.working_dir, self.run_name)
+        self.timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+        self.run_name = self.scan_id + '_' + self.timestamp
+        output_path = os.path.join(self.working_dir, 'hdf')
+        self.output_filename = os.path.join(output_path, self.run_name)
 
         # Setup the logger and the logfile
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -485,7 +492,9 @@ class ScanBase(object):
         '''
             Setup the logfile
         '''
-        self.fh = logging.FileHandler(self.output_filename + '.log')
+        output_path = os.path.join(self.working_dir, 'logs')
+        logger_filename = os.path.join(output_path, self.run_name)
+        self.fh = logging.FileHandler(logger_filename + '.log')
         self.fh.setLevel(loglevel)
         self.fh.setFormatter(logging.Formatter("%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s"))
         for lg in six.itervalues(logging.Logger.manager.loggerDict):

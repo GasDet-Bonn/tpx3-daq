@@ -199,7 +199,7 @@ class ToTCalib(ScanBase):
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting plotting...')
-        with tb.open_file(h5_filename, 'r') as h5_file:
+        with tb.open_file(h5_filename, 'r+') as h5_file:
             with plotting.Plotting(h5_filename) as p:
 
                 # Read needed configuration parameters
