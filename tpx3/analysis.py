@@ -182,9 +182,9 @@ def raw_data_to_dut(raw_data):
     for i in range(8):
         k_i = k[h == i] # gives a list of all data for the specific link number
         if len(k_i) % 2 != 0: # did we receive all packages?
-            logger.error("Missing package(s) from Link "+str(i))
+            logger.error("Missing package(s) from Link " + str(i))
         # initialize list with the needed length for temporal storage
-        data_words_i = np.empty((k_i.shape[0] / 2), dtype=np.uint64)
+        data_words_i = np.empty((k_i.shape[0] // 2), dtype=np.uint64)
         data_words_i[:] = k_i[1::2].view('>u4')
         data_words_i = (data_words_i << 16) + (k_i[0::2].view('>u4') >> 8)
         # append all data from this link to the list of all data
