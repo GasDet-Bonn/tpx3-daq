@@ -864,6 +864,7 @@ class Plotting(object):
         if coeff is not None:
             points = np.linspace(min(plot_range), max(plot_range), 500)
             gau = self._gauss(points, *coeff)
+            errors = np.sqrt(np.diag(cov))
 
         fig = Figure()
         FigureCanvas(fig)
@@ -888,13 +889,13 @@ class Plotting(object):
                     textright = '$\mu=%.1f\;\Delta$VCAL\n$\;\,\,=%.0f \; e^-$\n\n$\sigma=%.1f\;\Delta$VCAL\n$\;\,\,=%.0f \; e^-$' % (
                         abs(coeff[1]), self._convert_to_e(abs(coeff[1]), use_offset=use_electron_offset), abs(coeff[2]), self._convert_to_e(abs(coeff[2]), use_offset=False))
                 else:
-                    textright = '$\mu=%.1f$\n$\sigma=%.1f$' % (abs(coeff[1]), abs(coeff[2]))
+                    textright = '$\mu=%.1f \pm %.1f$\n$\sigma=%.1f \pm %.1f$' % (abs(coeff[1]), abs(errors[1]), abs(coeff[2]), abs(errors[2]))
             else:
                 if electron_axis:
                     textright = '$\mu=%.0f\;\Delta$VCAL\n$\;\,\,=%.0f \; e^-$\n\n$\sigma=%.0f\;\Delta$VCAL\n$\;\,\,=%.0f \; e^-$' % (
                         abs(coeff[1]), self._convert_to_e(abs(coeff[1]), use_offset=use_electron_offset), abs(coeff[2]), self._convert_to_e(abs(coeff[2]), use_offset=False))
                 else:
-                    textright = '$\mu=%.2f$\n$\sigma=%.2f$' % (abs(coeff[1]), abs(coeff[2]))
+                    textright = '$\mu=%.2f \pm %.2f$\n$\sigma=%.2f \pm %.2f$' % (abs(coeff[1]), abs(errors[1]), abs(coeff[2]), abs(errors[2]))
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
             ax.text(0.05, 0.9, textright, transform=ax.transAxes,
                     fontsize=8, verticalalignment='top', bbox=props)
@@ -911,7 +912,7 @@ class Plotting(object):
         self._save_plots(fig, suffix=suffix)
 
         if coeff is not None:
-            return coeff, np.sqrt(np.diag(cov))
+            return coeff, errors
 
     def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None):
         m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
@@ -924,6 +925,7 @@ class Plotting(object):
             self.logger.warning('Linear fit failed!')
 
         if coeff is not None:
+            errors = np.sqrt(np.diag(cov))
             points = np.linspace(min(x_plot_range), max(x_plot_range), 500)
             lin = self._lin(points, *coeff)
 
@@ -946,7 +948,7 @@ class Plotting(object):
         ax.grid(True)
 
         if coeff is not None and not self.qualitative:
-            textright = '$m=%.3f$\n$n=%.1f$' % (abs(coeff[0]), abs(coeff[1]))
+            textright = '$m=%.3f \pm %.3f$\n$n=%.1f \pm %.1f$' % (abs(coeff[0]), abs(errors[0]), abs(coeff[1]), abs(errors[0]))
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
             ax.text(0.05, 0.9, textright, transform=ax.transAxes,
                     fontsize=8, verticalalignment='top', bbox=props)
@@ -954,7 +956,7 @@ class Plotting(object):
         self._save_plots(fig, suffix=suffix)
 
         if coeff is not None:
-            return coeff, np.sqrt(np.diag(cov))
+            return coeff, errors
 
     def plot_stacked_threshold(self, data, tdac_mask, plot_range=None, electron_axis=False, x_axis_title=None, y_axis_title=None,
                                 title=None, suffix=None, min_tdac=0, max_tdac=15, range_tdac=16):
