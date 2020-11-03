@@ -22,6 +22,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq',
                 'Save_Equalisation', 'Save_Equal', 'SEQ','save_equalisation', 'save_equal', 'seq',
                 'Save_Backup', 'Backup','save_backup', 'backup',
+                'Load_Backup', 'load_backup',
                 'GUI',
                 'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol',
                 'Set_Mask', 'Mask', 'set_mask', 'mask', 
@@ -30,7 +31,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Expert', 'expert',
                 'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup',  'GUI', 'Help', 'Quit']
+help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'GUI', 'Help', 'Quit']
 
 def completer(text, state):
     options = [function for function in functions if function.startswith(text)]
@@ -218,7 +219,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
         user_path = os.path.join(user_path, 'backups')
         
         if file_name == None:
-            print('> Please enter the path of the equalisation  you like to save the backup under:')
+            print('> Please enter the path you like to save the backup under:')
             file_name = input('>> ')
         try:
             #look if path exists
@@ -226,7 +227,8 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             if os.path.isfile(full_path) == True:
                 print('File already exists')
             else:
-                file.logger.write_backup(file = full_path)
+                file = open(full_path, "w")
+                file_logger.write_backup(file = file)
         except:
             print('Could not write file')
 
@@ -598,6 +600,31 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) == 2:
                             try:
                                 funktion_call.Save_Backup(file_name = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n backup file name.')
+
+                #Load backup
+                elif inputlist[0] in {'Load_Backup', 'load_backup'}:
+                    if len(inputlist) == 1:
+                        print('Load_Backup')
+                        try:
+                            backup_data = file_logger.read_backup()
+                            TPX3_datalogger.set_data(config = backup_data)
+                            TPX3_datalogger.write_backup_to_yaml()
+                            print('backup set')
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the load backup function. As argument you can give the name of the backup file you like to load')
+                        elif len(inputlist) == 2:
+                            try:
+                                backup_data = file_logger.read_backup(file = (inputlist[1] + '.TPX3'))
+                                TPX3_datalogger.set_data(config = backup_data)
+                                TPX3_datalogger.write_backup_to_yaml()
+                                print('backup set')
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
