@@ -226,22 +226,9 @@ class ThresholdCalib(ScanBase):
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
             Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
-            self.logger.info('Cut S-Curves...')
-
-            # For the fit: cut away all hits over the number of injections
-            scurves_cut = np.zeros((256*256, len(param_range)), dtype=np.uint16)
-            pbar = tqdm(total=scurve.shape[0] * scurve.shape[1])
-            for col in range(scurve.shape[0]):
-                for row in range(scurve.shape[1]):
-                    if scurve[col][row] > n_injections:
-                        scurves_cut[col][row] = n_injections
-                    else:
-                        scurves_cut[col][row] = scurve[col][row]
-                    pbar.update()
-
             # Fit S-Curves to the histogramms for all pixels
             param_range = list(range(Vthreshold_start, Vthreshold_stop))
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurves_cut, scan_param_range=param_range, n_injections=n_injections, invert_x=True)
+            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True)
 
             # Save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted_' + str(iteration), 'Interpreted Data')

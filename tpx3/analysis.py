@@ -416,18 +416,26 @@ def imap_bar(func, args, n_processes=None):
 
 
 def fit_scurves_multithread(scurves, scan_param_range,
-                            n_injections=None, invert_x=False):
-    scurves = np.ma.masked_array(scurves)
+                            n_injections, invert_x=False):
+
+    _scurves = scurves
+    # Set all values above n_injections to n_injections. This is necessary, as the noise peak can lead to problems in the scurve fits.
+    # As we are only interested in the position of the scurve (which lays below n_injections) this should not cause a problem.
+    logger.info("Cut S-curves to %i hits for S-curve fit", n_injections)
+    pbar = tqdm(total=_scurves.shape[0] * _scurves.shape[1])
+    for col in range(_scurves.shape[0]):
+        for row in range(_scurves.shape[1]):
+            if _scurves[col][row] > n_injections:
+                _scurves[col][row] = n_injections
+            pbar.update(1)
+    
+    _scurves = np.ma.masked_array(_scurves)
     scan_param_range = np.array(scan_param_range)
 
     # Calculate noise median for fit start value
     logger.info("Calculate S-curve fit start parameters")
     sigmas = []
-    for curve in tqdm(scurves):
-        # FIXME: n_injections is not defined, can this happen?
-        if not n_injections:
-            raise RuntimeError('Number of injections not defined. Please report to developers at https://gitlab.cern.ch/silab/bdaq53/issues')
-            n_injections = curve.max()
+    for curve in tqdm(_scurves):
         # Calculate from pixels with valid data (maximum = n_injections)
         if curve.max() == n_injections:
             if np.all(curve.mask == np.ma.nomask):
