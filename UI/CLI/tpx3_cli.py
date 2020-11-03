@@ -272,7 +272,8 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
         else:
             print('{} s long data taking run started!'.format(scan_timeout))
             
-        TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, maskfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+
 
 
 class TPX3_CLI_TOP(object):
