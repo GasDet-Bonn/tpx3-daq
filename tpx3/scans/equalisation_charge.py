@@ -265,35 +265,22 @@ class Equalisation_charge(ScanBase):
             mask_matrix = np.zeros((256, 256), dtype=np.bool)
             mask_matrix[:, :] = 0
 
-            # Write the equalisation matrix and the mask matrix to a new HDF5 file
-            self.logger.info('Writing mask_matrix to file...')
+            # Write the equalisation matrix to a new HDF5 file
             output_path = os.path.join(self.working_dir, 'hdf')
-            maskfile = os.path.join(output_path, 'equal_W' + chip_wafer + '-' + chip_x + chip_y + '_' + self.timestamp + 'h5')
-
-            with tb.open_file(maskfile, 'a') as out_file:
-                try:
-                    out_file.remove_node(out_file.root.mask_matrix)
-                except NoSuchNodeError:
-                    self.logger.debug('Specified maskfile does not include a mask_matrix yet!')
-
-                out_file.create_carray(out_file.root,
-                                    name='mask_matrix',
-                                    title='Matrix mask',
-                                    obj=mask_matrix)
-                self.logger.info('Closing mask file: %s' % (maskfile))
+            thrfile = os.path.join(output_path, 'equal_W' + chip_wafer + '-' + chip_x + chip_y + '_' + self.timestamp + 'h5')
 
             self.logger.info('Writing equalisation matrix to file...')
-            with tb.open_file(maskfile, 'a') as out_file:
+            with tb.open_file(thrfile, 'a') as out_file:
                 try:
                     out_file.remove_node(out_file.root.thr_matrix)
                 except NoSuchNodeError:
-                    self.logger.debug('Specified maskfile does not include a thr_mask yet!')
+                    self.logger.debug('Specified thrfile does not include a thr_mask yet!')
 
                 out_file.create_carray(out_file.root,
                                         name='thr_matrix',
                                         title='Matrix Threshold',
                                         obj=eq_matrix)
-                self.logger.info('Closing equalisation matrix file: %s' % (maskfile))
+                self.logger.info('Closing equalisation matrix file: %s' % (thrfile))
 
 
 if __name__ == "__main__":

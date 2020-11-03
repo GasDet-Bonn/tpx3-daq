@@ -28,7 +28,7 @@ local_configuration = {
     'mask_step'        : 64,
     'VTP_fine_start'   : 210 + 0,
     'VTP_fine_stop'    : 210 + 300,
-    'maskfile'        : './output_data/20200505_165149_mask.h5'
+    'thrfile'        : './output_data/20200505_165149_mask.h5'
 }
 
 

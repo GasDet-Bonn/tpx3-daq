@@ -31,7 +31,7 @@ local_configuration = {
     'Vthreshold_stop'  : 2911,
     'n_injections'     : 100,
     'n_pulse_heights'  : 5,
-    'maskfile'         : './output_data/20201019_184320_mask.h5'
+    'thrfile'         : './output_data/20201019_184320_mask.h5'
 }
 
 

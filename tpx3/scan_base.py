@@ -196,7 +196,7 @@ class ScanBase(object):
         row.append()
 
         # scan/run specific configuration parameters
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'maskfile']
+        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'thrfile', 'maskfile']
         for kw, value in six.iteritems(kwargs):
             if kw in run_config_attributes:
                 row = run_config_table.row
@@ -358,6 +358,7 @@ class ScanBase(object):
             self.logger.warning("no EoR found")
 
         self.maskfile = kwargs.get('maskfile', None)
+        self.thrfile = kwargs.get('thrfile', None)
         self.configure(**kwargs)
 
         # Produce needed PCR (Pixel conficuration register)
@@ -536,20 +537,20 @@ class ScanBase(object):
             Write the pixel threshold matrix to file
         '''
         self.logger.info('Writing TDAC mask to file...')
-        if not self.maskfile:
-            self.maskfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
+        if not self.thrfile:
+            self.thrfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
 
-        with tb.open_file(self.maskfile, 'a') as out_file:
+        with tb.open_file(self.thrfile, 'a') as out_file:
             try:
                 out_file.remove_node(out_file.root.thr_matrix)
             except NoSuchNodeError:
-                self.logger.debug('Specified maskfile does not include a thr_mask yet!')
+                self.logger.debug('Specified thrfile does not include a thr_mask yet!')
 
             out_file.create_carray(out_file.root,
                                        name='thr_matrix',
                                        title='Matrix Threshold',
                                        obj=self.chip.thr_matrix)
-            self.logger.info('Closing TDAC mask threshold file: %s' % (self.maskfile))
+            self.logger.info('Closing thr_matrix file: %s' % (self.thrfile))
 
 
     def load_mask_matrix(self, **kwargs):
@@ -569,13 +570,13 @@ class ScanBase(object):
         '''
             Load the pixel threshold matrix
         '''
-        if self.maskfile:
-            self.logger.info('Loading thr_matrix file: %s' % (self.maskfile))
+        if self.thrfile:
+            self.logger.info('Loading thr_matrix file: %s' % (self.thrfile))
             try:
-                with tb.open_file(self.maskfile, 'r') as infile:
+                with tb.open_file(self.thrfile, 'r') as infile:
                     self.chip.thr_matrix = infile.root.thr_matrix[:]
             except NoSuchNodeError:
-                self.logger.debug('Specified maskfile does not include a thr_matrix!')
+                self.logger.debug('Specified thrfile does not include a thr_matrix!')
                 pass
 
     def close(self):

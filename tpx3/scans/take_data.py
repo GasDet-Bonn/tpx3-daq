@@ -23,7 +23,7 @@ import tpx3.plotting as plotting
 local_configuration = {
     # Scan parameters
     'scan_timeout' : 60*60,
-    #'maskfile'     : './output_data/20180707_222224_mask.h5'
+    #'thrfile'     : './output_data/20180707_222224_mask.h5'
 }
 
 

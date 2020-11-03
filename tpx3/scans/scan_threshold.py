@@ -28,7 +28,7 @@ local_configuration = {
     'Vthreshold_start' : 1800,
     'Vthreshold_stop'  : 2800,
     'n_injections'     : 100,
-    'maskfile'         : './output_data/20200401_160123_mask.h5'
+    'thrfile'         : './output_data/20200401_160123_mask.h5'
 }
 
 

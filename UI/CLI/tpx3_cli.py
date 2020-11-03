@@ -75,7 +75,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             mask_step = int(input('>> '))
             
         print ('ToT calibration with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
-        TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, mask_step = mask_step, maskfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, mask_step = mask_step, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
 
     def Threshold_Scan(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:
@@ -89,7 +89,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             mask_step = int(input('>> '))
             
         print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step)
-        TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, maskfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
 
     def Threshold_Calib(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None, n_pulse_heights = None):
         if Vthreshold_start == None:
@@ -105,7 +105,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             n_pulse_heights = int(input('>> '))
             
         print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step, 'Number of pulse heights = ', n_pulse_heights)
-        TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, n_pulse_heights = n_pulse_heights, maskfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, n_pulse_heights = n_pulse_heights, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
 
 
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
@@ -120,7 +120,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             mask_step = int(input('>> '))
             
         print ('Testpulse scan with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
-        TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, n_injections = n_injections, mask_step = mask_step, maskfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, n_injections = n_injections, mask_step = mask_step, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
 
     def Pixel_DAC_Optimisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:

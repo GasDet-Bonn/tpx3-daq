@@ -29,7 +29,7 @@ local_configuration = {
     'VTP_fine_start'   : 256 + 0,
     'VTP_fine_stop'    : 256 + 140,
     'n_injections'     : 100,
-    #'maskfile'        : './output_data/?_mask.h5'
+    #'thrfile'        : './output_data/?_mask.h5'
 }
 
 
