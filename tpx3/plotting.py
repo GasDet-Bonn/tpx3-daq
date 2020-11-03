@@ -252,7 +252,7 @@ class Plotting(object):
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
         for key, value in six.iteritems(self.run_config):
-            if key in [b'scan_id', b'run_name', b'chip_wafer', b'chip_x', b'chip_y', b'software_version', b'board_name', b'firmware_version', b'disable', b'maskfile']:
+            if key in [b'scan_id', b'run_name', b'chip_wafer', b'chip_x', b'chip_y', b'software_version', b'board_name', b'firmware_version', b'disable', b'thrfile', b'maskfile']:
                 continue
             tb_dict[key] = int(value)
 
