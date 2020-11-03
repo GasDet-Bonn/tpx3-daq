@@ -276,6 +276,13 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
 
 
 
+ ###################################################
+ ###                                             ###
+####                 CLI main                    ####
+ ###                                             ###
+ ###################################################
+
+
 class TPX3_CLI_TOP(object):
     def __init__(self, ext_input_list = None):
         readline.set_completer(completer)
@@ -284,10 +291,22 @@ class TPX3_CLI_TOP(object):
         expertmode = False
         print ('\n Welcome to the Timepix3 control Software\n')
 
+        if not ext_input_list == None:
+            cmd_list_element = []
+            cmd_list = []
+            for element in ext_input_list:
+                if not element == '+':
+                    cmd_list_element.append(element)
+                elif element == '+':
+                    cmd_list.append(cmd_list_element)
+                    cmd_list_element = []
+            cmd_list.append(cmd_list_element)
+            cmd_list.append(['Quit'])#To exit loop at the end
+
         # Here the main part of the cli starts. Every usercomand needs to be processed here.
         while 1:
 
-            #if
+            #if no external input is given
             if ext_input_list == None:
                 cmd_input = input('> ')
                 #Catch if no input given
@@ -297,9 +316,12 @@ class TPX3_CLI_TOP(object):
                     inputlist = cmd_input.split()
             #Input is given
             else:
-                inputlist = ext_input_list
-                cmd_input = ' '.join(ext_input_list)
-                ext_input_list = ['Quit']# To exit the while loop
+                inputlist = cmd_list[0]
+                cmd_input = ' '.join(cmd_list[0])
+                print(inputlist)
+                cmd_list.pop(0)
+                print(cmd_list)
+            
             if inputlist:
                 #Help
                 if inputlist[0] in {'Help', 'help', 'h', '-h'}:
