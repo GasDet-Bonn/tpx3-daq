@@ -66,6 +66,9 @@ if not os.path.exists(user_path):
 backup_path = os.path.join(user_path, 'backups')
 if not os.path.exists(backup_path):
     os.makedirs(backup_path)
+mask_path = os.path.join(user_path, 'masks')
+if not os.path.exists(mask_path):
+    os.makedirs(mask_path)
 scan_path = os.path.join(user_path, 'scans')
 if not os.path.exists(scan_path):
     os.makedirs(scan_path)
