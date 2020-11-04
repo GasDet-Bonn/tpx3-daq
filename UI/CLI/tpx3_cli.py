@@ -23,6 +23,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Save_Equalisation', 'Save_Equal', 'SEQ','save_equalisation', 'save_equal', 'seq',
                 'Save_Backup', 'Backup','save_backup', 'backup',
                 'Load_Backup', 'load_backup',
+                'Set_Default', 'Default', 'set_default', 'default',
                 'GUI',
                 'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol',
                 'Set_Mask', 'Mask', 'set_mask', 'mask', 
@@ -31,7 +32,10 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Expert', 'expert',
                 'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'GUI', 'Help', 'Quit']
+help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 
+                    'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
+                    'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 
+                    'Set_Default', 'GUI', 'Help', 'Quit']
 
 def completer(text, state):
     options = [function for function in functions if function.startswith(text)]
@@ -718,6 +722,21 @@ class TPX3_CLI_TOP(object):
                                     print('User quit')
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n Fast Io enable.')
+
+                #Set Default
+                elif inputlist[0] in {'Set_Default', 'Default', 'set_default', 'default'}:
+                    if len(inputlist) == 1:
+                        print('Set Default')
+                        try:
+                            TPX3_datalogger.set_data(config = TPX3_datalogger.default_config())
+                            TPX3_datalogger.write_backup_to_yaml()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the set default function. It sets everything back to default')
+                        else :
+                            print ('Set default does not take parameters!')
 
                 #Start GUI
                 elif inputlist[0] in {'GUI'}:
