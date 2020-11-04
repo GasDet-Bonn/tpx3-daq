@@ -9,7 +9,7 @@ from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
-from UI.tpx3_logger import TPX3_datalogger, file_logger  #TODO:check if already opened instance by GUI
+from UI.tpx3_logger import TPX3_datalogger, file_logger, mask_logger  #TODO:check if already opened instance by GUI
 
 #In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot', 
@@ -27,6 +27,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'GUI',
                 'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol',
                 'Set_Mask', 'Mask', 'set_mask', 'mask', 
+                'Load_Mask', 'load_mask',
+                'Save_Mask', 'save_mask',
                 'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode',
                 'Set_Fast_Io', 'Fast_Io', 'set_fast_io', 'fast_io', 'Fast_Io_en', 'fast_io_en',
                 'Expert', 'expert',
@@ -34,7 +36,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 
                     'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
-                    'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 
+                    'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Load_Mask', 'Set_Mask',
                     'Set_Default', 'GUI', 'Help', 'Quit']
 
 def completer(text, state):
@@ -266,6 +268,71 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
         else:
             print('Unknown polarity')
 
+    def Set_Mask(object, mask_input_list = None):
+        if mask_input_list == None:
+            print('> Please enter what you like to mask: (commands are "row rownumber", "column columnnumber" or "pixel x y". Multiple entrys can be made by a "+" between them)')
+            mask_input = input('>> ')
+            mask_input_list = mask_input.split()
+
+        mask_list = [[]]
+        mask_element = []
+        for element in mask_input_list:
+            if not element == '+':
+                mask_element.append(element)
+            elif element == '+':
+                mask_list.append(mask_element)
+                mask_element = []
+        mask_list.append(mask_element)
+        mask_list.pop(0)
+        #print(mask_list)
+        for mask in mask_list:
+            if mask[0] in {'row', 'Row'}:
+                if len(mask) >= 2:
+                    if int(mask[1]) >=0 and int(mask[1]) <256:
+                        print('Mask row', int(mask[1]))
+                        mask_logger.write_mask(mask_element = ['row', int(mask[1])])
+                    else:
+                        print('Row number out of range: There is only row 0 to 255')
+                else: 
+                    print('Error: No row number given!')
+            elif mask[0] in {'column', 'Column'}:
+                if len(mask) >= 2:
+                    if int(mask[1]) >=0 and int(mask[1]) <256:
+                        print('Mask column', int(mask[1]))
+                        mask_logger.write_mask(mask_element = ['column', int(mask[1])])
+                    else:
+                        print('Column number out of range: There is only column 0 to 255')
+                else: 
+                    print('Error: No column number given!')
+            elif mask[0] in {'pixel', 'Pixel'}:
+                if len(mask) >= 3:
+                    if int(mask[1]) >=0 and int(mask[1]) <256 and int(mask[2]) >=0 and int(mask[2]) <256:
+                        print('Mask pixel', int(mask[1]), int(mask[2]))
+                        mask_logger.write_mask(mask_element = ['pixel', int(mask[1]), int(mask[2])])
+                    else:
+                        print('Pixel number out of range: There is only 0 to 255 for x and y')
+                else: 
+                    print('Error: No full set of pixel coordinates. Needs x and y!')
+            else:
+                print('Unknown type:', mask)
+            
+    def Load_Mask(object, mask_path = None):
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'masks')
+        
+        if mask_path == None:
+            print('> Please enter the name of the mask file you like to load:')
+            mask_path = input('>> ')
+        try:
+            #look if path exists
+            full_path = user_path + os.sep + mask_path
+            if os.path.isfile(full_path) == True:
+                TPX3_datalogger.write_value(name = 'Mask_path', value = full_path)
+        except:
+            print('Path does not exist')
+
     def Run_Datataking(object, scan_timeout = None):
         if scan_timeout == None:
             print('> Please enter the required run time in seconds (choose 0 for an infinite run):')
@@ -276,7 +343,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
         else:
             print('{} s long data taking run started!'.format(scan_timeout))
             
-        TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
 
 
 
@@ -684,6 +751,43 @@ class TPX3_CLI_TOP(object):
                                 print('Unknown polarity use {negative, neg, -, 1} or {positive, pos, +, 0}')
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n polarity.')
+
+                #Set mask
+                elif inputlist[0] in {'Set_Mask', 'Mask', 'set_mask', 'mask'}:
+                    if len(inputlist) == 1:
+                        print('Set_Mask')
+                        try:
+                            funktion_call.Set_Mask()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the set mask function. As argument you can give mask commands: "row rownumber", "column columnnumber" or "pixel x y". Multiple entrys can be made by a "+" between them')
+                        elif len(inputlist) >= 2:
+                            mask_input = inputlist[1:]
+                            try:
+                                funktion_call.Set_Mask(mask_input_list = mask_input)
+                            except KeyboardInterrupt:
+                                print('User quit')
+
+                #Load Mask
+                elif inputlist[0] in {'Load_Mask', 'load_mask'}:
+                    if len(inputlist) == 1:
+                        print('Load_Mask')
+                        try:
+                            funktion_call.Load_Mask()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the load mask function. As argument you can give the name of the mask file you like to load')
+                        elif len(inputlist) == 2:
+                            try:
+                                funktion_call.Load_Mask(mask_path = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n mask file name.')
 
                 #Set operation mode
                 elif inputlist[0] in {'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode'}:
