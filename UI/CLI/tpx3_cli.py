@@ -868,7 +868,7 @@ class TPX3_CLI_TOP(object):
 
                 #Unknown command
                 else:
-                    print ('Unknown command: ', cmd_input, 'Use a language I understand.')
+                    print ('Unknown command: ', cmd_input, ' Use a language I understand.')
 
 if __name__ == "__main__":
     ext_input_list = sys.argv
