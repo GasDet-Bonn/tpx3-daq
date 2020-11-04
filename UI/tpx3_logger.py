@@ -4,6 +4,74 @@ import os
 import time
 import glob
 import yaml
+import numpy as np
+import tables as tb
+
+class mask_logger(object):
+
+    def create_file(filename = None):
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'masks')
+        if filename == None:
+            filename = "mask_" + time.strftime("%Y-%m-%d_%H-%M-%S")
+        if os.path.isfile(user_path + os.sep + filename + ".h5") == False:
+            full_path = user_path + os.sep + filename + ".h5"
+            return full_path
+        elif os.path.isfile(user_path + os.sep + filename + ".h5") == True:
+            print('File exists already')
+
+    def write_mask(mask_element, mask = None):
+        mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        if mask == None:
+            path = TPX3_datalogger.read_value(name = 'Mask_path')
+            if path == None:
+                path = mask_logger.create_file()
+                TPX3_datalogger.write_value(name = 'Mask_path', value = path)
+        else:
+            user_path = '~'
+            user_path = os.path.expanduser(user_path)
+            user_path = os.path.join(user_path, 'Timepix3')
+            user_path = os.path.join(user_path, 'masks')
+            path = user_path + os.sep + mask + ".h5"
+        #open file if existing and writing set data to mask_matrix
+        if os.path.isfile(path):
+            with tb.open_file(path, 'a') as infile:
+                mask_matrix = infile.root.mask_matrix[:]
+                infile.remove_node(infile.root.mask_matrix)
+
+        #manipulate mask matrix
+        if mask_element[0] == 'row':
+            mask_matrix[ : , int(mask_element[1])] = 1
+        elif mask_element[0] == 'column':
+            mask_matrix[int(mask_element[1]), :] = 1
+        elif mask_element[0] == 'pixel':
+            mask_matrix[int(mask_element[1]), int(mask_element[2])] = 1
+        else:
+            print('Error: Unknown mask element')
+
+        #Saving the final matrix
+        with tb.open_file(path, 'a') as out_file:
+            out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
+        
+    def get_mask(mask = None):
+        if mask == None:
+            path = TPX3_datalogger.read_value(Mask_path)
+            if path == None:
+                print('No mask set')
+        else:
+            user_path = '~'
+            user_path = os.path.expanduser(user_path)
+            user_path = os.path.join(user_path, 'Timepix3')
+            user_path = os.path.join(user_path, 'masks')
+            path = user_path + os.sep + mask + ".h5"
+
+        with tb.open_file(path, 'r') as infile:
+            mask_matrix = infile.root.mask_matrix[:]
+            return mask_matrix
+
+
 
 
 class file_logger(object):
@@ -94,17 +162,18 @@ class TPX3_data_logger(object):
  
 #here the data will be logged while the programm is running this function is called as global
     def __init__(self):
-        self.config_keys = ['Chip_name', 'plottype', 'colorsteps', 'integration_length', 
+        self.config_keys = ['Chip_wafer', 'Chip_name', 'plottype', 'colorsteps', 'integration_length', 
                             'color_depth', 'Ibias_Preamp_ON', 'VPreamp_NCAS', 
                             'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
                             'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 
                             'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
-                            'Equalisation_path', 'Polarity', 'Op_mode', 'Fast_Io_en']
+                            'Mask_path', 'Equalisation_path', 'Polarity', 'Op_mode', 'Fast_Io_en']
         self.data = self.default_config()
     
     def default_config(self):
-        return {'Chip_name' : None,
+        return {'Chip_wafer' : None,
+                'Chip_name' : None,
                 'plottype' : 'normal', 
                 'colorsteps' : 50, 
                 'integration_length' : 500, 
@@ -125,6 +194,7 @@ class TPX3_data_logger(object):
                 'Ibias_CP_PLL' : 127, 
                 'PLL_Vcntrl' : 127, 
                 'Equalisation_path' : None,
+                'Mask_path' : None,
                 'Polarity' : 1,
                 'Op_mode' : 0,
                 'Fast_Io_en' : 0}
