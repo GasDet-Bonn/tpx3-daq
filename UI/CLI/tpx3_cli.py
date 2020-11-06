@@ -615,6 +615,26 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
         except:
             print('Path does not exist')
 
+    def Save_Mask(object, file_name = None):
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'masks')
+        
+        if file_name == None:
+            print('> Please enter the the name you like to save the mask under:')
+            file_name = input('>> ')
+        try:
+            #look if path exists
+            full_path = user_path + os.sep + file_name + '.h5'
+            if os.path.isfile(full_path) == True:
+                print('File already exists')
+            else:
+                current_equal = TPX3_datalogger.read_value(name = 'Mask_path')
+                copy(current_equal, full_path)
+        except:
+            print('Could not write file')
+
     def Run_Datataking(object, scan_timeout = None):
         if scan_timeout == None:
             print('> Please enter the required run time in seconds (choose 0 for an infinite run):')
@@ -1093,6 +1113,25 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) == 2:
                             try:
                                 funktion_call.Load_Mask(mask_path = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print ('To many parameters! The given function takes only one parameters:\n mask file name.')
+
+                #Save mask
+                elif inputlist[0] in {'Save_Mask', 'save_mask'}:
+                    if len(inputlist) == 1:
+                        print('Save_ask')
+                        try:
+                            funktion_call.Save_Mask()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the save mask function. As argument you can give the name of the mask file')
+                        elif len(inputlist) == 2:
+                            try:
+                                funktion_call.Save_Mask(file_name = inputlist[1])
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
