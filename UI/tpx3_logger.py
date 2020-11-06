@@ -1,4 +1,3 @@
-#JSON
 import json
 import os
 import time
@@ -10,8 +9,7 @@ import tables as tb
 class mask_logger(object):
 
     def create_file(filename = None):
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'masks')
         if filename == None:
@@ -30,8 +28,7 @@ class mask_logger(object):
                 path = mask_logger.create_file()
                 TPX3_datalogger.write_value(name = 'Mask_path', value = path)
         else:
-            user_path = '~'
-            user_path = os.path.expanduser(user_path)
+            user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
             path = user_path + os.sep + mask + ".h5"
@@ -63,8 +60,7 @@ class mask_logger(object):
             if path == None:
                 print('Error: No mask to work with!')
         else:
-            user_path = '~'
-            user_path = os.path.expanduser(user_path)
+            user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
             path = user_path + os.sep + mask + ".h5"
@@ -94,12 +90,11 @@ class mask_logger(object):
 
     def get_mask(mask = None):
         if mask == None:
-            path = TPX3_datalogger.read_value(Mask_path)
+            path = TPX3_datalogger.read_value(name = 'Mask_path')
             if path == None:
                 print('No mask set')
         else:
-            user_path = '~'
-            user_path = os.path.expanduser(user_path)
+            user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
             path = user_path + os.sep + mask + ".h5"
@@ -109,15 +104,12 @@ class mask_logger(object):
             return mask_matrix
 
 
-
-
 class file_logger(object):
     #This class contains the functions to write the setting to a file which will then be call next time the GUI is started
     
     def create_file(filename = None):
-    #Creates backup folder and file if not existing
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        #Creates backup folder and file if not existing
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
         if filename == None:
@@ -141,8 +133,7 @@ class file_logger(object):
         
     def read_backup(file = None):
         #reads backup and returns the data
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
         if file == None:
@@ -160,8 +151,7 @@ class file_logger(object):
                 return False
                 
     def get_newest_backup_file():
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
         if os.path.isdir(user_path) == True:
@@ -173,8 +163,7 @@ class file_logger(object):
         return file
             
     def create_default_file():
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
         filename = "default.TPX3"
@@ -207,7 +196,7 @@ class TPX3_data_logger(object):
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
                             'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 
                             'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
-                            'Mask_path', 'Equalisation_path', 'Polarity', 'Op_mode', 'Fast_Io_en']
+                            'Equalisation_path', 'Mask_path', 'Polarity', 'Op_mode', 'Fast_Io_en']
         self.data = self.default_config()
     
     def default_config(self):
@@ -345,29 +334,29 @@ class TPX3_data_logger(object):
             if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 
                             'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
-            yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
+                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
+                
+            #elif name in {}
+            #    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
 
-        #elif name in {}
-        #    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
+            elif name in {'Polarity', 'Op_mode', 'Fast_Io_en'}:
+                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
-        elif name in {'Polarity', 'Op_mode', 'Fast_Io_en'}:
-            yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+            else:
+                yaml_file = None
 
-        else:
-            yaml_file = None
-
-        if not yaml_file == None:
-            with open(yaml_file) as file:
-                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
-            for register in yaml_data['registers']:
-                if register['name'] == name:
-                    register['value'] = self.data[name]
-            with open(yaml_file, 'w') as file:
-                yaml.dump(yaml_data, file)
-            return True
-        else:
-            print('No known .yml contains the asked name.')
-            return False
+            if not yaml_file == None:
+                with open(yaml_file) as file:
+                    yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+                for register in yaml_data['registers']:
+                    if register['name'] == name:
+                        register['value'] = self.data[name]
+                with open(yaml_file, 'w') as file:
+                    yaml.dump(yaml_data, file)
+                return True
+            else:
+                print('No known .yml contains the asked name.')
+                return False
 
     def write_backup_to_yaml(self):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -427,26 +416,26 @@ class TPX3_data_logger(object):
                     yaml.dump(yaml_data, file)
 
             else:
-            if key in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
-                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
+                if key in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
 
-            #elif key in {}
-            #    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
+                #elif key in {}
+                #    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
 
-            elif key in {'Polarity', 'Op_mode', 'Fast_Io_en'}:
-                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+                elif key in {'Polarity', 'Op_mode', 'Fast_Io_en'}:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
-            else:
-                yaml_file = None
-            
-            if not yaml_file == None:
-                with open(yaml_file) as file:
-                    yaml_data = yaml.load(file, Loader=yaml.FullLoader)
-                for register in yaml_data['registers']:
-                    if register['name'] == key:
-                        register['value'] = self.data[key]
-                with open(yaml_file, 'w') as file:
-                    yaml.dump(yaml_data, file)
-                
+                else:
+                    yaml_file = None
+
+                if not yaml_file == None:
+                    with open(yaml_file) as file:
+                        yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+                    for register in yaml_data['registers']:
+                        if register['name'] == key:
+                            register['value'] = self.data[key]
+                    with open(yaml_file, 'w') as file:
+                        yaml.dump(yaml_data, file)
+                    
     
 TPX3_datalogger = TPX3_data_logger()
