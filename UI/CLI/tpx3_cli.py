@@ -382,8 +382,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             print('Unknown DAC-name')
 
     def Load_Equalisation(object, equal_path = None):
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'scans')
         user_path = os.path.join(user_path, 'hdf')
@@ -400,8 +399,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             print('Path does not exist')
 
     def Save_Equalisation(object, file_name = None):
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'scans')
         user_path = os.path.join(user_path, 'hdf')
@@ -421,8 +419,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             print('Could not write file')
 
     def Save_Backup(object, file_name = None):
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
+        user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
         
