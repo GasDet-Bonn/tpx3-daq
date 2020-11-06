@@ -17,6 +17,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',
                 'Pixel_DAC_Optimisation', 'Pixel_DAC', 'PDAC', 'pixel_dac_optimisation', 'pixel_dac', 'pdac', 
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp', 
+                'Initialise_Hardware', 'Init_Hardware', 'Init', 'initialise_hardware', 'init_hardware', 'init',
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
                 'Set_DAC', 'set_dac',
                 'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq',
@@ -36,7 +37,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 
-                    'Testpulse_Scan', 'Run_Datataking', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
+                    'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
                     'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Load_Mask', 'Set_Mask',
                     'Unset_Mask', 'Set_Default', 'GUI', 'Help', 'Quit']
 
@@ -1189,6 +1190,24 @@ class TPX3_CLI_TOP(object):
                             print('This is the set default function. It sets everything back to default')
                         else :
                             print ('Set default does not take parameters!')
+
+                #Initialise Hardware
+                elif inputlist[0] in {'Initialise_Hardware', 'Init_Hardware', 'Init', 'initialise_hardware', 'init_hardware', 'init'}:
+                    if len(inputlist) == 1:
+                        print('Initialise Hardware')
+                        try:
+                            Chip_List = Init_Hardware.HardwareScan()
+                            #print(Chip_List)
+                            for n, chip in enumerate(Chip_List):
+                                name = 'Chip' + str(n) + '_name'
+                                TPX3_datalogger.write_value(name = name, value = chip)
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the initialise hardware function. It initialises the hardware and looks how many links and Chips are connected')
+                        else :
+                            print ('Initialise hardware does not take parameters!')
 
                 #Start GUI
                 elif inputlist[0] in {'GUI'}:

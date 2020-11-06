@@ -199,7 +199,9 @@ class TPX3_data_logger(object):
  
 #here the data will be logged while the programm is running this function is called as global
     def __init__(self):
-        self.config_keys = ['Chip_wafer', 'Chip_name', 'plottype', 'colorsteps', 'integration_length', 
+        self.config_keys = ['Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 
+                            'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name', 
+                            'plottype', 'colorsteps', 'integration_length', 
                             'color_depth', 'Ibias_Preamp_ON', 'VPreamp_NCAS', 
                             'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
@@ -209,8 +211,14 @@ class TPX3_data_logger(object):
         self.data = self.default_config()
     
     def default_config(self):
-        return {'Chip_wafer' : None,
-                'Chip_name' : None,
+        return {'Chip0_name' : [None],#[W?_??, [FPGA n, link n , delay, data-invert, data-edge], [FPGA m, link m , delay, data-invert, data-edge], ... ]
+                'Chip1_name' : [None],
+                'Chip2_name' : [None],
+                'Chip3_name' : [None],
+                'Chip4_name' : [None],
+                'Chip5_name' : [None],
+                'Chip6_name' : [None],
+                'Chip7_name' : [None],
                 'plottype' : 'normal', 
                 'colorsteps' : 50, 
                 'integration_length' : 500, 
@@ -274,7 +282,69 @@ class TPX3_data_logger(object):
     
     def write_to_yaml(self, name):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
+        if name == 'init':
+            yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'links.yml')
+
+            with open(yaml_file) as file:
+                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+
+                for i in range (0,7):
+                    name = 'Chip' + str(i) +'_name'
+                    value_list = self.data[name]
+                    if not value_list == [None]:
+
+                        Chipname = value_list[0]
+                        wafer_number = ''
+                        chip_coord2 = '' 
+                        for i in range (1, len(Chipname)):
+                            if Chipname[i] == '-':
+                                start_chipname = i
+                        for i in range (1, start_chipname):
+                            wafer_number = wafer_number + Chipname[i]
+                        chip_coord1 = Chipname[start_chipname+1]
+                        for i in range (start_chipname+2, len(Chipname)):
+                            chip_coord2 = chip_coord2 + Chipname[i]
+
+                        wafer_number = int(wafer_number)
+                        chip_coord1 = ord(chip_coord1.lower()) - ord('a') + 1
+                        chip_coord2 = int(chip_coord2)
+
+                        Chip_ID = (wafer_number << 8) | (chip_coord2 << 4) | chip_coord1
+
+                        for n in range(1, len(value_list)):
+                            element_list = value_list[n]
+                            if element_list[0] == 0: 
+                                element = 'RX'
+                                fpga_link = element_list[0]
+                                chip_link = element_list[1]
+                                data_delay = element_list[2]
+                                data_invert = element_list[3]
+                                data_edge = element_list[4]
+                            else:
+                                element = 'RX' + str(element_list[0])
+                                fpga_link = element_list[0]
+                                chip_link = element_list[1]
+                                data_delay = element_list[2]
+                                data_invert = element_list[3]
+                                data_edge = element_list[4]
+
+                            for register in yaml_data['registers']:
+                                if register['name'] == element:
+                                    register['fpga-link'] = fpga_link
+                                    register['chip-link'] = chip_link
+                                    register['chip-id'] = Chip_ID
+                                    register['data-delay'] = data_delay
+                                    register['data-invert'] = data_invert
+                                    register['data-edge'] = data_edge
+
+            with open(yaml_file, 'w') as file:
+                yaml.dump(yaml_data, file)
+            return True
+
+        else:
+            if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
+                            'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 
+                            'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
             yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
 
         #elif name in {}
@@ -302,6 +372,61 @@ class TPX3_data_logger(object):
     def write_backup_to_yaml(self):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for key in self.data:
+            if key in {'Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name'}:
+                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'links.yml')
+                with open(yaml_file) as file:
+                    yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+                value_list = self.data[key]
+                if not value_list == [None]:
+
+                    Chipname = value_list[0]
+                    wafer_number = ''
+                    chip_coord2 = '' 
+                    for i in range (1, len(Chipname)):
+                        if Chipname[i] == '-':
+                            start_chipname = i
+                    for i in range (1, start_chipname):
+                        wafer_number = wafer_number + Chipname[i]
+                    chip_coord1 = Chipname[start_chipname+1]
+                    for i in range (start_chipname+2, len(Chipname)):
+                        chip_coord2 = chip_coord2 + Chipname[i]
+
+                    wafer_number = int(wafer_number)
+                    chip_coord1 = ord(chip_coord1.lower()) - ord('a') + 1
+                    chip_coord2 = int(chip_coord2)
+
+                    Chip_ID = (wafer_number << 8) | (chip_coord2 << 4) | chip_coord1
+
+                    for n in range(1, len(value_list)):
+                        element_list = value_list[n]
+                        if element_list[0] == 0: 
+                            element = 'RX'
+                            fpga_link = element_list[0]
+                            chip_link = element_list[1]
+                            data_delay = element_list[2]
+                            data_invert = element_list[3]
+                            data_edge = element_list[4]
+                        else:
+                            element = 'RX' + str(element_list[0])
+                            fpga_link = element_list[0]
+                            chip_link = element_list[1]
+                            data_delay = element_list[2]
+                            data_invert = element_list[3]
+                            data_edge = element_list[4]
+
+                        for register in yaml_data['registers']:
+                            if register['name'] == element:
+                                register['fpga-link'] = fpga_link
+                                register['chip-link'] = chip_link
+                                register['chip-id'] = Chip_ID
+                                register['data-delay'] = data_delay
+                                register['data-invert'] = data_invert
+                                register['data-edge'] = data_edge
+
+                with open(yaml_file, 'w') as file:
+                    yaml.dump(yaml_data, file)
+
+            else:
             if key in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
 
@@ -314,7 +439,6 @@ class TPX3_data_logger(object):
             else:
                 yaml_file = None
             
-
             if not yaml_file == None:
                 with open(yaml_file) as file:
                     yaml_data = yaml.load(file, Loader=yaml.FullLoader)
