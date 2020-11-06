@@ -9,6 +9,7 @@ from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
+import tpx3.scans.scan_hardware as Init_Hardware
 from UI.tpx3_logger import TPX3_datalogger, file_logger, mask_logger  #TODO:check if already opened instance by GUI
 
 #In this part all callable function names should be in the list functions
