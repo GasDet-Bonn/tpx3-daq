@@ -40,6 +40,8 @@ help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 
                     'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Load_Mask', 'Set_Mask',
                     'Unset_Mask', 'Set_Default', 'GUI', 'Help', 'Quit']
 
+exit_list = ['Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
+
 def completer(text, state):
     options = [function for function in functions if function.startswith(text)]
     try:
@@ -75,11 +77,38 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def ToT_Calibration(object, VTP_fine_start = None, VTP_fine_stop = None, mask_step = None):
         if VTP_fine_start == None:
             print('> Please enter the VTP_fine_start value (0-511):')
-            VTP_fine_start = int(input('>> '))
+            while(1):
+                VTP_fine_start = input('>> ')
+                try:
+                    VTP_fine_start = int(VTP_fine_start)
+                    break
+                except:
+                    if VTP_fine_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the VTP_fine_stop value (0-511):')
-            VTP_fine_stop = int(input('>> '))
+            while(1):
+                VTP_fine_stop = input('>> ')
+                try:
+                    VTP_fine_stop = int(VTP_fine_stop)
+                    break
+                except:
+                    if VTP_fine_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of steps(4, 16, 64, 256):')
-            mask_step = int(input('>> '))
+            while(1):
+                mask_step = input('>> ')
+                try:
+                    mask_step = int(mask_step)
+                    break
+                except:
+                    if mask_step in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             
         print ('ToT calibration with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, mask_step = mask_step, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
@@ -87,13 +116,49 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Threshold_Scan(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:
             print('> Please enter the Vthreshold_start value (0-2911):')
-            Vthreshold_start = int(input('>> '))
+            while(1):
+                Vthreshold_start = input('>> ')
+                try:
+                    Vthreshold_start = int(Vthreshold_start)
+                    break
+                except:
+                    if Vthreshold_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the Vthreshold_stop value (0-2911):')
-            Vthreshold_stop = int(input('>> '))
+            while(1):
+                Vthreshold_stop = input('>> ')
+                try:
+                    Vthreshold_stop = int(Vthreshold_stop)
+                    break
+                except:
+                    if Vthreshold_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of injections (1-65535):')
-            n_injections = int(input('>> '))
+            while(1):
+                n_injections = input('>> ')
+                try:
+                    n_injections = int(n_injections)
+                    break
+                except:
+                    if n_injections in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of steps(4, 16, 64, 256):')
-            mask_step = int(input('>> '))
+            while(1):
+                mask_step = input('>> ')
+                try:
+                    mask_step = int(mask_step)
+                    break
+                except:
+                    if mask_step in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             
         print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step)
         TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
@@ -101,13 +166,49 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Threshold_Calib(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None, n_pulse_heights = None):
         if Vthreshold_start == None:
             print('> Please enter the Vthreshold_start value (0-2911):')
-            Vthreshold_start = int(input('>> '))
+            while(1):
+                Vthreshold_start = input('>> ')
+                try:
+                    Vthreshold_start = int(Vthreshold_start)
+                    break
+                except:
+                    if Vthreshold_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the Vthreshold_stop value (0-2911):')
-            Vthreshold_stop = int(input('>> '))
+            while(1):
+                Vthreshold_stop = input('>> ')
+                try:
+                    Vthreshold_stop = int(Vthreshold_stop)
+                    break
+                except:
+                    if Vthreshold_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of injections (1-65535):')
-            n_injections = int(input('>> '))
+            while(1):
+                n_injections = input('>> ')
+                try:
+                    n_injections = int(n_injections)
+                    break
+                except:
+                    if n_injections in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of steps(4, 16, 64, 256):')
-            mask_step = int(input('>> '))
+            while(1):
+                mask_step = input('>> ')
+                try:
+                    mask_step = int(mask_step)
+                    break
+                except:
+                    if mask_step in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of pulse height steps(2-100):')
             n_pulse_heights = int(input('>> '))
             
@@ -118,13 +219,49 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
         if VTP_fine_start == None:
             print('> Please enter the VTP_fine_start value (0-511):')
-            VTP_fine_start = int(input('>> '))
+            while(1):
+                VTP_fine_start = input('>> ')
+                try:
+                    VTP_fine_start = int(VTP_fine_start)
+                    break
+                except:
+                    if VTP_fine_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the VTP_fine_stop value (0-511):')
-            VTP_fine_stop = int(input('>> '))
+            while(1):
+                VTP_fine_stop = input('>> ')
+                try:
+                    VTP_fine_stop = int(VTP_fine_stop)
+                    break
+                except:
+                    if VTP_fine_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of injections (1-65535):')
-            n_injections = int(input('>> '))
+            while(1):
+                n_injections = input('>> ')
+                try:
+                    n_injections = int(n_injections)
+                    break
+                except:
+                    if n_injections in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of steps(4, 16, 64, 256):')
-            mask_step = int(input('>> '))
+            while(1):
+                mask_step = input('>> ')
+                try:
+                    mask_step = int(mask_step)
+                    break
+                except:
+                    if mask_step in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             
         print ('Testpulse scan with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, n_injections = n_injections, mask_step = mask_step, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
@@ -132,13 +269,49 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Pixel_DAC_Optimisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:
             print('> Please enter the Vthreshold_start value (0-2911):')
-            Vthreshold_start = int(input('>> '))
+            while(1):
+                Vthreshold_start = input('>> ')
+                try:
+                    Vthreshold_start = int(Vthreshold_start)
+                    break
+                except:
+                    if Vthreshold_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the Vthreshold_stop value (0-2911):')
-            Vthreshold_stop = int(input('>> '))
+            while(1):
+                Vthreshold_stop = input('>> ')
+                try:
+                    Vthreshold_stop = int(Vthreshold_stop)
+                    break
+                except:
+                    if Vthreshold_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of injections (1-65535):')
-            n_injections = int(input('>> '))
+            while(1):
+                n_injections = input('>> ')
+                try:
+                    n_injections = int(n_injections)
+                    break
+                except:
+                    if n_injections in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             print('> Please enter the number of steps (4, 16, 64, 256):')
-            mask_step = int(input('>> '))
+            while(1):
+                mask_step = input('>> ')
+                try:
+                    mask_step = int(mask_step)
+                    break
+                except:
+                    if mask_step in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
         print ('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
 
@@ -148,13 +321,40 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
             DAC_Name = input('>> ')
             if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
                 print('> Please enter the DAC value (0-255):')
-                DAC_value = int(input('>> '))
+                while(1):
+                    DAC_value = input('>> ')
+                    try:
+                        DAC_value = int(DAC_value)
+                        break
+                    except:
+                        if DAC_value in exit_list:
+                            return
+                        else:
+                            print('Input needs to be a number!')
             elif DAC_Name in {'Vthreshold_coarse'}:
                 print('> Please enter the DAC value ( 0-15):')
-                DAC_value = int(input('>> '))
+                while(1):
+                    DAC_value = input('>> ')
+                    try:
+                        DAC_value = int(DAC_value)
+                        break
+                    except:
+                        if DAC_value in exit_list:
+                            return
+                        else:
+                            print('Input needs to be a number!')
             elif DAC_Name in {'Vthreshold_fine', 'VTP_fine'}:
                 print('> Please enter the DAC value (0-511):')
-                DAC_value = int(input('>> '))
+                while(1):
+                    DAC_value = input('>> ')
+                    try:
+                        DAC_value = int(DAC_value)
+                        break
+                    except:
+                        if DAC_value in exit_list:
+                            return
+                        else:
+                            print('Input needs to be a number!')
 
         if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
             if DAC_value >= 0 and DAC_value <= 255:
@@ -242,7 +442,16 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Set_Polarity(object, polarity = None):
         if polarity == None:
             print('> Please enter the polarity (0 for positive or 1 for negative):')
-            polarity = int(input('>> '))
+            while(1):
+                polarity = input('>> ')
+                try:
+                    polarity = int(polarity)
+                    break
+                except:
+                    if polarity in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
         if polarity == 1 or polarity == 0:
             TPX3_datalogger.write_value(name = 'Polarity', value = polarity)
             TPX3_datalogger.write_to_yaml(name = 'Polarity')
@@ -252,7 +461,16 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Set_operation_mode(object, Op_mode = None):
         if Op_mode == None:
             print('> Please enter the operation mode (0 for ToT and TOA, 1 for only TOA, 2 for Event Count & Integral ToT):')
-            Op_mode = int(input('>> '))
+            while(1):
+                Op_mode = input('>> ')
+                try:
+                    Op_mode = int(Op_mode)
+                    break
+                except:
+                    if Op_mode in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
         if Op_mode >= 0 and Op_mode <= 2:
             TPX3_datalogger.write_value(name = 'Op_mode', value = Op_mode)
             TPX3_datalogger.write_to_yaml(name = 'Op_mode')
@@ -262,7 +480,16 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Set_Fast_Io(object, Fast_Io_en = None):
         if Fast_Io_en == None:
             print('> Please enter the fast IO enable (0 for off or 1 for on):')
-            Fast_Io_en = int(input('>> '))
+            while(1):
+                Fast_Io_en = input('>> ')
+                try:
+                    Fast_Io_en = int(Fast_Io_en)
+                    break
+                except:
+                    if Fast_Io_en in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
         if Fast_Io_en == 1 or Fast_Io_en == 0:
             TPX3_datalogger.write_value(name = 'Fast_Io_en', value = Fast_Io_en)
             TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en')
@@ -391,7 +618,16 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
     def Run_Datataking(object, scan_timeout = None):
         if scan_timeout == None:
             print('> Please enter the required run time in seconds (choose 0 for an infinite run):')
-            scan_timeout = int(input('>> '))
+            while(1):
+                scan_timeout = input('>> ')
+                try:
+                    scan_timeout = int(scan_timeout)
+                    break
+                except:
+                    if scan_timeout in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
         
         if scan_timeout == 0:
             print('Infinite data taking run started! You can close the run with "ctrl. c"')
