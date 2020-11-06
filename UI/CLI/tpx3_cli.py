@@ -695,6 +695,7 @@ class TPX3_CLI_TOP(object):
                 #Catch if no input given
                 if cmd_input == '':
                     print ('Something enter you must!')
+                    inputlist = []
                 else:
                     inputlist = cmd_input.split()
             #Input is given
