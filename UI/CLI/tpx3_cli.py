@@ -1211,6 +1211,7 @@ class TPX3_CLI_TOP(object):
 
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
+                    file_logger.write_backup(file = file_logger.create_file())
                     print('Goodbye and have a nice day.')
                     break
 
