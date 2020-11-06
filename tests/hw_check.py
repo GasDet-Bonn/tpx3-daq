@@ -237,6 +237,8 @@ def main(args_dict):
     chip['gpio'].reset()
 
     chip['FIFO'].reset()
+    time.sleep(0.01)
+    chip['FIFO'].get_data()
 
     chip['PULSE_GEN'].set_delay(0x105)
     chip['PULSE_GEN'].set_width(10)
