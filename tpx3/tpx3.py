@@ -1590,6 +1590,22 @@ class TPX3(Dut):
             self.write(data)
         return data
 
+    def set_threshold(self, threshold):
+        """
+        Calculates the fine and the coarse threshold and writes it to the chip
+        """
+        if(threshold <= 511):
+                coarse_threshold = 0
+                fine_threshold = threshold
+        else:
+            relative_fine_threshold = (threshold - 512) % 160
+            coarse_threshold = (((threshold - 512) - relative_fine_threshold) // 160) + 1
+            fine_threshold = relative_fine_threshold + 352
+
+        # Set the threshold DACs
+        self.set_dac("Vthreshold_coarse", coarse_threshold)
+        self.set_dac("Vthreshold_fine", fine_threshold)
+
     def lfsr_10_bit(self):
         """
         Generates a 10bit LFSR according to Manual v1.9 page 19

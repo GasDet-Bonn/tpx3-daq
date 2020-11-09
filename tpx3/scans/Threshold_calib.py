@@ -154,19 +154,8 @@ class ThresholdCalib(ScanBase):
         self.chip.set_dac("VTP_fine", 211 + (100 // n_pulse_heights) * iteration)
 
         for scan_param_id, vcal in enumerate(cal_high_range):
-            # Calculate the value for the fine and the coarse threshold DACs
-            if(vcal <= 511):
-                coarse_threshold = 0
-                fine_threshold = vcal
-            else:
-                relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
-                fine_threshold = relative_fine_threshold + 352
-
-            # Set the threshold DACs
-            self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
-            self.chip.set_dac("Vthreshold_fine", fine_threshold)
-            time.sleep(0.001)
+            # Set the threshold
+            self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id):
                 for i, mask_step_cmd in enumerate(mask_cmds):

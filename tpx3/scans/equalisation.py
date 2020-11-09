@@ -119,19 +119,8 @@ class Equalisation(ScanBase):
         pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
 
         for scan_param_id, vcal in enumerate(cal_high_range):
-            # Calculate the value for the fine and the coarse threshold DACs
-            if(vcal <= 511):
-                coarse_threshold = 0
-                fine_threshold = vcal
-            else:
-                relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
-                fine_threshold = relative_fine_threshold + 352
-
-            # Set the threshold DACs
-            self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
-            self.chip.set_dac("Vthreshold_fine", fine_threshold)
-            time.sleep(0.001)
+            # Set the threshold
+            self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id):
                 for mask_step_cmd in mask_cmds:
@@ -157,19 +146,8 @@ class Equalisation(ScanBase):
         pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
 
         for scan_param_id, vcal in enumerate(cal_high_range):
-            # Calculate the value for the fine and the coarse threshold DACs
-            if(vcal <= 511):
-                coarse_threshold = 0
-                fine_threshold = vcal
-            else:
-                relative_fine_threshold = (vcal - 512) % 160
-                coarse_threshold = (((vcal - 512) - relative_fine_threshold) // 160) + 1
-                fine_threshold = relative_fine_threshold + 352
-            
-            # Set the threshold DACs
-            self.chip.set_dac("Vthreshold_coarse", coarse_threshold)
-            self.chip.set_dac("Vthreshold_fine", fine_threshold)
-            time.sleep(0.001)
+            # Set the threshold
+            self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
                 for mask_step_cmd in mask_cmds2:
