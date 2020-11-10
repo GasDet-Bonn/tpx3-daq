@@ -321,12 +321,10 @@ class ScanBase(object):
         self.chip.write(data)
 
         # Reset the Timepix3 timer
-        data = self.chip.getGlobalSyncHeader() + [0x40] + [0x0]
-        self.chip.write(data)
-
-        # Start the Timepix3 timer
-        data = self.chip.getGlobalSyncHeader() + [0x4A] + [0x0]
-        self.chip.write(data)
+        self.chip['CONTROL']['TO_SYNC'] = 1
+        self.chip['CONTROL'].write()
+        self.chip['CONTROL']['TO_SYNC'] = 0
+        self.chip['CONTROL'].write()
 
         # Get ChipID - Only readable after doing EFuse_Read once
         data = self.chip.read_periphery_template("EFuse_Read")
