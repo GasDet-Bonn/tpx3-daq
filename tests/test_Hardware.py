@@ -39,11 +39,11 @@ class Test(unittest.TestCase):
         data = chip.getGlobalSyncHeader() + [0x4A] + [0x0]
         chip.write(data)
 
-        chip['RX'].reset()
-        chip['RX'].DATA_DELAY = 21
-        chip['RX'].ENABLE = 1
-        chip['RX'].INVERT = 0
-        chip['RX'].SAMPLING_EDGE = 0
+        chip['RX0'].reset()
+        chip['RX0'].DATA_DELAY = 21
+        chip['RX0'].ENABLE = 1
+        chip['RX0'].INVERT = 0
+        chip['RX0'].SAMPLING_EDGE = 0
         time.sleep(0.01)
 
         data = chip.write_pll_config(write=False)

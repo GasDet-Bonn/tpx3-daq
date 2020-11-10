@@ -1,5 +1,5 @@
 registers:
-- name: RX
+- name: RX0
   fpga-link: 0
   chip-link: 0
   chip-id: 0

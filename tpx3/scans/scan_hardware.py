@@ -24,7 +24,7 @@ def HardwareScan():
     chip = TPX3()
     chip.init()
 
-    rx_list_names = ['RX','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
+    rx_list_names = ['RX0','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
 
     # Initialize the progress bar
     pbar = tqdm(total = len(rx_list_names))

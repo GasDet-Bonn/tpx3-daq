@@ -277,7 +277,7 @@ class ScanBase(object):
         self.firmware_version = self.chip.fw_version
 
         # read the chan_mask giving the activated links and writing the names of the activated ones in a list
-        rx_list_names = ['RX','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
+        rx_list_names = ['RX0','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
         rx_list = []
         rx_antilist = []
         activated_links = self.chip._outputBlocks["chan_mask"]

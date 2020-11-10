@@ -37,7 +37,7 @@ hw_drivers:
     base_addr : 0x8000
     base_data_addr : 0x80000000
 
-  - name      : RX
+  - name      : RX0
     type      : tpx3.tpx3_rx
     interface : intf
     base_addr : 0x6000

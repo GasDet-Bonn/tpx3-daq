@@ -302,20 +302,12 @@ class TPX3_data_logger(object):
 
                         for n in range(1, len(value_list)):
                             element_list = value_list[n]
-                            if element_list[0] == 0: 
-                                element = 'RX'
-                                fpga_link = element_list[0]
-                                chip_link = element_list[1]
-                                data_delay = element_list[2]
-                                data_invert = element_list[3]
-                                data_edge = element_list[4]
-                            else:
-                                element = 'RX' + str(element_list[0])
-                                fpga_link = element_list[0]
-                                chip_link = element_list[1]
-                                data_delay = element_list[2]
-                                data_invert = element_list[3]
-                                data_edge = element_list[4]
+                            element = 'RX' + str(element_list[0])
+                            fpga_link = element_list[0]
+                            chip_link = element_list[1]
+                            data_delay = element_list[2]
+                            data_invert = element_list[3]
+                            data_edge = element_list[4]
 
                             for register in yaml_data['registers']:
                                 if register['name'] == element:
@@ -388,20 +380,12 @@ class TPX3_data_logger(object):
 
                     for n in range(1, len(value_list)):
                         element_list = value_list[n]
-                        if element_list[0] == 0: 
-                            element = 'RX'
-                            fpga_link = element_list[0]
-                            chip_link = element_list[1]
-                            data_delay = element_list[2]
-                            data_invert = element_list[3]
-                            data_edge = element_list[4]
-                        else:
-                            element = 'RX' + str(element_list[0])
-                            fpga_link = element_list[0]
-                            chip_link = element_list[1]
-                            data_delay = element_list[2]
-                            data_invert = element_list[3]
-                            data_edge = element_list[4]
+                        element = 'RX' + str(element_list[0])
+                        fpga_link = element_list[0]
+                        chip_link = element_list[1]
+                        data_delay = element_list[2]
+                        data_invert = element_list[3]
+                        data_edge = element_list[4]
 
                         for register in yaml_data['registers']:
                             if register['name'] == element:
