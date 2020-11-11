@@ -176,7 +176,7 @@ always@(posedge BUS_CLK)
     if(RST)
         byte2_cnt <= 0;
     else if(!cdc_fifo_empty && !fifo_full && byte2_cnt == 0)
-        byte2_cnt <= 3;
+        byte2_cnt <= 2;
     else if (!fifo_full & byte2_cnt != 0)
         byte2_cnt <= byte2_cnt - 1;
 
@@ -185,10 +185,9 @@ always@(posedge BUS_CLK)
     if(cdc_fifo_read)
         data_buf <= cdc_data_out;
 
-wire [31:0] fifo_write_data_byte [3:0];
+wire [31:0] fifo_write_data_byte [2:0];
 assign fifo_write_data_byte[0] = {IDENTIFIER,4'b0001,data_buf[23:0]};
 assign fifo_write_data_byte[1] = {IDENTIFIER,4'b0010,data_buf[47:24]};
-assign fifo_write_data_byte[2] = {IDENTIFIER,4'b0011,8'b0,data_buf[63:48]};
 wire [31:0] fifo_data_in;
 assign fifo_data_in = fifo_write_data_byte[byte2_cnt];
 
