@@ -17,8 +17,8 @@
 `include "pulse_gen/pulse_gen.v"
 `include "pulse_gen/pulse_gen_core.v"
 
-`include "timestamp/timestamp.v"
-`include "timestamp/timestamp_core.v"
+`include "../lib/tpx3_timestamp/timestamp.v"
+`include "../lib/tpx3_timestamp/timestamp_core.v"
 
 `include "bram_fifo/bram_fifo_core.v"
 `include "bram_fifo/bram_fifo.v"
