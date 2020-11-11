@@ -149,7 +149,7 @@ class TPX3(Dut):
     }
 
     ''' Compatible firware version '''
-    fw_version_required = 2
+    fw_version_required = 3
     
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########

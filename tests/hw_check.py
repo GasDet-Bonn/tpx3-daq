@@ -10,6 +10,7 @@ import array
 import argparse
 from six.moves import map
 from six.moves import range
+from tpx3.utils import toByteList, bitword_to_byte_list
 
 
 def pretty_print(string_val, bits=32):
@@ -232,29 +233,56 @@ def main(args_dict):
 
 
     print("Test Timestamp extension")
-    chip['timestamp'].reset()
-    chip['timestamp']["ENABLE"] = 1
     chip['gpio'].reset()
-
     chip['FIFO'].reset()
     time.sleep(0.01)
     chip['FIFO'].get_data()
 
-    chip['PULSE_GEN'].set_delay(0x105)
-    chip['PULSE_GEN'].set_width(10)
-    chip['PULSE_GEN'].set_repeat(1)
+    chip['PULSE_GEN'].reset()
+    chip['PULSE_GEN'].set_delay(40)
+    chip['PULSE_GEN'].set_width(4056)
+    chip['PULSE_GEN'].set_repeat(200)
+    chip['PULSE_GEN'].set_en(True)
     print("\t Delay = ", chip['PULSE_GEN'].get_delay())
     print("\t Width = ", chip['PULSE_GEN'].get_width())
     print("\t Repeat = ", chip['PULSE_GEN'].get_repeat())
 
-    chip['PULSE_GEN'].start()
+    for counter in range(1):
+        chip['CONTROL']['TO_SYNC'] = 1
+        chip['CONTROL'].write()
 
-    ret = chip['FIFO'].get_data()
-    print("\t Length of FIFO data: ", len(ret))
+        chip['CONTROL']['TO_SYNC'] = 0
+        chip['CONTROL'].write()
 
-    print("\t FIFO data: ")
-    for i, r in enumerate(ret):
-        print("\t\t", bin(r & 0xffffffff))
+        for _ in range(20):
+            chip.requestTimerLow()
+
+        time.sleep(0.1)
+        ret = chip['FIFO'].get_data()
+        print("\t Length of FIFO data: ", len(ret))
+
+        print("\t FIFO data: ")
+        for i, r in enumerate(ret):
+            if (r & 0xf0000000) >> 28 == 0b0101:
+                if (r & 0x0f000000) >> 24 == 0b0001:
+                    print("FPGA", bin(r & 0x00ffffff), r & 0x00ffffff, (r & 0x00ffffff) * 25 / 1000000)
+            else:
+                if (r & 0x0f000000) >> 24 != 0b0001:
+                    dataout = BitLogic(48)
+
+                    d1 = bitword_to_byte_list(ret[i-1])
+                    d2 = bitword_to_byte_list(ret[i])
+
+                    dataout[47:40] = d2[3]
+                    dataout[39:32] = d2[2]
+                    dataout[31:24] = d2[1]
+                    dataout[23:16] = d1[3]
+                    dataout[15:8] = d1[2]
+                    dataout[7:0] = d1[1]
+                    if (dataout.tovalue() & 0xff0000000000) >> 40 != 0x71:
+                        print("CHIP", bin(dataout.tovalue() & 0xffffffff), dataout.tovalue() & 0xffffffff, (dataout.tovalue() & 0xffffffff) * 25 / 1000000)
+
+        time.sleep(1)
 
 
     chip['CONTROL']['RESET'] = 1

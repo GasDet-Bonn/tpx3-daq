@@ -31,7 +31,7 @@ module timestamp_core
     input wire BUS_RD
 );
 
-localparam VERSION = 2;
+localparam VERSION = 3;
 
 //output format:
 //31-28: ID, 27-24: 0x1, 23-0: 23-0th bit of timestamp data
@@ -52,7 +52,7 @@ always @(posedge BUS_CLK) begin
     if(RST) begin
         CONF_EN <= 0;
             CONF_EXT_TIMESTAMP <= 0;
-            CONF_EXT_ENABLE <= 0;
+            CONF_EXT_ENABLE <= 1;
     end
     else if(BUS_WR) begin
         if(BUS_ADD == 2) begin

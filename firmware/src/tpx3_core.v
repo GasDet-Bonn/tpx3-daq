@@ -32,7 +32,7 @@
 `include "../lib/tpx3_rx/decode_8b10b.v"
 `include "utils/flag_domain_crossing.v"
 
-`define FW_VERSION 2
+`define FW_VERSION 3
 
 module tpx3_core (
         input  wire        BUS_CLK,
@@ -236,7 +236,7 @@ module tpx3_core (
         .BUS_WR(BUS_WR),
 
         .PULSE_CLK(CLK40),
-        .EXT_START(1'b0),
+        .EXT_START(!T0_Sync),
         .PULSE(PULSE)
     );
 
@@ -252,7 +252,7 @@ module tpx3_core (
     ) timestamp
     (
         .BUS_CLK(BUS_CLK),
-        .BUS_RST(BUS_RST),
+        .BUS_RST(T0_Sync),
         .BUS_ADD(BUS_ADD),
         .BUS_DATA(BUS_DATA[7:0]),
         .BUS_RD(BUS_RD),
@@ -262,6 +262,7 @@ module tpx3_core (
         .DI(PULSE),
         //.EXT_TIMESTAMP(TIMESTAMP),
         //.TIMESTAMP_OUT(TIMESTAMP_OUT),
+		  .EXT_ENABLE(!T0_Sync),
 
         .FIFO_READ(TS_FIFO_READ),
         .FIFO_EMPTY(TS_FIFO_EMPTY),

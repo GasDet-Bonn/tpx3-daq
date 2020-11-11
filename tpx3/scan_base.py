@@ -371,6 +371,18 @@ class ScanBase(object):
         data = self.chip.write_pll_config(write=False)
         self.chip.write(data)
 
+        # Reset the fpga timestamp pulser
+        self.chip['PULSE_GEN'].reset()
+
+        # Only activate the timestamp pulse if TOA is of interest
+        if self.scan_id in {"data_take"}:
+            self.chip['PULSE_GEN'].set_delay(40)
+            self.chip['PULSE_GEN'].set_width(4056)
+            self.chip['PULSE_GEN'].set_repeat(0)
+            self.chip['PULSE_GEN'].set_en(True)
+        else:
+            self.chip['PULSE_GEN'].set_en(False)
+
         # Reset the Timepix3 timer
         self.chip['CONTROL']['TO_SYNC'] = 1
         self.chip['CONTROL'].write()
