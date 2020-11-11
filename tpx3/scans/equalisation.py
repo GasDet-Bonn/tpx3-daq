@@ -66,50 +66,9 @@ class Equalisation(ScanBase):
 
         self.logger.info('Preparing injection masks...')
 
-        # Empty arrays for the masks command for the scan at 0 and at 15
-        mask_cmds = []
-        mask_cmds2 = []
-
-        # Initialize progress bar
-        pbar = tqdm(total=mask_step)
-
-        # Create the masks for all steps and for both threshold scans
-        for j in range(mask_step):
-            mask_step_cmd = []
-            mask_step_cmd2 = []
-
-            # Start with deactivated testpulses on all pixels and all pixels masked
-            self.chip.test_matrix[:, :] = self.chip.TP_OFF
-            self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
-            
-            # Switch on pixels based on mask_step
-            # e.g. for mask_step=16 every 4th pixel in x and y is active
-            self.chip.mask_matrix[(j//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
-                                  (j%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
-
-            # Create the list of mask commands for the scan at pixel threshold = 0
-            self.chip.thr_matrix[:, :] = 0
-            for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
-
-            # Create the list of mask commands for the scan at pixel threshold = 15
-            self.chip.thr_matrix[:, :] = 15
-            for i in range(256 // 4):
-                mask_step_cmd2.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
-
-            # Append the command for initializing a data driven readout
-            mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
-            mask_step_cmd2.append(self.chip.read_pixel_matrix_datadriven())
-
-            # Append the list of command for the current mask_step to the full command list
-            mask_cmds.append(mask_step_cmd)
-            mask_cmds2.append(mask_step_cmd2)
-
-            # Update the progress bar
-            pbar.update(1)
-
-        # Close the progress bar
-        pbar.close()
+        # Create the masks for all steps for the scan at 0 and at 15
+        mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0)
+        mask_cmds2 = self.create_scan_masks(mask_step, pixel_threhsold = 15)
 
         # Scan with pixel threshold 0
         self.logger.info('Starting scan for THR = 0...')

@@ -69,42 +69,8 @@ class TestpulseScan(ScanBase):
 
         self.logger.info('Preparing injection masks...')
 
-        # Empty array for the masks command for the scan
-        mask_cmds = []
-
-        # Initialize progress bar
-        pbar = tqdm(total=mask_step)
-
         # Create the masks for all steps
-        for i in range(mask_step):
-            mask_step_cmd = []
-
-            # Start with deactivated testpulses on all pixels and all pixels masked
-            self.chip.test_matrix[:, :] = self.chip.TP_OFF
-            self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
-            
-            # Switch on pixels and test pulses for pixels based on mask_step
-            # e.g. for mask_step=16 every 4th pixel in x and y is active
-            self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
-                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
-            self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
-                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
-
-            # Create the list of mask commands
-            for i in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
-
-            # Append the command for initializing a data driven readout
-            mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
-
-            # Append the list of command for the current mask_step to the full command list
-            mask_cmds.append(mask_step_cmd)
-
-            # Update the progress bar
-            pbar.update(1)
-
-        # Close the progress bar
-        pbar.close()
+        mask_cmds = self.create_scan_masks(mask_step)
 
         # Start the scan
         self.logger.info('Starting scan...')

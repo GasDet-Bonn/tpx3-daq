@@ -16,6 +16,7 @@ import pkg_resources
 import tables as tb
 import numpy as np
 import zmq
+from tqdm import tqdm
 
 from contextlib import contextmanager
 from .tpx3 import TPX3
@@ -140,11 +141,61 @@ class ScanBase(object):
         '''
         return self.chip
 
-    def prepare_injection_masks(self, start_column, stop_column, start_row, stop_row, mask_step):
+    def create_scan_masks(self, mask_step, pixel_threhsold = None):
         '''
-            Prepares injection masks for scans
+            Creates the pixel configuration register masks for scans based on the number of mask_step.
+            If a value is set for pixel threshold it is used for all pixels. Else the value which is
+            already stored for the pixels is used.
+            A list of commands to set the masks is returned
         '''
-        raise NotImplementedError('ScanBase.prepare_injection_masks() not implemented')
+        # Check if parameters are valid
+        if mask_step not in {4, 16, 64, 256}:
+            raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
+        if pixel_threhsold not in range(16) and pixel_threhsold != None:
+            raise ValueError("Value {} for pixel_threhsold is not in the allowed range (0 to 15 or None)".format(pixel_threhsold))
+
+        # Empty array for the masks command for the scan
+        mask_cmds = []
+
+        # Initialize progress bar
+        pbar = tqdm(total=mask_step)
+
+        # Create the masks for all steps
+        for i in range(mask_step):
+            mask_step_cmd = []
+
+            # Start with deactivated testpulses on all pixels and all pixels masked
+            self.chip.test_matrix[:, :] = self.chip.TP_OFF
+            self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
+
+            # Switch on pixels and test pulses for pixels based on mask_step
+            # e.g. for mask_step=16 every 4th pixel in x and y is active
+            self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
+            self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
+                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+
+            # If a pixel threshold is defined set it to all pixels
+            if pixel_threhsold != None:
+                self.chip.thr_matrix[:, :] = pixel_threhsold
+
+            # Create the list of mask commands
+            for i in range(256 // 4):
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
+
+            # Append the command for initializing a data driven readout
+            mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
+
+            # Append the list of command for the current mask_step to the full command list
+            mask_cmds.append(mask_step_cmd)
+
+            # Update the progress bar
+            pbar.update(1)
+
+        # Close the progress bar
+        pbar.close()
+
+        return mask_cmds
 
 
     def dump_configuration(self, iteration = None, **kwargs):
