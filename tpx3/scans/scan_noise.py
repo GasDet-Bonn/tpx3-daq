@@ -25,8 +25,8 @@ from six.moves import range
 local_configuration = {
     # Scan parameters
     'Vthreshold_start' : 1450,
-    'Vthreshold_stop'  : 1600,
-    'thrfile'         : '/home/gruber/Timepix3/scans/hdf/equal_W15-G3_2020-10-19_18-43-20.h5'
+    'Vthreshold_stop'  : 1700,
+    #'thrfile'        : './output_data/equal_?.h5'
 }
 
 
