@@ -596,7 +596,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
                     print('Unknown type:', mask)
         else:
             print('No mask file loaded, you cannot unmask nothing!')
-            
+
     def Load_Mask(object, mask_path = None):
         user_path = '~'
         user_path = os.path.expanduser(user_path)
@@ -647,7 +647,7 @@ class TPX3_CLI_funktion_call(object):#TODO: change to function_call
                         return
                     else:
                         print('Input needs to be a number!')
-        
+
         if scan_timeout == 0:
             print('Infinite data taking run started! You can close the run with "ctrl. c"')
         else:
@@ -1155,7 +1155,7 @@ class TPX3_CLI_TOP(object):
                                     print('User quit')
                         elif len(inputlist) > 2:
                             print ('To many parameters! The given function takes only one parameters:\n polarity.')
-                
+
                 #Set Fast Io mode
                 elif inputlist[0] in {'Set_Fast_Io', 'Fast_Io', 'Fast_Io_en', 'set_fast_io', 'fast_io', 'fast_io_en'}:
                     if len(inputlist) == 1:
