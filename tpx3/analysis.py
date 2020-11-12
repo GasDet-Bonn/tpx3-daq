@@ -42,6 +42,20 @@ def scurve_hist(hit_data, param_range):
 
     return scurves
 
+def noise_pixel_count(hit_data, param_range, Vthreshold_start):
+    noise_curve = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
+    pixel_list = np.zeros((256*256, Vthreshold_start + len(param_range)), dtype=np.uint16)
+
+    for i in range(hit_data.shape[0]):
+        x = hit_data['x'][i]
+        y = hit_data['y'][i]
+        p = hit_data['scan_param_id'][i]
+        if pixel_list[x * 256 + y, p + Vthreshold_start] == 0:
+            noise_curve[p + Vthreshold_start] += 1
+        pixel_list[x * 256 + y, p + Vthreshold_start] += 1
+
+    return noise_curve
+
 def vths(scurves, param_range, Vthreshold_start):
     vths = np.zeros((256, 256), dtype=np.uint16)
     for x in range(256):
