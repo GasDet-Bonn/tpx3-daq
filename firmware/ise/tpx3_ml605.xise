@@ -20,11 +20,11 @@
     </file>
     <file xil_pn:name="../src/tpx3_ml605.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="66"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="18"/>
     </file>
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5.xco" xil_pn:type="FILE_COREGEN">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="51"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
     </file>
   </files>
 
@@ -376,6 +376,10 @@
     <file xil_pn:name="../../../basil/firmware/modules/utils/generic_fifo.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/firmware/modules/includes/log2func.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/firmware/modules/utils/cdc_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/pulse_gen/pulse_gen.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/firmware/modules/pulse_gen/pulse_gen_core.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_timestamp/timestamp.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_timestamp/timestamp_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/firmware/modules/bram_fifo/bram_fifo_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/firmware/modules/bram_fifo/bram_fifo.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/firmware/modules/rrp_arbiter/rrp_arbiter.v" xil_pn:type="FILE_VERILOG"/>
