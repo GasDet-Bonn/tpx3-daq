@@ -431,8 +431,8 @@ def imap_bar(func, args, n_processes=None):
 
 def fit_scurves_multithread(scurves, scan_param_range,
                             n_injections, invert_x=False):
-
-    _scurves = scurves
+    _scurves = np.zeros((256*256, len(scan_param_range)), dtype=np.uint16)
+    
     # Set all values above n_injections to n_injections. This is necessary, as the noise peak can lead to problems in the scurve fits.
     # As we are only interested in the position of the scurve (which lays below n_injections) this should not cause a problem.
     logger.info("Cut S-curves to %i hits for S-curve fit", n_injections)
@@ -441,6 +441,8 @@ def fit_scurves_multithread(scurves, scan_param_range,
         for row in range(_scurves.shape[1]):
             if _scurves[col][row] > n_injections:
                 _scurves[col][row] = n_injections
+            else:
+                _scurves[col][row] = scurves[col][row]
             pbar.update(1)
     
     _scurves = np.ma.masked_array(_scurves)
