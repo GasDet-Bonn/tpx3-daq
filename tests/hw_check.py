@@ -63,19 +63,6 @@ def main(args_dict):
     chip.write(data)
 
     data = chip.write_outputBlock_config(write=False)
-    # data = [0xAA,0x00,0x00,0x00,0x00,0x10, 0b10101100, 0x01]
-    # data = [0xAA,0x00,0x00,0x00,0x00,0x10, 0xAD, 0x01] #org
-    # data = [0xAA,0x00,0x00,0x00,0x00,0x10, 0x0, 0x0] + [0x0]
-    # write some value to the register
-    # data = chip.set_dac("Vfbk", 128, write = False)
-
-    # chip['SPI'].set_size(len(data)*8) #in bits
-    # chip['SPI'].set_data(data)
-    # chip['SPI'].start()
-
-    # print(chip.get_configuration())
-    # while(not chip['SPI'].is_ready):
-    #     pass
     chip.write(data)
     
     print('RX ready:', chip['RX0'].is_ready)
@@ -90,21 +77,12 @@ def main(args_dict):
             chip['FIFO'].reset()
             time.sleep(0.01)
             chip['FIFO'].get_data()
-            # print '-', i, chip['RX0'].get_decoder_error_counter(), chip['RX0'].is_ready
+
 
             for _ in range(100):
 
-                data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)]  # [0b10101010, 0xFF] + [0x0]
+                data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)
                 chip.write(data)
-                # read back the value we just wrote
-                # data = chip.set_dac("Vfbk", 128, write = False)
-                # chip['SPI'].set_size(len(data)*8) #in bits
-                # chip['SPI'].set_data(data)
-                # chip['SPI'].start()
-                # while(not chip['SPI'].is_ready):
-                #     pass
-
-                # print 'FIFO_SIZE', chip['FIFO'].FIFO_SIZE
 
             fdata = chip['FIFO'].get_data()
             print('i =', i, '\tlen =', len(fdata), '\terror =', chip['RX0'].get_decoder_error_counter(), "\tready =", chip['RX0'].is_ready)
@@ -129,11 +107,6 @@ def main(args_dict):
     while(not chip['RX0'].is_ready):
         pass
     print((chip.get_configuration()))
-
-    # data = chip.getGlobalSyncHeader() + [0x02] + [0b11111111, 0x00000001] + [0x0]
-    # data = chip.set_dac("Ibias_Preamp_ON", 0x00, write = False)
-    # chip['FIFO'].reset()
-    # chip.write(data)
 
     print("Get ChipID")
     data = chip.read_periphery_template("EFuse_Read")
@@ -454,22 +427,6 @@ def main(args_dict):
 
     chip['CONTROL']['RESET'] = 0
     chip['CONTROL'].write()
-
-    # data = chip.set_dac("Ibias_Preamp_ON", 0b1101, write = False)
-    # chip['FIFO'].reset()
-    # chip.write(data)
-    # data = chip.read_dac("Ibias_Preamp_ON", write = False)
-    # chip['FIFO'].reset()
-
-    # chip.write(data)
-    # fdata = chip['FIFO'].get_data()
-    # print "decimal ", fdata[-1], " and length ", len(fdata)
-    # pretty_print(fdata[-1])
-    # pretty_print(fdata[0])
-    # #for i in range(len(fdata)):
-    # #    pretty_print(fdata[i])
-
-    # print 'FIFO_SIZE', chip['FIFO'].FIFO_SIZE
 
     if led_blink is True:
         # let LEDs blink!
