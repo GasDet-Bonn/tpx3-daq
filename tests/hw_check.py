@@ -11,6 +11,9 @@ import argparse
 from six.moves import map
 from six.moves import range
 from tpx3.utils import toByteList, bitword_to_byte_list
+import sys
+import math
+import numpy as np
 
 
 def pretty_print(string_val, bits=32):
@@ -23,6 +26,18 @@ def pretty_print(string_val, bits=32):
     print("Hex ", lst_hex)
     print("Binary ", bits)
 
+def gray_decrypt(value):
+    """
+    Decrypts a gray encoded 48 bit value according to Manual v1.9 page 19
+    """
+    encoded_value = BitLogic(48)
+    encoded_value[47:0]=value
+    gray_decrypt = BitLogic(48)
+    gray_decrypt[47]=encoded_value[47]
+    for i in range (46, -1, -1):
+        gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
+
+    return gray_decrypt
 
 def main(args_dict):
 
@@ -30,6 +45,7 @@ def main(args_dict):
     benchmark = args_dict["benchmark"]
     delay_scan = args_dict["delay_scan"]
     timestamp_request = args_dict["timestamp_request"]
+    timestamp_hits = args_dict["timestamp_hits"]
 
     chip = TPX3()
     chip.init()
@@ -285,6 +301,153 @@ def main(args_dict):
 
             time.sleep(1)
 
+    if timestamp_hits is True:
+        with open('timestamp_test.txt', 'w') as f:
+            sys.stdout = f
+            print("Test Timestamp extension - Hit data")
+
+            chip['CONTROL']['RESET'] = 1
+            chip['CONTROL'].write()
+            chip['CONTROL']['RESET'] = 0
+            chip['CONTROL'].write()
+
+            for rx in {'RX0', 'RX1', 'RX2', 'RX3', 'RX4', 'RX5', 'RX6', 'RX7'}:
+                chip[rx].reset()
+                chip[rx].DATA_DELAY = 0
+                chip[rx].ENABLE = 1
+
+            data = chip.reset_sequential(False)
+            chip.write(data, True)
+
+            chip['CONTROL']['EN_POWER_PULSING'] = 1
+            chip['CONTROL'].write()
+
+            # Set the output settings of the chip
+            chip._outputBlocks["chan_mask"] = 0b11111111
+            data = chip.write_outputBlock_config()
+
+            data = chip.write_pll_config(write=False)
+            chip.write(data)
+
+            chip.write_general_config()
+
+            data = chip.read_periphery_template("EFuse_Read")
+            data += [0x00]*4
+            chip["FIFO"].reset()
+            time.sleep(0.1)
+            chip.write(data)
+            time.sleep(0.1)
+
+            chip['gpio'].reset()
+            chip['FIFO'].reset()
+            time.sleep(0.01)
+            chip['FIFO'].get_data()
+
+            chip['PULSE_GEN'].reset()
+            chip['PULSE_GEN'].set_delay(40)
+            chip['PULSE_GEN'].set_width(4056)
+            chip['PULSE_GEN'].set_repeat(400)
+            chip['PULSE_GEN'].set_en(True)
+
+            chip.configs["Op_mode"] = 0
+            chip.write_general_config()
+
+            chip.reset_dac_attributes(to_default = False)
+            chip.write_dacs()
+            chip.set_dac("VTP_fine", 300)
+            time.sleep(0.01)
+
+            data = chip.write_tp_period(2, 0, write=False)
+            chip['FIFO'].reset()
+            time.sleep(0.01)
+            chip.write(data)
+            time.sleep(0.01)
+            data = chip.write_tp_pulsenumber(20, write=False)
+            chip['FIFO'].reset()
+            time.sleep(0.01)
+            chip.write(data)
+            time.sleep(0.01)
+
+            mask_step_cmd = []
+
+            chip.test_matrix[:, :] = chip.TP_OFF
+            chip.mask_matrix[:, :] = chip.MASK_OFF
+            chip.test_matrix[0::64,0::64] = chip.TP_ON
+            chip.mask_matrix[0::64,0::64] = chip.MASK_ON
+            
+            for i in range(256 // 4):
+                mask_step_cmd.append(chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
+            mask_step_cmd.append(chip.read_pixel_matrix_datadriven())
+
+            chip['CONTROL']['TO_SYNC'] = 1
+            chip['CONTROL'].write()
+
+            chip['CONTROL']['TO_SYNC'] = 0
+            chip['CONTROL'].write()
+
+            for counter in range(1):
+
+                chip.write_ctpr(list(range(0, 256, 1)))
+                chip.write(mask_step_cmd)
+                chip['FIFO'].get_data()
+                    
+                chip['CONTROL']['SHUTTER'] = 1
+                chip['CONTROL'].write()
+                time.sleep(0.1)
+                chip['CONTROL']['SHUTTER'] = 0
+                chip['CONTROL'].write()
+
+                time.sleep(0.1)
+                ret = chip['FIFO'].get_data()
+                print("\t Length of FIFO data: ", len(ret))
+
+                print("\t FIFO data: ")
+                for i, r in enumerate(ret):
+                    if (r & 0xf0000000) >> 28 == 0b0101:
+                        if (r & 0x0f000000) >> 24 == 0b0001:
+                            print("FPGA", bin(0x400000 | (r & 0x00ffffff)), r & 0x00ffffff, (r & 0x00ffffff) * 25 / 1000000)
+                    else:
+                        link = (r & 0x0e000000) >> 25
+
+                        if ((r & 0x0f000000) >> 24 == 0b0001 or 
+                            (r & 0x0f000000) >> 24 == 0b0011 or
+                            (r & 0x0f000000) >> 24 == 0b0101 or
+                            (r & 0x0f000000) >> 24 == 0b0111 or
+                            (r & 0x0f000000) >> 24 == 0b1001 or 
+                            (r & 0x0f000000) >> 24 == 0b1011 or
+                            (r & 0x0f000000) >> 24 == 0b1101 or
+                            (r & 0x0f000000) >> 24 == 0b1111):
+
+                            d1 = bitword_to_byte_list(r)
+                            for j in range(i, len(ret)):
+                                if (ret[j] & 0x0f000000) >> 24 == ((r & 0x0f000000) >> 24) - 1:
+                                    if (ret[j] & 0xf0000000) >> 28 != 0b0101:
+                                        d2 = bitword_to_byte_list(ret[j])
+                                        break
+
+                            dataout = BitLogic(48)
+                            dataout[47:40] = d2[3]
+                            dataout[39:32] = d2[2]
+                            dataout[31:24] = d2[1]
+                            dataout[23:16] = d1[3]
+                            dataout[15:8] = d1[2]
+                            dataout[7:0] = d1[1]
+
+                            if (dataout.tovalue() & 0xf00000000000) >> 44 == 0xB:
+                                pixel = (dataout.tovalue() >> 28) & 0b111
+                                super_pixel = (dataout.tovalue() >> 31) & 0x3f
+                                right_col = pixel > 3
+                                eoc = (dataout.tovalue() >> 37) & 0x7f
+
+                                x = (super_pixel * 4) + (pixel - right_col * 4)
+                                y = eoc * 2 + right_col * 1
+                                toa = gray_decrypt((dataout.tovalue() >> 14) & 0x3fff).tovalue()
+                                
+                                print("CHIP", bin(0x400000 | toa), toa, toa * 25 / 1000000, x, y, link)
+                            else:
+                                print("Reply", hex((dataout.tovalue() & 0xffff00000000) >> 32), link)
+
+        sys.stdout = sys.__stdout__
 
     chip['CONTROL']['RESET'] = 1
     chip['CONTROL'].write()
@@ -349,5 +512,8 @@ if __name__ == "__main__":
     parser.add_argument('--timestamp_request',
                         action='store_true',
                         help="Toggle this, if you want to test the timestamp extension with TPX3 Timer requests")
+    parser.add_argument('--timestamp_hits',
+                        action='store_true',
+                        help="Toggle this, if you want to test the timestamp extension with TPX3 hit data")
     args_dict = vars(parser.parse_args())
     main(args_dict)
