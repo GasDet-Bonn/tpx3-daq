@@ -17,6 +17,7 @@ import tables as tb
 import numpy as np
 import zmq
 from tqdm import tqdm
+import math
 
 from contextlib import contextmanager
 from .tpx3 import TPX3
