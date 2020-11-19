@@ -10,8 +10,7 @@ import numpy as np
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 from gi.repository import GObject
 from PlotWidget import plotwidget
-from utils import utils
-from logger import data_logger, file_logger, datalogger
+import tpx3.utils
 
 #import time
 
