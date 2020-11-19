@@ -130,6 +130,42 @@ class file_logger(object):
         if data == None:
             data = TPX3_datalogger.get_data()
         json.dump(data, file)
+
+
+    def write_tmp_backup():
+        #writes temp backup
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'tmp')
+        filename = "backup_" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".TPX3"
+
+        if os.path.isfile(user_path + os.sep + filename) == False:
+            backup_file = open(user_path + os.sep + filename, "w")
+            data = TPX3_datalogger.get_data()
+            json.dump(data, backup_file)
+            return True
+        else:
+            print('Error: tried to call existing tmp file')
+            return False
+
+    def delete_tmp_backups(days_to_hold = None):
+        #deletes old temporary backups
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'tmp')
+
+        #time in days before file will be removed if none is given
+        if days_to_hold == None:
+            days_to_hold = 14
+
+        #look if there are older files
+        now = time.time()
+
+        for f in os.listdir(user_path):
+            if os.stat(os.path.join(user_path, f)).st_mtime < now - days_to_hold * 86400:
+                if os.path.isfile(os.path.join(user_path, f)) and f.endswith(".TPX3"):
+                    os.remove(os.path.join(user_path, f))
+
         
     def read_backup(file = None):
         #reads backup and returns the data
@@ -154,13 +190,42 @@ class file_logger(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
+
+        user_path_tmp = os.path.expanduser('~')
+        user_path_tmp = os.path.join(user_path, 'Timepix3')
+        user_path_tmp = os.path.join(user_path, 'tmp')
+        #Look for newest backup in backup folder
         if os.path.isdir(user_path) == True:
             list_of_files = glob.glob(user_path + os.sep + "*.TPX3")
             if list_of_files:
                 file = max(list_of_files, key=os.path.getctime)
+                #return file
+            else:
+                file = None
+        else:
+            file = None
+        #Look for newest backup in tmp folder
+        if os.path.isdir(user_path_tmp) == True:
+            list_of_files = glob.glob(user_path_tmp + os.sep + "*.TPX3")
+            if list_of_files:
+                file_tmp = max(list_of_files, key=os.path.getctime)
+            else:
+                file_tmp = None
+        else:
+            file_tmp = None
+
+        if not (file_tmp == None and file == None):
+            if os.path.getctime(file) < os.path.getctime(file_tmp):
+                return filetmp
+            elif os.path.getctime(file) >= os.path.getctime(file_tmp):
                 return file
-        file = file_logger.create_default_file()
-        return file
+        elif not file == None:
+            return file
+        elif not file_tmp == None:
+            return file_tmp
+        else:
+            file = file_logger.create_default_file()
+            return file
             
     def create_default_file():
         user_path = os.path.expanduser('~')
