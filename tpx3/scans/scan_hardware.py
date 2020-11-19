@@ -107,6 +107,9 @@ def HardwareScan():
         with open(yaml_file, 'w') as file:
             yaml.dump(yaml_data, file)
 
+    # Close the progress bar
+    pbar.close()
+
     # Create a list if unique Chip-ID strings and corresponding Chip-ID bits
     ID_List = []
     for register in yaml_data['registers']:
