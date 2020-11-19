@@ -80,8 +80,7 @@ def main(args_dict):
 
 
             for _ in range(100):
-
-                data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)
+                data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)]
                 chip.write(data)
 
             fdata = chip['FIFO'].get_data()
