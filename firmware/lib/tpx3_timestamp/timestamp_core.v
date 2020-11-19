@@ -31,7 +31,7 @@ module timestamp_core
     input wire BUS_RD
 );
 
-localparam VERSION = 3;
+localparam VERSION = 2;
 
 //output format:
 //31-28: ID, 27-24: 0x1, 23-0: 23-0th bit of timestamp data
