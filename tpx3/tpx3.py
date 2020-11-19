@@ -238,7 +238,7 @@ class TPX3(Dut):
 
 
         if not conf:
-            conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yaml')
+            conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
 
         logger.info("Loading configuration file from %s" % conf)
         super(TPX3, self).__init__(conf)

@@ -52,7 +52,7 @@ class TestSim(unittest.TestCase):
             #extra="\nVSIM_ARGS += -t 1ps -wlf /tmp/tpx3-daq.wlf\n",
         )
 
-        with open(root_dir + "/tpx3/tpx3.yaml", "r") as f:
+        with open(root_dir + "/tpx3/tpx3.yml", "r") as f:
             cnfg = yaml.load(f, Loader=yaml.FullLoader)
 
         cnfg["transfer_layer"][0]["type"] = "SiSim"
