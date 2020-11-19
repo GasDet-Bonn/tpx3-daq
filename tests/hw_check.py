@@ -78,15 +78,12 @@ def main(args_dict):
             time.sleep(0.01)
             chip['FIFO'].get_data()
 
-
             for _ in range(100):
                 data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)]
                 chip.write(data)
 
             fdata = chip['FIFO'].get_data()
             print('i =', i, '\tlen =', len(fdata), '\terror =', chip['RX0'].get_decoder_error_counter(), "\tready =", chip['RX0'].is_ready)
-
-
 
         print('get_decoder_error_counter', chip['RX0'].get_decoder_error_counter())
         print('RX ready:', chip['RX0'].is_ready)
@@ -118,8 +115,6 @@ def main(args_dict):
     fdata = chip['FIFO'].get_data()
     print(fdata)
     dout = chip.decode_fpga(fdata, True)
-    #for i in range(len(dout)):
-    #    print(dout[i])
 
     if len(dout) == 2:
         wafer_number = dout[1][19:8]
