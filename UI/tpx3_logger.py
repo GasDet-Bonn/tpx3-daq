@@ -261,7 +261,9 @@ class TPX3_data_logger(object):
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
                             'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 
                             'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
-                            'Equalisation_path', 'Mask_path', 'Polarity', 'Op_mode', 'Fast_Io_en']
+                            'Equalisation_path', 'Mask_path', 'Polarity', 'Op_mode', 'Fast_Io_en',
+                            'clk_fast_out', 'ClkOut_frequency_src', 'AckCommand_en', 'SelectTP_Ext_Int',
+                            'clkphasediv', 'clkphasenum', 'PLLOutConfig']
         self.data = self.default_config()
     
     def default_config(self):
@@ -296,7 +298,14 @@ class TPX3_data_logger(object):
                 'Mask_path' : None,
                 'Polarity' : 1,
                 'Op_mode' : 0,
-                'Fast_Io_en' : 0}
+                'Fast_Io_en' : 0,
+                'clk_fast_out' : 1,
+                'ClkOut_frequency_src' : 2,
+                'AckCommand_en' : 0,
+                'SelectTP_Ext_Int' : 0,
+                'clkphasediv' : 1,
+                'clkphasenum' : 4,
+                'PLLOutConfig' : 0}
         
     def is_valid(self, config):
         if not isinstance(config, dict):
@@ -393,12 +402,14 @@ class TPX3_data_logger(object):
                             'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
                 
-            #elif name in {}
-            #    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
+            elif name in {'clk_fast_out', 'ClkOut_frequency_src'}:
+                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
 
-            elif name in {'Polarity', 'Op_mode', 'Fast_Io_en'}:
+            elif name in {'Polarity', 'Op_mode', 'Fast_Io_en', 'AckCommand_en', 'SelectTP_Ext_Int'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
+            elif name in {'clkphasediv', 'clkphasenum', 'PLLOutConfig'}:
+                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'PLLConfig.yml')
             else:
                 yaml_file = None
 
@@ -468,12 +479,14 @@ class TPX3_data_logger(object):
                 if key in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
                     yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
 
-                #elif key in {}
-                #    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
+                elif key in {'clk_fast_out', 'ClkOut_frequency_src'}:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
 
-                elif key in {'Polarity', 'Op_mode', 'Fast_Io_en'}:
+                elif key in {'Polarity', 'Op_mode', 'Fast_Io_en', 'AckCommand_en', 'SelectTP_Ext_Int'}:
                     yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
+                elif name in {'clkphasediv', 'clkphasenum', 'PLLOutConfig'}:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'PLLConfig.yml')
                 else:
                     yaml_file = None
 
