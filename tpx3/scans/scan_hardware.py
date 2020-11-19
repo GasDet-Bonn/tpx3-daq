@@ -99,6 +99,15 @@ def HardwareScan():
             # Stop after the first working set of settings
             if link_found == True:
                 break
+            if chip_link == 7 and link_found == False:
+                for register in yaml_data['registers']:
+                    if register['name'] == fpga_link:
+                        register['fpga-link'] = fpga_link_number
+                        register['chip-link'] = 0
+                        register['chip-id'] = 0
+                        register['data-delay'] = 0
+                        register['data-invert'] = 0
+                        register['data-edge'] = 0
 
         # Update the progress bar
         pbar.update(1)
@@ -122,7 +131,7 @@ def HardwareScan():
         ID = 'W' + str(wafer_number) + '-' + x_position + str(y_position)
 
         # Write new Chip-ID to the list
-        if ID not in ID_List:
+        if ID not in ID_List and register['chip-id'] != 0:
             ID_List.append([register['chip-id'], ID])
 
     # Create a list of Chips with all link settings for the specific chip
