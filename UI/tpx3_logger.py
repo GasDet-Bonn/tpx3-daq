@@ -39,7 +39,7 @@ class mask_logger(object):
                 mask_matrix = infile.root.mask_matrix[:]
                 infile.remove_node(infile.root.mask_matrix)
 
-        #manipulate mask matrix
+            #manipulate mask matrix
             if mask_element[0] == 'row':
                 mask_matrix[ : , int(mask_element[1])] = 1
             elif mask_element[0] == 'column':
@@ -49,10 +49,10 @@ class mask_logger(object):
             else:
                 print('Error: Unknown mask element')
 
-        #Saving the final matrix
+            #Saving the final matrix
             with tb.open_file(path, 'a') as out_file:
                 out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
-        
+
     def delete_mask(mask_element, mask = None):
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
         if mask == None:
@@ -64,7 +64,7 @@ class mask_logger(object):
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
             path = user_path + os.sep + mask + ".h5"
-            
+
         #open file if existing and writing set data to mask_matrix
         if os.path.isfile(path):
             with tb.open_file(path, 'a') as infile:
@@ -86,7 +86,7 @@ class mask_logger(object):
         #Saving the final matrix
             with tb.open_file(path, 'a') as out_file:
                 out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
-        
+
 
     def get_mask(mask = None):
         if mask == None:
@@ -106,7 +106,7 @@ class mask_logger(object):
 
 class file_logger(object):
     #This class contains the functions to write the setting to a file which will then be call next time the GUI is started
-    
+
     def create_file(filename = None):
         #Creates backup folder and file if not existing
         user_path = os.path.expanduser('~')
@@ -166,7 +166,7 @@ class file_logger(object):
                 if os.path.isfile(os.path.join(user_path, f)) and f.endswith(".TPX3"):
                     os.remove(os.path.join(user_path, f))
 
-        
+
     def read_backup(file = None):
         #reads backup and returns the data
         user_path = os.path.expanduser('~')
@@ -185,7 +185,7 @@ class file_logger(object):
             else:
                 print("Error! File does not exist")
                 return False
-                
+
     def get_newest_backup_file():
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
@@ -226,7 +226,7 @@ class file_logger(object):
         else:
             file = file_logger.create_default_file()
             return file
-            
+
     def create_default_file():
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
@@ -238,7 +238,7 @@ class file_logger(object):
         json.dump(TPX3_datalogger.default_config(), default_file)
         file = user_path + os.sep + filename
         return file
-        
+
     def get_backup_value(name, file = None):
         backup_data = file_logger.read_backup(file)
         if TPX3_datalogger.name_valid(name) == True:
@@ -246,11 +246,11 @@ class file_logger(object):
             return value
         print("Error: Unknown data name")
         return False    
-        
-        
-        
+
+
+
 class TPX3_data_logger(object):
- 
+
 #here the data will be logged while the programm is running this function is called as global
     def __init__(self):
         self.config_keys = ['Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 
@@ -265,7 +265,7 @@ class TPX3_data_logger(object):
                             'clk_fast_out', 'ClkOut_frequency_src', 'AckCommand_en', 'SelectTP_Ext_Int',
                             'clkphasediv', 'clkphasenum', 'PLLOutConfig']
         self.data = self.default_config()
-    
+
     def default_config(self):
         return {'Chip0_name' : [None],#[W?_??, [FPGA n, link n , delay, data-invert, data-edge], [FPGA m, link m , delay, data-invert, data-edge], ... ]
                 'Chip1_name' : [None],
@@ -306,7 +306,7 @@ class TPX3_data_logger(object):
                 'clkphasediv' : 1,
                 'clkphasenum' : 4,
                 'PLLOutConfig' : 0}
-        
+
     def is_valid(self, config):
         if not isinstance(config, dict):
             # depending on impl may also just return False
@@ -318,21 +318,21 @@ class TPX3_data_logger(object):
             if key == name:
                 return True
         return False
-        
-    def write_value(self, name, value):#was write_data TODO: change in GUI
+
+    def write_value(self, name, value):
         if self.name_valid(name) == True:
             self.data[name] = value
             return True
         print("Error: Unknown data name")
         return False
-        
+
     def read_value(self, name):
         if self.name_valid(name) == True:
             value = self.data[name]
             return value
         print("Error: Unknown data name")
         return False    
-        
+
     def get_data(self):
         return self.data
 
@@ -342,7 +342,7 @@ class TPX3_data_logger(object):
             return True
         print("Error: Corrupted data")
         return False
-    
+
     def write_to_yaml(self, name):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if name == 'init':
@@ -401,13 +401,10 @@ class TPX3_data_logger(object):
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 
                             'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
-                
             elif name in {'clk_fast_out', 'ClkOut_frequency_src'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
-
             elif name in {'Polarity', 'Op_mode', 'Fast_Io_en', 'AckCommand_en', 'SelectTP_Ext_Int'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
-
             elif name in {'clkphasediv', 'clkphasenum', 'PLLOutConfig'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'PLLConfig.yml')
             else:
@@ -435,7 +432,6 @@ class TPX3_data_logger(object):
                     yaml_data = yaml.load(file, Loader=yaml.FullLoader)
                 value_list = self.data[key]
                 if not value_list == [None]:
-
                     Chipname = value_list[0]
                     wafer_number = ''
                     chip_coord2 = '' 
@@ -498,6 +494,6 @@ class TPX3_data_logger(object):
                             register['value'] = self.data[key]
                     with open(yaml_file, 'w') as file:
                         yaml.dump(yaml_data, file)
-                    
-    
+
+
 TPX3_datalogger = TPX3_data_logger()
