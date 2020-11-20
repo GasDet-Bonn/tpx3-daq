@@ -43,6 +43,9 @@ def get_software_version():
         return VERSION
 
 
+class ConfigError(Exception):
+    pass
+
 class MetaTable(tb.IsDescription):
     index_start = tb.UInt32Col(pos=0)
     index_stop = tb.UInt32Col(pos=1)
@@ -96,8 +99,18 @@ class ScanBase(object):
     def __init__(self, dut_conf=None):
         # Initialize the chip
         self.chip = TPX3(dut_conf)
+        self.chip.init()
+
+        # Initialize the files
         self.set_directory()
         self.make_files()
+        
+        # Test if the link configuration is valid
+        if self.test_links() == True:
+            self.logger.info("Validity check of link configuration successful")
+        else:
+            self.logger.info("Validity check of link configuration failed")
+            raise ConfigError("Link configuration is not valid for current setup")
 
     def set_directory(self,sub_dir=None):
         # Get the user directory
@@ -141,6 +154,69 @@ class ScanBase(object):
             Returns the chip object
         '''
         return self.chip
+
+    def test_links(self):
+        '''
+            Checks if communication with the chip based on the settings in links.yml is possible.
+            If it is possible true is returned if not false is returned
+        '''
+        # Open the link yaml file
+        proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        yaml_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
+
+        if not yaml_file == None:
+            with open(yaml_file) as file:
+                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+
+        # Variable to track if the configuration is valid
+        valid = True
+
+        # Iterate over all links
+        for register in yaml_data['registers']:
+            # Reset the chip
+            self.chip['CONTROL']['RESET'] = 1
+            self.chip['CONTROL'].write()
+            self.chip['CONTROL']['RESET'] = 0
+            self.chip['CONTROL'].write()
+
+            # Write the PLL 
+            data = self.chip.write_pll_config()
+
+            # Create the chip output channel mask and write the output block
+            self.chip._outputBlocks["chan_mask"] = 0b1 << register['chip-link']
+            data = self.chip.write_outputBlock_config()
+
+            # Deactivate all fpga links
+            for register2 in yaml_data['registers']:
+                self.chip[register2['name']].ENABLE = 0
+                self.chip[register2['name']].reset()
+
+            # Activate the current fpga link and set all its settings
+            self.chip[register['name']].ENABLE = 1
+            self.chip[register['name']].DATA_DELAY = register['data-delay']
+            self.chip[register['name']].INVERT = register['data-invert']
+            self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+
+            # Reset and clean the FIFO
+            self.chip['FIFO'].reset()
+            time.sleep(0.01)
+            self.chip['FIFO'].get_data()
+
+            # Send the EFuse_Read command to get the Chip ID and test the communication
+            data = self.chip.read_periphery_template("EFuse_Read")
+            data += [0x00]*4
+            self.chip.write(data)
+
+            # Get the data from the chip
+            fdata = self.chip['FIFO'].get_data()
+            dout = self.chip.decode_fpga(fdata, True)
+
+            # Check if the received Chip ID is identical with the expected
+            if dout[1][19:0].tovalue() != register['chip-id']:
+                valid = False
+                break
+
+        return valid
 
     def create_scan_masks(self, mask_step, pixel_threhsold = None):
         '''
@@ -323,7 +399,6 @@ class ScanBase(object):
         self.scan_param_id = 0
 
         # Initialize the communication with the chip and read the board name and firmware version
-        self.chip.init()
         self.fifo_readout = FifoReadout(self.chip)
         self.board_name = self.chip.board_version
         self.firmware_version = self.chip.fw_version
