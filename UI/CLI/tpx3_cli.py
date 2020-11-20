@@ -10,7 +10,7 @@ from tpx3.scans.PixelDAC_opt import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
 import tpx3.scans.scan_hardware as Init_Hardware
-from UI.tpx3_logger import TPX3_datalogger, file_logger, mask_logger  #TODO:check if already opened instance by GUI
+from tpx3.scan_base import ConfigError
 
 #In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot', 
@@ -65,6 +65,8 @@ class TPX3_multiprocess_start(object):
                 sys.exit(1)
             except ValueError as e:
                 print(e)
+            except ConfigError:
+                print("The currnt link configuration is not valid. Please start 'Init' or check your hardware.")
             except NotImplementedError:
                 pass
 
