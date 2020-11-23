@@ -1606,6 +1606,19 @@ class TPX3(Dut):
         self.set_dac("Vthreshold_coarse", coarse_threshold)
         self.set_dac("Vthreshold_fine", fine_threshold)
 
+    def toggle_pin(self, pin, time = 0.01):
+        """
+        Toggles a pin for a defined time
+        """
+        if pin not in {"TO_SYNC", "RESET", "SHUTTER"}:
+            raise ValueError("You can only toggle TO_SYNC, RESET and SHUTTER pins!")
+
+        self.chip['CONTROL'][pin] = 1
+        self.chip['CONTROL'].write()
+        time.sleep(time)
+        self.chip['CONTROL'][pin] = 0
+        self.chip['CONTROL'].write()
+
     def lfsr_10_bit(self):
         """
         Generates a 10bit LFSR according to Manual v1.9 page 19

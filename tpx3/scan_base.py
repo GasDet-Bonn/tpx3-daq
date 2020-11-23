@@ -174,10 +174,7 @@ class ScanBase(object):
         # Iterate over all links
         for register in yaml_data['registers']:
             # Reset the chip
-            self.chip['CONTROL']['RESET'] = 1
-            self.chip['CONTROL'].write()
-            self.chip['CONTROL']['RESET'] = 0
-            self.chip['CONTROL'].write()
+            self.chip.toggle_pin("RESET")
 
             # Write the PLL 
             data = self.chip.write_pll_config()
@@ -419,10 +416,7 @@ class ScanBase(object):
 
         # Chip start-up sequence
         # Reset the chip
-        self.chip['CONTROL']['RESET'] = 1
-        self.chip['CONTROL'].write()
-        self.chip['CONTROL']['RESET'] = 0
-        self.chip['CONTROL'].write()
+        self.chip.toggle_pin("RESET")
 
         # Set the output settings of the chip
         data = self.chip.write_outputBlock_config()
@@ -460,10 +454,7 @@ class ScanBase(object):
             self.chip['PULSE_GEN'].set_en(False)
 
         # Reset the Timepix3 timer
-        self.chip['CONTROL']['TO_SYNC'] = 1
-        self.chip['CONTROL'].write()
-        self.chip['CONTROL']['TO_SYNC'] = 0
-        self.chip['CONTROL'].write()
+        self.chip.toggle_pin("TO_SYNC")
 
         # Get ChipID - Only readable after doing EFuse_Read once
         data = self.chip.read_periphery_template("EFuse_Read")

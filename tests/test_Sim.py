@@ -67,10 +67,7 @@ class TestSim(unittest.TestCase):
             self.chip["CONTROL"].write()
 
     def startUp(self):
-        self.chip["CONTROL"]["RESET"] = 1
-        self.chip["CONTROL"].write()
-        self.chip["CONTROL"]["RESET"] = 0
-        self.chip["CONTROL"].write()
+        self.chip.toggle_pin("RESET")
 
         self.chip['CONTROL']['EN_POWER_PULSING'] = 1
         self.chip['CONTROL'].write()

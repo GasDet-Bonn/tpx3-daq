@@ -50,11 +50,7 @@ def main(args_dict):
     chip = TPX3()
     chip.init()
 
-    chip['CONTROL']['RESET'] = 1
-    chip['CONTROL'].write()
-
-    chip['CONTROL']['RESET'] = 0
-    chip['CONTROL'].write()
+    self.chip.toggle_pin("RESET")
 
     print('RX ready:', chip['RX0'].is_ready)
     print('get_decoder_error_counter', chip['RX0'].get_decoder_error_counter())
@@ -232,11 +228,7 @@ def main(args_dict):
         print("\t Repeat = ", chip['PULSE_GEN'].get_repeat())
 
         for counter in range(1):
-            chip['CONTROL']['TO_SYNC'] = 1
-            chip['CONTROL'].write()
-
-            chip['CONTROL']['TO_SYNC'] = 0
-            chip['CONTROL'].write()
+            self.chip.toggle_pin("TO_SYNC")
 
             for _ in range(20):
                 chip.requestTimerLow()
@@ -273,10 +265,7 @@ def main(args_dict):
             sys.stdout = f
             print("Test Timestamp extension - Hit data")
 
-            chip['CONTROL']['RESET'] = 1
-            chip['CONTROL'].write()
-            chip['CONTROL']['RESET'] = 0
-            chip['CONTROL'].write()
+            self.chip.toggle_pin("RESET")
 
             for rx in {'RX0', 'RX1', 'RX2', 'RX3', 'RX4', 'RX5', 'RX6', 'RX7'}:
                 chip[rx].reset()
@@ -346,23 +335,15 @@ def main(args_dict):
                 mask_step_cmd.append(chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
             mask_step_cmd.append(chip.read_pixel_matrix_datadriven())
 
-            chip['CONTROL']['TO_SYNC'] = 1
-            chip['CONTROL'].write()
-
-            chip['CONTROL']['TO_SYNC'] = 0
-            chip['CONTROL'].write()
+            self.chip.toggle_pin("TO_SYNC")
 
             for counter in range(1):
 
                 chip.write_ctpr(list(range(0, 256, 1)))
                 chip.write(mask_step_cmd)
                 chip['FIFO'].get_data()
-                    
-                chip['CONTROL']['SHUTTER'] = 1
-                chip['CONTROL'].write()
-                time.sleep(0.1)
-                chip['CONTROL']['SHUTTER'] = 0
-                chip['CONTROL'].write()
+
+                self.chip.toggle_pin("SHUTTER", 0.1)
 
                 time.sleep(0.1)
                 ret = chip['FIFO'].get_data()
@@ -416,11 +397,7 @@ def main(args_dict):
 
         sys.stdout = sys.__stdout__
 
-    chip['CONTROL']['RESET'] = 1
-    chip['CONTROL'].write()
-
-    chip['CONTROL']['RESET'] = 0
-    chip['CONTROL'].write()
+    self.chip.toggle_pin("RESET")
 
     if led_blink is True:
         # let LEDs blink!
