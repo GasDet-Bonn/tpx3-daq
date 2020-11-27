@@ -343,6 +343,26 @@ class TPX3_data_logger(object):
         print("Error: Corrupted data")
         return False
 
+    def get_chipnames(self):
+        chiplist = []
+        for i in range (0,7):
+            name = 'Chip' + str(i) +'_name'
+            value_list = self.data[name]
+            if not value_list == [None]:
+                chiplist = chiplist + [value_list[0]]
+        return chiplist
+
+    def get_links(self, chipname):
+        for i in range (0,7):
+            name = 'Chip' + str(i) +'_name'
+            value_list = self.data[name]
+            if value_list[0] == chipname:
+                number_of_links = len(value_list) - 1
+                return number_of_links
+            else:
+                print('Name of Chipname not in list')
+                return False
+
     def write_to_yaml(self, name):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if name == 'init':
