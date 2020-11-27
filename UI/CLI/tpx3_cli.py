@@ -11,6 +11,7 @@ from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
 import tpx3.scans.scan_hardware as Init_Hardware
 from tpx3.scan_base import ConfigError
+from UI.tpx3_logger import file_logger, mask_logger
 
 
 # In this part all callable function names should be in the list functions
@@ -96,9 +97,10 @@ class TPX3_multiprocess_start(object):
             except NotImplementedError:
                 pass
 
-        p = Process(target=startup_func, args=(function,), kwargs=kwargs)
-        p.start()
-        p.join()
+        file_logger.write_tmp_backup()
+        new_process = Process(target=startup_func, args=(function,), kwargs=kwargs)
+        new_process.start()
+        return new_process
 
 
 class TPX3_CLI_function_call(object):
@@ -775,6 +777,9 @@ class TPX3_CLI_TOP(object):
         readline.parse_and_bind("tab: complete")
         function_call = TPX3_CLI_function_call()
         expertmode = False
+        data = file_logger.read_backup()
+        TPX3_datalogger.set_data(data)
+        TPX3_datalogger.write_backup_to_yaml()
         print ('\n Welcome to the Timepix3 control Software\n')
 
         if not ext_input_list == None:
@@ -1326,9 +1331,11 @@ class TPX3_CLI_TOP(object):
                 #Start GUI
                 elif inputlist[0] in {'GUI'}:
                     if len(inputlist) == 1:
-                        #Start GUI
-                        print('GUI started')
-                        break
+                        file_logger.write_backup(file = file_logger.create_file())
+                        GUI.GUI_start()
+                        backup_data = file_logger.read_backup()
+                        TPX3_datalogger.set_data(config = backup_data)
+                        TPX3_datalogger.write_backup_to_yaml()
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
                             print('This will start the GUI')
@@ -1477,6 +1484,8 @@ class TPX3_CLI_TOP(object):
                     print ('Unknown command: ', cmd_input, ' Use a language I understand.')
 
 if __name__ == "__main__":
+    from UI.tpx3_logger import TPX3_datalogger
+    import UI.GUI.GUI as GUI
     ext_input_list = sys.argv
     ext_input_list.pop(0)
     if ext_input_list == []:
