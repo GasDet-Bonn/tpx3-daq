@@ -30,6 +30,7 @@ jobs:
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
       conda update --yes conda
       conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
+      pip3 install pycairo PyGObject
     displayName: 'Install miniconda'
   - script: |
       echo Install Tpx3-DAQ
@@ -97,6 +98,7 @@ jobs:
       export PATH=$(Agent.BuildDirectory)/miniconda/bin:$PATH
       conda update --yes conda
       conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
+      pip3 install pycairo PyGObject
     displayName: 'Install miniconda'
   - script: |
       echo Prepare simulation
