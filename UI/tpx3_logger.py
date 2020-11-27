@@ -481,7 +481,7 @@ class TPX3_data_logger(object):
                 elif key in {'Polarity', 'Op_mode', 'Fast_Io_en', 'AckCommand_en', 'SelectTP_Ext_Int'}:
                     yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
 
-                elif name in {'clkphasediv', 'clkphasenum', 'PLLOutConfig'}:
+                elif key in {'clkphasediv', 'clkphasenum', 'PLLOutConfig'}:
                     yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'PLLConfig.yml')
                 else:
                     yaml_file = None
