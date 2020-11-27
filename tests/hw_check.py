@@ -50,7 +50,7 @@ def main(args_dict):
     chip = TPX3()
     chip.init()
 
-    self.chip.toggle_pin("RESET")
+    chip.toggle_pin("RESET")
 
     print('RX ready:', chip['RX0'].is_ready)
     print('get_decoder_error_counter', chip['RX0'].get_decoder_error_counter())
@@ -228,7 +228,7 @@ def main(args_dict):
         print("\t Repeat = ", chip['PULSE_GEN'].get_repeat())
 
         for counter in range(1):
-            self.chip.toggle_pin("TO_SYNC")
+            chip.toggle_pin("TO_SYNC")
 
             for _ in range(20):
                 chip.requestTimerLow()
@@ -265,7 +265,7 @@ def main(args_dict):
             sys.stdout = f
             print("Test Timestamp extension - Hit data")
 
-            self.chip.toggle_pin("RESET")
+            chip.toggle_pin("RESET")
 
             for rx in {'RX0', 'RX1', 'RX2', 'RX3', 'RX4', 'RX5', 'RX6', 'RX7'}:
                 chip[rx].reset()
@@ -335,7 +335,7 @@ def main(args_dict):
                 mask_step_cmd.append(chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
             mask_step_cmd.append(chip.read_pixel_matrix_datadriven())
 
-            self.chip.toggle_pin("TO_SYNC")
+            chip.toggle_pin("TO_SYNC")
 
             for counter in range(1):
 
@@ -343,7 +343,7 @@ def main(args_dict):
                 chip.write(mask_step_cmd)
                 chip['FIFO'].get_data()
 
-                self.chip.toggle_pin("SHUTTER", 0.1)
+                chip.toggle_pin("SHUTTER", 0.1)
 
                 time.sleep(0.1)
                 ret = chip['FIFO'].get_data()
@@ -397,7 +397,7 @@ def main(args_dict):
 
         sys.stdout = sys.__stdout__
 
-    self.chip.toggle_pin("RESET")
+    chip.toggle_pin("RESET")
 
     if led_blink is True:
         # let LEDs blink!
