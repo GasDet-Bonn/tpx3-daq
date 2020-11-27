@@ -37,11 +37,20 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Expert', 'expert',
                 'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
+
+expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'clk_fast_mode',
+                    'Set_Acknowledgement', 'set_acknowledgement', 'Acknowledgement', 'acknowledgement',
+                    'Set_TP_ext_in', 'set_tp_ext_in', 'TP_ext_in', 'tp_ext_in',
+                    'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency']
+
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
                     'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Load_Mask', 'Set_Mask',
                     'Unset_Mask', 'Set_Default', 'GUI', 'Help', 'Quit']
 
+help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency']
+
+expert_help_functions = help_functions + help_expert
 exit_list = ['Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 
 def completer(text, state):
@@ -51,6 +60,14 @@ def completer(text, state):
     except IndexError:
         return None
 
+# Auto completion for all functions in the "function" and the "expert_function" list
+def expert_completer(text, state):
+    expertfunctions = functions + expert_functions
+    options = [function for function in expertfunctions if function.startswith(text)]
+    try:
+        return options[state]
+    except IndexError:
+        return None
 class TPX3_multiprocess_start(object):
     def process_call(function, **kwargs):
         
@@ -657,6 +674,83 @@ class TPX3_CLI_function_call(object):
             
         TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
 
+    def Set_Acknowledgement(object, Acknowledgement_en = None):
+        if Acknowledgement_en == None:
+            print('> Please enter the Acknowledgement enable (0 for off or 1 for on):')
+            while(1):
+                Acknowledgement_en = input('>> ')
+                try:
+                    Acknowledgement_en = int(Acknowledgement_en)
+                    break
+                except:
+                    if Acknowledgement_en in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        if Acknowledgement_en == 1 or Acknowledgement_en == 0:
+            TPX3_datalogger.write_value(name = 'AckCommand_en', value = Acknowledgement_en)
+            TPX3_datalogger.write_to_yaml(name = 'AckCommand_en')
+        else:
+            print('Unknown value')
+
+    def Set_CLK_fast_mode(object, CLK_fast_mode_en = None):
+        if CLK_fast_mode_en == None:
+            print('> Please enter the CLK_fast_mode enable (0 for off or 1 for on):')
+            while(1):
+                CLK_fast_mode_en = input('>> ')
+                try:
+                    CLK_fast_mode_en = int(CLK_fast_mode_en)
+                    break
+                except:
+                    if CLK_fast_mode_en in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        if CLK_fast_mode_en == 1 or CLK_fast_mode_en == 0:
+            TPX3_datalogger.write_value(name = 'clk_fast_out', value = CLK_fast_mode_en)
+            TPX3_datalogger.write_to_yaml(name = 'clk_fast_out')
+        else:
+            print('Unknown value')
+
+    def Set_TP_ext_in(object, TP_ext_in_en = None):
+        if TP_ext_in_en == None:
+            print('> Please enter the TP_ext_in enable (0 for off or 1 for on):')
+            while(1):
+                TP_ext_in_en = input('>> ')
+                try:
+                    TP_ext_in_en = int(TP_ext_in_en)
+                    break
+                except:
+                    if TP_ext_in_en in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        if TP_ext_in_en == 1 or TP_ext_in_en == 0:
+            TPX3_datalogger.write_value(name = 'SelectTP_Ext_Int', value = TP_ext_in_en)
+            TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int')
+        else:
+            print('Unknown value')
+
+    def Set_ClkOut_frequency(object, ClkOut_frequency = None):
+        if ClkOut_frequency == None:
+            print('> Please enter the desired ClkOut_frequency: "1" for 320MHz ; "2" for 160MHz; "3" for 80MHz; "4" for 40MHz; "5" for Extern')
+            while(1):
+                ClkOut_frequency = input('>> ')
+                try:
+                    ClkOut_frequency = int(ClkOut_frequency)
+                    break
+                except:
+                    if ClkOut_frequency in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        if ClkOut_frequency >= 1 and ClkOut_frequency <= 5:
+            TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = ClkOut_frequency)
+            TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src')
+        else:
+            print('Unknown value')
+
+
 
 
  ###################################################
@@ -691,6 +785,9 @@ class TPX3_CLI_TOP(object):
 
             #if no external input is given
             if ext_input_list == None:
+                if expertmode == True:
+                    cmd_input = input('expert> ')
+                else:
                 cmd_input = input('> ')
                 #Catch if no input given
                 if cmd_input == '':
@@ -709,9 +806,14 @@ class TPX3_CLI_TOP(object):
             if inputlist:
                 #Help
                 if inputlist[0] in {'Help', 'help', 'h', '-h'}:
+                    if expertmode == False:
                     print('If you need detailed help on a function type [functionname -h].\n Possible options are:')
                     for function in help_functions:
                         print (function)
+                    elif expertmode == True:
+                        print('If you need detailed help on a function type [functionname -h].\n Possible options are:')
+                        for function in expert_help_functions:
+                            print (function)
 
                 #ToT_Calibration
                 elif inputlist[0] in {'ToT', 'ToT_Calibration', 'tot_Calibration', 'tot'}:
@@ -1226,14 +1328,128 @@ class TPX3_CLI_TOP(object):
                 elif inputlist[0] in {'Expert', 'expert'}:
                     if expertmode == False:
                         expertmode = True
+                        readline.set_completer(expert_completer)
+                        #readline.parse_and_bind("tab: complete")
+                        print('Welcome to the expert mode my dear friend. In this mode you can do more advanced things to the Timepix3. If you have no idea why you are here, type "expert" again.')
                     elif expertmode == True:
                         expertmode = False
+                        readline.set_completer(completer)
+                        #readline.parse_and_bind("tab: complete")
+                        print('Goodbye my dear friend. I hope you enjoyed the world of experts. Enjoy your further stay in the normal mode.')
 
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
                     file_logger.write_backup(file = file_logger.create_file())
+                    file_logger.delete_tmp_backups()
                     print('Goodbye and have a nice day.')
                     break
+
+                # Expert mode functions
+                elif expertmode == True:
+
+                    # Set CLK fast mode
+                    if inputlist[0] in {'Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'clk_fast_mode'}:
+                        if len(inputlist) == 1:
+                            print('Set CLK_fast_mode')
+                            try:
+                                function_call.Set_CLK_fast_mode()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This is the set CLK_fast_mode function. As argument you can give the enable as 0 (off) or 1 (on)')
+                            elif len(inputlist) == 2:
+                                    try:
+                                        function_call.Set_CLK_fast_mode(CLK_fast_mode_en = int(inputlist[1]))
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                            elif len(inputlist) > 2:
+                                print ('To many parameters! The given function takes only one parameters:\n CLK_fast_mode enable.')
+
+                    #Set Acknowledgement
+                    elif inputlist[0] in {'Set_Acknowledgement', 'set_acknowledgement', 'Acknowledgement', 'acknowledgement'}:
+                        if len(inputlist) == 1:
+                            print('Set Acknowledgement')
+                            try:
+                                function_call.Set_Acknowledgement()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This is the set acknowledgement function. As argument you can give the enable as 0 (off) or 1 (on)')
+                            elif len(inputlist) == 2:
+                                    try:
+                                        function_call.Set_Acknowledgement(Acknowledgement_en = int(inputlist[1]))
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                            elif len(inputlist) > 2:
+                                print ('To many parameters! The given function takes only one parameters:\n Acknowledgement enable.')
+
+                    #Select TP_ext_in
+                    elif inputlist[0] in {'Set_TP_ext_in', 'set_tp_ext_in', 'TP_ext_in', 'tp_ext_in'}:
+                        if len(inputlist) == 1:
+                            print('Set TP_ext_in')
+                            try:
+                                function_call.Set_TP_ext_in()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This is the set TP_ext_in function. As argument you can give the enable as 0 (off) or 1 (on)')
+                            elif len(inputlist) == 2:
+                                    try:
+                                        function_call.Set_TP_ext_in(TP_ext_in_en = int(inputlist[1]))
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                            elif len(inputlist) > 2:
+                                print ('To many parameters! The given function takes only one parameters:\n TP_ext_in enable.')
+
+                    #ClkOut_frequency_source
+                    elif inputlist[0] in {'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency'}:
+                        if len(inputlist) == 1:
+                            print('Set ClkOut_frequency')
+                            try:
+                                function_call.Set_ClkOut_frequency()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This is the set ClkOut_frequency function. As argument you can give the desired frequency: 320MHz["1" or "320"]; 160MHz["2" or "160"]; 80MHz["3" or "80"]; 40MHz["4" or "40"]; Extern["5" or "Ext"]')
+                            elif len(inputlist) == 2:
+                                if inputlist[1] in {'1', '320'}:
+                                    try:
+                                        function_call.Set_ClkOut_frequency(ClkOut_frequency = 1)
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                                elif inputlist[1] in {'2', '160'}:
+                                    try:
+                                        function_call.Set_ClkOut_frequency(ClkOut_frequency = 2)
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                                elif inputlist[1] in {'3', '80'}:
+                                    try:
+                                        function_call.Set_ClkOut_frequency(ClkOut_frequency = 3)
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                                elif inputlist[1] in {'4', '40'}:
+                                    try:
+                                        function_call.Set_ClkOut_frequency(ClkOut_frequency = 4)
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                                elif inputlist[1] in {'5','Ext', 'ext'}:
+                                    try:
+                                        function_call.Set_ClkOut_frequency(ClkOut_frequency = 5)
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                                else:
+                                    print('Unknown argument')
+                            elif len(inputlist) > 2:
+                                print ('To many parameters! The given function takes only one parameters:\n ClkOut_frequency.')
+
+
+                    #Unknown command
+                    else:
+                        print ('Unknown command: ', cmd_input, ' Use a language I understand.')
 
                 #Unknown command
                 else:
