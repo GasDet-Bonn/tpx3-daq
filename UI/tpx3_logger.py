@@ -12,8 +12,14 @@ class mask_logger(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'masks')
+        Chipnames = TPX3_datalogger.get_chipnames()
+        if len(Chipnames) == 1:
+            Chip = Chipnames[0]
+        else:
+            print('not implemented')
+
         if filename == None:
-            filename = "mask_" + time.strftime("%Y-%m-%d_%H-%M-%S")
+            filename = Chip + "_mask_" + time.strftime("%Y-%m-%d_%H-%M-%S")
         if os.path.isfile(user_path + os.sep + filename + ".h5") == False:
             full_path = user_path + os.sep + filename + ".h5"
             return full_path
@@ -112,8 +118,17 @@ class file_logger(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
+        Chipnames = TPX3_datalogger.get_chipnames()
+        if len(Chipnames) == 0:
+            Chip = 'Default'
+        elif len(Chipnames) == 1:
+            Chip = Chipnames[0]
+        else:
+            Chip = 'Multi_chip'
+            print('not implemented')
+
         if filename == None:
-            filename = "backup_" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".TPX3"
+            filename = Chip + "_backup_" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".TPX3"
         if os.path.isdir(user_path) == False:
             os.mkdir(user_path)
             if os.path.isfile(user_path + os.sep + filename) == False:
