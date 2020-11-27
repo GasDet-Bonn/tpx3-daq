@@ -49,16 +49,16 @@ class GUI_Plot(Gtk.Window):
         self.box.grid.attach(self.Slowbutton, 0, 1, 1, 1)
         self.box.grid.attach(self.Fastbutton, 0, 2, 1, 1)
         
-        self.plotwidget.set_plottype(datalogger.read_value("plottype"))
-        self.plotwidget.set_occupancy_length(datalogger.read_value("integration_length"))
-        self.plotwidget.set_color_depth(datalogger.read_value("color_depth"))
-        self.plotwidget.set_color_steps(datalogger.read_value("colorsteps"))
+        self.plotwidget.set_plottype(TPX3_datalogger.read_value("plottype"))
+        self.plotwidget.set_occupancy_length(TPX3_datalogger.read_value("integration_length"))
+        self.plotwidget.set_color_depth(TPX3_datalogger.read_value("color_depth"))
+        self.plotwidget.set_color_steps(TPX3_datalogger.read_value("colorsteps"))
         
-        if datalogger.read_value("plottype") == "normal":
-            self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(datalogger.read_value("colorsteps")))
+        if TPX3_datalogger.read_value("plottype") == "normal":
+            self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(TPX3_datalogger.read_value("colorsteps")))
             self.Tag = GObject.idle_add(self.plotwidget.update_plot)
-        elif datalogger.read_value("plottype") == "occupancy":
-            self.plotwidget.change_colormap(colormap = cm.viridis, vmax = datalogger.read_value("color_depth"))
+        elif TPX3_datalogger.read_value("plottype") == "occupancy":
+            self.plotwidget.change_colormap(colormap = cm.viridis, vmax = TPX3_datalogger.read_value("color_depth"))
             self.plotwidget.reset_occupancy()
             self.Tag = GObject.idle_add(self.plotwidget.update_occupancy_plot)
         
@@ -88,10 +88,10 @@ class GUI_Plot(Gtk.Window):
             subw = GUI_Plot_settings(self.plotwidget)
         
     def window_destroy(event, self, widget):
-        datalogger.write_data(type = "plottype", value = self.plotwidget.get_plottype())
-        datalogger.write_data(type = "colorsteps", value = self.plotwidget.get_iteration_depth("normal"))
-        datalogger.write_data(type = "integration_length", value = self.plotwidget.get_iteration_depth("occupancy"))
-        datalogger.write_data(type = "color_depth", value = self.plotwidget.get_iteration_depth("occupancy.color"))
+        TPX3_datalogger.write_value(type = "plottype", value = self.plotwidget.get_plottype())
+        TPX3_datalogger.write_value(type = "colorsteps", value = self.plotwidget.get_iteration_depth("normal"))
+        TPX3_datalogger.write_value(type = "integration_length", value = self.plotwidget.get_iteration_depth("occupancy"))
+        TPX3_datalogger.write_value(type = "color_depth", value = self.plotwidget.get_iteration_depth("occupancy.color"))
         GObject.source_remove(self.Tag)
         self.destroy()
 
@@ -882,8 +882,8 @@ class GUI_Main_Settings(Gtk.Window):
         self.input_window.connect("destroy", self.window_destroy)
         
     def on_load_default_button_clicked(self, widget):
-        data = datalogger.default_config()
-        datalogger.set_data(data)
+        data = TPX3_datalogger.default_config()
+        TPX3_datalogger.set_data(data)
         GUI.set_destroyed()
         self.destroy()
         
@@ -916,7 +916,7 @@ class GUI_Main_Settings_Backup_Input(Gtk.Window):
         filename = self.entry.get_text()
         data = file_logger.read_backup("backup/" + filename)
         if not data == False:
-            datalogger.set_data(data)
+            TPX3_datalogger.set_data(data)
         self.destroy()
         
     def window_destroy(self, widget):
@@ -949,7 +949,8 @@ class GUI_Main(Gtk.Window):
         
         #get last backup
         data = file_logger.read_backup()
-        datalogger.set_data(data)
+        TPX3_datalogger.set_data(data)
+        TPX3_datalogger.write_backup_to_yaml()
         
 #########################################################################################################
         ### Page 1
@@ -1176,12 +1177,18 @@ class GUI_Main(Gtk.Window):
         
         
 def quit_procedure(gui):
-    file = file_logger.create_file()
-    file_logger.write_backup(file)
+    file_logger.write_backup(file = file_logger.create_file())
     Gtk.main_quit()
 
+def GUI_start():
+    GUI.connect("destroy", quit_procedure)
+    GUI.show_all()
+    GUI.progressbar.hide()
+    Gtk.main()
+
+GUI = GUI_Main()
+
 if __name__ == "__main__":
-    GUI = GUI_Main()
     GUI.connect("destroy", quit_procedure)
     GUI.show_all()
     GUI.progressbar.hide()
