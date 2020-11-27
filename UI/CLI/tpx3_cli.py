@@ -12,7 +12,8 @@ from tpx3.scans.Threshold_calib import ThresholdCalib
 import tpx3.scans.scan_hardware as Init_Hardware
 from tpx3.scan_base import ConfigError
 
-#In this part all callable function names should be in the list functions
+
+# In this part all callable function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot', 
                 'Threshold_Scan', 'THL_Scan', 'THL', 'threshold_scan', 'thl_scan', 'thl', 
                 'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',
@@ -44,6 +45,7 @@ expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'c
                     'Set_TP_ext_in', 'set_tp_ext_in', 'TP_ext_in', 'tp_ext_in',
                     'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency']
 
+# In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
                     'Unset_Mask', 'Set_Default', 'GUI', 'Chip_names', 'Help', 'Quit']
@@ -51,8 +53,11 @@ help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency']
 
 expert_help_functions = help_functions + help_expert
+
+# In this list all exit commands for the TPX3 CLI functions are defined
 exit_list = ['Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 
+# Auto completion for all functions in the "function" list
 def completer(text, state):
     options = [function for function in functions if function.startswith(text)]
     try:
@@ -68,6 +73,9 @@ def expert_completer(text, state):
         return options[state]
     except IndexError:
         return None
+
+# This class starts a new process when a function is called. this is used for all TPX3 Scan functions and the datataking function. 
+# With this you can end a wrong started function with "Ctrl. c" without ending the whole CLI.
 class TPX3_multiprocess_start(object):
     def process_call(function, **kwargs):
         
@@ -512,7 +520,7 @@ class TPX3_CLI_function_call(object):
             TPX3_datalogger.write_value(name = 'Fast_Io_en', value = Fast_Io_en)
             TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en')
         else:
-            print('Unknown polarity')
+            print('Unknown value')
 
     def Set_Mask(object, mask_input_list = None):
         if mask_input_list == None:
@@ -778,9 +786,11 @@ class TPX3_CLI_TOP(object):
                     cmd_list.append(cmd_list_element)
                     cmd_list_element = []
             cmd_list.append(cmd_list_element)
-            cmd_list.append(['Quit'])#To exit loop at the end
+            
+            # Exit loop at the end
+            cmd_list.append(['Quit'])
 
-        # Here the main part of the cli starts. Every usercomand needs to be processed here.
+        # Here the main part of the CLI starts. Every usercommand needs to be processed here.
         while 1:
 
             #if no external input is given
