@@ -35,6 +35,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode',
                 'Set_Fast_Io', 'Fast_Io', 'set_fast_io', 'fast_io', 'Fast_Io_en', 'fast_io_en',
                 'Expert', 'expert',
+                'Chip_names', 'chip_names', 'Who', 'who',
                 'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 
@@ -45,8 +46,7 @@ expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'c
 
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
-                    'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Load_Mask', 'Set_Mask',
-                    'Unset_Mask', 'Set_Default', 'GUI', 'Help', 'Quit']
+                    'Unset_Mask', 'Set_Default', 'GUI', 'Chip_names', 'Help', 'Quit']
 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency']
 
@@ -1337,6 +1337,16 @@ class TPX3_CLI_TOP(object):
                         #readline.parse_and_bind("tab: complete")
                         print('Goodbye my dear friend. I hope you enjoyed the world of experts. Enjoy your further stay in the normal mode.')
 
+                # Get Chip names
+                elif inputlist[0] in {'Chip_names', 'chip_names', 'Who', 'who'}:
+                    print('Connected chips are:')
+                    for Chipname in TPX3_datalogger.get_chipnames():
+                        number_of_links = TPX3_datalogger.get_links(chipname=Chipname)
+                        if number_of_links == 1:
+                            print(Chipname + ' on ' + str(number_of_links) + ' link')
+                        else:
+                            print(Chipname + ' on ' + str(number_of_links) + ' links')
+                
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
                     file_logger.write_backup(file = file_logger.create_file())
