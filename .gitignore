@@ -129,3 +129,6 @@ tpx3/scans/output_data/*
 dvt_build.log
 *.pydevproject
 **/output_data/*
+
+# Textfiles
+.txt
