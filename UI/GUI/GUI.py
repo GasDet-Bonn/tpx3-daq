@@ -122,7 +122,8 @@ class GUI_Plot_settings(Gtk.Window):
         plot_depth_label = Gtk.Label()
         plot_depth_label.set_text("Plot Depth")
         self.plot_depth_value = nIteration
-        plot_depth_adj = Gtk.Adjustment( nIteration, 0, 1000, 1, 0, 0)
+        plot_depth_adj = Gtk.Adjustment()
+        plot_depth_adj.configure(nIteration, 0, 1000, 1, 0, 0)
         self.plot_depth = Gtk.SpinButton(adjustment = plot_depth_adj, climb_rate = 1, digits = 0)
         self.plot_depth.set_value(self.plot_depth_value) 
         self.plot_depth.connect("value-changed", self.plot_depth_set)
@@ -131,7 +132,8 @@ class GUI_Plot_settings(Gtk.Window):
         color_depth_label = Gtk.Label()
         color_depth_label.set_text("Color Depth")
         self.color_depth_value = color_depth
-        color_depth_adj = Gtk.Adjustment( color_depth, 0, 255, 1, 0, 0)
+        color_depth_adj = Gtk.Adjustment()
+        color_depth_adj.configure(color_depth, 0, 255, 1, 0, 0)
         self.color_depth = Gtk.SpinButton(adjustment = color_depth_adj, climb_rate = 1, digits = 0)
         self.color_depth.set_value(self.color_depth_value) 
         self.color_depth.connect("value-changed", self.color_depth_set)
@@ -185,7 +187,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_Preamp_ON
         self.Ibias_Preamp_ON_value = 127
-        Ibias_Preamp_ON_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_Preamp_ON_adj = Gtk.Adjustment()
+        Ibias_Preamp_ON_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_Preamp_ON = Gtk.SpinButton(adjustment = Ibias_Preamp_ON_adj, climb_rate = 1, digits=0)
         self.Ibias_Preamp_ON.set_value(self.Ibias_Preamp_ON_value) 
         self.Ibias_Preamp_ON.connect("value-changed", self.Ibias_Preamp_ON_set)
@@ -194,7 +197,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_Preamp_OFF
         self.Ibias_Preamp_OFF_value =7
-        Ibias_Preamp_OFF_adj = Gtk.Adjustment(7, 0, 15, 1, 0, 0)
+        Ibias_Preamp_OFF_adj = Gtk.Adjustment()
+        Ibias_Preamp_OFF_adj.configure(7, 0, 15, 1, 0, 0)
         self.Ibias_Preamp_OFF = Gtk.SpinButton(adjustment = Ibias_Preamp_OFF_adj, climb_rate = 1, digits = 0)
         self.Ibias_Preamp_OFF.set_value(self.Ibias_Preamp_OFF_value) 
         self.Ibias_Preamp_OFF.connect("value-changed", self.Ibias_Preamp_OFF_set)
@@ -203,7 +207,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #VPreamp_NCAS
         self.VPreamp_NCAS_value = 127
-        VPreamp_NCAS_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        VPreamp_NCAS_adj = Gtk.Adjustment()
+        VPreamp_NCAS_adj.configure(127, 0, 255, 1, 0, 0)
         self.VPreamp_NCAS = Gtk.SpinButton(adjustment = VPreamp_NCAS_adj, climb_rate = 1, digits = 0)
         self.VPreamp_NCAS.set_value(self.VPreamp_NCAS_value) 
         self.VPreamp_NCAS.connect("value-changed", self.VPreamp_NCAS_set)
@@ -212,7 +217,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_Ikrum
         self.Ibias_Ikrum_value = 127
-        Ibias_Ikrum_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_Ikrum_adj = Gtk.Adjustment()
+        Ibias_Ikrum_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_Ikrum = Gtk.SpinButton(adjustment = Ibias_Ikrum_adj, climb_rate = 1, digits = 0)
         self.Ibias_Ikrum.set_value(self.Ibias_Ikrum_value) 
         self.Ibias_Ikrum.connect("value-changed", self.Ibias_Ikrum_set)
@@ -221,7 +227,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Vfbk
         self.Vfbk_value = 127
-        Vfbk_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Vfbk_adj = Gtk.Adjustment()
+        Vfbk_adj.configure(127, 0, 255, 1, 0, 0)
         self.Vfbk = Gtk.SpinButton(adjustment = Vfbk_adj, climb_rate = 1, digits = 0)
         self.Vfbk.set_value(self.Vfbk_value) 
         self.Vfbk.connect("value-changed", self.Vfbk_set)
@@ -230,7 +237,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Vthreshold_fine
         self.Vthreshold_fine_value = 255
-        Vthreshold_fine_adj = Gtk.Adjustment(255, 0, 511, 1, 0, 0)
+        Vthreshold_fine_adj = Gtk.Adjustment()
+        Vthreshold_fine_adj.configure(255, 0, 511, 1, 0, 0)
         self.Vthreshold_fine = Gtk.SpinButton(adjustment = Vthreshold_fine_adj, climb_rate = 1, digits = 0)
         self.Vthreshold_fine.set_value(self.Vthreshold_fine_value) 
         self.Vthreshold_fine.connect("value-changed", self.Vthreshold_fine_set)
@@ -239,7 +247,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Vthreshold_coarse
         self.Vthreshold_coarse_value = 7
-        Vthreshold_coarse_adj = Gtk.Adjustment(7, 0, 15, 1, 0, 0)
+        Vthreshold_coarse_adj = Gtk.Adjustment()
+        Vthreshold_coarse_adj.configure(7, 0, 15, 1, 0, 0)
         self.Vthreshold_coarse = Gtk.SpinButton(adjustment = Vthreshold_coarse_adj, climb_rate = 1, digits = 0)
         self.Vthreshold_coarse.set_value(self.Vthreshold_coarse_value) 
         self.Vthreshold_coarse.connect("value-changed", self.Vthreshold_coarse_set)
@@ -248,7 +257,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_DiscS1_ON
         self.Ibias_DiscS1_ON_value = 127
-        Ibias_DiscS1_ON_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_DiscS1_ON_adj = Gtk.Adjustment()
+        Ibias_DiscS1_ON_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_DiscS1_ON = Gtk.SpinButton(adjustment = Ibias_DiscS1_ON_adj, climb_rate = 1, digits = 0)
         self.Ibias_DiscS1_ON.set_value(self.Ibias_DiscS1_ON_value) 
         self.Ibias_DiscS1_ON.connect("value-changed", self.Ibias_DiscS1_ON_set)
@@ -257,7 +267,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_DiscS1_OFF
         self.Ibias_DiscS1_OFF_value = 7
-        Ibias_DiscS1_OFF_adj = Gtk.Adjustment(7, 0, 15, 1, 0, 0)
+        Ibias_DiscS1_OFF_adj = Gtk.Adjustment()
+        Ibias_DiscS1_OFF_adj.configure(7, 0, 15, 1, 0, 0)
         self.Ibias_DiscS1_OFF = Gtk.SpinButton(adjustment = Ibias_DiscS1_OFF_adj, climb_rate = 1, digits = 0)
         self.Ibias_DiscS1_OFF.set_value(self.Ibias_DiscS1_OFF_value) 
         self.Ibias_DiscS1_OFF.connect("value-changed", self.Ibias_DiscS1_OFF_set)
@@ -266,7 +277,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_DiscS2_ON
         self.Ibias_DiscS2_ON_value = 127
-        Ibias_DiscS2_ON_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_DiscS2_ON_adj = Gtk.Adjustment()
+        Ibias_DiscS2_ON_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_DiscS2_ON = Gtk.SpinButton(adjustment = Ibias_DiscS2_ON_adj, climb_rate = 1, digits = 0)
         self.Ibias_DiscS2_ON.set_value(self.Ibias_DiscS2_ON_value) 
         self.Ibias_DiscS2_ON.connect("value-changed", self.Ibias_DiscS2_ON_set)
@@ -275,7 +287,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_DiscS2_OFF
         self.Ibias_DiscS2_OFF_value = 7
-        Ibias_DiscS2_OFF_adj = Gtk.Adjustment(7, 0, 15, 1, 0, 0)
+        Ibias_DiscS2_OFF_adj = Gtk.Adjustment()
+        Ibias_DiscS2_OFF_adj.configure(7, 0, 15, 1, 0, 0)
         self.Ibias_DiscS2_OFF = Gtk.SpinButton(adjustment = Ibias_DiscS2_OFF_adj, climb_rate = 1, digits = 0)
         self.Ibias_DiscS2_OFF.set_value(self.Ibias_DiscS2_OFF_value) 
         self.Ibias_DiscS2_OFF.connect("value-changed", self.Ibias_DiscS2_OFF_set)
@@ -284,7 +297,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_PixelDAC
         self.Ibias_PixelDAC_value = 127
-        Ibias_PixelDAC_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_PixelDAC_adj = Gtk.Adjustment()
+        Ibias_PixelDAC_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_PixelDAC = Gtk.SpinButton(adjustment = Ibias_PixelDAC_adj, climb_rate = 1, digits = 0)
         self.Ibias_PixelDAC.set_value(self.Ibias_PixelDAC_value) 
         self.Ibias_PixelDAC.connect("value-changed", self.Ibias_PixelDAC_set)
@@ -293,7 +307,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_TPbufferIn
         self.Ibias_TPbufferIn_value = 127
-        Ibias_TPbufferIn_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_TPbufferIn_adj = Gtk.Adjustment()
+        Ibias_TPbufferIn_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_TPbufferIn = Gtk.SpinButton(adjustment = Ibias_TPbufferIn_adj, climb_rate = 1, digits = 0)
         self.Ibias_TPbufferIn.set_value(self.Ibias_TPbufferIn_value) 
         self.Ibias_TPbufferIn.connect("value-changed", self.Ibias_TPbufferIn_set)
@@ -302,7 +317,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_TPbufferOut
         self.Ibias_TPbufferOut_value = 127
-        Ibias_TPbufferOut_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_TPbufferOut_adj = Gtk.Adjustment()
+        Ibias_TPbufferOut_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_TPbufferOut = Gtk.SpinButton(adjustment = Ibias_TPbufferOut_adj, climb_rate = 1, digits = 0)
         self.Ibias_TPbufferOut.set_value(self.Ibias_TPbufferOut_value) 
         self.Ibias_TPbufferOut.connect("value-changed", self.Ibias_TPbufferOut_set)
@@ -311,7 +327,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #VTP_coarse
         self.VTP_coarse_value = 127
-        VTP_coarse_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        VTP_coarse_adj = Gtk.Adjustment()
+        VTP_coarse_adj.configure(127, 0, 255, 1, 0, 0)
         self.VTP_coarse = Gtk.SpinButton(adjustment = VTP_coarse_adj, climb_rate = 1, digits = 0)
         self.VTP_coarse.set_value(self.VTP_coarse_value) 
         self.VTP_coarse.connect("value-changed", self.VTP_coarse_set)
@@ -320,7 +337,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #VTP_fine
         self.VTP_fine_value = 255
-        VTP_fine_adj = Gtk.Adjustment(255, 0, 511, 1, 0, 0)
+        VTP_fine_adj = Gtk.Adjustment()
+        VTP_fine_adj.configure(255, 0, 511, 1, 0, 0)
         self.VTP_fine = Gtk.SpinButton(adjustment = VTP_fine_adj, climb_rate = 1, digits = 0)
         self.VTP_fine.set_value(self.VTP_fine_value) 
         self.VTP_fine.connect("value-changed", self.VTP_fine_set)
@@ -329,7 +347,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #Ibias_CP_PLL
         self.Ibias_CP_PLL_value = 127
-        Ibias_CP_PLL_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        Ibias_CP_PLL_adj = Gtk.Adjustment()
+        Ibias_CP_PLL_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_CP_PLL = Gtk.SpinButton(adjustment = Ibias_CP_PLL_adj, climb_rate = 1, digits = 0)
         self.Ibias_CP_PLL.set_value(self.Ibias_CP_PLL_value) 
         self.Ibias_CP_PLL.connect("value-changed", self.Ibias_CP_PLL_set)
@@ -338,7 +357,8 @@ class GUI_SetDAC(Gtk.Window):
         
         #PLL_Vcntrl
         self.PLL_Vcntrl_value = 127
-        PLL_Vcntrl_adj = Gtk.Adjustment(127, 0, 255, 1, 0, 0)
+        PLL_Vcntrl_adj = Gtk.Adjustment()
+        PLL_Vcntrl_adj.configure(127, 0, 255, 1, 0, 0)
         self.PLL_Vcntrl = Gtk.SpinButton(adjustment = PLL_Vcntrl_adj, climb_rate = 1, digits = 0)
         self.PLL_Vcntrl.set_value(self.PLL_Vcntrl_value) 
         self.PLL_Vcntrl.connect("value-changed", self.PLL_Vcntrl_set)
@@ -493,7 +513,8 @@ class GUI_PixelDAC_opt(Gtk.Window):
         
         #Threshold_start
         self.Threshold_start_value = 200
-        Threshold_start_adj = Gtk.Adjustment(200, 0, 2800, 1, 0, 0)
+        Threshold_start_adj = Gtk.Adjustment()
+        Threshold_start_adj.configure(200, 0, 2800, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
         self.Threshold_start.set_value(self.Threshold_start_value) 
         self.Threshold_start.connect("value-changed", self.Threshold_start_set)
@@ -502,7 +523,8 @@ class GUI_PixelDAC_opt(Gtk.Window):
         
         #Threshold_stop
         self.Threshold_stop_value = 1600
-        Threshold_stop_adj = Gtk.Adjustment(1600, 0, 2800, 1, 0, 0)
+        Threshold_stop_adj = Gtk.Adjustment()
+        Threshold_stop_adj.configure(1600, 0, 2800, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
         self.Threshold_stop.set_value(self.Threshold_stop_value) 
         self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
@@ -547,7 +569,8 @@ class GUI_PixelDAC_opt(Gtk.Window):
         self.Threshold_start_value = self.Threshold_start.get_value_as_int()
         temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
-        new_adjustment_start = Gtk.Adjustment(200, self.Threshold_start_value, 2800, 1, 0, 0)
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Threshold_start_value, 2800, 1, 0, 0)
         self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
         self.Threshold_stop.set_adjustment(adjustment = new_adjustment_start)
         self.Threshold_stop.set_value(temp_Threshold_stop_value)
@@ -557,7 +580,8 @@ class GUI_PixelDAC_opt(Gtk.Window):
         self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
         print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
-        new_adjustment_stop = Gtk.Adjustment(200, 0, self.Threshold_stop_value, 1, 0, 0)
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
         self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
         self.Threshold_start.set_adjustment(adjustment = new_adjustment_stop)
         self.Threshold_start.set_value(temp_Threshold_start_value)
@@ -605,7 +629,8 @@ class GUI_Equalisation(Gtk.Window):
         
         #Threshold_start
         self.Threshold_start_value = 1500
-        Threshold_start_adj = Gtk.Adjustment(200, 0, 2800, 1, 0, 0)
+        Threshold_start_adj = Gtk.Adjustment()
+        Threshold_start_adj.configure(200, 0, 2800, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
         self.Threshold_start.set_value(self.Threshold_start_value) 
         self.Threshold_start.connect("value-changed", self.Threshold_start_set)
@@ -614,7 +639,8 @@ class GUI_Equalisation(Gtk.Window):
         
         #Threshold_stop
         self.Threshold_stop_value = 2500
-        Threshold_stop_adj = Gtk.Adjustment(1600, 0, 2800, 1, 0, 0)
+        Threshold_stop_adj = Gtk.Adjustment()
+        Threshold_stop_adj.configure(1600, 0, 2800, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
         self.Threshold_stop.set_value(self.Threshold_stop_value) 
         self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
@@ -663,7 +689,8 @@ class GUI_Equalisation(Gtk.Window):
         self.Threshold_start_value = self.Threshold_start.get_value_as_int()
         temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
-        new_adjustment_start = Gtk.Adjustment(200, self.Threshold_start_value, 2800, 1, 0, 0)
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Threshold_start_value, 2800, 1, 0, 0)
         self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
         self.Threshold_stop.set_adjustment(adjustment = new_adjustment_start)
         self.Threshold_stop.set_value(temp_Threshold_stop_value)
@@ -673,7 +700,8 @@ class GUI_Equalisation(Gtk.Window):
         self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
         print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
-        new_adjustment_stop = Gtk.Adjustment(200, 0, self.Threshold_stop_value, 1, 0, 0)
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
         self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
         self.Threshold_start.set_adjustment(adjustment = new_adjustment_stop)
         self.Threshold_start.set_value(temp_Threshold_start_value)
@@ -728,7 +756,8 @@ class GUI_ToT_Calib(Gtk.Window):
         
         #Testpulse_range_start
         self.Testpulse_range_start_value = 210
-        Testpulse_range_start_adj = Gtk.Adjustment(210, 0, 511, 1, 0, 0)
+        Testpulse_range_start_adj = Gtk.Adjustment()
+        Testpulse_range_start_adj.configure(210, 0, 511, 1, 0, 0)
         self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
         self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
         self.Testpulse_range_start.connect("value-changed", self.Testpulse_range_start_set)
@@ -737,7 +766,8 @@ class GUI_ToT_Calib(Gtk.Window):
         
         #Testpulse_range_stop
         self.Testpulse_range_stop_value = 510
-        Testpulse_range_stop_adj = Gtk.Adjustment(510, 0, 511, 1, 0, 0)
+        Testpulse_range_stop_adj = Gtk.Adjustment()
+        Testpulse_range_stop_adj.configure(510, 0, 511, 1, 0, 0)
         self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
         self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
         self.Testpulse_range_stop.connect("value-changed", self.Testpulse_range_stop_set)
@@ -783,7 +813,8 @@ class GUI_ToT_Calib(Gtk.Window):
         self.Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
         temp_Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
         print("Testpulse_range_start value is " + str(self.Testpulse_range_start.get_value_as_int()) + ".")
-        new_adjustment_start = Gtk.Adjustment(200, self.Testpulse_range_start_value, 2800, 1, 0, 0)
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Testpulse_range_start_value, 2800, 1, 0, 0)
         self.Testpulse_range_stop.disconnect_by_func(self.Testpulse_range_stop_set)
         self.Testpulse_range_stop.set_adjustment(adjustment = new_adjustment_start)
         self.Testpulse_range_stop.set_value(temp_Testpulse_range_stop_value)
@@ -793,7 +824,8 @@ class GUI_ToT_Calib(Gtk.Window):
         self.Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
         temp_Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
         print("Testpulse_range_stop value is " + str(self.Testpulse_range_stop.get_value_as_int()) + ".")
-        new_adjustment_stop = Gtk.Adjustment(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
         self.Testpulse_range_start.disconnect_by_func(self.Testpulse_range_start_set)
         self.Testpulse_range_start.set_adjustment(adjustment = new_adjustment_stop)
         self.Testpulse_range_start.set_value(temp_Testpulse_range_start_value)
@@ -920,7 +952,9 @@ class GUI_Main(Gtk.Window):
         ### Page 1
         
         page1 = Gtk.Box()
-        self.notebook.append_page(page1, Gtk.Label("Basic Funktion"))
+        page1_label = Gtk.Label()
+        page1_label.set_text("Basic Funktion")
+        self.notebook.append_page(page1, page1_label)
         page1.set_border_width(10)
         page1.grid = Gtk.Grid()
         page1.grid.set_row_spacing(2)
@@ -1000,7 +1034,9 @@ class GUI_Main(Gtk.Window):
         ChipName = "Chip1"
         TestString = "Enter Something"
         self.page2 = Gtk.Box()
-        self.notebook.append_page(self.page2, Gtk.Label(ChipName))
+        page2_label = Gtk.Label()
+        page2_label.set_text(ChipName)
+        self.notebook.append_page(self.page2, page2_label)
         self.page2.set_border_width(10)
         self.page2.grid = Gtk.Grid()
         self.page2.grid.set_row_spacing(10)
@@ -1010,10 +1046,11 @@ class GUI_Main(Gtk.Window):
         self.page2.entry.connect('activate', self.entered_text)
         self.page2.space =Gtk.Label()
         self.page2.space.set_text("         ")
-        self.page2.space1 =Gtk.Label()
+        self.page2.space1 = Gtk.Label()
         self.page2.space1.set_text("    ")
         
-        self.page2.label = Gtk.Label(TestString)
+        self.page2.label = Gtk.Label()
+        self.page2.label.set_text(TestString)
         self.plotbutton = Gtk.Button(label = "Show Plot")
         self.plotbutton.connect("clicked", self.on_plotbutton_clicked)
         self.page2.grid.attach(self.page2.entry, 0, 0, 1, 1)
@@ -1024,7 +1061,7 @@ class GUI_Main(Gtk.Window):
         self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
         self.page2.pack_end(self.page2.space, True, False, 0)
         self.page2.pack_end(self.page2.space1, True, False, 0)
-        GObject.timeout_add(250, self.plotwidget.update_plot)
+        GLib.timeout_add(250, self.plotwidget.update_plot)
         
     
 ################################################################################################### 
