@@ -841,8 +841,7 @@ class GUI_ToT_Calib(Gtk.Window):
         
         GUI.Status_window_call(function = "ToT_Calib", lowerTHL = self.Testpulse_range_start_value, upperTHL = self.Testpulse_range_stop_value, iterations = self.Number_of_Iterations)
         
-        #ToTCalib.start(VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, mask_step = self.Number_of_Iterations)
-        
+        process = TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, mask_step = self.Number_of_Iterations, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
         print("Start ToT Calibration")
         
         self.destroy()
