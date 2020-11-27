@@ -74,8 +74,8 @@ class TPX3_multiprocess_start(object):
         p.start()
         p.join()
 
-class TPX3_CLI_funktion_call(object):#TODO: change to function_call
 
+class TPX3_CLI_function_call(object):
     TPX3_multiprocess_start = TPX3_multiprocess_start()
 
     def ToT_Calibration(object, VTP_fine_start = None, VTP_fine_stop = None, mask_step = None):
@@ -670,7 +670,7 @@ class TPX3_CLI_TOP(object):
     def __init__(self, ext_input_list = None):
         readline.set_completer(completer)
         readline.parse_and_bind("tab: complete")
-        funktion_call = TPX3_CLI_funktion_call()
+        function_call = TPX3_CLI_function_call()
         expertmode = False
         print ('\n Welcome to the Timepix3 control Software\n')
 
@@ -718,7 +718,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('ToT_Calibration')
                         try:
-                            funktion_call.ToT_Calibration()
+                            function_call.ToT_Calibration()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -727,12 +727,12 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) < 4:
                             print ('Incomplete set of parameters:')
                             try:
-                                funktion_call.ToT_Calibration()
+                                function_call.ToT_Calibration()
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) == 4:
                             try:
-                                funktion_call.ToT_Calibration(VTP_fine_start = int(inputlist[1]), VTP_fine_stop = int(inputlist[2]), mask_step = int(inputlist[3]))
+                                function_call.ToT_Calibration(VTP_fine_start = int(inputlist[1]), VTP_fine_stop = int(inputlist[2]), mask_step = int(inputlist[3]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 4:
@@ -743,7 +743,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Threshold_Scan')
                         try:
-                            funktion_call.Threshold_Scan()
+                            function_call.Threshold_Scan()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -752,12 +752,12 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) < 5:
                             print ('Incomplete set of parameters:')
                             try:
-                                funktion_call.Threshold_Scan()
+                                function_call.Threshold_Scan()
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) == 5:
                             try:
-                                funktion_call.Threshold_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
+                                function_call.Threshold_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
@@ -768,7 +768,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Threshold_Calibration')
                         try:
-                            funktion_call.Threshold_Calib()
+                            function_call.Threshold_Calib()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -777,12 +777,12 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) < 6:
                             print ('Incomplete set of parameters:')
                             try:
-                                funktion_call.Threshold_Scan()
+                                function_call.Threshold_Scan()
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) == 6:
                             try:
-                                funktion_call.Threshold_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]), n_pulse_height = int(inputlist[5]))
+                                function_call.Threshold_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]), n_pulse_height = int(inputlist[5]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 6:
@@ -793,7 +793,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Testpulse_Scan')
                         try:
-                            funktion_call.Testpulse_Scan()
+                            function_call.Testpulse_Scan()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -802,12 +802,12 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) < 5:
                             print ('Incomplete set of parameters:')
                             try:
-                                funktion_call.Testpulse_Scan()
+                                function_call.Testpulse_Scan()
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) == 5:
                             try:
-                                funktion_call.Testpulse_Scan(VTP_fine_start = int(inputlist[1]), VTP_fine_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
+                                function_call.Testpulse_Scan(VTP_fine_start = int(inputlist[1]), VTP_fine_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
@@ -818,7 +818,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Pixel_DAC_Optimisation')
                         try:
-                            funktion_call.Pixel_DAC_Optimisation()
+                            function_call.Pixel_DAC_Optimisation()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -827,12 +827,12 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) < 5:
                             print ('Incomplete set of parameters:')
                             try:
-                                funktion_call.Pixel_DAC_Optimisation()
+                                function_call.Pixel_DAC_Optimisation()
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) == 5:
                             try:
-                                funktion_call.Pixel_DAC_Optimisation(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
+                                function_call.Pixel_DAC_Optimisation(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
@@ -843,7 +843,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Set_DAC')
                         try:
-                            funktion_call.Set_DAC()
+                            funkcion_call.Set_DAC()
                         except:
                             print('User quit')
                     else:
@@ -852,83 +852,83 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) < 3:
                             print ('Incomplete set of parameters:')
                             try:
-                                funktion_call.Set_DAC()
+                                function_call.Set_DAC()
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) == 3:
                             if inputlist[1] in {'1', 'Ibias_Preamp_ON'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_Preamp_ON', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_Preamp_ON', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'2', 'VPreamp_NCAS'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'VPreamp_NCAS', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'VPreamp_NCAS', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'3', 'Ibias_Ikrum'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_Ikrum', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_Ikrum', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'4', 'Vfbk'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Vfbk', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Vfbk', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'5', 'Vthreshold_fine'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Vthreshold_fine', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Vthreshold_fine', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'6', 'Vthreshold_coarse'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Vthreshold_coarse', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Vthreshold_coarse', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'7', 'Ibias_DiscS1_ON'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_DiscS1_ON', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_DiscS1_ON', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'8', 'Ibias_DiscS2_ON'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_DiscS2_ON', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_DiscS2_ON', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'9', 'Ibias_PixelDAC'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_PixelDAC', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_PixelDAC', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'10', 'Ibias_TPbufferIn'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_TPbufferIn', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_TPbufferIn', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'11', 'Ibias_TPbufferOut'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_TPbufferOut', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_TPbufferOut', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'12', 'VTP_coarse'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'VTP_coarse', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'VTP_coarse', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'13', 'VTP_fine'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'VTP_fine', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'VTP_fine', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'14', 'Ibias_CP_PLL'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'Ibias_CP_PLL', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'Ibias_CP_PLL', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'15', 'PLL_Vcntrl'}:
                                 try:
-                                    funktion_call.Set_DAC(DAC_Name = 'PLL_Vcntrl', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC(DAC_Name = 'PLL_Vcntrl', DAC_value = int(inputlist[2]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             else:
@@ -941,7 +941,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Run_Datataking')
                         try:
-                            funktion_call.Run_Datataking()
+                            function_call.Run_Datataking()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -949,7 +949,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the datataking function. As argument you can give the scan timeout (in seconds, if 0 is entered the datataking will run infinitely')
                         elif len(inputlist) == 2:
                             try:
-                                funktion_call.Run_Datataking(scan_timeout = int(inputlist[1]))
+                                function_call.Run_Datataking(scan_timeout = int(inputlist[1]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
@@ -960,7 +960,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Load_Equalisation')
                         try:
-                            funktion_call.Load_Equalisation()
+                            function_call.Load_Equalisation()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -968,7 +968,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the load equalisation function. As argument you can give the path of the equalisation you like to load')
                         elif len(inputlist) == 2:
                             try:
-                                funktion_call.Load_Equalisation(equal_path = inputlist[1])
+                                function_call.Load_Equalisation(equal_path = inputlist[1])
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
@@ -979,7 +979,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Save_Equalisation')
                         try:
-                            funktion_call.Save_Equalisation()
+                            function_call.Save_Equalisation()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -987,7 +987,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the save equalisation function. As argument you can give the name of the equalisation file')
                         elif len(inputlist) == 2:
                             try:
-                                funktion_call.Save_Equalisation(file_name = inputlist[1])
+                                function_call.Save_Equalisation(file_name = inputlist[1])
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
@@ -998,7 +998,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Save_Backup')
                         try:
-                            funktion_call.Save_Backup()
+                            function_call.Save_Backup()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1006,7 +1006,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the save backup function. As argument you can give the name of the backup file')
                         elif len(inputlist) == 2:
                             try:
-                                funktion_call.Save_Backup(file_name = inputlist[1])
+                                function_call.Save_Backup(file_name = inputlist[1])
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
@@ -1043,7 +1043,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Set_Polarity')
                         try:
-                            funktion_call.Set_Polarity()
+                            function_call.Set_Polarity()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1052,12 +1052,12 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) == 2:
                             if inputlist[1] in {'negative', 'neg', '-', '1'}:
                                 try:
-                                    funktion_call.Set_Polarity(polarity = 1)
+                                    function_call.Set_Polarity(polarity = 1)
                                 except KeyboardInterrupt:
                                     print('User quit')
                             elif inputlist[1] in {'positive', 'pos', '+', '0'}:
                                 try:
-                                    funktion_call.Set_Polarity(polarity = 0)
+                                    function_call.Set_Polarity(polarity = 0)
                                 except KeyboardInterrupt:
                                     print('User quit')
                             else:
@@ -1070,7 +1070,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Set_Mask')
                         try:
-                            funktion_call.Set_Mask()
+                            function_call.Set_Mask()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1079,7 +1079,7 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) >= 2:
                             mask_input = inputlist[1:]
                             try:
-                                funktion_call.Set_Mask(mask_input_list = mask_input)
+                                function_call.Set_Mask(mask_input_list = mask_input)
                             except KeyboardInterrupt:
                                 print('User quit')
 
@@ -1088,7 +1088,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Unset_Mask')
                         try:
-                            funktion_call.Unset_Mask()
+                            function_call.Unset_Mask()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1097,7 +1097,7 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) >= 2:
                             mask_input = inputlist[1:]
                             try:
-                                funktion_call.Unset_Mask(mask_input_list = mask_input)
+                                function_call.Unset_Mask(mask_input_list = mask_input)
                             except KeyboardInterrupt:
                                 print('User quit')
 
@@ -1106,7 +1106,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Load_Mask')
                         try:
-                            funktion_call.Load_Mask()
+                            function_call.Load_Mask()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1114,7 +1114,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the load mask function. As argument you can give the name of the mask file you like to load')
                         elif len(inputlist) == 2:
                             try:
-                                funktion_call.Load_Mask(mask_path = inputlist[1])
+                                function_call.Load_Mask(mask_path = inputlist[1])
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
@@ -1125,7 +1125,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Save_ask')
                         try:
-                            funktion_call.Save_Mask()
+                            function_call.Save_Mask()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1133,7 +1133,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the save mask function. As argument you can give the name of the mask file')
                         elif len(inputlist) == 2:
                             try:
-                                funktion_call.Save_Mask(file_name = inputlist[1])
+                                function_call.Save_Mask(file_name = inputlist[1])
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
@@ -1144,7 +1144,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Set_operation_mode')
                         try:
-                            funktion_call.Set_operation_mode()
+                            function_call.Set_operation_mode()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1152,7 +1152,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the Set operation mode function. As argument you can give the operation mode as 0 for ToT & ToA, 1 for only ToA or 2 for Event Count & Integral ToT')
                         elif len(inputlist) == 2:
                                 try:
-                                    funktion_call.Set_operation_mode(Op_mode = int(inputlist[1]))
+                                    function_call.Set_operation_mode(Op_mode = int(inputlist[1]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                         elif len(inputlist) > 2:
@@ -1163,7 +1163,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Set_Fast_Io')
                         try:
-                            funktion_call.Set_Fast_Io()
+                            function_call.Set_Fast_Io()
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1171,7 +1171,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the Fast Io enable function. As argument you can give the enable as 0 (off) or 1 (on)')
                         elif len(inputlist) == 2:
                                 try:
-                                    funktion_call.Set_Fast_Io(Fast_Io_en = int(inputlist[1]))
+                                    function_call.Set_Fast_Io(Fast_Io_en = int(inputlist[1]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                         elif len(inputlist) > 2:
