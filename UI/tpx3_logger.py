@@ -214,7 +214,7 @@ class file_logger(object):
         else:
             file_tmp = None
 
-        if not (file_tmp == None and file == None):
+        if file_tmp != None and file != None:
             if os.path.getctime(file) < os.path.getctime(file_tmp):
                 return filetmp
             elif os.path.getctime(file) >= os.path.getctime(file_tmp):
