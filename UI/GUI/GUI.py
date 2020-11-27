@@ -731,9 +731,6 @@ class GUI_Equalisation(Gtk.Window):
             print("Start Charge Equal")
             #Equalisation_charge.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations)
             
-        self.window_destroy(self)
-        
-    def window_destroy(self, widget, event):
         self.destroy()
         
 class GUI_ToT_Calib(Gtk.Window):
@@ -848,9 +845,6 @@ class GUI_ToT_Calib(Gtk.Window):
         
         print("Start ToT Calibration")
         
-        self.window_destroy(self)
-        
-    def window_destroy(self, widget, event):
         self.destroy()
 
 class GUI_Main_Settings(Gtk.Window):
