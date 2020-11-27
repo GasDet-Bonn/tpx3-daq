@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import gi
 
+import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk,Gdk
 from matplotlib.figure import Figure
@@ -8,12 +9,13 @@ from numpy import arange, pi, random, linspace
 import matplotlib.cm as cm
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
-from gi.repository import GObject
-from PlotWidget import plotwidget
-import tpx3.utils
-
-#import time
-
+from gi.repository import GObject, GLib
+from UI.GUI.PlotWidget import plotwidget
+import tpx3.utils as utils
+from UI.tpx3_logger import file_logger
+from UI.CLI.tpx3_cli import TPX3_multiprocess_start
+import os
+from UI.tpx3_logger import TPX3_datalogger
 
 class GUI_Plot(Gtk.Window):
     def __init__(self):
