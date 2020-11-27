@@ -926,9 +926,10 @@ class GUI_Main(Gtk.Window):
     
     def __init__(self):
         self.open = False
-        
+        current_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        png_path = os.path.join(current_path, 'UI' + os.sep + 'GUI' + os.sep + 'GasDet3.png')
         Gtk.Window.__init__(self, title = "Gui")
-        self.set_icon_from_file(r"GasDet3.png")
+        self.set_icon_from_file(png_path)
         #self.set_default_size(800, 600)
         self.connect("button_press_event", self.window_on_button_press_event)
         
