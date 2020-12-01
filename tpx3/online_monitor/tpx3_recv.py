@@ -3,6 +3,7 @@ from online_monitor.receiver.receiver import Receiver
 from zmq.utils import jsonapi
 import numpy as np
 import time
+import copy
 
 from matplotlib import cm
 
@@ -16,14 +17,12 @@ from pyqtgraph.dockarea import DockArea, Dock
 from online_monitor.utils import utils
 
 
-def generatePgColormap(cm_name):
+def generateColorMapLut(cm_name):
     # https://github.com/pyqtgraph/pyqtgraph/issues/561
-    pltMap = cm.get_cmap(cm_name)
-    colors = pltMap.colors
-    colors = [c + [1.] for c in colors]
-    positions = np.linspace(0, 1, len(colors))
-    pgMap = pg.ColorMap(positions, colors)
-    return pgMap
+    colormap = copy.copy(cm.get_cmap(cm_name))
+    colormap._init()
+    lut = (colormap._lut[:-3] * 255).astype(np.uint8)
+    return lut
 
 
 class Tpx3(Receiver):
@@ -85,7 +84,7 @@ class Tpx3(Receiver):
         view.invertY(True)
         self.occupancy_img = pg.ImageItem(border='w')
         # Set colormap from matplotlib
-        lut = generatePgColormap("viridis").getLookupTable(0.0, 1.0, 256)
+        lut = generateColorMapLut("viridis")
 
         self.occupancy_img.setLookupTable(lut, update=True)
         # view.addItem(self.occupancy_img)
@@ -127,8 +126,8 @@ class Tpx3(Receiver):
 
     def handle_data(self, data):
         if 'meta_data' not in data:  # Histograms
-            self.occupancy_img.setImage(data['occupancy'][:, :],
-                                        autoDownsample=True)
+            self.occupancy_img.setImage(image = data['occupancy'][:, :],
+                                        autoDownsample = True)
             self.tot_plot.setData(x=np.linspace(-0.5, 15.5, 17),
                                   y=data['tot_hist'], fillLevel=0,
                                   brush=(0, 0, 255, 150))
