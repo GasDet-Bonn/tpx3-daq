@@ -82,6 +82,7 @@ class TPX3_multiprocess_start(object):
     def process_call(function, **kwargs):
         
         def startup_func(function, **kwargs):
+            system_exit = False
             try:  
                 call_func = (function+'()')
                 scan = eval(call_func)
@@ -93,12 +94,14 @@ class TPX3_multiprocess_start(object):
             except ValueError as e:
                 print(e)
             except ConfigError:
-                print("The currnt link configuration is not valid. Please start 'Init' or check your hardware.")
+                print("The current link configuration is not valid. Please start 'Init' or check your hardware.")
             except NotImplementedError:
                 pass
+            except SystemExit:
+                system_exit = True
 
             status = kwargs.pop('status', None)
-            if status != None
+            if status != None and system_exit != True:
                 status.put("Scan finished")
 
         file_logger.write_tmp_backup()
