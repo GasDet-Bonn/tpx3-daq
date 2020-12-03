@@ -119,8 +119,7 @@ class DataTake(ScanBase):
                         self.stop_scan = True
                         system_exit = True
 
-
-            time.sleep(0.1)
+            self.chip['PULSE_GEN'].reset()
 
         if scan_timeout != 0 and progress == None:
             # Close the progress bar
