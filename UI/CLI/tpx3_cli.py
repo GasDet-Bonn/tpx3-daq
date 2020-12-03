@@ -97,6 +97,10 @@ class TPX3_multiprocess_start(object):
             except NotImplementedError:
                 pass
 
+            status = kwargs.pop('status', None)
+            if status != None
+                status.put("Scan finished")
+
         file_logger.write_tmp_backup()
         new_process = Process(target=startup_func, args=(function,), kwargs=kwargs)
         new_process.start()
