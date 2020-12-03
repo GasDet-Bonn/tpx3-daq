@@ -86,8 +86,8 @@ class TPX3_multiprocess_start(object):
                 call_func = (function+'()')
                 scan = eval(call_func)
                 scan.start(**kwargs)
-                scan.analyze()
-                scan.plot()
+                scan.analyze(**kwargs)
+                scan.plot(**kwargs)
             except KeyboardInterrupt:
                 sys.exit(1)
             except ValueError as e:
