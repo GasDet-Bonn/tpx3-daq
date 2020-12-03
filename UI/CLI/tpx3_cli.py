@@ -373,7 +373,7 @@ class TPX3_CLI_function_call(object):
                         else:
                             print('Input needs to be a number!')
             elif DAC_Name in {'Vthreshold_coarse'}:
-                print('> Please enter the DAC value ( 0-15):')
+                print('> Please enter the DAC value (0-15):')
                 while(1):
                     DAC_value = input('>> ')
                     try:
@@ -813,7 +813,7 @@ class TPX3_CLI_TOP(object):
                 if expertmode == True:
                     cmd_input = input('expert> ')
                 else:
-                cmd_input = input('> ')
+                    cmd_input = input('> ')
                 #Catch if no input given
                 if cmd_input == '':
                     print ('Something enter you must!')
@@ -832,9 +832,9 @@ class TPX3_CLI_TOP(object):
                 #Help
                 if inputlist[0] in {'Help', 'help', 'h', '-h'}:
                     if expertmode == False:
-                    print('If you need detailed help on a function type [functionname -h].\n Possible options are:')
-                    for function in help_functions:
-                        print (function)
+                        print('If you need detailed help on a function type [functionname -h].\n Possible options are:')
+                        for function in help_functions:
+                            print (function)
                     elif expertmode == True:
                         print('If you need detailed help on a function type [functionname -h].\n Possible options are:')
                         for function in expert_help_functions:
@@ -970,7 +970,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Set_DAC')
                         try:
-                            funkcion_call.Set_DAC()
+                            function_call.Set_DAC()
                         except:
                             print('User quit')
                     else:
