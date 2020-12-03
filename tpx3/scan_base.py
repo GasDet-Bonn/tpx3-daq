@@ -399,10 +399,13 @@ class ScanBase(object):
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
-    def start(self, iteration = None, **kwargs):
+    def start(self, iteration = None, status = None, **kwargs):
         '''
             Prepares the scan and starts the actual test routine
         '''
+
+        if status != None:
+            status.put("Initialize scan")
 
         self._first_read = False
         self.scan_param_id = 0
@@ -523,7 +526,7 @@ class ScanBase(object):
             self.socket = None
 
         # Start the scan
-        self.scan(**kwargs)
+        self.scan(status = status, **kwargs)
 
         # Print the readout status and disable the receiver after the scan
         self.fifo_readout.print_readout_status()

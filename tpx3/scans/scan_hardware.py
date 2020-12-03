@@ -15,6 +15,7 @@ def HardwareScan(progress = None, **kwargs):
     '''
         Scans over fpga and chip links and additionally over data delays to detect the optimal link settings.
         If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+        If there is a status queue information about the status of the scan are put into it
         Stores the result in links.yml and returns a table of chips with a list of their links and settings.
     '''
     # Open the link yaml file
@@ -38,8 +39,15 @@ def HardwareScan(progress = None, **kwargs):
         # Initailize counter for progress
         step_counter = 0
 
+    if status != None:
+        status.put("Starting scan")
+    if status != None:
+        status.put("iteration_symbol")
+
     # Iterate over all fpga links
     for fpga_link_number, fpga_link in enumerate(rx_list_names):
+        status.put("Scan for {} (Iteration {} of {})".format(fpga_link, fpga_link_number + 1, len(rx_list_names)))
+        
         # Reset the chip
         chip['CONTROL']['RESET'] = 1
         chip['CONTROL'].write()
@@ -134,6 +142,12 @@ def HardwareScan(progress = None, **kwargs):
     if progress == None:
         # Close the progress bar
         pbar.close()
+
+    if status != None:
+        status.put("iteration_finish_symbol")
+
+    if status != None:
+        status.put("Create chip list")
 
     # Create a list if unique Chip-ID strings and corresponding Chip-ID bits
     ID_List = []

@@ -31,7 +31,7 @@ class DataTake(ScanBase):
 
     scan_id = "data_take"
 
-    def scan(self, scan_timeout=60.0, progress = None, **kwargs):
+    def scan(self, scan_timeout=60.0, progress = None, status = None, **kwargs):
         '''
             Takes data for run. A runtime in secondes can be defined. scan_timeout 0 is interpreted as infinite
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -58,6 +58,10 @@ class DataTake(ScanBase):
 
         # Start the run
         self.logger.info('Starting data taking...')
+        if status != None:
+            status.put("Starting run")
+        if status != None:
+            status.put("iteration_symbol")
 
         # If there is a defined runtime crate a progress bar
         if scan_timeout != 0 and progress == None:
@@ -91,10 +95,12 @@ class DataTake(ScanBase):
                                 self.stop_scan = True
 
                         # If the runtime is 0 show and update a time counter and run infinitely
-                        else:
-                            minutes, seconds = divmod(how_long, 60)
-                            hours, minutes = divmod(minutes, 60)
+                        minutes, seconds = divmod(how_long, 60)
+                        hours, minutes = divmod(minutes, 60)
+                        if scan_timeout == 0 and status == None:
                             print(f'Runtime: %d:%02d:%02d\r' % (hours, minutes, seconds), end="")
+                        elif status != None:
+                            status.put('Run since: %d:%02d:%02d' % (hours, minutes, seconds))
 
                     # react on keyboard interupt
                     except KeyboardInterrupt:
@@ -107,6 +113,9 @@ class DataTake(ScanBase):
         if scan_timeout != 0 and progress == None:
             # Close the progress bar
             pbar.clear()
+
+        if status != None:
+            status.put("iteration_finish_symbol")
 
         self.logger.info('Scan finished')
 

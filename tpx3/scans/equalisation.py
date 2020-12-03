@@ -41,10 +41,11 @@ class Equalisation(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1000, Vthreshold_stop = 1350, mask_step = 16, progress = None, **kwargs):
+    def scan(self, Vthreshold_start = 1000, Vthreshold_stop = 1350, mask_step = 16, progress = None, status = None, **kwargs):
         '''
             Takes data for equalisation. Therefore a threshold scan is performed for all pixel thresholds at 0 and at 15.
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+            If there is a status queue information about the status of the scan are put into it
         '''
 
         # Check if parameters are valid before starting the scan
@@ -66,6 +67,8 @@ class Equalisation(ScanBase):
         data = self.chip.write_tp_period(1, 0)
 
         self.logger.info('Preparing injection masks...')
+        if status != None:
+            status.put("Preparing injection masks")
 
         # Create the masks for all steps for the scan at 0 and at 15
         mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0, progress = progress)
@@ -73,6 +76,10 @@ class Equalisation(ScanBase):
 
         # Scan with pixel threshold 0
         self.logger.info('Starting scan for THR = 0...')
+        if status != None:
+            status.put("Starting scan")
+        if status != None:
+            status.put("iteration_symbol")
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
         if progress == None:
@@ -87,6 +94,8 @@ class Equalisation(ScanBase):
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id):
+                if status != None:
+                    status.put("Scan iteration {} of {} for THR = 0".format(scan_param_id + 1, len(cal_high_range)))
                 for mask_step_cmd in mask_cmds:
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
@@ -126,6 +135,8 @@ class Equalisation(ScanBase):
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
+                if status != None:
+                    status.put("Scan iteration {} of {} for THR = 15".format(scan_param_id + 1, len(cal_high_range)))
                 for mask_step_cmd in mask_cmds2:
                     # Only activate testpulses for columns with active pixels
                     self.chip.write(mask_step_cmd)
@@ -150,16 +161,22 @@ class Equalisation(ScanBase):
             # Close the progress bar
             pbar.close()
 
+        if status != None:
+            status.put("iteration_finish_symbol"
+
         self.logger.info('Scan finished')
 
-    def analyze(self, progress = None, **kwargs):
+    def analyze(self, progress = None, status = None, **kwargs):
         '''
             Analyze the data of the equalisation and calculate the equalisation matrix
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+            If there is a status queue information about the status of the scan are put into it
         '''
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting data analysis...')
+        if status != None:
+            status.put("Performing data analysis")
 
         # Open the HDF5 which contains all data of the equalisation
         with tb.open_file(h5_filename, 'r+') as h5_file:

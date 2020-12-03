@@ -37,10 +37,11 @@ class NoiseScan(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, progress = None, **kwargs):
+    def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, progress = None, status = None, **kwargs):
         '''
             Takes data for threshold scan in a range of thresholds.
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+            If there is a status queue information about the status of the scan are put into it
         '''
 
         # Check if parameters are valid before starting the scan
@@ -58,6 +59,10 @@ class NoiseScan(ScanBase):
 
         # Start the scan
         self.logger.info('Starting scan...')
+        if status != None:
+            status.put("Starting scan")
+        if status != None:
+            status.put("iteration_symbol")
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
         if progress == None:
@@ -74,7 +79,9 @@ class NoiseScan(ScanBase):
             # Set the threshold
             self.chip.set_threshold(vcal)
 
-            with self.readout(scan_param_id=scan_param_id):           
+            with self.readout(scan_param_id=scan_param_id):
+                if status != None:
+                    status.put("Scan iteration {} of {}".format(scan_param_id + 1, len(cal_high_range)))           
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
                     time.sleep(0.01)
@@ -94,17 +101,23 @@ class NoiseScan(ScanBase):
             # Close the progress bar
             pbar.close()
 
+        if status != None:
+            status.put("iteration_finish_symbol")
+
         self.logger.info('Scan finished')
 
-    def analyze(self, progress = None, **kwargs):
+    def analyze(self, progress = None, status = None, **kwargs):
         '''
             Analyze the data of the scan
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+            If there is a status queue information about the status of the scan are put into it
         '''
 
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting data analysis...')
+        if status != None:
+            status.put("Performing data analysis")
 
         # Open the HDF5 which contains all data of the scan
         with tb.open_file(h5_filename, 'r+') as h5_file:
@@ -140,14 +153,17 @@ class NoiseScan(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
-    def plot(self, **kwargs):
+    def plot(self, status = None, **kwargs):
         '''
             Plot data and histograms of the scan
+            If there is a status queue information about the status of the scan are put into it
         '''
 
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting plotting...')
+        if status != None:
+            status.put("Create Plots")
         with tb.open_file(h5_filename, 'r+') as h5_file:
 
             with plotting.Plotting(h5_filename) as p:

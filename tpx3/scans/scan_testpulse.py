@@ -40,10 +40,11 @@ class TestpulseScan(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, VTP_fine_start = 100, VTP_fine_stop = 200, n_injections = 100, mask_step = 16, progress = None, **kwargs):
+    def scan(self, VTP_fine_start = 100, VTP_fine_stop = 200, n_injections = 100, mask_step = 16, progress = None, status = None, **kwargs):
         '''
             Takes data for testpulse scan over a range of testpulses with a defined number of pulses per iteration
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+            If there is a status queue information about the status of the scan are put into it
         '''
 
         # Check if parameters are valid before starting the scan
@@ -69,12 +70,18 @@ class TestpulseScan(ScanBase):
         self.chip.write_tp_pulsenumber(n_injections)
 
         self.logger.info('Preparing injection masks...')
+        if status != None:
+            status.put("Preparing injection masks")
 
         # Create the masks for all steps
         mask_cmds = self.create_scan_masks(mask_step, progress = progress)
 
         # Start the scan
         self.logger.info('Starting scan...')
+        if status != None:
+            status.put("Starting scan")
+        if status != None:
+            status.put("iteration_symbol")
         cal_high_range = list(range(VTP_fine_start, VTP_fine_stop, 1))
 
         if progress == None:
@@ -90,6 +97,8 @@ class TestpulseScan(ScanBase):
             time.sleep(0.001)
 
             with self.readout(scan_param_id=scan_param_id):
+                if status != None:
+                    status.put("Scan iteration {} of {}".format(scan_param_id + 1, len(cal_high_range)))
                 for i, mask_step_cmd in enumerate(mask_cmds):
                     # Only activate testpulses for columns with active pixels
                     self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
@@ -117,17 +126,23 @@ class TestpulseScan(ScanBase):
             # Close the progress bar
             pbar.close()
 
+        if status != None:
+            status.put("iteration_finish_symbol")
+
         self.logger.info('Scan finished')
 
-    def analyze(self, progress = None, **kwargs):
+    def analyze(self, progress = None, status = None, **kwargs):
         '''
             Analyze the data of the scan
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+            If there is a status queue information about the status of the scan are put into it
         '''
 
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting data analysis...')
+        if status != None:
+            status.put("Performing data analysis")
 
         # Open the HDF5 which contains all data of the scan
         with tb.open_file(h5_filename, 'r+') as h5_file:
@@ -171,14 +186,17 @@ class TestpulseScan(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
-    def plot(self, **kwargs):
+    def plot(self, status = None, **kwargs):
         '''
             Plot data and histograms of the scan
+            If there is a status queue information about the status of the scan are put into it
         '''
 
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting plotting...')
+        if status != None:
+            status.put("Create Plots")
         with tb.open_file(h5_filename, 'r+') as h5_file:
             with plotting.Plotting(h5_filename) as p:
 
