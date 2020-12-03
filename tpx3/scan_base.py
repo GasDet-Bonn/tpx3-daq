@@ -490,12 +490,6 @@ class ScanBase(object):
         data = self.chip.reset_sequential(False)
         self.chip.write(data, True)
         fdata = self.chip['FIFO'].get_data()
-        dout = self.chip.decode_fpga(fdata, True)
-        ddout = self.chip.decode(dout[0], 0x71)
-        try:
-            ddout = self.chip.decode(dout[1], 0x71)
-        except IndexError:
-            self.logger.warning("no EoR found")
 
         self.maskfile = kwargs.get('maskfile', None)
         self.thrfile = kwargs.get('thrfile', None)
