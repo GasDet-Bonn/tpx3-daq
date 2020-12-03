@@ -242,7 +242,16 @@ class TPX3_CLI_function_call(object):
                     else:
                         print('Input needs to be a number!')
             print('> Please enter the number of pulse height steps(2-100):')
-            n_pulse_heights = int(input('>> '))
+            while(1):
+                n_pulse_heights = input('>> ')
+                try:
+                    n_pulse_heights = int(n_pulse_heights)
+                    break
+                except:
+                    if n_pulse_heights in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
             
         print ('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step, 'Number of pulse heights = ', n_pulse_heights)
         TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, n_pulse_heights = n_pulse_heights, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
