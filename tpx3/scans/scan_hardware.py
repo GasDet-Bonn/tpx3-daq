@@ -11,7 +11,12 @@ import time
 import os
 import yaml
 
-def HardwareScan():
+def HardwareScan(progress = None, **kwargs):
+    '''
+        Scans over fpga and chip links and additionally over data delays to detect the optimal link settings.
+        If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
+        Stores the result in links.yml and returns a table of chips with a list of their links and settings.
+    '''
     # Open the link yaml file
     proj_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     yaml_file =  os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
@@ -26,8 +31,12 @@ def HardwareScan():
 
     rx_list_names = ['RX0','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
 
-    # Initialize the progress bar
-    pbar = tqdm(total = len(rx_list_names))
+    if progress == None:
+        # Initialize the progress bar
+        pbar = tqdm(total = len(rx_list_names))
+    else:
+        # Initailize counter for progress
+        step_counter = 0
 
     # Iterate over all fpga links
     for fpga_link_number, fpga_link in enumerate(rx_list_names):
@@ -109,15 +118,22 @@ def HardwareScan():
                         register['data-invert'] = 0
                         register['data-edge'] = 0
 
-        # Update the progress bar
-        pbar.update(1)
+        if progress == None:
+            # Update the progress bar
+            pbar.update(1)
+        else:
+            # Update the progress fraction and put it in the queue
+            step_counter += 1
+            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+            progress.put(fraction)
 
         # Write the ideal settings to the yaml file
         with open(yaml_file, 'w') as file:
             yaml.dump(yaml_data, file)
 
-    # Close the progress bar
-    pbar.close()
+    if progress == None:
+        # Close the progress bar
+        pbar.close()
 
     # Create a list if unique Chip-ID strings and corresponding Chip-ID bits
     ID_List = []

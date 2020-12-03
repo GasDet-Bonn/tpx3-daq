@@ -31,9 +31,10 @@ class DataTake(ScanBase):
 
     scan_id = "data_take"
 
-    def scan(self, scan_timeout=60.0, **kwargs):
+    def scan(self, scan_timeout=60.0, progress = None, **kwargs):
         '''
-            Takes data for run
+            Takes data for run. A runtime in secondes can be defined. scan_timeout 0 is interpreted as infinite
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         # Check if parameters are valid before starting the scan
@@ -59,7 +60,7 @@ class DataTake(ScanBase):
         self.logger.info('Starting data taking...')
 
         # If there is a defined runtime crate a progress bar
-        if scan_timeout != 0:
+        if scan_timeout != 0 and progress == None:
             pbar = tqdm(total=int(scan_timeout))
 
         start_time = time.time()
@@ -78,8 +79,14 @@ class DataTake(ScanBase):
                         
                         # If there is a defined runtime update the progress bar continiously until the time is over
                         if scan_timeout != 0:
-                            pbar.n = how_long
-                            pbar.refresh()
+                            if progress == None:
+                                # Update the progress bar
+                                pbar.n = how_long
+                                pbar.refresh()
+                            else:
+                                # Update the progress fraction and put it in the queue
+                                fraction = how_long / scan_timeout
+                                progress.put(fraction)
                             if how_long > scan_timeout:
                                 self.stop_scan = True
 
@@ -97,7 +104,7 @@ class DataTake(ScanBase):
 
             time.sleep(0.1)
 
-        if scan_timeout != 0:
+        if scan_timeout != 0 and progress == None:
             # Close the progress bar
             pbar.clear()
 

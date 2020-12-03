@@ -414,36 +414,62 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
     return (popt[1], popt[2], chi2 / (y.shape[0] - 3 - 1))
 
 
-def imap_bar(func, args, n_processes=None):
-    ''' Apply function (func) to interable (args) with progressbar
+def imap_bar(func, args, n_processes=None, progress = None):
+    '''
+        Apply function (func) to interable (args) with progressbar based on tqdm or 'progress'
+        in case of a GUI
     '''
     p = mp.Pool(n_processes)
     res_list = []
-    pbar = tqdm(total=len(args))
+
+    if progress == None:
+        pbar = tqdm(total=len(args))
+    else:
+        step_counter = 0
+
     for _, res in enumerate(p.imap(func, args)):
-        pbar.update()
+        if progress == None:
+            pbar.update(1)
+        else:
+            step_counter += 1
+            fraction = step_counter / len(args)
+            progress.put(fraction)
         res_list.append(res)
-    pbar.close()
+
+    if progress == None:
+        pbar.close()
+    
     p.close()
     p.join()
     return res_list
 
 
 def fit_scurves_multithread(scurves, scan_param_range,
-                            n_injections, invert_x=False):
+                            n_injections, invert_x=False, progress = None):
     _scurves = np.zeros((256*256, len(scan_param_range)), dtype=np.uint16)
     
     # Set all values above n_injections to n_injections. This is necessary, as the noise peak can lead to problems in the scurve fits.
     # As we are only interested in the position of the scurve (which lays below n_injections) this should not cause a problem.
     logger.info("Cut S-curves to %i hits for S-curve fit", n_injections)
-    pbar = tqdm(total=_scurves.shape[0] * _scurves.shape[1])
+    if progress == None:
+        pbar = tqdm(total=_scurves.shape[0] * _scurves.shape[1])
+    else:
+        step_counter = 0
     for col in range(_scurves.shape[0]):
         for row in range(_scurves.shape[1]):
             if _scurves[col][row] > n_injections:
                 _scurves[col][row] = n_injections
             else:
                 _scurves[col][row] = scurves[col][row]
-            pbar.update(1)
+            if progress == None:
+                pbar.update(1)
+            else:
+                step_counter += 1
+                fraction = step_counter / mask_step
+                progress.put(fraction)
+
+    if progress == None:
+        pbar.close()
     
     _scurves = np.ma.masked_array(_scurves)
     scan_param_range = np.array(scan_param_range)
@@ -451,7 +477,13 @@ def fit_scurves_multithread(scurves, scan_param_range,
     # Calculate noise median for fit start value
     logger.info("Calculate S-curve fit start parameters")
     sigmas = []
-    for curve in tqdm(_scurves):
+
+    if progress == None:
+        pbar = tqdm(total=_scurves.shape[0] * _scurves.shape[1])
+    else:
+        step_counter = 0
+
+    for curve in _scurves:
         # Calculate from pixels with valid data (maximum = n_injections)
         if curve.max() == n_injections:
             if np.all(curve.mask == np.ma.nomask):
@@ -466,6 +498,17 @@ def fit_scurves_multithread(scurves, scan_param_range,
                               n_injections=n_injections,
                               invert_x=invert_x)
             sigmas.append(sigma)
+
+            if progress == None:
+                pbar.update(1)
+            else:
+                step_counter += 1
+                fraction = step_counter / (_scurves.shape[0] * _scurves.shape[1])
+                progress.put(fraction)
+
+    if progress == None:
+        pbar.close()
+
     sigma_0 = np.median(sigmas)
 
     logger.info("Start S-curve fit on %d CPU core(s)", mp.cpu_count())
@@ -476,7 +519,7 @@ def fit_scurves_multithread(scurves, scan_param_range,
                                 sigma_0=sigma_0,
                                 invert_x=invert_x)
 
-    result_list = imap_bar(partialfit_scurve, scurves.tolist())
+    result_list = imap_bar(partialfit_scurve, scurves.tolist(), progress = progress)
     result_array = np.array(result_list)
     logger.info("S-curve fit finished")
 
@@ -520,7 +563,7 @@ def fit_ToT(tot_data, scan_param_range):
     return (popt[0], popt[1], popt[2], popt[3], chi2 / (y.shape[0] - 3 - 1))
 
 
-def fit_totcurves_multithread(totcurves, scan_param_range):
+def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
     totcurves = np.ma.masked_array(totcurves)
     scan_param_range = np.array(scan_param_range)
 
@@ -528,7 +571,7 @@ def fit_totcurves_multithread(totcurves, scan_param_range):
 
     partialfit_totcurves = partial(fit_ToT, scan_param_range=scan_param_range)
 
-    result_list = imap_bar(partialfit_totcurves, totcurves.tolist())
+    result_list = imap_bar(partialfit_totcurves, totcurves.tolist(), progress = progress)
     result_array = np.array(result_list)
     logger.info("ToT-curve fit finished")
 

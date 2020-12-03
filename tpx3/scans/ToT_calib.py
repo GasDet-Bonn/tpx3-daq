@@ -39,9 +39,10 @@ class ToTCalib(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, VTP_fine_start=210, VTP_fine_stop=511, mask_step=64, **kwargs):
+    def scan(self, VTP_fine_start=210, VTP_fine_stop=511, mask_step=64, progress = None, **kwargs):
         '''
-            Takes data for the ToT calibration
+            Takes data for the ToT calibration in a range of testpulses
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         # Check if parameters are valid before starting the scan
@@ -70,14 +71,18 @@ class ToTCalib(ScanBase):
         self.logger.info('Preparing injection masks...')
 
         # Create the masks for all steps
-        mask_cmds = self.create_scan_masks(mask_step)
+        mask_cmds = self.create_scan_masks(mask_step, progress = progress)
 
         # Start the scan
         self.logger.info('Starting scan...')
         cal_high_range = list(range(VTP_fine_start, VTP_fine_stop, 1))
 
-        # Initialize progress bar
-        pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        if progress == None:
+            # Initialize progress bar
+            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        else:
+            # Initailize counter for progress
+            step_counter = 0
 
         for scan_param_id, vcal in enumerate(cal_high_range):
             # Set the fine testpulse DAC
@@ -95,22 +100,30 @@ class ToTCalib(ScanBase):
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(0.01)
-                        pbar.update(1)
+                        if progress == None:
+                            # Update the progress bar
+                            pbar.update(1)
+                        else:
+                            # Update the progress fraction and put it in the queue
+                            step_counter += 1
+                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            progress.put(fraction)
                     self.chip.stop_readout()
                     self.chip.reset_sequential()
                     time.sleep(0.01)
                 time.sleep(0.01)
 
-        # Close the progress bar
-        pbar.close()
+        if progress == None:
+            # Close the progress bar
+            pbar.close()
 
         self.logger.info('Scan finished')
 
-    def analyze(self):
+    def analyze(self, progress = None, **kwargs):
         '''
             Analyze the data of the scan
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
-
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting data analysis...')
@@ -139,7 +152,7 @@ class ToTCalib(ScanBase):
 
             # Fit ToT-Curves to the histogramms for all pixels
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
-            a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range)
+            a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range, progress = progress)
 
             # Save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
@@ -157,7 +170,7 @@ class ToTCalib(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
-    def plot(self):
+    def plot(self, **kwargs):
         '''
             Plot data and histograms of the scan
         '''

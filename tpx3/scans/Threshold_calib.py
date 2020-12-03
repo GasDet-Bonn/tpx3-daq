@@ -42,9 +42,10 @@ class ThresholdCalib(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1350, Vthreshold_stop = 2911, n_injections = 100, mask_step = 16, n_pulse_heights = 5, **kwargs):
+    def scan(self, Vthreshold_start = 1350, Vthreshold_stop = 2911, n_injections = 100, mask_step = 16, n_pulse_heights = 5, progress = None, **kwargs):
         '''
             Threshold scan main loop
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         # Check if parameters are valid before starting the scan
@@ -78,18 +79,19 @@ class ThresholdCalib(ScanBase):
                 self.dump_configuration(iteration = iteration, **args)
 
             # Start the scan for the current iteration
-            self.scan_iteration(iteration, **args)
+            self.scan_iteration(iteration, progress = progress, **args)
 
             # Analyse the data of the current iteration
-            opt_results = self.analyze_iteration(iteration)
+            opt_results = self.analyze_iteration(iteration, progress = progress)
 
         # Create the plots for the full calibration
         self.plot()
 
 
-    def scan_iteration(self, iteration, n_pulse_heights, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
+    def scan_iteration(self, iteration, n_pulse_heights, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, progress = None, **kwargs):
         '''
             Takes data for one iteration of the calibration. Therefore a threshold scan is performed for all pixel thresholds
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         # Set general configuration registers of the Timepix3 
@@ -105,15 +107,19 @@ class ThresholdCalib(ScanBase):
         self.logger.info('Preparing injection masks...')
 
         # Create the masks for all steps
-        mask_cmds = self.create_scan_masks(mask_step)
+        mask_cmds = self.create_scan_masks(mask_step, progress = progress)
 
         # Start the scan
         self.logger.info('Threshold calibration iteration %i', iteration)
         self.logger.info('Starting scan...')
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
-        # Initialize progress bar
-        pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        if progress == None:
+            # Initialize progress bar
+            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        else:
+            # Initailize counter for progress
+            step_counter = 0
 
         # Set testpulse DACs
         self.chip.set_dac("VTP_coarse", 100)
@@ -134,20 +140,29 @@ class ThresholdCalib(ScanBase):
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(0.001)
-                        pbar.update(1)
+                        if progress == None:
+                            # Update the progress bar
+                            pbar.update(1)
+                        else:
+                            # Update the progress fraction and put it in the queue
+                            step_counter += 1
+                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            progress.put(fraction)
                     self.chip.stop_readout()
                     self.chip.reset_sequential()
                     time.sleep(0.001)
                 time.sleep(0.001)
 
-        # Close the progress bar
-        pbar.close()
+        if progress == None:
+            # Close the progress bar
+            pbar.close()
 
         self.logger.info('Iteration %i finished', iteration)
 
-    def analyze_iteration(self, iteration):
+    def analyze_iteration(self, iteration, progress = None):
         '''
             Analyze the data of the iteration
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         h5_filename = self.output_filename + '.h5'
@@ -183,7 +198,7 @@ class ThresholdCalib(ScanBase):
 
             # Fit S-Curves to the histogramms for all pixels
             param_range = list(range(Vthreshold_start, Vthreshold_stop))
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True)
+            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True, progress = progress)
 
             # Save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted_' + str(iteration), 'Interpreted Data')
@@ -201,7 +216,7 @@ class ThresholdCalib(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(eval(interpreted_call), name='HistOcc', obj=hist_occ)
 
-    def plot(self):
+    def plot(self, **kwargs):
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting plotting...')

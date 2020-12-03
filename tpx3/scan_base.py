@@ -215,11 +215,13 @@ class ScanBase(object):
 
         return valid
 
-    def create_scan_masks(self, mask_step, pixel_threhsold = None):
+    def create_scan_masks(self, mask_step, pixel_threhsold = None, progress = None):
         '''
             Creates the pixel configuration register masks for scans based on the number of mask_step.
             If a value is set for pixel threshold it is used for all pixels. Else the value which is
             already stored for the pixels is used.
+            If progress is None a tqdm progress bar is used else progress should be a
+            Multiprocess Queue which stores the progress as fraction of 1
             A list of commands to set the masks is returned
         '''
         # Check if parameters are valid
@@ -231,8 +233,12 @@ class ScanBase(object):
         # Empty array for the masks command for the scan
         mask_cmds = []
 
-        # Initialize progress bar
-        pbar = tqdm(total=mask_step)
+        if progress == None:
+            # Initialize progress bar
+            pbar = tqdm(total=mask_step)
+        else:
+            # Initailize counter for progress
+            step_counter = 0
 
         # Create the masks for all steps
         for i in range(mask_step):
@@ -263,14 +269,20 @@ class ScanBase(object):
             # Append the list of command for the current mask_step to the full command list
             mask_cmds.append(mask_step_cmd)
 
-            # Update the progress bar
-            pbar.update(1)
+            if progress == None:
+                # Update the progress bar
+                pbar.update(1)
+            else:
+                # Update the progress fraction and put it in the queue
+                step_counter += 1
+                fraction = step_counter / mask_step
+                progress.put(fraction)
 
-        # Close the progress bar
-        pbar.close()
+        if progress == None:
+            # Close the progress bar
+            pbar.close()
 
         return mask_cmds
-
 
     def dump_configuration(self, iteration = None, **kwargs):
         '''
@@ -533,10 +545,10 @@ class ScanBase(object):
             self.socket.close()
             self.socket = None
 
-    def analyze(self):
+    def analyze(self, **kwargs):
         raise NotImplementedError('ScanBase.analyze() not implemented')
 
-    def plot(self):
+    def plot(self, **kwargs):
         raise NotImplementedError('ScanBase.plot() not implemented')
 
     def scan(self, **kwargs):

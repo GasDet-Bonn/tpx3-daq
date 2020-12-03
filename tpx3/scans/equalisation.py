@@ -41,9 +41,10 @@ class Equalisation(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1000, Vthreshold_stop = 1350, mask_step = 16, **kwargs):
+    def scan(self, Vthreshold_start = 1000, Vthreshold_stop = 1350, mask_step = 16, progress = None, **kwargs):
         '''
             Takes data for equalisation. Therefore a threshold scan is performed for all pixel thresholds at 0 and at 15.
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         # Check if parameters are valid before starting the scan
@@ -67,15 +68,19 @@ class Equalisation(ScanBase):
         self.logger.info('Preparing injection masks...')
 
         # Create the masks for all steps for the scan at 0 and at 15
-        mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0)
-        mask_cmds2 = self.create_scan_masks(mask_step, pixel_threhsold = 15)
+        mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0, progress = progress)
+        mask_cmds2 = self.create_scan_masks(mask_step, pixel_threhsold = 15, progress = progress)
 
         # Scan with pixel threshold 0
         self.logger.info('Starting scan for THR = 0...')
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
 
-        # Initialize progress bar
-        pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        if progress == None:
+            # Initialize progress bar
+            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        else:
+            # Initailize counter for progress
+            step_counter = 0
 
         for scan_param_id, vcal in enumerate(cal_high_range):
             # Set the threshold
@@ -89,20 +94,32 @@ class Equalisation(ScanBase):
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(0.01)
-                        pbar.update(1)
+                        if progress == None:
+                            # Update the progress bar
+                            pbar.update(1)
+                        else:
+                            # Update the progress fraction and put it in the queue
+                            step_counter += 1
+                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            progress.put(fraction)
                     self.chip.stop_readout()
                     self.chip.reset_sequential()
                     time.sleep(0.001)
                 time.sleep(0.001)
 
-        # Close the progress bar
-        pbar.close()
+        if progress == None:
+            # Close the progress bar
+            pbar.close()
 
         # Scan with pixel threshold 15
         self.logger.info('Starting scan for THR = 15...')
 
-        # Initialize progress bar
-        pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+        if progress == None:
+            # Initialize progress bar
+            pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+        else:
+            # Initailize counter for progress
+            step_counter = 0
 
         for scan_param_id, vcal in enumerate(cal_high_range):
             # Set the threshold
@@ -116,20 +133,29 @@ class Equalisation(ScanBase):
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(0.01)
-                        pbar.update(1)
+                        if progress == None:
+                            # Update the progress bar
+                            pbar.update(1)
+                        else:
+                            # Update the progress fraction and put it in the queue
+                            step_counter += 1
+                            fraction = step_counter / (len(mask_cmds2) * len(cal_high_range))
+                            progress.put(fraction)
                     self.chip.stop_readout()
                     self.chip.reset_sequential()
                     time.sleep(0.001)
                 time.sleep(0.001)
 
-        # Close the progress bar
-        pbar.close()
+        if progress == None:
+            # Close the progress bar
+            pbar.close()
 
         self.logger.info('Scan finished')
 
-    def analyze(self):
+    def analyze(self, progress = None, **kwargs):
         '''
             Analyze the data of the equalisation and calculate the equalisation matrix
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
         h5_filename = self.output_filename + '.h5'
 

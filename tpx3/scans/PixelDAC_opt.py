@@ -44,10 +44,11 @@ class PixelDAC_opt(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, mask_step = 16, **kwargs):
+    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, mask_step = 16, progress = None, **kwargs):
         '''
             Main function of the pixel dac optimization. Starts the scan iterations and the analysis of
             of the individual iterations.
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         # Check if parameters are valid before starting the scan
@@ -89,10 +90,10 @@ class PixelDAC_opt(ScanBase):
                 self.dump_configuration(iteration = iteration, **args)
 
             # Start the scan for the current iteration
-            self.scan_iteration(**args)
+            self.scan_iteration(progress = progress, **args)
 
             # Analyse the data of the current iteration
-            opt_results = self.analyze_iteration(iteration)
+            opt_results = self.analyze_iteration(iteration, progress = progress)
             last_pixeldac = pixeldac
 
             # Store results of iteration
@@ -113,9 +114,10 @@ class PixelDAC_opt(ScanBase):
         with open('../dacs.yml', 'w') as f:
             yaml.dump(doc, f)
 
-    def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, **kwargs):
+    def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, progress = None, **kwargs):
         '''
             Takes data for one iteration of the optimization. Therefore a threshold scan is performed for all pixel thresholds at 0 and at 15.
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         # Set general configuration registers of the Timepix3 
@@ -135,15 +137,19 @@ class PixelDAC_opt(ScanBase):
         self.logger.info('Preparing injection masks...')
 
         # Create the masks for all steps for the scan at 0 and at 15
-        mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0)
-        mask_cmds2 = self.create_scan_masks(mask_step, pixel_threhsold = 15)
+        mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0, progress = progress)
+        mask_cmds2 = self.create_scan_masks(mask_step, pixel_threhsold = 15, progress = progress)
 
         # Scan with all masks over the given threshold range for pixelthreshold 0
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
         self.logger.info('Starting scan for THR = 0...')
 
-        # Initialize progress bar
-        pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        if progress == None:
+            # Initialize progress bar
+            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+        else:
+            # Initailize counter for progress
+            step_counter = 0
 
         for scan_param_id, vcal in enumerate(cal_high_range):
             # Set the threshold
@@ -160,20 +166,32 @@ class PixelDAC_opt(ScanBase):
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(0.01)
-                        pbar.update(1)
+                        if progress == None:
+                            # Update the progress bar
+                            pbar.update(1)
+                        else:
+                            # Update the progress fraction and put it in the queue
+                            step_counter += 1
+                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            progress.put(fraction)
                     self.chip.stop_readout()
                     self.chip.reset_sequential()
                     time.sleep(0.001)
                 time.sleep(0.001)
         
-        # Close the progress bar
-        pbar.close()
+        if progress == None:
+            # Close the progress bar
+            pbar.close()
 
         # Scan with all masks over the given threshold range for pixelthreshold 15
         self.logger.info('Starting scan for THR = 15...')
 
-        # Initialize progress bar
-        pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+        if progress == None:
+            # Initialize progress bar
+            pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+        else:
+            # Initailize counter for progress
+            step_counter = 0
 
         for scan_param_id, vcal in enumerate(cal_high_range):
             # Set the threshold
@@ -190,21 +208,30 @@ class PixelDAC_opt(ScanBase):
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(0.01)
-                        pbar.update(1)
+                        if progress == None:
+                            # Update the progress bar
+                            pbar.update(1)
+                        else:
+                            # Update the progress fraction and put it in the queue
+                            step_counter += 1
+                            fraction = step_counter / (len(mask_cmds2) * len(cal_high_range))
+                            progress.put(fraction)
                     self.chip.stop_readout()
                     self.chip.reset_sequential()
                     time.sleep(0.001)
                 time.sleep(0.001)
 
-        # Close the progress bar
-        pbar.close()
+        if progress == None:
+            # Close the progress bar
+            pbar.close()
 
         self.logger.info('Scan finished')
 
-    def analyze_iteration(self, iteration = 0):
+    def analyze_iteration(self, iteration = 0, progress = None):
         '''
             Analyze the data of the iteration and calculate the new Ibias_PixelDAC value.
             In the last iteration the data is also used to calculate an equalisation matrix.
+            If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
         '''
 
         h5_filename = self.output_filename + '.h5'
@@ -253,8 +280,8 @@ class PixelDAC_opt(ScanBase):
 
             # Fit S-Curves to the histogramms for all pixels
             self.logger.info('Fit the scurves for all pixels...')
-            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True)
-            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True)
+            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
 
             # Put the threshold distribution based on the fit results in two histogramms
             self.logger.info('Get the cumulated global threshold distributions...')
