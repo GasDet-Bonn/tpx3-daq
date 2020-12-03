@@ -515,7 +515,7 @@ class ScanBase(object):
         self.dump_configuration(iteration = iteration, **kwargs)
 
         # Setup data sending - can be used eg. for an event Display
-        socket_addr = kwargs.pop('send_data', 'tcp://127.0.0.2:5500')
+        socket_addr = kwargs.pop('send_data', 'tcp://127.0.0.1:5500')
         if socket_addr:
             try:
                 self.context = zmq.Context()
