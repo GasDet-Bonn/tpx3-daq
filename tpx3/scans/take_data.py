@@ -15,6 +15,8 @@ from tqdm import tqdm
 import numpy as np
 import time
 import tables as tb
+import signal
+import sys
 
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
@@ -31,6 +33,11 @@ class DataTake(ScanBase):
 
     scan_id = "data_take"
 
+    def handle_exit(sig, frame):
+        raise(SystemExit)
+
+    signal.signal(signal.SIGTERM, handle_exit)
+
     def scan(self, scan_timeout=60.0, progress = None, status = None, **kwargs):
         '''
             Takes data for run. A runtime in secondes can be defined. scan_timeout 0 is interpreted as infinite
@@ -41,7 +48,8 @@ class DataTake(ScanBase):
         if scan_timeout < 0:
             raise ValueError("Value {} for scan_timeout must be equal or bigger than 0".format(scan_timeout))
 
-        
+        system_exit = False
+
         # Set the threshold of the chip
         Vthreshold_fine = 117
         Vthreshold_coarse = 8
@@ -106,6 +114,10 @@ class DataTake(ScanBase):
                     except KeyboardInterrupt:
                         self.logger.info('Scan was stopped due to keyboard interrupt')
                         self.stop_scan = True
+                    except SystemExit:
+                        self.logger.info('Scan was stopped due to system exit')
+                        self.stop_scan = True
+                        system_exit = True
 
 
             time.sleep(0.1)
@@ -118,6 +130,9 @@ class DataTake(ScanBase):
             status.put("iteration_finish_symbol")
 
         self.logger.info('Scan finished')
+
+        if system_exit == True:
+            raise SystemExit
 
 if __name__ == "__main__":
     scan = DataTake()
