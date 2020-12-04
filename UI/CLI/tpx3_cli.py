@@ -1,7 +1,7 @@
 import readline
 import sys
 import os
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from shutil import copy
 from tpx3.scans.ToT_calib import ToTCalib
 from tpx3.scans.scan_threshold import ThresholdScan
@@ -9,7 +9,7 @@ from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
-import tpx3.scans.scan_hardware as Init_Hardware
+from tpx3.scans.scan_hardware import ScanHardware
 from tpx3.scan_base import ConfigError
 from UI.tpx3_logger import file_logger, mask_logger
 
@@ -782,6 +782,11 @@ class TPX3_CLI_function_call(object):
         else:
             print('Unknown value')
 
+    def Initialise_Hardware(object):
+        hardware_scan_results = Queue()
+        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', results = hardware_scan_results)
+        new_process.join()
+        return hardware_scan_results.get()
 
 
 
@@ -1336,8 +1341,7 @@ class TPX3_CLI_TOP(object):
                     if len(inputlist) == 1:
                         print('Initialise Hardware')
                         try:
-                            Chip_List = Init_Hardware.HardwareScan()
-                            #print(Chip_List)
+                            Chip_List = function_call.Initialise_Hardware()
                             for n, chip in enumerate(Chip_List):
                                 name = 'Chip' + str(n) + '_name'
                                 TPX3_datalogger.write_value(name = name, value = chip)
