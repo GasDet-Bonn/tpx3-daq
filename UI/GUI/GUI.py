@@ -1309,111 +1309,242 @@ class GUI_SetDAC(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
         
-class GUI_PixelDAC_opt(Gtk.Window):
+class GUI_Additional_Settings(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, title = "PixelDAC optimisation")
+        Gtk.Window.__init__(self, title = "Settings")
         self.connect("delete-event", self.window_destroy)
-        
+        self.expert_value = False
         
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         grid.set_column_spacing(10)
         grid.set_border_width(10)
-        grid.set_column_homogeneous(True)
-        grid.set_row_homogeneous(True)
         self.add(grid)
         
         Space = Gtk.Label()
         Space.set_text("")
+        self.Space2 = Gtk.Label()
+        self.Space2.set_text("")
         
-        Threshold_label = Gtk.Label()
-        Threshold_label.set_text("Threshold")
+        #Button for polarity select
+        self.polarity_value = TPX3_datalogger.read_value('Polarity')
+        self.set_polarity_button = Gtk.ToggleButton()
+        if self.polarity_value == 1:
+            self.set_polarity_button.set_active(True)
+            self.set_polarity_button.set_label('  NEG  ')
+        else:
+            self.set_polarity_button.set_active(False)
+            self.set_polarity_button.set_label('  POS  ')
         
-        #Threshold_start
-        self.Threshold_start_value = 200
-        Threshold_start_adj = Gtk.Adjustment()
-        Threshold_start_adj.configure(200, 0, 2800, 1, 0, 0)
-        self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
-        self.Threshold_start.connect("value-changed", self.Threshold_start_set)
-        Threshold_start_label = Gtk.Label()
-        Threshold_start_label.set_text("Start ")
+        self.set_polarity_button.connect("toggled", self.set_polarity_button_toggled)
+        set_polarity_button_label = Gtk.Label()
+        set_polarity_button_label.set_text("Polarity")
         
-        #Threshold_stop
-        self.Threshold_stop_value = 1600
-        Threshold_stop_adj = Gtk.Adjustment()
-        Threshold_stop_adj.configure(1600, 0, 2800, 1, 0, 0)
-        self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
-        self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
-        Threshold_stop_label = Gtk.Label()
-        Threshold_stop_label.set_text("Stop ")
+        #Button for Fast IO select
+        self.Fast_IO_en_value = TPX3_datalogger.read_value('Fast_Io_en')
+        self.Fast_IO_button = Gtk.ToggleButton()
+        if self.Fast_IO_en_value == 1:
+            self.Fast_IO_button.set_active(True)
+            self.Fast_IO_button.set_label('  ON  ')
+        else:
+            self.Fast_IO_button.set_active(False)
+            self.Fast_IO_button.set_label('  OFF  ')
+        self.Fast_IO_button.connect("toggled", self.Fast_IO_button_toggled)
+        Fast_IO_button_label = Gtk.Label()
+        Fast_IO_button_label.set_text("Fast IO")
         
-        #Buttons for number of iteration
-        Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, "4")
-        Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "16")
-        Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "64")
-        Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "256")
-        Iterationbutton2.set_active(True)
-        Iterationbutton1.connect("toggled", self.on_Iterationbutton_toggled, "4")
-        Iterationbutton2.connect("toggled", self.on_Iterationbutton_toggled, "16")
-        Iterationbutton3.connect("toggled", self.on_Iterationbutton_toggled, "64")
-        Iterationbutton4.connect("toggled", self.on_Iterationbutton_toggled, "256")
+        #Buttons for number of operation mode
+        self.op_mode_value = TPX3_datalogger.read_value('Op_mode')
+        Op_mode_button1 = Gtk.RadioButton.new_with_label_from_widget(None, "ToT and ToA")
+        Op_mode_button2 = Gtk.RadioButton.new_with_label_from_widget( Op_mode_button1, "Only ToA")
+        Op_mode_button3 = Gtk.RadioButton.new_with_label_from_widget( Op_mode_button1, "Event Count & Integral ToT")
+        if self.op_mode_value == 0:
+            Op_mode_button1.set_active(True)
+        elif self.op_mode_value == 1:
+            Op_mode_button2.set_active(True)
+        else:
+            Op_mode_button3.set_active(True)
+        Op_mode_button1.connect("toggled", self.Op_mode_button_toggled, "0")
+        Op_mode_button2.connect("toggled", self.Op_mode_button_toggled, "1")
+        Op_mode_button3.connect("toggled", self.Op_mode_button_toggled, "2")
+        Op_mode_label = Gtk.Label()
+        Op_mode_label.set_text('     Operation mode     ')
         
-        Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text("Number of iterations")
-        self.Number_of_Iterations = 16
+        #Expert check box
+        self.expert_checkbox = Gtk.CheckButton(label="Expert")
+        self.expert_checkbox.connect("toggled", self.on_expert_toggled)
+        self.expert_checkbox.set_active(False)
         
-        #Startbutton
-        self.Startbutton = Gtk.Button(label = "Start")
-        self.Startbutton.connect("clicked", self.on_Startbutton_clicked)
+        #Button for Set AckCommand_en
+        self.AckCommand_en_value = TPX3_datalogger.read_value('AckCommand_en')
+        self.AckCommand_en_button = Gtk.ToggleButton()
+        if self.AckCommand_en_value == 1:
+            self.AckCommand_en_button.set_active(True)
+            self.AckCommand_en_button.set_label('  ON  ')
+        else:
+            self.AckCommand_en_button.set_active(False)
+            self.AckCommand_en_button.set_label('  OFF  ')
+        self.AckCommand_en_button.connect("toggled", self.AckCommand_en_button_toggled)
+        self.AckCommand_en_button_label = Gtk.Label()
+        self.AckCommand_en_button_label.set_text("AckCommand enable")
         
-        grid.attach(Threshold_label, 0, 0, 6, 1)
-        grid.attach(Threshold_start_label, 0, 1, 1, 1)
-        grid.attach(self.Threshold_start, 1, 1, 2, 1)
-        grid.attach(Threshold_stop_label, 3, 1, 1, 1)
-        grid.attach(self.Threshold_stop, 4, 1, 2, 1)
-        grid.attach(Number_of_iteration_label, 1, 2, 4, 1)
-        grid.attach(Iterationbutton1, 1, 3, 1, 1)
-        grid.attach(Iterationbutton2, 2, 3, 1, 1)
-        grid.attach(Iterationbutton3, 3, 3, 1, 1)
-        grid.attach(Iterationbutton4, 4, 3, 1, 1)
-        grid.attach(Space, 0, 4, 1, 1)
-        grid.attach(self.Startbutton, 4, 5, 2, 1)
+        #Button for Select TP_Ext_Int
+        self.TP_Ext_Int_en_value = TPX3_datalogger.read_value('SelectTP_Ext_Int')
+        self.TP_Ext_Int_button = Gtk.ToggleButton()
+        if self.TP_Ext_Int_en_value == 1:
+            self.TP_Ext_Int_button.set_active(True)
+            self.TP_Ext_Int_button.set_label('  ON  ')
+        else:
+            self.TP_Ext_Int_button.set_active(False)
+            self.TP_Ext_Int_button.set_label('  OFF  ')
+        self.TP_Ext_Int_button.connect("toggled", self.TP_Ext_Int_button_toggled)
+        self.TP_Ext_Int_button_label = Gtk.Label()
+        self.TP_Ext_Int_button_label.set_text("TP_Ext_Int")
+
+        #ClkOut_frequency_src
+        self.ClkOut_frequency_src_value = TPX3_datalogger.read_value('ClkOut_frequency_src')
+        self.ClkOut_frequency_combo = Gtk.ComboBoxText()
+        self.ClkOut_frequency_combo.set_entry_text_column(0)
+        self.ClkOut_frequency_combo.connect("changed", self.ClkOut_frequency_combo_changed)
+        self.ClkOut_frequency_combo.append_text('320\u200AMHz')
+        self.ClkOut_frequency_combo.append_text('160\u200AMHz')
+        self.ClkOut_frequency_combo.append_text('80\u200AMHz')
+        self.ClkOut_frequency_combo.append_text('40\u200AMHz')
+        self.ClkOut_frequency_combo.append_text('external')
+        self.ClkOut_frequency_combo.set_active((TPX3_datalogger.read_value('ClkOut_frequency_src')-1))
+        self.ClkOut_frequency_combo_label = Gtk.Label()
+        self.ClkOut_frequency_combo_label.set_text("ClkOut_frequency_src")
+
+
+        #Save Button
+        self.Savebutton = Gtk.Button(label = "Save")
+        self.Savebutton.connect("clicked", self.on_Savebutton_clicked)
+        
+        grid.attach(set_polarity_button_label, 0, 0, 2, 1)
+        grid.attach(self.set_polarity_button, 2, 0, 1, 1)
+        grid.attach(self.expert_checkbox, 5, 0, 1, 1)
+        grid.attach(Fast_IO_button_label, 0, 1, 2, 1)
+        grid.attach(self.Fast_IO_button, 2, 1, 1, 1)
+        grid.attach(Op_mode_label, 0, 2, 2, 1)
+        grid.attach(Op_mode_button1, 2, 2, 3, 1)
+        grid.attach(Op_mode_button2, 2, 3, 3, 1)
+        grid.attach(Op_mode_button3, 2, 4, 3, 1)
+        grid.attach(Space, 0, 5, 3, 1)
+        grid.attach(self.TP_Ext_Int_button_label, 0, 6, 2, 1)
+        grid.attach(self.TP_Ext_Int_button, 2, 6, 1, 1)
+        grid.attach(self.AckCommand_en_button_label, 0, 7, 2, 1)
+        grid.attach(self.AckCommand_en_button, 2, 7, 1, 1)
+        grid.attach(self.ClkOut_frequency_combo_label, 0, 8, 2, 1)
+        grid.attach(self.ClkOut_frequency_combo, 2, 8, 3, 1)
+        grid.attach(self.Space2, 0, 9, 3, 1)
+        grid.attach(self.Savebutton, 5, 10, 1, 1)
 
         self.show_all()
+        self.TP_Ext_Int_button_label.hide()
+        self.TP_Ext_Int_button.hide()
+        self.AckCommand_en_button_label.hide()
+        self.AckCommand_en_button.hide()
+        self.ClkOut_frequency_combo_label.hide()
+        self.ClkOut_frequency_combo.hide()
+        self.Space2.hide()
+        self.resize(1,1)
+
+    def on_expert_toggled(self, button):
+        self.expert_value = button.get_active()
+        if self.expert_value == True:
+            self.TP_Ext_Int_button_label.show()
+            self.TP_Ext_Int_button.show()
+            self.AckCommand_en_button_label.show()
+            self.AckCommand_en_button.show()
+            self.ClkOut_frequency_combo_label.show()
+            self.ClkOut_frequency_combo.show()
+            self.Space2.show()
+            self.resize(1,1)
+        else:
+            self.TP_Ext_Int_button_label.hide()
+            self.TP_Ext_Int_button.hide()
+            self.AckCommand_en_button_label.hide()
+            self.AckCommand_en_button.hide()
+            self.ClkOut_frequency_combo_label.hide()
+            self.ClkOut_frequency_combo.hide()
+            self.Space2.hide()
+            self.resize(1,1)
+
+
+    def set_polarity_button_toggled(self, button):
+        if self.set_polarity_button.get_active():
+            state = 1
+            self.set_polarity_button.set_label('  NEG ')
+        else:
+            state = 0
+            self.set_polarity_button.set_label('  POS  ')
+        print("Button was turned", state)
+        self.polarity_value = state
+
+    def Fast_IO_button_toggled(self, button):
+        if self.Fast_IO_button.get_active():
+            state = 1
+            self.Fast_IO_button.set_label('  ON  ')
+        else:
+            state = 0
+            self.Fast_IO_button.set_label('  OFF ')
+        self.Fast_IO_en_value = state
         
-    def Threshold_start_set(self, event):
-        self.Threshold_start_value = self.Threshold_start.get_value_as_int()
-        temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
-        print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
-        new_adjustment_start = Gtk.Adjustment()
-        new_adjustment_start.configure(200, self.Threshold_start_value, 2800, 1, 0, 0)
-        self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
-        self.Threshold_stop.set_adjustment(adjustment = new_adjustment_start)
-        self.Threshold_stop.set_value(temp_Threshold_stop_value)
-        self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
+    def TP_Ext_Int_button_toggled(self, button):
+        if self.TP_Ext_Int_button.get_active():
+            state = 1
+            self.TP_Ext_Int_button.set_label('  ON  ')
+        else:
+            state = 0
+            self.TP_Ext_Int_button.set_label('  OFF ')
+        self.TP_Ext_Int_en_value = state
         
-    def Threshold_stop_set(self, event):
-        self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
-        temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
-        print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
-        new_adjustment_stop = Gtk.Adjustment()
-        new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
-        self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
-        self.Threshold_start.set_adjustment(adjustment = new_adjustment_stop)
-        self.Threshold_start.set_value(temp_Threshold_start_value)
-        self.Threshold_start.connect("value-changed", self.Threshold_start_set)
+    def AckCommand_en_button_toggled(self, button):
+        if self.AckCommand_en_button.get_active():
+            state = 1
+            self.AckCommand_en_button.set_label('  ON  ')
+        else:
+            state = 0
+            self.AckCommand_en_button.set_label('  OFF ')
+        self.AckCommand_en_value = state
         
-    def on_Iterationbutton_toggled(self, button, name):
+    def Op_mode_button_toggled(self, button, name):
         if button.get_active():
-            print(name, " iterations are choosen")
-        self.Number_of_Iterations = int(name)
+            print('Operation mode: ', name)
+        self.op_mode_value = int(name)
+
+    def ClkOut_frequency_combo_changed(self, combo):
+        text = combo.get_active_text()
+        if text == '320\u200AMHz':
+            self.ClkOut_frequency_src_value = 1
+        elif text == '160\u200AMHz':
+            self.ClkOut_frequency_src_value = 2
+        elif text == '80\u200AMHz':
+            self.ClkOut_frequency_src_value = 3
+        elif text == '40\u200AMHz':
+            self.ClkOut_frequency_src_value = 4
+        elif text == 'external':
+            self.ClkOut_frequency_src_value = 5
+
+        print("Selected: speed=%s" % text)
+
+    def on_Savebutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            print('Something else is beeing processed')
+            return
+        TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
+        TPX3_datalogger.write_to_yaml(name = 'Polarity')
+        TPX3_datalogger.write_value(name = 'Fast_Io_en', value = self.Fast_IO_en_value)
+        TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en')
+        TPX3_datalogger.write_value(name = 'Op_mode', value = self.op_mode_value)
+        TPX3_datalogger.write_to_yaml(name = 'Op_mode')
+        TPX3_datalogger.write_value(name = 'AckCommand_en', value = self.AckCommand_en_value)
+        TPX3_datalogger.write_to_yaml(name = 'AckCommand_en')
+        TPX3_datalogger.write_value(name = 'SelectTP_Ext_Int', value = self.TP_Ext_Int_en_value)
+        TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int')
+        TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = self.ClkOut_frequency_src_value)
+        TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src')
         
-    def on_Startbutton_clicked(self, widget):
-        print("Start PixelDAC optimisation")
-        GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations)
-        self.destroy()
     def window_destroy(self, widget, event):
         self.destroy()
         
@@ -1711,6 +1842,8 @@ class GUI_Main(Gtk.Window):
         self.SetDACbutton = Gtk.Button(label = "Set DACs")
         self.SetDACbutton.connect("clicked", self.on_SetDACbutton_clicked)
         
+        self.AddSetbutton = Gtk.Button(label = "Settings")
+        self.AddSetbutton.connect("clicked", self.on_AddSetbutton_clicked)
         self.QuitCurrentFunctionbutton = Gtk.Button(label = "Quit")
         self.QuitCurrentFunctionbutton.connect("clicked", self.on_QuitCurrentFunctionbutton_clicked)
         
@@ -1755,7 +1888,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(Status, 2, 8, 6, 5)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
-        page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 9, 2, 1)
+        page1.grid.attach(self.AddSetbutton, 8, 1, 2, 1)
     
         GLib.idle_add(self.update_progress)
 
@@ -1844,6 +1977,8 @@ class GUI_Main(Gtk.Window):
     def on_SetDACbutton_clicked(self, widget):
         subw = GUI_SetDAC()
         
+    def on_AddSetbutton_clicked(self, widget):
+        subw = GUI_Additional_Settings()
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
         self.progressbar.hide()
         self.statuslabel.set_text("")
