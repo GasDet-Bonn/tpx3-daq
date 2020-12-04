@@ -1858,6 +1858,15 @@ class GUI_Main(Gtk.Window):
         self.statusstring1 = ''
         self.progressbar.set_fraction(0.0)
         self.resize(1,1)
+        if self.running_process == None: 
+            file_logger.write_backup(file = file_logger.create_file())
+            Gtk.main_quit()
+        elif not self.running_process.is_alive():
+            self.running_process = None
+        else:
+            self.running_process.terminate()
+            self.running_process = None
+
     def Status_window_call(self, function = "default", subtype = "", lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, statusstring = "", progress = 0):
         if function == "PixelDAC_opt":
             self.statuslabel.set_markup("<big><b>PixelDAC Optimisation</b></big>")
