@@ -17,6 +17,9 @@ from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import os
 from UI.tpx3_logger import TPX3_datalogger
 import tpx3.scans.scan_hardware as Init_Hardware
+from multiprocessing import Queue
+import time
+from datetime import datetime, timedelta
 
 class GUI_Plot(Gtk.Window):
     def __init__(self):
