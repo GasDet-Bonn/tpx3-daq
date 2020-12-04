@@ -137,7 +137,7 @@ class ScanHardware(object):
             else:
                 # Update the progress fraction and put it in the queue
                 step_counter += 1
-                fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                fraction = step_counter / len(rx_list_names)
                 progress.put(fraction)
 
             # Write the ideal settings to the yaml file
