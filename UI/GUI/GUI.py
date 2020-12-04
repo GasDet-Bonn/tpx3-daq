@@ -827,6 +827,125 @@ class GUI_PixelDAC_opt(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Run_Datataking(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = "Start Datataking")
+        self.connect("delete-event", self.window_destroy)
+        
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+        self.add(grid)
+        
+        Space = Gtk.Label()
+        Space.set_text("")
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text("")
+        
+        #Time range label
+        Datataking_Time_label = Gtk.Label()
+        Datataking_Time_label.set_text('Datataking Time')
+        
+        #Time range label
+        self.Datataking_Time_label = Gtk.Label()
+        self.Datataking_Time_label.set_text('Datataking End:' )
+        
+        #Time range entrys
+        self.hours_entry = Gtk.Entry()
+        self.hours_entry.set_text('0')
+        self.hours_entry.connect('activate', self.time_entry_text, 'h')
+        self.hours_entry.set_width_chars(8)
+        self.minutes_entry = Gtk.Entry()
+        self.minutes_entry.set_text('0')
+        self.minutes_entry.connect('activate', self.time_entry_text, 'min')
+        self.minutes_entry.set_width_chars(8)
+        self.seconds_entry = Gtk.Entry()
+        self.seconds_entry.set_text('0')
+        self.seconds_entry.connect('activate', self.time_entry_text, 'sec')
+        self.seconds_entry.set_width_chars(8)
+
+        hours_label = Gtk.Label()
+        hours_label.set_text('Hours')
+        minutes_label = Gtk.Label()
+        minutes_label.set_text('Minutes')
+        seconds_label = Gtk.Label()
+        seconds_label.set_text('Seconds')
+
+        #default values
+        self.Datataking_Time_value = 0
+        self.finish_time = 0
+        self.finish_str = ''
+        
+        #Startbutton
+        self.Startbutton = Gtk.Button(label = "Start")
+        self.Startbutton.connect("clicked", self.on_Startbutton_clicked)
+        
+
+        grid.attach(Datataking_Time_label, 0, 0, 6, 1)
+        grid.attach(hours_label, 0, 1, 2, 1)
+        grid.attach(self.hours_entry, 0, 2, 2, 1)
+        grid.attach(minutes_label, 2, 1, 2, 1)
+        grid.attach(self.minutes_entry, 2, 2, 2, 1)
+        grid.attach(seconds_label, 4, 1, 2, 1)
+        grid.attach(self.seconds_entry, 4, 2, 2, 1)
+        grid.attach(self.Datataking_Time_label, 0, 3, 6, 1)
+        grid.attach(Space, 0, 4, 1, 1)
+        grid.attach(self.other_process, 0, 5, 4, 1)
+        grid.attach(self.Startbutton, 4, 5, 2, 1)
+
+        self.show_all()
+
+    def time_entry_text(self, button, name):
+        non_int_input = False
+        try:
+            hours = int(self.hours_entry.get_text())
+            self.hours_entry.set_text(str(hours))
+        except ValueError:
+            self.hours_entry.set_text('')
+            non_int_input = True
+        try:
+            minutes = int(self.minutes_entry.get_text())
+            self.minutes_entry.set_text(str(minutes))
+        except ValueError:
+            self.minutes_entry.set_text('')
+            non_int_input = True
+        try:
+            seconds = int(self.seconds_entry.get_text())
+            self.seconds_entry.set_text(str(seconds))
+        except ValueError:
+            self.seconds_entry.set_text('')
+            non_int_input = True
+        if non_int_input == True:
+            return
+
+        self.Datataking_Time_value = hours * 3600 + minutes * 60 + seconds
+        self.finish_time = datetime.now() + timedelta(seconds = self.Datataking_Time_value)
+        if not self.Datataking_Time_value == 0:
+            self.finish_str = 'Datataking ends: ' +  self.finish_time.strftime("%d/%m/%Y %H:%M:%S")
+        else:
+            self.finish_str = 'Datataking ends on user quit.'
+        self.Datataking_Time_label.set_text(self.finish_str)
+
+    def on_Startbutton_clicked(self, widget):
+        self.time_entry_text('button', 'start')
+        if GUI.get_process_alive():
+            self.other_process.set_text("Other process running")
+            return
+        
+        GUI.Status_window_call(function = "Run", lowerTHL = self.Datataking_Time_value, upperTHL = self.finish_str)
+        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = self.Datataking_Time_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+        GUI.set_running_process(running_process = new_process)
+
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_SetDAC(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = "DAC settings")
@@ -1677,6 +1796,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
         page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
         page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
+        page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 9, 2, 1)
     
@@ -1751,7 +1871,7 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Testpulse_Scan()
         
     def on_Runbutton_clicked(self, widget):
-        print("Function call: Run")
+        subw = GUI_Run_Datataking()
 
     def on_Startupbutton_clicked(self, widget):
         print("Function call: Startup")
