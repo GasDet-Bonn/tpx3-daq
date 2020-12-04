@@ -1634,10 +1634,13 @@ class GUI_Main(Gtk.Window):
         self.set_icon_from_file(png_path)
         #self.set_default_size(800, 600)
         self.connect("button_press_event", self.window_on_button_press_event)
+        self.progress_value_queue = Queue()
+        self.status_queue = Queue()
+        self.running_process = None
+        self.iteration_symbol = False
         
         self.grid = Gtk.Grid()
         self.add(self.grid)
-        
         
         self.statusbar = Gtk.Statusbar()
         self.context_id = self.statusbar.get_context_id("Status Main")
@@ -1646,6 +1649,11 @@ class GUI_Main(Gtk.Window):
         self.notebook = Gtk.Notebook()
         self.grid.add(self.notebook)
         self.grid.attach(self.statusbar, 0, 1, 1, 1)
+        
+        self.statusstring4 = ''
+        self.statusstring3 = ''
+        self.statusstring2 = ''
+        self.statusstring1 = ''
         
         #get last backup
         data = file_logger.read_backup()
@@ -1669,9 +1677,6 @@ class GUI_Main(Gtk.Window):
         
         Space = Gtk.Label()
         Space.set_text("")
-        
-        Space2 = Gtk.Label()
-        Space2.set_text("")
         
         self.PixelDACbutton = Gtk.Button(label = "PixelDAC")
         self.PixelDACbutton.connect("clicked", self.on_PixelDACbutton_clicked)
@@ -1717,14 +1722,26 @@ class GUI_Main(Gtk.Window):
         self.statuslabel = Gtk.Label()
         self.statuslabel2 = Gtk.Label()
         self.statuslabel3 = Gtk.Label()
+        self.statuslabel4 = Gtk.Label()
+        self.statuslabel5 = Gtk.Label()
+        self.statuslabel6 = Gtk.Label()
         self.statuslabel.set_text("")
         self.statuslabel2.set_text("")
         self.statuslabel3.set_text("")
+        self.statuslabel4.set_text("")
+        self.statuslabel5.set_text("")
+        self.statuslabel6.set_text("")
         self.statuslabel2.set_justify(Gtk.Justification.LEFT)
         self.statuslabel3.set_justify(Gtk.Justification.LEFT)
+        self.statuslabel4.set_justify(Gtk.Justification.LEFT)
+        self.statuslabel5.set_justify(Gtk.Justification.LEFT)
+        self.statuslabel6.set_justify(Gtk.Justification.LEFT)
         self.Statusbox.add(self.statuslabel)
         self.Statusbox.add(self.statuslabel2)
         self.Statusbox.add(self.statuslabel3)
+        self.Statusbox.add(self.statuslabel4)
+        self.Statusbox.add(self.statuslabel5)
+        self.Statusbox.add(self.statuslabel6)
         self.Statusbox.pack_end(self.progressbar, True, True, 5)
         
         page1.grid.attach(self.Startupbutton, 0, 0, 2, 1)
@@ -1735,9 +1752,13 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
         page1.grid.attach(self.NoiseScanbutton, 0, 7, 2, 1)
         page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
+        page1.grid.attach(Status, 2, 8, 6, 5)
+        page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 9, 2, 1)
     
+        GLib.idle_add(self.update_progress)
+
 #######################################################################################################     
         ### Page 2 
         
@@ -1824,47 +1845,147 @@ class GUI_Main(Gtk.Window):
         subw = GUI_SetDAC()
         
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
-        print("Function call: Quit current function")
         self.progressbar.hide()
         self.statuslabel.set_text("")
         self.statuslabel2.set_text("")
         self.statuslabel3.set_text("")
+        self.statuslabel4.set_text("")
+        self.statuslabel5.set_text("")
+        self.statuslabel6.set_text("")
+        self.statusstring4 = ''
+        self.statusstring3 = ''
+        self.statusstring2 = ''
+        self.statusstring1 = ''
         self.progressbar.set_fraction(0.0)
-        
-    def Status_window_call(self, function = "default", subtype = "", lowerTHL = 0, upperTHL = 0, iterations = 0, statusstring = "", progress = 0):
+        self.resize(1,1)
+    def Status_window_call(self, function = "default", subtype = "", lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, statusstring = "", progress = 0):
         if function == "PixelDAC_opt":
-            self.statuslabel.set_markup("<big><b>PixelDAC optimisation</b></big>")
+            self.statuslabel.set_markup("<big><b>PixelDAC Optimisation</b></big>")
             self.progressbar.show()
             self.progressbar.set_fraction(progress)
-            self.statuslabel2.set_text("From THL=" + str(lowerTHL) + " to THL= " + str(upperTHL) + " with " + str(iterations) + " iterations per step")
-            self.statuslabel3.set_text(statusstring)
+            self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
+            self.statuslabel6.set_text(statusstring)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
         elif function == "Equalisation":
             self.statuslabel.set_markup("<big><b>" + subtype + "-based Equalisation</b></big>")
             self.progressbar.show()
-            self.statuslabel2.set_text("From THL=" + str(lowerTHL) + " to THL= " + str(upperTHL) + " with " + str(iterations) + " iterations per step")
-            self.statuslabel3.set_text(statusstring)
+            self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step")
+            self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
         elif function == "ToT_Calib":
-            self.statuslabel.set_markup("<big><b>ToT calibration</b></big>")
+            self.statuslabel.set_markup("<big><b>ToT Calibration</b></big>")
             self.progressbar.show()
             self.statuslabel2.set_text("For testpulses ranging from " + utils.print_nice(lowerTHL * 0.5) + "\u200AmV to " + utils.print_nice(upperTHL * 0.5) + "\u200AmV with " + str(iterations) + " iterations per step")
-            self.statuslabel3.set_text(statusstring)
+            self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
+        elif function == "ThresholdScan":
+            self.statuslabel.set_markup("<big><b>Threshold Scan</b></big>")
+            self.progressbar.show()
+            self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
+            self.statuslabel6.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
+        elif function == "ThresholdCalib":
+            self.statuslabel.set_markup("<big><b>Threshold Calibration</b></big>")
+            self.progressbar.show()
+            self.statuslabel2.set_text("Scanning " + str(n_pulse_heights) + " puls heights from THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
+            self.statuslabel6.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
+        elif function == "TestpulsScan":
+            self.statuslabel.set_markup("<big><b>Testpuls Scan</b></big>")
+            self.progressbar.show()
+            self.statuslabel2.set_text("For testpulses ranging from " + utils.print_nice(lowerTHL * 0.5) + "\u200AmV to " + utils.print_nice(upperTHL * 0.5) + "\u200AmV with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
+            self.statuslabel6.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
+        elif function == "Run":
+            self.statuslabel.set_markup("<big><b>Run</b></big>")
+            if upperTHL != 'Datataking ends on user quit.':
+                self.progressbar.show()
+            self.statuslabel2.set_text("Run datataking for " + str(lowerTHL) + "\u200As. " + upperTHL + '.')
+            self.statuslabel6.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
         elif function == "status":
-            self.statuslabel3.set_text(statusstring)
+            if statusstring == 'iteration_symbol':
+                self.iteration_symbol = True
+                self.statusstring4 = self.statusstring3
+                self.statusstring3 = self.statusstring2
+                self.statusstring2 = self.statusstring1
+                return
+            elif statusstring == 'iteration_finish_symbol':
+                self.iteration_symbol = False
+                return
+            if self.iteration_symbol == True:
+                self.statusstring1 = statusstring
+            else:
+                self.statusstring4 = self.statusstring3
+                self.statusstring3 = self.statusstring2
+                self.statusstring2 = self.statusstring1
+                self.statusstring1 = statusstring
+            self.statuslabel3.set_text(self.statusstring4)
+            self.statuslabel4.set_text(self.statusstring3)
+            self.statuslabel5.set_text(self.statusstring2)
+            self.statuslabel6.set_text(self.statusstring1)
         elif function == "progress":
             self.progressbar.set_fraction(progress)
         elif function == "default":
             self.statuslabel.set_text("Error: Call without functionname")
-            print("Error: Call without functionname")
         else:
             self.statuslabel.set_text("Error: " + function + " is not known!")
             print("Error: " + function + " is not known")
 
+    def get_progress_bar(self):
+        return self.progressbar
 
     def write_statusbar(self, status):
         self.statusbar.push(self.context_id, str(status))
 
+    def get_progress_value_queue(self):
+        return self.progress_value_queue
+    
+    def get_status_queue(self):
+        return self.status_queue
+
+    def set_running_process(self, running_process):
+        self.running_process = running_process
+    
+    def get_process_alive(self):
+        if self.running_process == None:
+            return False
+        else:
+            return self.running_process.is_alive()
+    
+    def update_progress(self):
+        if not self.progress_value_queue.empty():
+            self.progressbar.set_fraction(self.progress_value_queue.get())
+        if not self.status_queue.empty():
+            self.Status_window_call(function = "status", statusstring = self.status_queue.get())
+        return True
 
 ########################################################################################################################
     ### Functions Page2
