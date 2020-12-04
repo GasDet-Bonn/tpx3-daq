@@ -1671,13 +1671,13 @@ class GUI_Equalisation(Gtk.Window):
         print("Start " + self.Equalisation_Type + " based Equalisation from THL=" + str(self.Threshold_start_value) + " to THL=" + 
         str(self.Threshold_stop_value) + " with " + str(self.Number_of_Iterations) + " iterations per threshold.")
         
-        GUI.Status_window_call(function="Equalisation", subtype = self.Equalisation_Type, lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), , status = GUI.get_status_queue())
+        GUI.Status_window_call(function="Equalisation", subtype = self.Equalisation_Type, lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations)
         if self.Equalisation_Type == "Noise":
             print("Start Noise Equal")
-            #Equalisation.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations)
+            #Equalisation.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
         elif self.Equalisation_Type == "Testpulse":
             print("Start Charge Equal")
-            #Equalisation_charge.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations)
+            #Equalisation_charge.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
             
         self.destroy()
         
