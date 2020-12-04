@@ -1844,6 +1844,10 @@ class GUI_Main(Gtk.Window):
         
         self.AddSetbutton = Gtk.Button(label = "Settings")
         self.AddSetbutton.connect("clicked", self.on_AddSetbutton_clicked)
+
+        self.SetMaskbutton = Gtk.Button(label = "Set Mask")
+        self.SetMaskbutton.connect("clicked", self.on_SetMaskbutton_clicked)
+        
         self.QuitCurrentFunctionbutton = Gtk.Button(label = "Quit")
         self.QuitCurrentFunctionbutton.connect("clicked", self.on_QuitCurrentFunctionbutton_clicked)
         
@@ -1891,6 +1895,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
         page1.grid.attach(self.AddSetbutton, 8, 1, 2, 1)
+        page1.grid.attach(self.SetMaskbutton, 8, 3, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 13, 2, 1)
     
         GLib.idle_add(self.update_progress)
@@ -1982,6 +1987,10 @@ class GUI_Main(Gtk.Window):
         
     def on_AddSetbutton_clicked(self, widget):
         subw = GUI_Additional_Settings()
+
+    def on_SetMaskbutton_clicked(self, widget):
+        print("Function call: Set Mask")
+        
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
         self.progressbar.hide()
         self.statuslabel.set_text("")
