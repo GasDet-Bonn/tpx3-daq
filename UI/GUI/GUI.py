@@ -1977,7 +1977,9 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Run_Datataking()
 
     def on_Startupbutton_clicked(self, widget):
-        Init_Hardware.HardwareScan()
+        GUI.Status_window_call(function = "InitHardware")
+        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+        GUI.set_running_process(running_process = new_process)
         
     def on_Resetbutton_clicked(self, widget):
         print("Function call: Reset")
@@ -2059,6 +2061,16 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup("<big><b>Threshold Calibration</b></big>")
             self.progressbar.show()
             self.statuslabel2.set_text("Scanning " + str(n_pulse_heights) + " puls heights from THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
+            self.statuslabel6.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
+        elif function == 'InitHardware':
+            self.statuslabel.set_markup("<big><b>Hardware Initialization</b></big>")
+            self.progressbar.show()
+            self.statuslabel2.set_text("Scanning over all FPGA and chip links.")
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.statusstring4 = ''
