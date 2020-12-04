@@ -16,6 +16,7 @@ from UI.tpx3_logger import file_logger
 from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import os
 from UI.tpx3_logger import TPX3_datalogger
+import tpx3.scans.scan_hardware as Init_Hardware
 
 class GUI_Plot(Gtk.Window):
     def __init__(self):
@@ -1791,6 +1792,7 @@ class GUI_Main(Gtk.Window):
         self.Statusbox.add(self.statuslabel3)
         self.Statusbox.pack_end(self.progressbar, True, True, 5)
         
+        page1.grid.attach(self.Startupbutton, 0, 0, 2, 1)
         page1.grid.attach(self.PixelDACbutton, 0, 1, 2, 1)
         page1.grid.attach(self.TOTCalibbutton, 0, 3, 2, 1)
         page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
@@ -1874,7 +1876,7 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Run_Datataking()
 
     def on_Startupbutton_clicked(self, widget):
-        print("Function call: Startup")
+        Init_Hardware.HardwareScan()
         
     def on_Resetbutton_clicked(self, widget):
         print("Function call: Reset")
