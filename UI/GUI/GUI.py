@@ -1879,6 +1879,7 @@ class GUI_Main(Gtk.Window):
         
         page1.grid.attach(self.Startupbutton, 0, 0, 2, 1)
         page1.grid.attach(self.PixelDACbutton, 0, 1, 2, 1)
+        page1.grid.attach(self.Equalbutton, 0, 2, 2, 1)
         page1.grid.attach(self.TOTCalibbutton, 0, 3, 2, 1)
         page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
         page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
@@ -1887,8 +1888,10 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
         page1.grid.attach(Status, 2, 8, 6, 5)
         page1.grid.attach(Space, 0, 10, 2, 2)
+        page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
         page1.grid.attach(self.AddSetbutton, 8, 1, 2, 1)
+        page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 13, 2, 1)
     
         GLib.idle_add(self.update_progress)
 
