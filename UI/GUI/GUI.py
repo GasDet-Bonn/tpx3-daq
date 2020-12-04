@@ -420,6 +420,153 @@ class GUI_Threshold_Scan(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Threshold_Calib(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = "Threshold Calibration")
+        self.connect("delete-event", self.window_destroy)
+        
+        
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+        self.add(grid)
+        
+        Space = Gtk.Label()
+        Space.set_text("")
+        
+        Threshold_label = Gtk.Label()
+        Threshold_label.set_text("Threshold")
+        
+        #Threshold_start
+        self.Threshold_start_value = 200
+        Threshold_start_adj = Gtk.Adjustment()
+        Threshold_start_adj.configure(200, 0, 2911, 1, 0, 0)
+        self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
+        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.connect("value-changed", self.Threshold_start_set)
+        Threshold_start_label = Gtk.Label()
+        Threshold_start_label.set_text("Start ")
+        
+        #Threshold_stop
+        self.Threshold_stop_value = 1600
+        Threshold_stop_adj = Gtk.Adjustment()
+        Threshold_stop_adj.configure(1600, 0, 2911, 1, 0, 0)
+        self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
+        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
+        Threshold_stop_label = Gtk.Label()
+        Threshold_stop_label.set_text("Stop ")
+
+        #n_injections
+        self.n_injections_value = 100
+        n_injections_adj = Gtk.Adjustment()
+        n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
+        self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
+        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.connect("value-changed", self.n_injections_set)
+        n_injections_label = Gtk.Label()
+        n_injections_label.set_text("Number of injections ")
+        
+        #Buttons for number of iteration
+        Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, "4")
+        Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "16")
+        Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "64")
+        Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "256")
+        Iterationbutton2.set_active(True)
+        Iterationbutton1.connect("toggled", self.on_Iterationbutton_toggled, "4")
+        Iterationbutton2.connect("toggled", self.on_Iterationbutton_toggled, "16")
+        Iterationbutton3.connect("toggled", self.on_Iterationbutton_toggled, "64")
+        Iterationbutton4.connect("toggled", self.on_Iterationbutton_toggled, "256")
+        
+        Number_of_iteration_label = Gtk.Label()
+        Number_of_iteration_label.set_text("Number of iterations")
+        self.Number_of_Iterations = 16
+
+        #n_pulse_heights
+        self.n_pulse_heights_value = 50
+        n_pulse_heights_adj = Gtk.Adjustment()
+        n_pulse_heights_adj.configure(50, 2, 100, 1, 0, 0)
+        self.n_pulse_heights = Gtk.SpinButton(adjustment = n_pulse_heights_adj, climb_rate = 1, digits = 0)
+        self.n_pulse_heights.set_value(self.n_pulse_heights_value) 
+        self.n_pulse_heights.connect("value-changed", self.n_pulse_heights_set)
+        n_pulse_heights_label = Gtk.Label()
+        n_pulse_heights_label.set_text("Pulse height steps ")
+        
+        #Startbutton
+        self.Startbutton = Gtk.Button(label = "Start")
+        self.Startbutton.connect("clicked", self.on_Startbutton_clicked)
+        
+        grid.attach(Threshold_label, 0, 0, 6, 1)
+        grid.attach(Threshold_start_label, 0, 1, 1, 1)
+        grid.attach(self.Threshold_start, 1, 1, 2, 1)
+        grid.attach(Threshold_stop_label, 3, 1, 1, 1)
+        grid.attach(self.Threshold_stop, 4, 1, 2, 1)
+        grid.attach(n_injections_label, 2, 2, 2, 1)
+        grid.attach(self.n_injections, 2, 3, 2, 1)
+        grid.attach(Number_of_iteration_label, 1, 4, 4, 1)
+        grid.attach(Iterationbutton1, 1, 5, 1, 1)
+        grid.attach(Iterationbutton2, 2, 5, 1, 1)
+        grid.attach(Iterationbutton3, 3, 5, 1, 1)
+        grid.attach(Iterationbutton4, 4, 5, 1, 1)
+        grid.attach(n_pulse_heights_label, 2, 6, 2, 1)
+        grid.attach(self.n_pulse_heights, 2, 7, 2, 1)
+        grid.attach(Space, 0, 8, 1, 1)
+        grid.attach(self.Startbutton, 4, 9, 2, 1)
+
+        self.show_all()
+        
+    def Threshold_start_set(self, event):
+        self.Threshold_start_value = self.Threshold_start.get_value_as_int()
+        temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+        print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Threshold_start_value, 2911, 1, 0, 0)
+        self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
+        self.Threshold_stop.set_adjustment(adjustment = new_adjustment_start)
+        self.Threshold_stop.set_value(temp_Threshold_stop_value)
+        self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
+        
+    def Threshold_stop_set(self, event):
+        self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+        temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
+        print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
+        self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
+        self.Threshold_start.set_adjustment(adjustment = new_adjustment_stop)
+        self.Threshold_start.set_value(temp_Threshold_start_value)
+        self.Threshold_start.connect("value-changed", self.Threshold_start_set)
+
+    def n_injections_set(self, event):
+        self.n_injections_value = self.n_injections.get_value_as_int()
+        print("n_injections value is " + str(self.n_injections.get_value_as_int()) + ".")
+        
+    def on_Iterationbutton_toggled(self, button, name):
+        if button.get_active():
+            print(name, " iterations are choosen")
+        self.Number_of_Iterations = int(name)
+
+    def n_pulse_heights_set(self, event):
+        self.n_pulse_heights_value = self.n_pulse_heights.get_value_as_int()
+        print("n_pulse_heights value is " + str(self.n_pulse_heights.get_value_as_int()) + ".")
+        
+    def on_Startbutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            print('Something else is beeing processed')
+            return
+        print("Start Threshold calibration")
+        GUI.Status_window_call(function = "ThresholdCalib", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value, n_pulse_heights = self.n_pulse_heights_value)
+        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, n_pulse_heights = self.n_pulse_heights_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+        GUI.set_running_process(running_process = new_process)
+        
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_SetDAC(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = "DAC settings")
@@ -1223,6 +1370,9 @@ class GUI_Main(Gtk.Window):
         self.TOTCalibbutton = Gtk.Button(label = "TOT Calibration")
         self.TOTCalibbutton.connect("clicked", self.on_TOTCalibbutton_clicked)
 
+        self.THLCalibbutton = Gtk.Button(label = "THL Calibration")
+        self.THLCalibbutton.connect("clicked", self.on_THLCalibbutton_clicked)
+
         self.THLScanbutton = Gtk.Button(label = "THL Scan")
         self.THLScanbutton.connect("clicked", self.on_THLScanbutton_clicked)
         
@@ -1263,6 +1413,7 @@ class GUI_Main(Gtk.Window):
         self.Statusbox.pack_end(self.progressbar, True, True, 5)
         
         page1.grid.attach(self.TOTCalibbutton, 0, 3, 2, 1)
+        page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
         page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 9, 2, 1)
@@ -1329,6 +1480,9 @@ class GUI_Main(Gtk.Window):
     def on_TOTCalibbutton_clicked(self, widget):
         subw = GUI_ToT_Calib()
         
+    def on_THLCalibbutton_clicked(self, widget):
+        subw = GUI_Threshold_Calib()
+
     def on_THLScanbutton_clicked(self, widget):
         subw = GUI_Threshold_Scan()
         
