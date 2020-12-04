@@ -1410,7 +1410,7 @@ class GUI_Equalisation(Gtk.Window):
         #Threshold_start
         self.Threshold_start_value = 1500
         Threshold_start_adj = Gtk.Adjustment()
-        Threshold_start_adj.configure(200, 0, 2800, 1, 0, 0)
+        Threshold_start_adj.configure(200, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
         self.Threshold_start.set_value(self.Threshold_start_value) 
         self.Threshold_start.connect("value-changed", self.Threshold_start_set)
@@ -1420,7 +1420,7 @@ class GUI_Equalisation(Gtk.Window):
         #Threshold_stop
         self.Threshold_stop_value = 2500
         Threshold_stop_adj = Gtk.Adjustment()
-        Threshold_stop_adj.configure(1600, 0, 2800, 1, 0, 0)
+        Threshold_stop_adj.configure(1600, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
         self.Threshold_stop.set_value(self.Threshold_stop_value) 
         self.Threshold_stop.connect("value-changed", self.Threshold_stop_set)
@@ -1437,10 +1437,8 @@ class GUI_Equalisation(Gtk.Window):
         Iterationbutton2.connect("toggled", self.on_Iterationbutton_toggled, "16")
         Iterationbutton3.connect("toggled", self.on_Iterationbutton_toggled, "64")
         Iterationbutton4.connect("toggled", self.on_Iterationbutton_toggled, "256")
-        
         Number_of_iteration_label = Gtk.Label()
         Number_of_iteration_label.set_text("Number of iterations")
-
         self.Number_of_Iterations = 16
         
         #Startbutton
@@ -1470,7 +1468,7 @@ class GUI_Equalisation(Gtk.Window):
         temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
         new_adjustment_start = Gtk.Adjustment()
-        new_adjustment_start.configure(200, self.Threshold_start_value, 2800, 1, 0, 0)
+        new_adjustment_start.configure(200, self.Threshold_start_value, 2911, 1, 0, 0)
         self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
         self.Threshold_stop.set_adjustment(adjustment = new_adjustment_start)
         self.Threshold_stop.set_value(temp_Threshold_stop_value)
@@ -1498,10 +1496,13 @@ class GUI_Equalisation(Gtk.Window):
         self.Equalisation_Type = name
         
     def on_Startbutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            print('Something else is beeing processed')
+            return
         print("Start " + self.Equalisation_Type + " based Equalisation from THL=" + str(self.Threshold_start_value) + " to THL=" + 
         str(self.Threshold_stop_value) + " with " + str(self.Number_of_Iterations) + " iterations per threshold.")
         
-        GUI.Status_window_call(function="Equalisation", subtype = self.Equalisation_Type, lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations)
+        GUI.Status_window_call(function="Equalisation", subtype = self.Equalisation_Type, lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), , status = GUI.get_status_queue())
         if self.Equalisation_Type == "Noise":
             print("Start Noise Equal")
             #Equalisation.start(self.Threshold_start_value, self.Threshold_stop_value, self.Number_of_Iterations)
