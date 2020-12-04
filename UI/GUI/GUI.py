@@ -567,6 +567,135 @@ class GUI_Threshold_Calib(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Testpulse_Scan(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = "Testpulse Scan")
+        self.connect("delete-event", self.window_destroy)
+        
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+        self.add(grid)
+        
+        Space = Gtk.Label()
+        Space.set_text("")
+        
+        Testpulse_range_label = Gtk.Label()
+        Testpulse_range_label.set_text("Testpulse range")
+        
+        #Testpulse_range_start
+        self.Testpulse_range_start_value = 210
+        Testpulse_range_start_adj = Gtk.Adjustment()
+        Testpulse_range_start_adj.configure(210, 0, 511, 1, 0, 0)
+        self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
+        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
+        self.Testpulse_range_start.connect("value-changed", self.Testpulse_range_start_set)
+        Testpulse_range_start_label = Gtk.Label()
+        Testpulse_range_start_label.set_text("Start ")
+        
+        #Testpulse_range_stop
+        self.Testpulse_range_stop_value = 510
+        Testpulse_range_stop_adj = Gtk.Adjustment()
+        Testpulse_range_stop_adj.configure(510, 0, 511, 1, 0, 0)
+        self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
+        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
+        self.Testpulse_range_stop.connect("value-changed", self.Testpulse_range_stop_set)
+        Testpulse_range_stop_label = Gtk.Label()
+        Testpulse_range_stop_label.set_text("Stop ")
+
+        #n_injections
+        self.n_injections_value = 100
+        n_injections_adj = Gtk.Adjustment()
+        n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
+        self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
+        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.connect("value-changed", self.n_injections_set)
+        n_injections_label = Gtk.Label()
+        n_injections_label.set_text("Number of injections ")
+        
+        #Buttons for number of iteration
+        Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, "4")
+        Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "16")
+        Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "64")
+        Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "256")
+        Iterationbutton2.set_active(True)
+        Iterationbutton1.connect("toggled", self.on_Iterationbutton_toggled, "4")
+        Iterationbutton2.connect("toggled", self.on_Iterationbutton_toggled, "16")
+        Iterationbutton3.connect("toggled", self.on_Iterationbutton_toggled, "64")
+        Iterationbutton4.connect("toggled", self.on_Iterationbutton_toggled, "256")
+        
+        Number_of_iteration_label = Gtk.Label()
+        Number_of_iteration_label.set_text("Number of iterations")
+        self.Number_of_Iterations = 16
+        
+        #Startbutton
+        self.Startbutton = Gtk.Button(label = "Start")
+        self.Startbutton.connect("clicked", self.on_Startbutton_clicked)
+        
+        grid.attach(Testpulse_range_label, 0, 0, 6, 1)
+        grid.attach(Testpulse_range_start_label, 0, 1, 1, 1)
+        grid.attach(self.Testpulse_range_start, 1, 1, 2, 1)
+        grid.attach(Testpulse_range_stop_label, 3, 1, 1, 1)
+        grid.attach(self.Testpulse_range_stop, 4, 1, 2, 1)
+        grid.attach(n_injections_label, 2, 2, 2, 1)
+        grid.attach(self.n_injections, 2, 3, 2, 1)
+        grid.attach(Number_of_iteration_label, 1, 4, 4, 1)
+        grid.attach(Iterationbutton1, 1, 5, 1, 1)
+        grid.attach(Iterationbutton2, 2, 5, 1, 1)
+        grid.attach(Iterationbutton3, 3, 5, 1, 1)
+        grid.attach(Iterationbutton4, 4, 5, 1, 1)
+        grid.attach(Space, 0, 6, 1, 1)
+        grid.attach(self.Startbutton, 4, 7, 2, 1)
+
+        self.show_all()
+        
+    def Testpulse_range_start_set(self, event):
+        self.Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
+        temp_Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
+        print("Testpulse_range_start value is " + str(self.Testpulse_range_start.get_value_as_int()) + ".")
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Testpulse_range_start_value, 2911, 1, 0, 0)
+        self.Testpulse_range_stop.disconnect_by_func(self.Testpulse_range_stop_set)
+        self.Testpulse_range_stop.set_adjustment(adjustment = new_adjustment_start)
+        self.Testpulse_range_stop.set_value(temp_Testpulse_range_stop_value)
+        self.Testpulse_range_stop.connect("value-changed", self.Testpulse_range_stop_set)
+        
+    def Testpulse_range_stop_set(self, event):
+        self.Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
+        temp_Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
+        print("Testpulse_range_stop value is " + str(self.Testpulse_range_stop.get_value_as_int()) + ".")
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
+        self.Testpulse_range_start.disconnect_by_func(self.Testpulse_range_start_set)
+        self.Testpulse_range_start.set_adjustment(adjustment = new_adjustment_stop)
+        self.Testpulse_range_start.set_value(temp_Testpulse_range_start_value)
+        self.Testpulse_range_start.connect("value-changed", self.Testpulse_range_start_set)
+
+    def n_injections_set(self, event):
+        self.n_injections_value = self.n_injections.get_value_as_int()
+        print("n_injections value is " + str(self.n_injections.get_value_as_int()) + ".")
+        
+    def on_Iterationbutton_toggled(self, button, name):
+        if button.get_active():
+            print(name, " iterations are choosen")
+        self.Number_of_Iterations = int(name)
+        
+    def on_Startbutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            print('Something else is beeing processed')
+            return
+        GUI.Status_window_call(function = "TestpulsScan", lowerTHL = self.Testpulse_range_start_value, upperTHL = self.Testpulse_range_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
+        new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+        GUI.set_running_process(running_process = new_process)
+        
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_SetDAC(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = "DAC settings")
@@ -1376,8 +1505,8 @@ class GUI_Main(Gtk.Window):
         self.THLScanbutton = Gtk.Button(label = "THL Scan")
         self.THLScanbutton.connect("clicked", self.on_THLScanbutton_clicked)
         
-        self.TOTScanbutton = Gtk.Button(label = "TOT Calibration")
-        self.TOTScanbutton.connect("clicked", self.on_TOTScanbutton_clicked)
+        self.TestpulsScanbutton = Gtk.Button(label = "Testpuls Scan")
+        self.TestpulsScanbutton.connect("clicked", self.on_TestpulsScanbutton_clicked)
         
         self.Runbutton = Gtk.Button(label = "Start readout")
         self.Runbutton.connect("clicked", self.on_Runbutton_clicked)
@@ -1415,6 +1544,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.TOTCalibbutton, 0, 3, 2, 1)
         page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
         page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
+        page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 9, 2, 1)
     
@@ -1486,9 +1616,8 @@ class GUI_Main(Gtk.Window):
     def on_THLScanbutton_clicked(self, widget):
         subw = GUI_Threshold_Scan()
         
-    def on_TOTScanbutton_clicked(self, widget):
-        print("Function call: TOTScan")
-        subw = GUI_ToT_Calib()
+    def on_TestpulsScanbutton_clicked(self, widget):
+        subw = GUI_Testpulse_Scan()
         
     def on_Runbutton_clicked(self, widget):
         print("Function call: Run")
