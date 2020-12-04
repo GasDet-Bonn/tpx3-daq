@@ -966,7 +966,7 @@ class GUI_SetDAC(Gtk.Window):
         Space.set_text("")
         
         #Ibias_Preamp_ON
-        self.Ibias_Preamp_ON_value = 127
+        self.Ibias_Preamp_ON_value = TPX3_datalogger.read_value(name = 'Ibias_Preamp_ON')
         Ibias_Preamp_ON_adj = Gtk.Adjustment()
         Ibias_Preamp_ON_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_Preamp_ON = Gtk.SpinButton(adjustment = Ibias_Preamp_ON_adj, climb_rate = 1, digits=0)
@@ -976,7 +976,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_Preamp_ON_label.set_text("Ibias_Preamp_ON ")
         
         #Ibias_Preamp_OFF
-        self.Ibias_Preamp_OFF_value =7
+        self.Ibias_Preamp_OFF_value = 7
         Ibias_Preamp_OFF_adj = Gtk.Adjustment()
         Ibias_Preamp_OFF_adj.configure(7, 0, 15, 1, 0, 0)
         self.Ibias_Preamp_OFF = Gtk.SpinButton(adjustment = Ibias_Preamp_OFF_adj, climb_rate = 1, digits = 0)
@@ -986,7 +986,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_Preamp_OFF_label.set_text("Ibias_Preamp_OFF ")
         
         #VPreamp_NCAS
-        self.VPreamp_NCAS_value = 127
+        self.VPreamp_NCAS_value = TPX3_datalogger.read_value(name = 'VPreamp_NCAS')
         VPreamp_NCAS_adj = Gtk.Adjustment()
         VPreamp_NCAS_adj.configure(127, 0, 255, 1, 0, 0)
         self.VPreamp_NCAS = Gtk.SpinButton(adjustment = VPreamp_NCAS_adj, climb_rate = 1, digits = 0)
@@ -996,7 +996,7 @@ class GUI_SetDAC(Gtk.Window):
         VPreamp_NCAS_label.set_text("VPreamp_NCAS ")
         
         #Ibias_Ikrum
-        self.Ibias_Ikrum_value = 127
+        self.Ibias_Ikrum_value = TPX3_datalogger.read_value(name = 'Ibias_Ikrum')
         Ibias_Ikrum_adj = Gtk.Adjustment()
         Ibias_Ikrum_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_Ikrum = Gtk.SpinButton(adjustment = Ibias_Ikrum_adj, climb_rate = 1, digits = 0)
@@ -1006,7 +1006,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_Ikrum_label.set_text("Ibias_Ikrum ")
         
         #Vfbk
-        self.Vfbk_value = 127
+        self.Vfbk_value = TPX3_datalogger.read_value(name = 'Vfbk')
         Vfbk_adj = Gtk.Adjustment()
         Vfbk_adj.configure(127, 0, 255, 1, 0, 0)
         self.Vfbk = Gtk.SpinButton(adjustment = Vfbk_adj, climb_rate = 1, digits = 0)
@@ -1016,7 +1016,7 @@ class GUI_SetDAC(Gtk.Window):
         Vfbk_label.set_text("Vfbk ")
         
         #Vthreshold_fine
-        self.Vthreshold_fine_value = 255
+        self.Vthreshold_fine_value = TPX3_datalogger.read_value(name = 'Vthreshold_fine')
         Vthreshold_fine_adj = Gtk.Adjustment()
         Vthreshold_fine_adj.configure(255, 0, 511, 1, 0, 0)
         self.Vthreshold_fine = Gtk.SpinButton(adjustment = Vthreshold_fine_adj, climb_rate = 1, digits = 0)
@@ -1026,7 +1026,7 @@ class GUI_SetDAC(Gtk.Window):
         Vthreshold_fine_label.set_text("Vthreshold_fine ")
         
         #Vthreshold_coarse
-        self.Vthreshold_coarse_value = 7
+        self.Vthreshold_coarse_value = TPX3_datalogger.read_value(name = 'Vthreshold_coarse')
         Vthreshold_coarse_adj = Gtk.Adjustment()
         Vthreshold_coarse_adj.configure(7, 0, 15, 1, 0, 0)
         self.Vthreshold_coarse = Gtk.SpinButton(adjustment = Vthreshold_coarse_adj, climb_rate = 1, digits = 0)
@@ -1036,7 +1036,7 @@ class GUI_SetDAC(Gtk.Window):
         Vthreshold_coarse_label.set_text("Vthreshold_coarse ")
         
         #Ibias_DiscS1_ON
-        self.Ibias_DiscS1_ON_value = 127
+        self.Ibias_DiscS1_ON_value = TPX3_datalogger.read_value(name = 'Ibias_DiscS1_ON')
         Ibias_DiscS1_ON_adj = Gtk.Adjustment()
         Ibias_DiscS1_ON_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_DiscS1_ON = Gtk.SpinButton(adjustment = Ibias_DiscS1_ON_adj, climb_rate = 1, digits = 0)
@@ -1056,7 +1056,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_DiscS1_OFF_label.set_text("Ibias_DiscS1_OFF ")
         
         #Ibias_DiscS2_ON
-        self.Ibias_DiscS2_ON_value = 127
+        self.Ibias_DiscS2_ON_value = TPX3_datalogger.read_value(name = 'Ibias_DiscS2_ON')
         Ibias_DiscS2_ON_adj = Gtk.Adjustment()
         Ibias_DiscS2_ON_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_DiscS2_ON = Gtk.SpinButton(adjustment = Ibias_DiscS2_ON_adj, climb_rate = 1, digits = 0)
@@ -1076,7 +1076,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_DiscS2_OFF_label.set_text("Ibias_DiscS2_OFF ")
         
         #Ibias_PixelDAC
-        self.Ibias_PixelDAC_value = 127
+        self.Ibias_PixelDAC_value = TPX3_datalogger.read_value(name = 'Ibias_PixelDAC')
         Ibias_PixelDAC_adj = Gtk.Adjustment()
         Ibias_PixelDAC_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_PixelDAC = Gtk.SpinButton(adjustment = Ibias_PixelDAC_adj, climb_rate = 1, digits = 0)
@@ -1086,7 +1086,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_PixelDAC_label.set_text("Ibias_PixelDAC ")
         
         #Ibias_TPbufferIn
-        self.Ibias_TPbufferIn_value = 127
+        self.Ibias_TPbufferIn_value = TPX3_datalogger.read_value(name = 'Ibias_TPbufferIn')
         Ibias_TPbufferIn_adj = Gtk.Adjustment()
         Ibias_TPbufferIn_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_TPbufferIn = Gtk.SpinButton(adjustment = Ibias_TPbufferIn_adj, climb_rate = 1, digits = 0)
@@ -1096,7 +1096,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_TPbufferIn_label.set_text("Ibias_TPbufferIn ")
         
         #Ibias_TPbufferOut
-        self.Ibias_TPbufferOut_value = 127
+        self.Ibias_TPbufferOut_value = TPX3_datalogger.read_value(name = 'Ibias_TPbufferOut')
         Ibias_TPbufferOut_adj = Gtk.Adjustment()
         Ibias_TPbufferOut_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_TPbufferOut = Gtk.SpinButton(adjustment = Ibias_TPbufferOut_adj, climb_rate = 1, digits = 0)
@@ -1106,7 +1106,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_TPbufferOut_label.set_text("Ibias_TPbufferOut ")
         
         #VTP_coarse
-        self.VTP_coarse_value = 127
+        self.VTP_coarse_value = TPX3_datalogger.read_value(name = 'VTP_coarse')
         VTP_coarse_adj = Gtk.Adjustment()
         VTP_coarse_adj.configure(127, 0, 255, 1, 0, 0)
         self.VTP_coarse = Gtk.SpinButton(adjustment = VTP_coarse_adj, climb_rate = 1, digits = 0)
@@ -1116,7 +1116,7 @@ class GUI_SetDAC(Gtk.Window):
         VTP_coarse_label.set_text("VTP_coarse ")
         
         #VTP_fine
-        self.VTP_fine_value = 255
+        self.VTP_fine_value = TPX3_datalogger.read_value(name = 'VTP_fine')
         VTP_fine_adj = Gtk.Adjustment()
         VTP_fine_adj.configure(255, 0, 511, 1, 0, 0)
         self.VTP_fine = Gtk.SpinButton(adjustment = VTP_fine_adj, climb_rate = 1, digits = 0)
@@ -1126,7 +1126,7 @@ class GUI_SetDAC(Gtk.Window):
         VTP_fine_label.set_text("VTP_fine ")
         
         #Ibias_CP_PLL
-        self.Ibias_CP_PLL_value = 127
+        self.Ibias_CP_PLL_value = TPX3_datalogger.read_value(name = 'Ibias_CP_PLL')
         Ibias_CP_PLL_adj = Gtk.Adjustment()
         Ibias_CP_PLL_adj.configure(127, 0, 255, 1, 0, 0)
         self.Ibias_CP_PLL = Gtk.SpinButton(adjustment = Ibias_CP_PLL_adj, climb_rate = 1, digits = 0)
@@ -1136,7 +1136,7 @@ class GUI_SetDAC(Gtk.Window):
         Ibias_CP_PLL_label.set_text("Ibias_CP_PLL ")
         
         #PLL_Vcntrl
-        self.PLL_Vcntrl_value = 127
+        self.PLL_Vcntrl_value = TPX3_datalogger.read_value(name = 'PLL_Vcntrl')
         PLL_Vcntrl_adj = Gtk.Adjustment()
         PLL_Vcntrl_adj.configure(127, 0, 255, 1, 0, 0)
         self.PLL_Vcntrl = Gtk.SpinButton(adjustment = PLL_Vcntrl_adj, climb_rate = 1, digits = 0)
