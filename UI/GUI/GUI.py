@@ -1759,6 +1759,9 @@ class GUI_Main(Gtk.Window):
         self.TestpulsScanbutton = Gtk.Button(label = "Testpuls Scan")
         self.TestpulsScanbutton.connect("clicked", self.on_TestpulsScanbutton_clicked)
         
+        self.NoiseScanbutton = Gtk.Button(label = "Noise Scan")
+        self.NoiseScanbutton.connect("clicked", self.on_NoiseScanbutton_clicked)
+        
         self.Runbutton = Gtk.Button(label = "Start readout")
         self.Runbutton.connect("clicked", self.on_Runbutton_clicked)
         
@@ -1798,6 +1801,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
         page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
         page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
+        page1.grid.attach(self.NoiseScanbutton, 0, 7, 2, 1)
         page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
         page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 9, 2, 1)
@@ -1871,6 +1875,9 @@ class GUI_Main(Gtk.Window):
         
     def on_TestpulsScanbutton_clicked(self, widget):
         subw = GUI_Testpulse_Scan()
+        
+    def on_NoiseScanbutton_clicked(self, widget):
+        print("Function call: NoiseScan")
         
     def on_Runbutton_clicked(self, widget):
         subw = GUI_Run_Datataking()
