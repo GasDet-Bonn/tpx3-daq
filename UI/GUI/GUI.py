@@ -2104,7 +2104,6 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_text("Error: Call without functionname")
         else:
             self.statuslabel.set_text("Error: " + function + " is not known!")
-            print("Error: " + function + " is not known")
 
     def get_progress_bar(self):
         return self.progressbar
