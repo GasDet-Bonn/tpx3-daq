@@ -16,7 +16,7 @@ from UI.tpx3_logger import file_logger
 from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import os
 from UI.tpx3_logger import TPX3_datalogger
-import tpx3.scans.scan_hardware as Init_Hardware
+from tpx3.scans.scan_hardware import ScanHardware
 from multiprocessing import Queue
 import time
 from datetime import datetime, timedelta
@@ -1767,6 +1767,7 @@ class GUI_Main(Gtk.Window):
         self.connect("button_press_event", self.window_on_button_press_event)
         self.progress_value_queue = Queue()
         self.status_queue = Queue()
+        self.hardware_scan_results = Queue()
         self.running_process = None
         self.iteration_symbol = False
         
@@ -1775,7 +1776,7 @@ class GUI_Main(Gtk.Window):
         
         self.statusbar = Gtk.Statusbar()
         self.context_id = self.statusbar.get_context_id("Status Main")
-        self.statusbar.push(self.context_id, "Statusbar for Markus...")
+        self.statusbar.push(self.context_id, "Please initalize the hardware with 'Hardware Init'.")
         
         self.notebook = Gtk.Notebook()
         self.grid.add(self.notebook)
@@ -1833,7 +1834,7 @@ class GUI_Main(Gtk.Window):
         self.Runbutton = Gtk.Button(label = "Start readout")
         self.Runbutton.connect("clicked", self.on_Runbutton_clicked)
         
-        self.Startupbutton = Gtk.Button(label = "Startup Sequence")
+        self.Startupbutton = Gtk.Button(label = "Hardware Init")
         self.Startupbutton.connect("clicked", self.on_Startupbutton_clicked)
         
         self.Resetbutton = Gtk.Button(label = "Reset")
@@ -1899,6 +1900,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 13, 2, 1)
     
         GLib.idle_add(self.update_progress)
+        GLib.idle_add(self.update_status)
 
 #######################################################################################################     
         ### Page 2 
@@ -1978,7 +1980,7 @@ class GUI_Main(Gtk.Window):
 
     def on_Startupbutton_clicked(self, widget):
         GUI.Status_window_call(function = "InitHardware")
-        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', results = self.hardware_scan_results, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
         GUI.set_running_process(running_process = new_process)
         
     def on_Resetbutton_clicked(self, widget):
@@ -2152,6 +2154,22 @@ class GUI_Main(Gtk.Window):
             self.progressbar.set_fraction(self.progress_value_queue.get())
         if not self.status_queue.empty():
             self.Status_window_call(function = "status", statusstring = self.status_queue.get())
+        return True
+
+    def update_status(self):
+        if not self.hardware_scan_results.empty():
+            Chip_List = self.hardware_scan_results.get()
+            for n, chip in enumerate(Chip_List):
+                name = 'Chip' + str(n) + '_name'
+                TPX3_datalogger.write_value(name = name, value = chip)
+            statusstring = 'Connected to '
+            for Chipname in TPX3_datalogger.get_chipnames():
+                number_of_links = TPX3_datalogger.get_links(chipname=Chipname)
+                if number_of_links == 1:
+                    statusstring += Chipname + ' (' + str(number_of_links) + ' link)'
+                else:
+                    statusstring += Chipname + ' (' + str(number_of_links) + ' links)'
+            self.statusbar.push(self.context_id, statusstring)
         return True
 
 ########################################################################################################################
