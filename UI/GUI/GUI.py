@@ -2163,12 +2163,14 @@ class GUI_Main(Gtk.Window):
                 name = 'Chip' + str(n) + '_name'
                 TPX3_datalogger.write_value(name = name, value = chip)
             statusstring = 'Connected to '
-            for Chipname in TPX3_datalogger.get_chipnames():
+            for n, Chipname in enumerate(TPX3_datalogger.get_chipnames()):
                 number_of_links = TPX3_datalogger.get_links(chipname=Chipname)
                 if number_of_links == 1:
                     statusstring += Chipname + ' (' + str(number_of_links) + ' link)'
                 else:
                     statusstring += Chipname + ' (' + str(number_of_links) + ' links)'
+                if n == 0:
+                    self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)
         return True
 
