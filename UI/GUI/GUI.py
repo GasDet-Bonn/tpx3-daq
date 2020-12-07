@@ -1898,9 +1898,9 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.AddSetbutton, 8, 1, 2, 1)
         page1.grid.attach(self.SetMaskbutton, 8, 3, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 13, 2, 1)
-    
-        GLib.idle_add(self.update_progress)
-        GLib.idle_add(self.update_status)
+
+        GLib.timeout_add(100, self.update_progress)
+        GLib.timeout_add(250, self.update_status)
 
 #######################################################################################################     
         ### Page 2 
