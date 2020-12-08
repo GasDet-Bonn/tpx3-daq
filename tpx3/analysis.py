@@ -451,12 +451,9 @@ def fit_scurves_multithread(scurves, scan_param_range,
     # Set all values above n_injections to n_injections. This is necessary, as the noise peak can lead to problems in the scurve fits.
     # As we are only interested in the position of the scurve (which lays below n_injections) this should not cause a problem.
     logger.info("Cut S-curves to %i hits for S-curve fit", n_injections)
-    for col in range(_scurves.shape[0]):
-        for row in range(_scurves.shape[1]):
-            if _scurves[col][row] > n_injections:
-                _scurves[col][row] = n_injections
-            else:
-                _scurves[col][row] = scurves[col][row]
+    pulse_check = _scurves > n_injections
+    _scurves[pulse_check] = n_injections
+    _scurves[np.invert(pulse_check)] = scurves[np.invert(pulse_check)]
     
     _scurves = np.ma.masked_array(_scurves)
     scan_param_range = np.array(scan_param_range)
