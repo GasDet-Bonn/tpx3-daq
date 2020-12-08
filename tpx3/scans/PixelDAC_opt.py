@@ -281,7 +281,7 @@ class PixelDAC_opt(ScanBase):
             last_pixeldac = [int(item[1]) for item in run_config if item[0] == b'last_pixeldac'][0]
             last_delta = [float(item[1]) for item in run_config if item[0] == b'last_delta'][0]
             chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
-            chip_x = [int(item[1]) for item in run_config if item[0] == b'chip_x'][0]
+            chip_x = [str(item[1]) for item in run_config if item[0] == b'chip_x'][0]
             chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
             # Select only data which is hit data
