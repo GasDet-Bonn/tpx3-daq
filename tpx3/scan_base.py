@@ -341,7 +341,7 @@ class ScanBase(object):
         row.append()
 
         # scan/run specific configuration parameters
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'thrfile', 'maskfile']
+        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'thrfile', 'maskfile', 'offset']
         for kw, value in six.iteritems(kwargs):
             if kw in run_config_attributes:
                 row = run_config_table.row
@@ -354,12 +354,10 @@ class ScanBase(object):
             row['attribute'] = 'pixeldac'
             row['value'] = str(127)
             row.append()
-
             row = run_config_table.row
             row['attribute'] = 'last_pixeldac'
             row['value'] = str(127)
             row.append()
-
             row = run_config_table.row
             row['attribute'] = 'last_delta'
             row['value'] = str(1)

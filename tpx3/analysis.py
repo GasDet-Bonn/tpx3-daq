@@ -75,6 +75,8 @@ def vth_hist(vths, Vthreshold_stop):
         for y in range(256):
             if int(vths[x, y]) >= Vthreshold_stop:
                 logger.info("Scan for pixel %d / %d failed" % (x, y))
+            elif int(vths[x, y]) == 0:
+                continue
             else:
                 hist[int(vths[x, y])] += 1
     return hist
@@ -503,7 +505,7 @@ def fit_scurves_multithread(scurves, scan_param_range,
                                 sigma_0=sigma_0,
                                 invert_x=invert_x)
 
-    result_list = imap_bar(partialfit_scurve, scurves.tolist(), progress = progress)
+    result_list = imap_bar(partialfit_scurve, _scurves.tolist(), progress = progress)
     result_array = np.array(result_list)
     logger.info("S-curve fit finished")
 
