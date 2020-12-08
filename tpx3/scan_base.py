@@ -340,6 +340,23 @@ class ScanBase(object):
                 row['attribute'] = kw
                 row['value'] = value if isinstance(value, str) else str(value)
                 row.append()
+
+        if self.scan_id == 'PixelDAC_opt' and iteration == 0:
+            row = run_config_table.row
+            row['attribute'] = 'pixeldac'
+            row['value'] = str(127)
+            row.append()
+
+            row = run_config_table.row
+            row['attribute'] = 'last_pixeldac'
+            row['value'] = str(127)
+            row.append()
+
+            row = run_config_table.row
+            row['attribute'] = 'last_delta'
+            row['value'] = str(1)
+            row.append()
+
         run_config_table.flush()
 
         # Save the dac settings
