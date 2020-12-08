@@ -215,11 +215,15 @@ class ScanBase(object):
 
         return valid
 
-    def create_scan_masks(self, mask_step, pixel_threhsold = None, progress = None):
+    def create_scan_masks(self, mask_step, pixel_threhsold = None, number = None, offset = 0, append_datadriven = True, progress = None):
         '''
             Creates the pixel configuration register masks for scans based on the number of mask_step.
             If a value is set for pixel threshold it is used for all pixels. Else the value which is
             already stored for the pixels is used.
+            Number sets the number of matrices (starting with offset) which is returned. If number
+            is None all matrices are returned.
+            If append_datadriven is True the command read_pixel_matrix_datadriven is appended to the
+            matrix command list.
             If progress is None a tqdm progress bar is used else progress should be a
             Multiprocess Queue which stores the progress as fraction of 1
             A list of commands to set the masks is returned
@@ -233,15 +237,18 @@ class ScanBase(object):
         # Empty array for the masks command for the scan
         mask_cmds = []
 
+        if number == None:
+            number = mask_step
+
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=mask_step)
+            pbar = tqdm(total=number)
         else:
             # Initailize counter for progress
             step_counter = 0
 
         # Create the masks for all steps
-        for i in range(mask_step):
+        for i in range(offset, number + offset):
             mask_step_cmd = []
 
             # Start with deactivated testpulses on all pixels and all pixels masked
@@ -263,8 +270,9 @@ class ScanBase(object):
             for i in range(256 // 4):
                 mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
-            # Append the command for initializing a data driven readout
-            mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
+            if append_datadriven == True:
+                # Append the command for initializing a data driven readout
+                mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
 
             # Append the list of command for the current mask_step to the full command list
             mask_cmds.append(mask_step_cmd)
@@ -275,7 +283,7 @@ class ScanBase(object):
             else:
                 # Update the progress fraction and put it in the queue
                 step_counter += 1
-                fraction = step_counter / mask_step
+                fraction = step_counter / number
                 progress.put(fraction)
 
         if progress == None:
