@@ -86,15 +86,12 @@ def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
     means = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
     eq_step_size = int((means[1] - means[0]) / 16)
 
-    for x in range(256):
-        for y in range(256):
-            eq_distance = (vths_th0[x, y] - means[0]) / eq_step_size
-            if eq_distance >= 8:
-                matrix[x, y] = 0
-            elif eq_distance <= -8:
-                matrix[x, y] = 15
-            else:
-                matrix[x, y] = int(8 - eq_distance)
+    filter_0 = (vths_th0 - means[0]) / eq_step_size >= 8
+    filter_15 = (vths_th0 - means[0]) / eq_step_size <= -8
+    filter_remaining = np.invert(np.logical_or(filter_0, filter_15))
+    matrix[filter_0] = 0
+    matrix[filter_15] = 15
+    matrix[filter_remaining] = (vths_th0[filter_remaining] - means[0]) / eq_step_size
 
     return matrix
 
