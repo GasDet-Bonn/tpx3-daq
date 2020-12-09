@@ -281,7 +281,7 @@ class PixelDAC_opt(ScanBase):
             last_pixeldac = [int(item[1]) for item in run_config if item[0] == b'last_pixeldac'][0]
             last_delta = [float(item[1]) for item in run_config if item[0] == b'last_delta'][0]
             chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
-            chip_x = [str(item[1]) for item in run_config if item[0] == b'chip_x'][0]
+            chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
             chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
             # Select only data which is hit data
@@ -327,7 +327,7 @@ class PixelDAC_opt(ScanBase):
 
                 # Write the equalisation matrix and the mask matrix to a new HDF5 file
                 output_path = os.path.join(self.working_dir, 'hdf')
-                thrfile = os.path.join(output_path, 'equal_W' + chip_wafer + '-' + chip_x + chip_y + '_' + self.timestamp + 'h5')
+                thrfile = os.path.join(output_path, 'equal_W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_' + self.timestamp + '.h5')
 
                 self.logger.info('Writing equalisation matrix to file...')
                 with tb.open_file(thrfile, 'a') as out_file:
