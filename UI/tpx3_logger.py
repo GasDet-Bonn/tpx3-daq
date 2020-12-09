@@ -45,19 +45,19 @@ class mask_logger(object):
                 mask_matrix = infile.root.mask_matrix[:]
                 infile.remove_node(infile.root.mask_matrix)
 
-            #manipulate mask matrix
-            if mask_element[0] == 'row':
-                mask_matrix[ : , int(mask_element[1])] = 1
-            elif mask_element[0] == 'column':
-                mask_matrix[int(mask_element[1]), :] = 1
-            elif mask_element[0] == 'pixel':
-                mask_matrix[int(mask_element[1]), int(mask_element[2])] = 1
-            else:
-                print('Error: Unknown mask element')
+        #manipulate mask matrix
+        if mask_element[0] == 'row':
+            mask_matrix[ : , int(mask_element[1])] = 1
+        elif mask_element[0] == 'column':
+            mask_matrix[int(mask_element[1]), :] = 1
+        elif mask_element[0] == 'pixel':
+            mask_matrix[int(mask_element[1]), int(mask_element[2])] = 1
+        else:
+            print('Error: Unknown mask element')
 
-            #Saving the final matrix
-            with tb.open_file(path, 'a') as out_file:
-                out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
+        #Saving the final matrix
+        with tb.open_file(path, 'a') as out_file:
+            out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
 
     def delete_mask(mask_element, mask = None):
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
