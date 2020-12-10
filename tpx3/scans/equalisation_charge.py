@@ -145,7 +145,7 @@ class Equalisation_charge(ScanBase):
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
                 if status != None:
                     status.put("Scan iteration {} of {} for THR = 15".format(scan_param_id + 1, len(cal_high_range)))
-                for mask_step_cmd in mask_cmds2:
+                for i, mask_step_cmd in enumerate(mask_cmds2):
                     # Only activate testpulses for columns with active pixels
                     self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
 
