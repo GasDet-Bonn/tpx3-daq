@@ -85,15 +85,17 @@ def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
     matrix = np.zeros((256, 256), dtype=np.uint8)
     means = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
     eq_step_size = int((means[1] - means[0]) / 16)
+    eq_distance = (vths_th0 - means[0]) / eq_step_size
 
-    filter_0 = (vths_th0 - means[0]) / eq_step_size >= 8
-    filter_15 = (vths_th0 - means[0]) / eq_step_size <= -8
-    filter_remaining = np.invert(np.logical_or(filter_0, filter_15))
+    matrix = 8 - eq_distance
+
+    filter_0 = eq_distance >= 8
     matrix[filter_0] = 0
-    matrix[filter_15] = 15
-    matrix[filter_remaining] = (vths_th0[filter_remaining] - means[0]) / eq_step_size
 
-    return matrix
+    filter_15 = eq_distance <= -8
+    matrix[filter_15] = 15
+
+    return matrix.astype(int)
 
 def pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop):
     means = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
