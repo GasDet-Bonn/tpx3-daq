@@ -45,7 +45,7 @@ class PixelDAC_opt(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, offset = 16, progress = None, status = None, **kwargs):
+    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, offset = 0, progress = None, status = None, **kwargs):
         '''
             Main function of the pixel dac optimization. Starts the scan iterations and the analysis of
             of the individual iterations.
