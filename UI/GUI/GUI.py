@@ -524,7 +524,6 @@ class GUI_Threshold_Calib(Gtk.Window):
     def Threshold_start_set(self, event):
         self.Threshold_start_value = self.Threshold_start.get_value_as_int()
         temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
-        print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
         new_adjustment_start = Gtk.Adjustment()
         new_adjustment_start.configure(200, self.Threshold_start_value, 2911, 1, 0, 0)
         self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
@@ -535,7 +534,6 @@ class GUI_Threshold_Calib(Gtk.Window):
     def Threshold_stop_set(self, event):
         self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
-        print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
         new_adjustment_stop = Gtk.Adjustment()
         new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
         self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
@@ -545,22 +543,20 @@ class GUI_Threshold_Calib(Gtk.Window):
 
     def n_injections_set(self, event):
         self.n_injections_value = self.n_injections.get_value_as_int()
-        print("n_injections value is " + str(self.n_injections.get_value_as_int()) + ".")
+        
 
     def on_Iterationbutton_toggled(self, button, name):
-        if button.get_active():
-            print(name, " iterations are choosen")
         self.Number_of_Iterations = int(name)
 
     def n_pulse_heights_set(self, event):
         self.n_pulse_heights_value = self.n_pulse_heights.get_value_as_int()
-        print("n_pulse_heights value is " + str(self.n_pulse_heights.get_value_as_int()) + ".")
+        
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
             print('Something else is beeing processed')
             return
-        print("Start Threshold calibration")
+
         GUI.Status_window_call(function = "ThresholdCalib", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value, n_pulse_heights = self.n_pulse_heights_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, n_pulse_heights = self.n_pulse_heights_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
         GUI.set_running_process(running_process = new_process)
@@ -787,7 +783,6 @@ class GUI_PixelDAC_opt(Gtk.Window):
     def Threshold_start_set(self, event):
         self.Threshold_start_value = self.Threshold_start.get_value_as_int()
         temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
-        print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
         new_adjustment_start = Gtk.Adjustment()
         new_adjustment_start.configure(200, self.Threshold_start_value, 2911, 1, 0, 0)
         self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
@@ -798,7 +793,6 @@ class GUI_PixelDAC_opt(Gtk.Window):
     def Threshold_stop_set(self, event):
         self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
-        print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
         new_adjustment_stop = Gtk.Adjustment()
         new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
         self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
@@ -808,18 +802,15 @@ class GUI_PixelDAC_opt(Gtk.Window):
 
     def n_injections_set(self, event):
         self.n_injections_value = self.n_injections.get_value_as_int()
-        print("n_injections value is " + str(self.n_injections.get_value_as_int()) + ".")
 
     def on_Iterationbutton_toggled(self, button, name):
-        if button.get_active():
-            print(name, " iterations are choosen")
         self.Number_of_Iterations = int(name)
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
             print('Something else is beeing processed')
             return
-        print("Start PixelDAC optimisation")
+
         GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
         GUI.set_running_process(running_process = new_process)
@@ -1189,75 +1180,57 @@ class GUI_SetDAC(Gtk.Window):
 
     def Ibias_Preamp_ON_set(self, event):
         self.Ibias_Preamp_ON_value = self.Ibias_Preamp_ON.get_value_as_int()
-        print("Ibias_Preamp_ON value is " + str(self.Ibias_Preamp_ON_value) + ".")
 
     def Ibias_Preamp_OFF_set(self, event):
         self.Ibias_Preamp_OFF_value = self.Ibias_Preamp_OFF.get_value_as_int()
-        print("Ibias_Preamp_OFF value is " + str(self.Ibias_Preamp_OFF.get_value_as_int()) + ".")
 
     def VPreamp_NCAS_set(self, event):
         self.VPreamp_NCAS_value = self.VPreamp_NCAS.get_value_as_int()
-        print("VPreamp_NCAS value is " + str(self.VPreamp_NCAS.get_value_as_int()) + ".")
 
     def Ibias_Ikrum_set(self, event):
         self.Ibias_Ikrum_value = self.Ibias_Ikrum.get_value_as_int()
-        print("Ibias_Ikrum value is " + str(self.Ibias_Ikrum.get_value_as_int()) + ".")
 
     def Vfbk_set(self, event):
         self.Vfbk_value = self.Vfbk.get_value_as_int()
-        print("Vfbk value is " + str(self.Vfbk.get_value_as_int()) + ".")
 
     def Vthreshold_fine_set(self, event):
         self.Vthreshold_fine_value = self.Vthreshold_fine.get_value_as_int()
-        print("Vthreshold_fine value is " + str(self.Vthreshold_fine.get_value_as_int()) + ".")
 
     def Vthreshold_coarse_set(self, event):
         self.Vthreshold_coarse_value = self.Vthreshold_coarse.get_value_as_int()
-        print("Vthreshold_coarse value is " + str(self.Vthreshold_coarse.get_value_as_int()) + ".")
 
     def Ibias_DiscS1_ON_set(self, event):
         self.Ibias_DiscS1_ON_value = self.Ibias_DiscS1_ON.get_value_as_int()
-        print("Ibias_DiscS1_ON value is " + str(self.Ibias_DiscS1_ON.get_value_as_int()) + ".")
 
     def Ibias_DiscS1_OFF_set(self, event):
         self.Ibias_DiscS1_OFF_value = self.Ibias_DiscS1_OFF.get_value_as_int()
-        print("Ibias_DiscS1_OFF value is " + str(self.Ibias_DiscS1_OFF.get_value_as_int()) + ".")
 
     def Ibias_DiscS2_ON_set(self, event):
         self.Ibias_DiscS2_ON_value = self.Ibias_DiscS2_ON.get_value_as_int()
-        print("Ibias_DiscS2_ON value is " + str(self.Ibias_DiscS2_ON.get_value_as_int()) + ".")
 
     def Ibias_DiscS2_OFF_set(self, event):
         self.Ibias_DiscS2_OFF_value = self.Ibias_DiscS2_OFF.get_value_as_int()
-        print("Ibias_DiscS2_OFF value is " + str(self.Ibias_DiscS2_OFF.get_value_as_int()) + ".")
 
     def Ibias_PixelDAC_set(self, event):
         self.Ibias_PixelDAC_value = self.Ibias_PixelDAC.get_value_as_int()
-        print("Ibias_PixelDAC value is " + str(self.Ibias_PixelDAC.get_value_as_int()) + ".")
 
     def Ibias_TPbufferIn_set(self, event):
         self.Ibias_TPbufferIn_value = self.Ibias_TPbufferIn.get_value_as_int()
-        print("Ibias_TPbufferIn value is " + str(self.Ibias_TPbufferIn.get_value_as_int()) + ".")
 
     def Ibias_TPbufferOut_set(self, event):
         self.Ibias_TPbufferOut_value = self.Ibias_TPbufferOut.get_value_as_int()
-        print("Ibias_TPbufferOut value is " + str(self.Ibias_TPbufferOut.get_value_as_int()) + ".")
 
     def VTP_coarse_set(self, event):
         self.VTP_coarse_value = self.VTP_coarse.get_value_as_int()
-        print("VTP_coarse value is " + str(self.VTP_coarse.get_value_as_int()) + ".")
 
     def VTP_fine_set(self, event):
         self.VTP_fine_value = self.VTP_fine.get_value_as_int()
-        print("VTP_fine value is " + str(self.VTP_fine.get_value_as_int()) + ".")
 
     def Ibias_CP_PLL_set(self, event):
         self.Ibias_CP_PLL_value = self.Ibias_CP_PLL.get_value_as_int()
-        print("Ibias_CP_PLL value is " + str(self.Ibias_CP_PLL.get_value_as_int()) + ".")
 
     def PLL_Vcntrl_set(self, event):
         self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
-        print("PLL_Vcntrl value is " + str(self.PLL_Vcntrl.get_value_as_int()) + ".")
 
     def on_Savebutton_clicked(self, widget):
         if GUI.get_process_alive():
@@ -1471,7 +1444,6 @@ class GUI_Additional_Settings(Gtk.Window):
         else:
             state = 0
             self.set_polarity_button.set_label('  POS  ')
-        print("Button was turned", state)
         self.polarity_value = state
 
     def Fast_IO_button_toggled(self, button):
@@ -1502,8 +1474,6 @@ class GUI_Additional_Settings(Gtk.Window):
         self.AckCommand_en_value = state
 
     def Op_mode_button_toggled(self, button, name):
-        if button.get_active():
-            print('Operation mode: ', name)
         self.op_mode_value = int(name)
 
     def ClkOut_frequency_combo_changed(self, combo):
@@ -1518,8 +1488,6 @@ class GUI_Additional_Settings(Gtk.Window):
             self.ClkOut_frequency_src_value = 4
         elif text == 'external':
             self.ClkOut_frequency_src_value = 5
-
-        print("Selected: speed=%s" % text)
 
     def on_Savebutton_clicked(self, widget):
         if GUI.get_process_alive():
@@ -1628,7 +1596,6 @@ class GUI_Equalisation(Gtk.Window):
     def Threshold_start_set(self, event):
         self.Threshold_start_value = self.Threshold_start.get_value_as_int()
         temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
-        print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
         new_adjustment_start = Gtk.Adjustment()
         new_adjustment_start.configure(200, self.Threshold_start_value, 2911, 1, 0, 0)
         self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
@@ -1639,7 +1606,6 @@ class GUI_Equalisation(Gtk.Window):
     def Threshold_stop_set(self, event):
         self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
-        print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
         new_adjustment_stop = Gtk.Adjustment()
         new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
         self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
@@ -1653,8 +1619,6 @@ class GUI_Equalisation(Gtk.Window):
         self.Number_of_Iterations = int(name)
 
     def on_Equalisation_Typebutton_toggled(self, button, name):
-        if button.get_active():
-            print( name," based method is choosen")
         self.Equalisation_Type = name
 
     def on_Startbutton_clicked(self, widget):
