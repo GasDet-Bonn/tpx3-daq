@@ -120,7 +120,7 @@ class file_logger(object):
         user_path = os.path.join(user_path, 'backups')
         Chipnames = TPX3_datalogger.get_chipnames()
         if len(Chipnames) == 0:
-            Chip = 'Default'
+            Chip = 'W?_??'
         elif len(Chipnames) == 1:
             Chip = Chipnames[0]
         else:
