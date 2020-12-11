@@ -95,7 +95,7 @@ def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
     filter_15 = eq_distance <= -8
     matrix[filter_15] = 15
 
-    return matrix.astype(int)
+    return matrix.astype(np.uint8)
 
 def pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop):
     means = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
