@@ -654,7 +654,6 @@ class GUI_Testpulse_Scan(Gtk.Window):
     def Testpulse_range_start_set(self, event):
         self.Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
         temp_Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
-        print("Testpulse_range_start value is " + str(self.Testpulse_range_start.get_value_as_int()) + ".")
         new_adjustment_start = Gtk.Adjustment()
         new_adjustment_start.configure(200, self.Testpulse_range_start_value, 2911, 1, 0, 0)
         self.Testpulse_range_stop.disconnect_by_func(self.Testpulse_range_stop_set)
@@ -665,7 +664,6 @@ class GUI_Testpulse_Scan(Gtk.Window):
     def Testpulse_range_stop_set(self, event):
         self.Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
         temp_Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
-        print("Testpulse_range_stop value is " + str(self.Testpulse_range_stop.get_value_as_int()) + ".")
         new_adjustment_stop = Gtk.Adjustment()
         new_adjustment_stop.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
         self.Testpulse_range_start.disconnect_by_func(self.Testpulse_range_start_set)
@@ -675,16 +673,13 @@ class GUI_Testpulse_Scan(Gtk.Window):
 
     def n_injections_set(self, event):
         self.n_injections_value = self.n_injections.get_value_as_int()
-        print("n_injections value is " + str(self.n_injections.get_value_as_int()) + ".")
 
     def on_Iterationbutton_toggled(self, button, name):
-        if button.get_active():
-            print(name, " iterations are choosen")
         self.Number_of_Iterations = int(name)
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
-            print('Something else is beeing processed')
+            self.other_process.set_text("Other process running")
             return
         GUI.Status_window_call(function = "TestpulsScan", lowerTHL = self.Testpulse_range_start_value, upperTHL = self.Testpulse_range_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
