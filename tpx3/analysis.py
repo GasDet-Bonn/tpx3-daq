@@ -75,8 +75,8 @@ def vth_hist(vths, Vthreshold_stop):
         for y in range(256):
             if int(vths[x, y]) >= Vthreshold_stop:
                 logger.info("Scan for pixel %d / %d failed" % (x, y))
-            elif int(vths[x, y]) == 0:
-                continue
+            elif int(vths[x, y]) < 0:
+                logger.info("Scan for pixel %d / %d failed" % (x, y))
             else:
                 hist[int(vths[x, y])] += 1
     return hist
