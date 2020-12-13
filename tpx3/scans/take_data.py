@@ -50,12 +50,6 @@ class DataTake(ScanBase):
 
         system_exit = False
 
-        # Set the threshold of the chip
-        Vthreshold_fine = 117
-        Vthreshold_coarse = 8
-        self.chip.set_dac("Vthreshold_fine", Vthreshold_fine)
-        self.chip.set_dac("Vthreshold_coarse", Vthreshold_coarse)
-
         # Disable test pulses, set the mode to ToT/ToA and write the configuration to the Timepix3
         self.chip._configs["TP_en"] = 0
         self.chip._configs["Op_mode"] = 0
