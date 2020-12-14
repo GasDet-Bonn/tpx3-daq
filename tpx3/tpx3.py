@@ -708,6 +708,9 @@ class TPX3(Dut):
         A list of 48 bit bitarrays for each word is returned.
         """
 
+        # remove data that belongs to the timestamp
+        data = np.asarray([data_part for data_part in data if ((data_part & 0xF0000000) >> 28) != 0b0101],dtype=np.uint32)
+
         # determine number of 48bit words
         assert len(data) % 2 == 0, "Missing one 32bit subword of a 48bit package"
         nwords = len(data) // 2
