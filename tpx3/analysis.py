@@ -144,23 +144,19 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
     return (mean_th0, mean_th15, rms_th0, rms_th15, delta, rms_delta)
 
 
-#TODO: This is bad should be njit
-def _interpret_raw_data(data):
-
-    # TODO: fix types
-    data_type = {'names': ['data_header', 'header', 'x', 'y', 'TOA', 'TOT', 'EventCounter', 'HitCounter', 'EoC', 'CTPR', 'scan_param_id','chunk_start_time'],
-               'formats': ['uint8', 'uint8', 'uint16', 'uint16', 'uint8', 'uint8', 'uint16', 'uint8', 'uint8', 'uint8', 'uint16', 'double']}
+def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
+    data_type = {'names': ['data_header', 'header', 'x',     'y',     'TOA',    'TOT',    'EventCounter', 'HitCounter', 'FTOA',  'scan_param_id','chunk_start_time'],
+               'formats': ['uint8',       'uint8',  'uint8', 'uint8', 'uint16', 'uint16', 'uint16',       'uint8',      'uint8', 'uint16',       'float']}
 
     pix_data = np.recarray((data.shape[0]), dtype=data_type)
 
     n47 = np.uint64(47)
     n44 = np.uint64(44)
     n28 = np.uint64(28)
-    n36 = np.uint64(36)
     n4 = np.uint64(4)
 
-    nff = np.uint64(0xff)
     n3ff = np.uint64(0x3ff)
+    n3fff = np.uint64(0x3fff)
     nf = np.uint64(0xf)
 
     pixel = (data >> n28) & np.uint64(0b111)
@@ -172,9 +168,41 @@ def _interpret_raw_data(data):
     pix_data['header'] = data >> n44
     pix_data['y'] = (super_pixel * 4) + (pixel - right_col * 4)
     pix_data['x'] = eoc * 2 + right_col * 1
-    pix_data['HitCounter'] = data & nf
-    pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff] # at the moment in ToA and ToT mode this gives you ToT
-    # TODO
+    if(vco == False):
+        pix_data['HitCounter'] = _lfsr_4_lut[data & nf]
+        pix_data['FTOA'] = np.zeros(len(data))
+    else:
+        pix_data['HitCounter'] = np.zeros(len(data))
+        pix_data['FTOA'] = data & nf
+
+    # ToA and ToT mode
+    if op_mode == 0b00:
+        pix_data['TOT'] = _lfsr_10_lut[(data >> n4) & n3ff]
+        pix_data['TOA'] = _gray_14_lut[(data >> n14) & n3fff]
+        pix_data['EventCounter'] = np.zeros(len(data))
+        if len(ToA_Extension):
+            pix_data['TOA_Extension'] = ToA_Extension
+            pix_data['TOA_Combined'] = (ToA_Extension & 0xFFFFFFFFC000) + pix_data['TOA']
+        else:
+            pix_data['TOA_Extension'] = np.zeros(len(data))
+            pix_data['TOA_Combined'] = np.zeros(len(data))
+    elif op_mode == 0b01: # ToA
+        pix_data['TOA'] = _gray_14_lut[(data >> n14) & n3fff]
+        pix_data['EventCounter'] = np.zeros(len(data))
+        pix_data['TOT'] = np.zeros(len(data))
+        if len(ToA_Extension):
+            pix_data['TOA_Extension'] = ToA_Extension
+            pix_data['TOA_Combined'] = (ToA_Extension & 0xFFFFFFFFC000) + pix_data['TOA']
+        else:
+            pix_data['TOA_Extension'] = np.zeros(len(data))
+            pix_data['TOA_Combined'] = np.zeros(len(data))
+    else: # Event and iToT
+        pix_data['iTOT'] = _lfsr_14_lut[(data >> n14) & n3fff]
+        pix_data['EventCounter'] = _lfsr_10_lut[(data >> n4) & n3ff]
+        pix_data['TOT'] = np.zeros(len(data))
+        pix_data['TOA'] = np.zeros(len(data))
+        pix_data['TOA_Extension'] = np.zeros(len(data))
+        pix_data['TOA_Combined'] = np.zeros(len(data))
 
     return pix_data
 
