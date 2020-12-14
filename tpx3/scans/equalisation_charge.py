@@ -222,8 +222,8 @@ class Equalisation_charge(ScanBase):
             
             # Create histograms for number of detected hits for individual thresholds
             self.logger.info('Get the global threshold distributions for all pixels...')
-            scurve_th0 = analysis.scurve_hist(hit_data_th0, param_range_th0)
-            scurve_th15 = analysis.scurve_hist(hit_data_th15, param_range_th15)
+            scurve_th0 = analysis.scurve_hist(hit_data_th0, np.arange(len(param_range) // 2))
+            scurve_th15 = analysis.scurve_hist(hit_data_th15, np.arange(len(param_range) // 2, len(param_range)))
 
             # Fit S-Curves to the histogramms for all pixels
             self.logger.info('Fit the scurves for all pixels...')
