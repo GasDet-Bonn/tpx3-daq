@@ -52,7 +52,6 @@ class DataTake(ScanBase):
 
         # Disable test pulses, set the mode to ToT/ToA and write the configuration to the Timepix3
         self.chip._configs["TP_en"] = 0
-        self.chip._configs["Op_mode"] = 0
         self.chip.write_general_config()
 
         # Initialize data-driven readout

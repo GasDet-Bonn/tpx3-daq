@@ -56,8 +56,7 @@ class ToTCalib(ScanBase):
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
 
-        # Set general configuration registers of the Timepix3 
-        self.chip.configs["Op_mode"] = 0 # Change to ToT/ToA mode
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Write to the test pulse registers of the Timepix3

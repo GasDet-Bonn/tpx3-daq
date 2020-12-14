@@ -539,6 +539,24 @@ class ScanBase(object):
         for i in range(256 // 4):
             self.chip.write_pcr(list(range(4 * i, 4 * i + 4)))
 
+        # Set Op_mode for the scans, based on the scan id
+        if self.scan_id == 'Equalisation_charge':
+            self.chip._configs["Op_mode"] = 2
+        elif self.scan_id == 'Equalisation':
+            self.chip._configs["Op_mode"] = 2
+        elif self.scan_id == 'PixelDAC_opt':
+            self.chip._configs["Op_mode"] = 2
+        elif self.scan_id == 'testpulse_scan':
+            self.chip._configs["Op_mode"] = 2
+        elif self.scan_id == 'threshold_scan':
+            self.chip._configs["Op_mode"] = 2
+        elif self.scan_id == 'threshold_calib':
+            self.chip._configs["Op_mode"] = 2
+        elif self.scan_id == 'noise_scan':
+            self.chip._configs["Op_mode"] = 0
+        elif self.scan_id == 'ToT_calib':
+            self.chip._configs["Op_mode"] = 0
+
         # Setup HDF5 file
         filename = self.output_filename + '.h5'
         self.h5_file = tb.open_file(filename, mode='w', title=self.scan_id)
