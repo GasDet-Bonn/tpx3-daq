@@ -505,9 +505,6 @@ class ScanBase(object):
         else:
             self.chip['PULSE_GEN'].set_en(False)
 
-        # Reset the Timepix3 timer
-        self.chip.toggle_pin("TO_SYNC")
-
         # Get ChipID - Only readable after doing EFuse_Read once
         data = self.chip.read_periphery_template("EFuse_Read")
         data += [0x00]*4

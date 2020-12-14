@@ -73,6 +73,9 @@ class DataTake(ScanBase):
         with self.readout(scan_param_id=1):
             time.sleep(0.1)
 
+            # Reset the Timepix3 timer and start the ToA Extension on the FPGA
+            self.chip.toggle_pin("TO_SYNC")
+
             # Open the shutter and take data
             with self.shutter():
                 self.stop_scan = False
