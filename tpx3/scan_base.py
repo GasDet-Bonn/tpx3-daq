@@ -67,6 +67,11 @@ class DacTable(tb.IsDescription):
     value = tb.UInt16Col()
 
 
+class ConfTable(tb.IsDescription):
+    configuration = tb.StringCol(64)
+    value = tb.UInt16Col()
+
+
 def send_data(socket, data, scan_par_id, name='ReadoutData'):
     '''
         Sends the data of every read out (raw data and meta data)
@@ -364,6 +369,15 @@ class ScanBase(object):
             row.append()
 
         run_config_table.flush()
+
+        # save the general configuration
+        general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig', title='GeneralConfig', description=ConfTable)
+        for conf, value in six.iteritems(self.chip.configs):
+            row = general_config_table.row
+            row['configuration'] = conf
+            row['value'] = value
+            row.append()
+        general_config_table.flush()
 
         # Save the dac settings
         # Scans without multiple iterations
