@@ -22,12 +22,14 @@ from scipy.special import erf
 from numba import njit
 import math
 from six.moves import range
+from numba import njit
 
 logger = logging.getLogger('Analysis')
 
+_lfsr_4_lut = np.zeros((2 ** 4), dtype=np.uint16)
 _lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
-
-from numba import njit
+_lfsr_14_lut = np.zeros((2 ** 14), dtype=np.uint16)
+_gray_14_lut = np.zeros((2 ** 14), dtype=np.uint16)
 
 @njit
 def scurve_hist(hit_data, param_range):
@@ -266,6 +268,22 @@ def interpret_raw_data(raw_data, meta_data=[], chunk_start_time=None, split_fine
 
     return ret
 
+def init_lfsr_4_lut():
+        """
+        Generates a 4bit LFSR according to Manual v1.9 page 19
+        """
+        lfsr = BitLogic(4)
+        lfsr[3:0] = 0xF
+        dummy = 0
+        for i in range(2**4):
+            _lfsr_4_lut[BitLogic.tovalue(lfsr)] = i
+            dummy = lfsr[3]
+            lfsr[3] = lfsr[2]
+            lfsr[2] = lfsr[1]
+            lfsr[1] = lfsr[0]
+            lfsr[0] = lfsr[3] ^ dummy
+        _lfsr_4_lut[2 ** 4 - 1] = 0
+
 
 def init_lfsr_10_lut():
     """
@@ -291,6 +309,45 @@ def init_lfsr_10_lut():
         lfsr[0] = lfsr[7] ^ dummy
     _lfsr_10_lut[2 ** 10 - 1] = 0
 
+def init_lfsr_14_lut():
+    """
+    Generates a 14bit LFSR according to Manual v1.9 page 19
+    """
+    lfsr = BitLogic(14)
+    lfsr[7:0] = 0xFF
+    lfsr[13:8] = 63
+    dummy = 0
+    for i in range(2**14):
+        _lfsr_14_lut[BitLogic.tovalue(lfsr)] = i
+        dummy = lfsr[13]
+        lfsr[13] = lfsr[12]
+        lfsr[12] = lfsr[11]
+        lfsr[11] = lfsr[10]
+        lfsr[10] = lfsr[9]
+        lfsr[9] = lfsr[8]
+        lfsr[8] = lfsr[7]
+        lfsr[7] = lfsr[6]
+        lfsr[6] = lfsr[5]
+        lfsr[5] = lfsr[4]
+        lfsr[4] = lfsr[3]
+        lfsr[3] = lfsr[2]
+        lfsr[2] = lfsr[1]
+        lfsr[1] = lfsr[0]
+        lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
+    _lfsr_14_lut[2 ** 14 - 1] = 0
+
+def init_gray_14_lut():
+    """
+    Generates a 14bit gray according to Manual v1.9 page 19
+    """
+    for j in range(2**14):
+        encoded_value = BitLogic(14) #48
+        encoded_value[13:0]=j #47
+        gray_decrypt_v = BitLogic(14) #48
+        gray_decrypt_v[13]=encoded_value[13] #47
+        for i in range (12, -1, -1): #46
+            gray_decrypt_v[i]=gray_decrypt_v[i+1]^encoded_value[i]
+        _gray_14_lut[j] = gray_decrypt_v.tovalue()
 
 def scurve(x, A, mu, sigma):
     return 0.5 * A * erf((x - mu) / (np.sqrt(2) * sigma)) + 0.5 * A
@@ -575,7 +632,10 @@ def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
 
 
 # init LUTs
+init_lfsr_4_lut()
 init_lfsr_10_lut()
+init_lfsr_14_lut()
+init_gray_14_lut()
 
 if __name__ == "__main__":
     pass
