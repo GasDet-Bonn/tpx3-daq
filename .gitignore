@@ -132,3 +132,6 @@ dvt_build.log
 
 # Textfiles
 .txt
+
+# Datafiles
+.h5
