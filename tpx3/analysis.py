@@ -261,9 +261,9 @@ def interpret_raw_data(raw_data, meta_data=[], chunk_start_time=None, split_fine
             # split raw_data according to these positions into sets that all consist of entries which belong to one scan_id
             split = np.split(raw_data, stops)
             # remove the last element (WHY?) and process each chunk individually
+            pbar = tqdm(total = len(split[:-1]))
             for i in range(len(split[:-1])):
                 # print param[i], stops[i], len(split[i]), split[i]
-
                 # sends split[i] (i.e. part of data that is currently treated) recursively
                 # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
                 int_pix_data = interpret_raw_data(split[i])
@@ -274,8 +274,11 @@ def interpret_raw_data(raw_data, meta_data=[], chunk_start_time=None, split_fine
                     ret = np.hstack((ret, int_pix_data))
                 else:
                     ret = int_pix_data
+                pbar.update(1)
+            pbar.close()
         # case used for clustering: split further into the time frames defined through one row in meta_data
         else:
+            pbar = tqdm(total=meta_data.shape[0])
             for l in range(meta_data.shape[0]):
                 index_start = meta_data['index_start'][l]
                 index_stop = meta_data['index_stop'][l]
@@ -288,6 +291,8 @@ def interpret_raw_data(raw_data, meta_data=[], chunk_start_time=None, split_fine
                         ret = np.hstack((ret, int_pix_data))
                     else:
                         ret = int_pix_data
+                    pbar.update(1)
+            pbar.close()
     else:
 
         #it can be chunked and multithreaded here
