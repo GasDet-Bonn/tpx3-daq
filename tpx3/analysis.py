@@ -206,6 +206,80 @@ def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
 
     return pix_data
 
+"""
+Corrects for missing packages in the raw_data of the data
+"""
+def save_and_correct(raw_data, indices):
+    # split into packages, which should be package0 and 1
+    package0 = raw_data[1::2]
+    package0 = (package0 & 0x01000000) >> 24
+    package1 = raw_data[0::2]
+    package1 = (package1 & 0x01000000) >> 24
+    # package 0 should have a 0 here, check where this is not the case
+    ones = np.where(package0 == 1)[0]
+    # found an error -> missing package somewhere
+    if len(ones) != 0:
+        first = ones[0]
+        # delete package belonging to the missing one
+        if first == 0:
+            raw_data = np.delete(raw_data, 0, axis = 0)
+            indices = np.delete(indices, 0, axis = 0)
+            #logger.info("Deleted package at index "+str(0))
+        elif package1[first] == 1:
+            raw_data = np.delete(raw_data, 2*first+1, axis = 0)
+            indices = np.delete(indices, 2*first+1, axis = 0)
+            #logger.info("Deleted package at index "+str(2*first+1))
+        else:
+            raw_data = np.delete(raw_data, 2*(first-1)+1, axis = 0)
+            indices = np.delete(indices, 2*(first-1)+1, axis = 0)
+            #logger.info("Deleted package at index "+str(2*(first-1)+1))
+
+        # call recursively until everything is as it should
+        raw_data, indices, num = save_and_correct(raw_data,indices)
+        num += 1
+    # everything is fine, return
+    else:
+        num = 0
+
+    return raw_data, indices, num
+
+"""
+Corrects for missing packages in the raw_data of the FPGA Timestamps
+"""
+def save_and_correct_timer(raw_data, indices):
+    # split timer packages
+    package1 = raw_data[1::2]
+    package1 = (package1 & 0x01000000) >> 24
+    package0 = raw_data[0::2]
+    package0 = (package0 & 0x01000000) >> 24
+    #package1 should have a 1 at this position; find where this is not the case
+    ones = np.where(package1 == 0)[0]
+    # if we found an error: correct
+    if len(ones) != 0:
+        first = ones[0]
+        # delete the package that belongs to the missing package
+        if first == 0:
+            raw_data = np.delete(raw_data, 0, axis = 0)
+            indices = np.delete(indices, 0, axis = 0)
+            #logger.info("Deleted package at index "+str(0))
+        elif package0[first] == 0:
+            raw_data = np.delete(raw_data, 2*first+1, axis = 0)
+            indices = np.delete(indices, 2*first+1, axis = 0)
+            #logger.info("Deleted package at index "+str(2*first+1))
+        else:
+            raw_data = np.delete(raw_data, 2*(first-1)+1, axis = 0)
+            indices = np.delete(indices, 2*(first-1)+1, axis = 0)
+            #logger.info("Deleted package at index "+str(2*(first-1)+1))
+
+        # call recursively on the resulting new raw_data until everything is fine
+        raw_data, indices, num = save_and_correct_timer(raw_data,indices)
+        num += 1 # counting variable
+    #if everything is alright: wounderfull, return!
+    else:
+        num = 0
+
+    return raw_data, indices, num
+
 def raw_data_to_dut(raw_data):
     '''
     Transform to 48 bit format -> fast decode_fpga
