@@ -135,3 +135,7 @@ dvt_build.log
 
 # Datafiles
 .h5
+
+# GUI pictures
+UI/GUI/*.png
+!UI/GUI/GasDet3.png
