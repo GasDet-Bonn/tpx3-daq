@@ -44,6 +44,18 @@ def scurve_hist(hit_data, param_range):
 
     return scurves
 
+def totcurve_hist(hit_data, param_range):
+    totcurves = np.zeros((256*256, len(param_range)), dtype=np.uint16)
+
+    for i in range(hit_data.shape[0]):
+        x = hit_data['x'][i]
+        y = hit_data['y'][i]
+        p = hit_data['scan_param_id'][i]
+        c = hit_data['TOT'][i]
+        totcurves[x*256+y,p] += c
+
+    return totcurves
+
 def noise_pixel_count(hit_data, param_range, Vthreshold_start):
     noise_curve = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
     pixel_list = np.zeros((256*256, Vthreshold_start + len(param_range)), dtype=np.uint16)

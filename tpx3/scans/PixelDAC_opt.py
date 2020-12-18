@@ -268,10 +268,14 @@ class PixelDAC_opt(ScanBase):
             meta_data = eval(meta_data_call)
             run_config_call = ('h5_file.root.' + 'configuration.run_config_' + str(iteration) + '[:]')
             run_config = eval(run_config_call)
+            general_config_call = ('h5_file.root.' + 'configuration.generalConfig_' + str(iteration) + '[:]')
+            general_config = eval(general_config_call)
+            op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
+            vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
             self.logger.info('Interpret raw data...')
-            hit_data = analysis.interpret_raw_data(raw_data, meta_data)
+            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data)
 
             # Read needed configuration parameters
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
