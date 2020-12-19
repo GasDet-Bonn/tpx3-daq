@@ -93,6 +93,27 @@ class mask_logger(object):
             with tb.open_file(path, 'a') as out_file:
                 out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
 
+    def write_full_mask(full_mask, mask = None):
+        if mask == None:
+            path = TPX3_datalogger.read_value(name = 'Mask_path')
+            if path == None:
+                path = mask_logger.create_file()
+                TPX3_datalogger.write_value(name = 'Mask_path', value = path)
+        else:
+            user_path = os.path.expanduser('~')
+            user_path = os.path.join(user_path, 'Timepix3')
+            user_path = os.path.join(user_path, 'masks')
+            path = user_path + os.sep + mask + ".h5"
+
+        #delete last mask
+        if os.path.isfile(path):
+            with tb.open_file(path, 'a') as infile:
+                infile.remove_node(infile.root.mask_matrix)
+
+        #Saving the final matrix
+        with tb.open_file(path, 'a') as out_file:
+            out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=full_mask)
+        return True
 
     def get_mask(mask = None):
         if mask == None:
