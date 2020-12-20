@@ -11,7 +11,7 @@ from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
 from tpx3.scans.scan_hardware import ScanHardware
 from tpx3.scan_base import ConfigError
-from UI.tpx3_logger import file_logger, mask_logger
+from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
 
 
 # In this part all callable function names should be in the list functions
@@ -1509,7 +1509,6 @@ class TPX3_CLI_TOP(object):
                     print ('Unknown command: ', cmd_input, ' Use a language I understand.')
 
 if __name__ == "__main__":
-    from UI.tpx3_logger import TPX3_datalogger
     import UI.GUI.GUI as GUI
     ext_input_list = sys.argv
     ext_input_list.pop(0)
