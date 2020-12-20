@@ -120,7 +120,7 @@ class mask_logger(object):
             path = TPX3_datalogger.read_value(name = 'Mask_path')
             if path == None:
                 print('No mask set')
-        else:
+                return False
             user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
