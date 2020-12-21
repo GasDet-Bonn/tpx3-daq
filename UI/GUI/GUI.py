@@ -1802,7 +1802,7 @@ class GUI_Main(Gtk.Window):
         self.Startupbutton = Gtk.Button(label = "Hardware Init")
         self.Startupbutton.connect("clicked", self.on_Startupbutton_clicked)
 
-        self.Resetbutton = Gtk.Button(label = "Reset")
+        self.Resetbutton = Gtk.Button(label = "Default")
         self.Resetbutton.connect("clicked", self.on_Resetbutton_clicked)
 
         self.SetDACbutton = Gtk.Button(label = "Set DACs")
