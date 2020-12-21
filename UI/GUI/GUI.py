@@ -1654,6 +1654,247 @@ class GUI_Equalisation(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Set_Mask(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = "Set Mask")
+        self.connect("delete-event", self.window_destroy)
+        
+        if  isinstance(mask_logger.get_mask(), bool):
+            self.np_mask_list = np.zeros((256 * 256, ), dtype=bool)
+        else:
+            current_mask = mask_logger.get_mask()
+            self.np_mask_list = current_mask.reshape((256 * 256))
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(0)
+        grid.set_column_spacing(0)
+        grid.set_border_width(1)
+        grid.set_column_homogeneous(False)
+        grid.set_row_homogeneous(False)
+        self.add(grid)
+        
+        self.np_row_list = np.zeros((256, ), dtype=bool)
+        self.np_column_list = np.zeros((256, ), dtype=bool)
+        
+        self.surface = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 2610)
+        self.cr = cairo.Context(self.surface)
+        self.cr.rectangle(0, 0, 2610, 2610)
+        self.cr.set_source_rgb(1, 1, 1)
+        self.cr.fill()
+        self.cr.select_font_face("Open Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        self.cr.set_font_size(9)
+        
+        self.row_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 21, 2610)
+        self.row_num = cairo.Context(self.row_numbers)
+        self.row_num.rectangle(0, 0, 21, 2610)
+        self.row_num.set_source_rgb(1, 1, 1)
+        self.row_num.fill()
+        self.row_num.select_font_face("Open Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        self.row_num.set_font_size(9)
+        
+        self.column_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 21)
+        self.column_num = cairo.Context(self.column_numbers)
+        self.column_num.rectangle(0, 0, 2610, 21)
+        self.column_num.set_source_rgb(1, 1, 1)
+        self.column_num.fill()
+        self.column_num.select_font_face("Open Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        self.column_num.set_font_size(9)
+        
+        for x in range(4, 260):
+            self.cr.set_line_width(1)
+            self.cr.set_source_rgb(0.4, 0.4, 0.4)
+            self.cr.rectangle(x * 10, 10, 10, 20)
+            self.cr.move_to(((x + 1) * 10) - 1, 29)
+            self.cr.rotate(-1.5708)
+            self.cr.show_text(str(x-4))
+            self.cr.rotate(1.5708)
+            self.cr.stroke()
+            
+            self.column_num.set_line_width(1)
+            self.column_num.set_source_rgb(0.4, 0.4, 0.4)
+            self.column_num.rectangle(x * 10, 0, 10, 20)
+            self.column_num.move_to(((x + 1) * 10) - 1, 19)
+            self.column_num.rotate(-1.5708)
+            self.column_num.show_text(str(x-4))
+            self.column_num.rotate(1.5708)
+            self.column_num.stroke()
+            
+        for y in range(4, 260):
+            self.cr.rectangle(10, y * 10, 20, 10)
+            self.cr.move_to(11, ((y + 1) * 10) - 1)
+            self.cr.show_text(str(255 - (y-4)))
+            self.cr.stroke()  
+            
+            self.row_num.set_line_width(1)
+            self.row_num.set_source_rgb(0.4, 0.4, 0.4)
+            self.row_num.rectangle(0, y * 10, 20, 10)
+            self.row_num.move_to(1, ((y + 1) * 10) - 1)
+            self.row_num.show_text(str(255 - (y-4)))
+            self.row_num.stroke()
+            
+        for x in range(4, 260):            
+            for y in range(4, 260):
+                self.cr.rectangle(x * 10, y * 10, 10, 10)
+                self.cr.stroke()
+
+        np_masked = np.argwhere(self.np_mask_list == True)
+        for xy_coords in np_masked:
+            x_coord = int((xy_coords / 256)) + 4
+            y_coord = int(255 - (xy_coords - ((x_coord - 4) * 256))) + 4
+            self.cr.set_source_rgb(1, 0, 0)
+            self.cr.rectangle(x_coord * 10, y_coord * 10, 10, 10)
+            self.cr.fill()
+                
+        self.row_numbers.write_to_png("row_number.png")
+        self.column_numbers.write_to_png("column_number.png")
+        self.surface.write_to_png("Chip_mask.png")
+        
+        self.map_area = Gtk.EventBox()
+        self.mapview = Gtk.ScrolledWindow()
+        self.mapview.set_property("width-request", 700)
+        self.mapview.set_property("height-request", 700)
+        self.mapview.set_border_width(0)
+        self.mapview.set_policy(Gtk.PolicyType.ALWAYS, Gtk.PolicyType.ALWAYS)
+        self.mapview.add_events(Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.BUTTON1_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.map = Gtk.Image()
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file("Chip_mask.png")
+        self.map.set_from_pixbuf(self.pixbuf)
+        
+        self.columnview = Gtk.ScrolledWindow()
+        self.columnview.set_property("width-request", 700)
+        self.columnview.set_property("height-request", 21)
+        self.columnview.set_border_width(0)
+        self.columnview.set_policy(Gtk.PolicyType.ALWAYS, Gtk.PolicyType.NEVER)
+        self.column = Gtk.Image()
+        self.column_pixbuf = GdkPixbuf.Pixbuf.new_from_file("column_number.png")
+        self.column.set_from_pixbuf(self.column_pixbuf)
+        self.columnview.add(self.column)
+        
+        self.rowview = Gtk.ScrolledWindow()
+        self.rowview.set_property("width-request", 21)
+        self.rowview.set_property("height-request", 700)
+        self.rowview.set_max_content_height(500)
+        self.rowview.set_border_width(0)
+        self.rowview.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.ALWAYS)
+        #motion-notify-event
+        #self.rowview.set_sensitive(False)
+        self.row = Gtk.Image()
+        self.row_pixbuf = GdkPixbuf.Pixbuf.new_from_file("row_number.png")
+        self.row.set_from_pixbuf(self.row_pixbuf)
+        self.rowview.add(self.row)
+        
+        self.map_area.add(self.map)
+        self.map_area.connect ('button-press-event', self.on_drawing_area_button_press)
+        self.mapview.add(self.map_area)
+        
+        Space = Gtk.Label()
+        Space.set_text("") 
+        
+        #Savebutton
+        self.Savebutton = Gtk.Button(label = "Save")
+        self.Savebutton.connect("clicked", self.on_Savebutton_clicked)
+        
+        grid.attach(self.mapview, 0, 0, 20, 20)
+        grid.attach(self.columnview, 0, 20, 20, 2)
+        grid.attach(self.rowview, 20, 0, 2, 20)
+        grid.attach(self.Savebutton, 23, 21, 2, 1)
+        
+        self.rowview.set_vadjustment(self.mapview.get_vadjustment())
+        self.columnview.set_hadjustment(self.mapview.get_hadjustment())
+
+        self.show_all()
+        
+    def draw_clicked(self):
+        self.cr.rectangle(0, 0, 2610, 2610)
+        self.cr.set_source_rgb(1, 1, 1)
+        self.cr.fill()
+        for x in range(4, 260):
+            self.cr.set_line_width(1)
+            self.cr.set_source_rgb(0.4, 0.4, 0.4)
+            self.cr.rectangle(x * 10, 10, 10, 20)
+            self.cr.move_to(((x + 1) * 10) - 1, 29)
+            self.cr.rotate(-1.5708)
+            self.cr.show_text(str(x-4))
+            self.cr.rotate(1.5708)
+            self.cr.stroke()
+        for y in range(4, 260):
+            self.cr.rectangle(10, y * 10, 20, 10)
+            self.cr.move_to(11, ((y + 1) * 10) - 1)
+            self.cr.show_text(str(255 - (y-4)))
+            self.cr.stroke()    
+        for x in range(4, 260):            
+            for y in range(4, 260):
+                self.cr.rectangle(x * 10, y * 10, 10, 10)
+                self.cr.stroke()
+        np_masked = np.argwhere(self.np_mask_list == True)
+        np_row = np.argwhere(self.np_row_list == True)
+        np_column = np.argwhere(self.np_column_list == True)
+        for row in np_row:
+            self.cr.set_source_rgb(1, 0, 0)
+            self.cr.rectangle(10, (255 - (row - 4)) * 10, 20, 10)
+            self.cr.fill()
+        for column in np_column:
+            self.cr.set_source_rgb(1, 0, 0)
+            self.cr.rectangle((column + 4) * 10, 10, 10, 20)
+            self.cr.fill()
+        for xy_coords in np_masked:
+            x_coord = int((xy_coords / 256)) + 4
+            y_coord = int(255 - (xy_coords - ((x_coord - 4) * 256))) + 4
+            self.cr.set_source_rgb(1, 0, 0)
+            self.cr.rectangle(x_coord * 10, y_coord * 10, 10, 10)
+            self.cr.fill()
+        self.surface.write_to_png("Chip_mask.png")
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file("Chip_mask.png")
+        self.map.set_from_pixbuf(self.pixbuf)
+                
+    def on_drawing_area_button_press(self, widget, event):
+        if event.button == 1:
+            x_coord = (int(event.x / 10) - 4)
+            y_coord = 255 - (int(event.y / 10) - 4)
+
+            if x_coord in range(256) and y_coord in [257, 258]:
+                if self.np_column_list[x_coord]:
+                    self.np_column_list[x_coord] = False
+                    for y in range(256):
+                        self.np_mask_list[(x_coord * 256 + y)] = False
+                else:
+                    self.np_column_list[x_coord] = True
+                    for y in range(256):
+                        self.np_mask_list[(x_coord * 256 + y)] = True 
+                self.draw_clicked()
+            elif y_coord in range(256) and x_coord in [-3, -2]:
+                if self.np_row_list[y_coord]:
+                    self.np_row_list[y_coord] = False
+                    for x in range(256):
+                        self.np_mask_list[(x * 256 + y_coord)] = False
+                else:
+                    self.np_row_list[y_coord] = True
+                    for x in range(256):
+                        self.np_mask_list[(x * 256 + y_coord)] = True 
+                self.draw_clicked()
+            elif x_coord in range(256) and y_coord in range(256):
+                x_y_entry = x_coord * 256 + y_coord
+                if self.np_mask_list[x_y_entry]:
+                    self.np_mask_list[x_y_entry] = False
+                else:
+                    self.np_mask_list[x_y_entry] = True
+                self.draw_clicked()
+        elif event.button == 3:
+            x_coord = (int(event.x / 10) - 4)
+            y_coord = 255 - (int(event.y / 10) - 4)
+            self.coord_label.set_text(str(x_coord) + ', ' + str(y_coord))
+            self.popover.show_all()
+            self.popover.popup()
+        
+        
+    def on_Savebutton_clicked(self, widget):
+        mask_array = self.np_mask_list.reshape((256,256))
+        mask_logger.write_full_mask(full_mask = mask_array)
+        
+        self.destroy()
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_Main_Settings(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = "Edit")
@@ -1974,7 +2215,7 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Additional_Settings()
 
     def on_SetMaskbutton_clicked(self, widget):
-        print("Function call: Set Mask")
+        subw = GUI_Set_Mask()
 
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
         self.progressbar.hide()
