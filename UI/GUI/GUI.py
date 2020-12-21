@@ -1959,6 +1959,14 @@ class GUI_Main_Settings_Backup_Input(Gtk.Window):
             TPX3_datalogger.set_data(data)
         self.destroy()
 
+class GUI_Process_Running(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = "Error")
+        self.connect("delete-event", self.window_destroy)
+        label = Gtk.Label()
+        label.set_text("Process is running on the chip!")
+        self.show_all()
+
     def window_destroy(self, widget):
         self.destroy()
 
