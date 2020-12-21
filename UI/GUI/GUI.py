@@ -1,25 +1,23 @@
-from __future__ import absolute_import
-import gi
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk,Gdk
-from matplotlib.figure import Figure
-from numpy import arange, pi, random, linspace
-import matplotlib.cm as cm
-import numpy as np
-from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
-from gi.repository import GObject, GLib
-from UI.GUI.PlotWidget import plotwidget
-import tpx3.utils as utils
-from UI.tpx3_logger import file_logger
-from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import os
-from UI.tpx3_logger import TPX3_datalogger
-from tpx3.scans.scan_hardware import ScanHardware
-from multiprocessing import Queue
 import time
+import cairo
+from shutil import copy
 from datetime import datetime, timedelta
+from gi.repository import Gtk, Gdk, GdkPixbuf, GObject, GLib
+import matplotlib.cm as cm
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
+import numpy as np
+from numpy import arange, pi, random, linspace
+from multiprocessing import Queue
+
+from UI.GUI.PlotWidget import plotwidget
+from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger
+from UI.CLI.tpx3_cli import TPX3_multiprocess_start
+import tpx3.utils as utils
 
 class GUI_Plot(Gtk.Window):
     def __init__(self):
