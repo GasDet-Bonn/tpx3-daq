@@ -1947,7 +1947,25 @@ class GUI_Main(Gtk.Window):
         GUI.set_running_process(running_process = new_process)
 
     def on_Resetbutton_clicked(self, widget):
-        print("Function call: Reset")
+        if not self.get_process_alive():
+            TPX3_datalogger.set_data(config = TPX3_datalogger.default_config())
+            TPX3_datalogger.write_backup_to_yaml()
+            self.progressbar.hide()
+            self.statuslabel.set_text("")
+            self.statuslabel2.set_text("")
+            self.statuslabel3.set_text("")
+            self.statuslabel4.set_text("")
+            self.statuslabel5.set_text("")
+            self.statuslabel6.set_text("")
+            self.statusstring4 = ''
+            self.statusstring3 = ''
+            self.statusstring2 = ''
+            self.statusstring1 = ''
+            self.progressbar.set_fraction(0.0)
+            self.resize(1,1)
+            self.write_statusbar('Default setting initialised')
+        else:
+            subw = GUI_Process_Running
 
     def on_SetDACbutton_clicked(self, widget):
         subw = GUI_SetDAC()
