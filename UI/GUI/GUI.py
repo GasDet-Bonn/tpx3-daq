@@ -312,6 +312,10 @@ class GUI_Threshold_Scan(Gtk.Window):
         Threshold_label = Gtk.Label()
         Threshold_label.set_text("Threshold")
 
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text("")
+
         #Threshold_start
         self.Threshold_start_value = 200
         Threshold_start_adj = Gtk.Adjustment()
@@ -374,6 +378,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         grid.attach(Iterationbutton3, 3, 5, 1, 1)
         grid.attach(Iterationbutton4, 4, 5, 1, 1)
         grid.attach(Space, 0, 6, 1, 1)
+        grid.attach(self.other_process, 0, 7, 4, 1)
         grid.attach(self.Startbutton, 4, 7, 2, 1)
 
         self.show_all()
@@ -411,7 +416,7 @@ class GUI_Threshold_Scan(Gtk.Window):
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
-            print('Something else is beeing processed')
+            self.other_process.set_text("Other process running")
             return
         GUI.Status_window_call(function = "ThresholdScan", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
@@ -440,6 +445,10 @@ class GUI_Threshold_Calib(Gtk.Window):
 
         Threshold_label = Gtk.Label()
         Threshold_label.set_text("Threshold")
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text("")
 
         #Threshold_start
         self.Threshold_start_value = 200
@@ -515,6 +524,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         grid.attach(n_pulse_heights_label, 2, 6, 2, 1)
         grid.attach(self.n_pulse_heights, 2, 7, 2, 1)
         grid.attach(Space, 0, 8, 1, 1)
+        grid.attach(self.other_process, 0, 9, 4, 1)
         grid.attach(self.Startbutton, 4, 9, 2, 1)
 
         self.show_all()
@@ -552,7 +562,7 @@ class GUI_Threshold_Calib(Gtk.Window):
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
-            print('Something else is beeing processed')
+            self.other_process.set_text("Other process running")
             return
 
         GUI.Status_window_call(function = "ThresholdCalib", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value, n_pulse_heights = self.n_pulse_heights_value)
@@ -582,6 +592,10 @@ class GUI_Testpulse_Scan(Gtk.Window):
 
         Testpulse_range_label = Gtk.Label()
         Testpulse_range_label.set_text("Testpulse range")
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text("")
 
         #Testpulse_range_start
         self.Testpulse_range_start_value = 210
@@ -645,6 +659,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         grid.attach(Iterationbutton3, 3, 5, 1, 1)
         grid.attach(Iterationbutton4, 4, 5, 1, 1)
         grid.attach(Space, 0, 6, 1, 1)
+        grid.attach(self.other_process, 0, 7, 4, 1)
         grid.attach(self.Startbutton, 4, 7, 2, 1)
 
         self.show_all()
@@ -706,6 +721,10 @@ class GUI_PixelDAC_opt(Gtk.Window):
 
         Threshold_label = Gtk.Label()
         Threshold_label.set_text("Threshold")
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text("")
 
         #Threshold_start
         self.Threshold_start_value = 200
@@ -769,6 +788,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         grid.attach(Iterationbutton3, 3, 5, 1, 1)
         grid.attach(Iterationbutton4, 4, 5, 1, 1)
         grid.attach(Space, 0, 6, 1, 1)
+        grid.attach(self.other_process, 0, 7, 4, 1)
         grid.attach(self.Startbutton, 4, 7, 2, 1)
 
         self.show_all()
@@ -801,7 +821,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
-            print('Something else is beeing processed')
+            self.other_process.set_text("Other process running")
             return
 
         GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
@@ -1227,7 +1247,7 @@ class GUI_SetDAC(Gtk.Window):
 
     def on_Savebutton_clicked(self, widget):
         if GUI.get_process_alive():
-            print('Something else is beeing processed')
+            subw = GUI_Process_Running
             return
         print("Save DAC settings")
         TPX3_datalogger.write_value(name = 'Ibias_Preamp_ON', value = self.Ibias_Preamp_ON_value)
@@ -1484,7 +1504,7 @@ class GUI_Additional_Settings(Gtk.Window):
 
     def on_Savebutton_clicked(self, widget):
         if GUI.get_process_alive():
-            print('Something else is beeing processed')
+            subw = GUI_Process_Running
             return
         TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
         TPX3_datalogger.write_to_yaml(name = 'Polarity')
