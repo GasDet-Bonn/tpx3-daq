@@ -1918,10 +1918,14 @@ class GUI_Main_Settings(Gtk.Window):
         self.load_default_Equalisation_button = Gtk.Button(label = "Load Default Equalisation")
         self.load_default_Equalisation_button.connect("clicked", self.on_load_default_Equalisation_button_clicked)
         
+        self.load_default_Mask_button = Gtk.Button(label = "Load Default Mask")
+        self.load_default_Mask_button.connect("clicked", self.on_load_default_Mask_button_clicked)
+        
         grid.attach(self.load_Backup_button, 0, 0, 1, 1)
         grid.attach(self.load_Equalisation_button, 0, 1, 1, 1)
         grid.attach(self.load_Mask_button, 0, 2, 1, 1)
         grid.attach(self.load_default_Equalisation_button, 0, 3, 1, 1)
+        grid.attach(self.load_default_Mask_button, 0, 4, 1, 1)
 
         self.show_all()
 
@@ -2019,6 +2023,10 @@ class GUI_Main_Settings(Gtk.Window):
     def on_load_default_Equalisation_button_clicked(self, widget):
         TPX3_datalogger.write_value(name = 'Equalisation_path', value = None)
         GUI.statuslabel.set_text('Set equalisation to default.')
+
+    def on_load_default_Mask_button_clicked(self, widget):
+        TPX3_datalogger.write_value(name = 'Mask_path', value = None)
+        GUI.statuslabel.set_text('Set mask to default.')
 
         self.input_window.connect("destroy", self.window_destroy)
 
