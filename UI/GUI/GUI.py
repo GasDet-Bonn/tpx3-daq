@@ -2036,11 +2036,10 @@ class GUI_Main_Settings(Gtk.Window):
         self.input_window = GUI_Main_Save_Backup_Input()
         self.input_window.connect("destroy", self.window_destroy)
 
-    def on_load_default_button_clicked(self, widget):
-        data = TPX3_datalogger.default_config()
-        TPX3_datalogger.set_data(data)
-        GUI.set_destroyed()
-        self.destroy()
+
+    def restrict_to_folder(self, dialog, folder):
+        if not dialog.get_current_folder() == folder:
+            dialog.set_current_folder(folder)
 
     def window_destroy(self, widget, event = True):
         GUI.set_destroyed()
