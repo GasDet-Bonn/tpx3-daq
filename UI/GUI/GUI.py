@@ -1906,20 +1906,48 @@ class GUI_Main_Settings(Gtk.Window):
         grid.set_row_spacing(2)
         self.add(grid)
 
-        self.load_backup_button = Gtk.Button(label = "Load Backup")
-        self.load_backup_button.connect("clicked", self.on_load_backup_button_clicked)
+        self.load_Backup_button = Gtk.Button(label = "Load Backup")
+        self.load_Backup_button.connect("clicked", self.on_load_Backup_button_clicked)
 
         self.load_default_button = Gtk.Button(label = "Load Default")
         self.load_default_button.connect("clicked", self.on_load_default_button_clicked)
 
-        grid.attach(self.load_backup_button, 0, 0, 1, 1)
-        grid.attach(self.load_default_button, 0, 1, 1, 1)
+        grid.attach(self.load_Backup_button, 0, 0, 1, 1)
 
         self.show_all()
 
-    def on_load_backup_button_clicked(self, widget):
-        print("Load backup")
-        self.input_window = GUI_Main_Settings_Backup_Input()
+    def on_load_Backup_button_clicked(self, widget):
+
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'backups')
+
+        backup_dialog = Gtk.FileChooserDialog(title="Please choose a backup file", parent=self, action=Gtk.FileChooserAction.OPEN)
+        backup_dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK, )
+        backup_dialog.set_current_folder(user_path)
+        backup_dialog.set_local_only(True)
+
+        def change_folder(event):
+            self.restrict_to_folder(dialog = backup_dialog, folder = user_path)
+
+        filter_backup = Gtk.FileFilter()
+        filter_backup.set_name("Backup files")
+        filter_backup.add_pattern("*.TPX3")
+        backup_dialog.add_filter(filter_backup)
+
+        backup_dialog.connect('current_folder_changed', change_folder)
+        
+        response = backup_dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            file_name = os.path.basename(backup_dialog.get_filename())
+            backup_data = file_logger.read_backup(file = file_name)
+            TPX3_datalogger.set_data(config = backup_data)
+            TPX3_datalogger.write_backup_to_yaml()
+            GUI.statuslabel.set_text('Set backup from file.')
+
+        backup_dialog.destroy()
+
         self.input_window.connect("destroy", self.window_destroy)
 
     def on_load_default_button_clicked(self, widget):
