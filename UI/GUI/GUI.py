@@ -1912,8 +1912,12 @@ class GUI_Main_Settings(Gtk.Window):
         self.load_Equalisation_button = Gtk.Button(label = "Load Equalisation")
         self.load_Equalisation_button.connect("clicked", self.on_load_Equalisation_button_clicked)
 
+        self.load_Mask_button = Gtk.Button(label = "Load Mask")
+        self.load_Mask_button.connect("clicked", self.on_load_Mask_button_clicked)
+
         grid.attach(self.load_Backup_button, 0, 0, 1, 1)
         grid.attach(self.load_Equalisation_button, 0, 1, 1, 1)
+        grid.attach(self.load_Mask_button, 0, 2, 1, 1)
 
         self.show_all()
 
@@ -1978,6 +1982,35 @@ class GUI_Main_Settings(Gtk.Window):
             GUI.statuslabel.set_text('Set equalisation from file.')
 
         equalisation_dialog.destroy()
+
+    def on_load_Mask_button_clicked(self, widget):
+        user_path = '~'
+        user_path = os.path.expanduser(user_path)
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'masks')
+
+        mask_dialog = Gtk.FileChooserDialog(title='Please choose a mask file', parent=self, action=Gtk.FileChooserAction.OPEN)
+        mask_dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK, )
+        mask_dialog.set_current_folder(user_path)
+        mask_dialog.set_local_only(True)
+
+        def change_folder(event):
+            self.restrict_to_folder(dialog = mask_dialog, folder = user_path)
+
+        filter_mask = Gtk.FileFilter()
+        filter_mask.set_name('Mask files')
+        filter_mask.add_pattern('*.h5')
+        mask_dialog.add_filter(filter_mask)
+
+        mask_dialog.connect('current_folder_changed', change_folder)
+        
+        response = mask_dialog.run()
+        
+        if response == Gtk.ResponseType.OK:
+            TPX3_datalogger.write_value(name = 'Mask_path', value = mask_dialog.get_filename())
+            GUI.statuslabel.set_text('Set mask from file.')
+
+        mask_dialog.destroy()
 
         self.input_window.connect("destroy", self.window_destroy)
 
