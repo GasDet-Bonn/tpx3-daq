@@ -1921,11 +1921,15 @@ class GUI_Main_Settings(Gtk.Window):
         self.load_default_Mask_button = Gtk.Button(label = "Load Default Mask")
         self.load_default_Mask_button.connect("clicked", self.on_load_default_Mask_button_clicked)
         
+        self.save_Backup_button = Gtk.Button(label = "Save Backup")
+        self.save_Backup_button.connect("clicked", self.on_save_Backup_button_clicked)
+        
         grid.attach(self.load_Backup_button, 0, 0, 1, 1)
         grid.attach(self.load_Equalisation_button, 0, 1, 1, 1)
         grid.attach(self.load_Mask_button, 0, 2, 1, 1)
         grid.attach(self.load_default_Equalisation_button, 0, 3, 1, 1)
         grid.attach(self.load_default_Mask_button, 0, 4, 1, 1)
+        grid.attach(self.save_Backup_button, 0, 5, 1, 1)
 
         self.show_all()
 
@@ -2028,6 +2032,8 @@ class GUI_Main_Settings(Gtk.Window):
         TPX3_datalogger.write_value(name = 'Mask_path', value = None)
         GUI.statuslabel.set_text('Set mask to default.')
 
+    def on_save_Backup_button_clicked(self, widget):
+        self.input_window = GUI_Main_Save_Backup_Input()
         self.input_window.connect("destroy", self.window_destroy)
 
     def on_load_default_button_clicked(self, widget):
@@ -2042,29 +2048,49 @@ class GUI_Main_Settings(Gtk.Window):
             self.input_window.window_destroy(widget)
         self.destroy()
 
-class GUI_Main_Settings_Backup_Input(Gtk.Window):
+class GUI_Main_Save_Backup_Input(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, title = "")
+
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'backups')
+
+        Gtk.Window.__init__(self, title = "Save Backup")
         self.connect("delete-event", self.window_destroy)
         self.set_decorated(False)
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         self.add(grid)
+
         label = Gtk.Label()
         label.set_text("Enter backup file name")
+
         self.entry = Gtk.Entry()
         self.entry.connect('activate', self.entered_text)
 
+        self.existing_label = Gtk.Label()
+        self.existing_label.set_text('')
+
         grid.attach(label, 0, 0, 1, 1)
         grid.attach(self.entry, 0, 1, 1, 1)
+        grid.attach(self.existing_label, 0, 2, 1, 1)
 
         self.show_all()
 
     def entered_text(self, widget):
         filename = self.entry.get_text()
-        data = file_logger.read_backup("backup/" + filename)
-        if not data == False:
-            TPX3_datalogger.set_data(data)
+        full_path = user_path + os.sep + filename + '.TPX3'
+        if os.path.isfile(full_path) == True:
+            self.entry.set_text('')
+            self.existing_label.set_text('File already exists')
+        else:
+            file = open(full_path, "w")
+            file_logger.write_backup(file = file)
+            self.destroy()
+
+    def window_destroy(self, widget):
+        self.destroy()
+
         self.destroy()
 
 class GUI_Process_Running(Gtk.Window):
