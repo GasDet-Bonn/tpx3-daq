@@ -1909,10 +1909,11 @@ class GUI_Main_Settings(Gtk.Window):
         self.load_Backup_button = Gtk.Button(label = "Load Backup")
         self.load_Backup_button.connect("clicked", self.on_load_Backup_button_clicked)
 
-        self.load_default_button = Gtk.Button(label = "Load Default")
-        self.load_default_button.connect("clicked", self.on_load_default_button_clicked)
+        self.load_Equalisation_button = Gtk.Button(label = "Load Equalisation")
+        self.load_Equalisation_button.connect("clicked", self.on_load_Equalisation_button_clicked)
 
         grid.attach(self.load_Backup_button, 0, 0, 1, 1)
+        grid.attach(self.load_Equalisation_button, 0, 1, 1, 1)
 
         self.show_all()
 
@@ -1947,6 +1948,36 @@ class GUI_Main_Settings(Gtk.Window):
             GUI.statuslabel.set_text('Set backup from file.')
 
         backup_dialog.destroy()
+
+    def on_load_Equalisation_button_clicked(self, widget):
+
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'scans')
+        user_path = os.path.join(user_path, 'hdf')
+
+        equalisation_dialog = Gtk.FileChooserDialog(title="Please choose a equalisation file", parent=self, action=Gtk.FileChooserAction.OPEN)
+        equalisation_dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK, )
+        equalisation_dialog.set_current_folder(user_path)
+        equalisation_dialog.set_local_only(True)
+
+        def change_folder(event):
+            self.restrict_to_folder(dialog = equalisation_dialog, folder = user_path)
+
+        filter_equalisation = Gtk.FileFilter()
+        filter_equalisation.set_name('Equalisation files')
+        filter_equalisation.add_pattern('*.h5')
+        equalisation_dialog.add_filter(filter_equalisation)
+
+        equalisation_dialog.connect('current_folder_changed', change_folder)
+
+        response = equalisation_dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            TPX3_datalogger.write_value(name = 'Equalisation_path', value = equalisation_dialog.get_filename())
+            GUI.statuslabel.set_text('Set equalisation from file.')
+
+        equalisation_dialog.destroy()
 
         self.input_window.connect("destroy", self.window_destroy)
 
