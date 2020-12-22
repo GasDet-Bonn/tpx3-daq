@@ -1924,12 +1924,16 @@ class GUI_Main_Settings(Gtk.Window):
         self.save_Backup_button = Gtk.Button(label = "Save Backup")
         self.save_Backup_button.connect("clicked", self.on_save_Backup_button_clicked)
         
+        self.save_Equalisation_button = Gtk.Button(label = "Save Equalisation")
+        self.save_Equalisation_button.connect("clicked", self.on_save_Equalisation_button_clicked)
+        
         grid.attach(self.load_Backup_button, 0, 0, 1, 1)
         grid.attach(self.load_Equalisation_button, 0, 1, 1, 1)
         grid.attach(self.load_Mask_button, 0, 2, 1, 1)
         grid.attach(self.load_default_Equalisation_button, 0, 3, 1, 1)
         grid.attach(self.load_default_Mask_button, 0, 4, 1, 1)
         grid.attach(self.save_Backup_button, 0, 5, 1, 1)
+        grid.attach(self.save_Equalisation_button, 0, 6, 1, 1)
 
         self.show_all()
 
@@ -2036,6 +2040,9 @@ class GUI_Main_Settings(Gtk.Window):
         self.input_window = GUI_Main_Save_Backup_Input()
         self.input_window.connect("destroy", self.window_destroy)
 
+    def on_save_Equalisation_button_clicked(self, widget):
+        self.input_window = GUI_Main_Save_Equalisation_Input()
+        self.input_window.connect("destroy", self.window_destroy)
 
     def restrict_to_folder(self, dialog, folder):
         if not dialog.get_current_folder() == folder:
@@ -2090,6 +2097,47 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
     def window_destroy(self, widget):
         self.destroy()
 
+class GUI_Main_Save_Equalisation_Input(Gtk.Window):
+    def __init__(self):
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'scans')
+        user_path = os.path.join(user_path, 'hdf')
+
+        Gtk.Window.__init__(self, title = "Save Equalisation")
+        self.connect("delete-event", self.window_destroy)
+        self.set_decorated(False)
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        self.add(grid)
+
+        label = Gtk.Label()
+        label.set_text("Enter equalisation file name")
+
+        self.entry = Gtk.Entry()
+        self.entry.connect('activate', self.entered_text)
+
+        self.existing_label = Gtk.Label()
+        self.existing_label.set_text('')
+
+        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(self.entry, 0, 1, 1, 1)
+        grid.attach(self.existing_label, 0, 2, 1, 1)
+
+        self.show_all()
+
+    def entered_text(self, widget):
+        equal_path = self.entry.get_text()
+        full_path = user_path + os.sep + equal_path + '.h5'
+        if os.path.isfile(full_path) == True:
+            self.entry.set_text('')
+            self.existing_label.set_text('File already exists')
+        else:
+            current_equal = TPX3_datalogger.read_value(name = 'Equalisation_path')
+            copy(current_equal, full_path)
+        self.destroy()
+
+    def window_destroy(self, widget):
         self.destroy()
 
 class GUI_Process_Running(Gtk.Window):
