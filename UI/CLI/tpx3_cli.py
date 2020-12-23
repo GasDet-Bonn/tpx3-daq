@@ -6,7 +6,7 @@ from shutil import copy
 from tpx3.scans.ToT_calib import ToTCalib
 from tpx3.scans.scan_threshold import ThresholdScan
 from tpx3.scans.scan_testpulse import TestpulseScan
-from tpx3.scans.PixelDAC_opt import PixelDAC_opt
+from tpx3.scans.PixelDAC_opt_fast import PixelDAC_opt
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
 from tpx3.scans.scan_hardware import ScanHardware
@@ -317,7 +317,7 @@ class TPX3_CLI_function_call(object):
         new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, n_injections = n_injections, mask_step = mask_step, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
         new_process.join()
 
-    def Pixel_DAC_Optimisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
+    def Pixel_DAC_Optimisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, offset = None):
         if Vthreshold_start == None:
             print('> Please enter the Vthreshold_start value (0-2911):')
             while(1):
@@ -352,19 +352,19 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of steps (4, 16, 64, 256):')
+            print('> Please enter the column offset (0-15):')
             while(1):
-                mask_step = input('>> ')
+                offset = input('>> ')
                 try:
-                    mask_step = int(mask_step)
+                    offset = int(offset)
                     break
                 except:
-                    if mask_step in exit_list:
+                    if offset in exit_list:
                         return
                     else:
                         print('Input needs to be a number!')
-        print ('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
+        print ('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'offset =', offset)
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, offset = offset)
         new_process.join()
 
     def Set_DAC(object, DAC_Name = None, DAC_value = None):
@@ -955,7 +955,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
-                            print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-511),\n stop testpulse value (0-511),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+                            print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-511),\n stop testpulse value (0-511),\n number of injections (1-65535),\n column offset (0-15).')
 
                 #Pixel_DAC_Optimisation
                 elif inputlist[0] in {'Pixel_DAC_Optimisation', 'Pixel_DAC', 'PDAC', 'pixel_dac_optimisation', 'pixel_dac', 'pdac'}:
@@ -967,7 +967,7 @@ class TPX3_CLI_TOP(object):
                             print('User quit')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the Pixel DAC Optimisation. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911), the number of testpulse injections (1-65535) and the number of steps (4, 16, 64, 256).')
+                            print('This is the Pixel DAC Optimisation. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911), the number of testpulse injections (1-65535) and the column offset (0-15).')
                         elif len(inputlist) < 5:
                             print ('Incomplete set of parameters:')
                             try:
@@ -976,7 +976,7 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) == 5:
                             try:
-                                function_call.Pixel_DAC_Optimisation(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
+                                function_call.Pixel_DAC_Optimisation(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), offset = int(inputlist[4]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
