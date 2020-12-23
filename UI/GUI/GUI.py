@@ -756,20 +756,15 @@ class GUI_PixelDAC_opt(Gtk.Window):
         n_injections_label = Gtk.Label()
         n_injections_label.set_text("Number of injections")
 
-        #Buttons for number of iteration
-        Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, "4")
-        Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "16")
-        Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "64")
-        Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, "256")
-        Iterationbutton2.set_active(True)
-        Iterationbutton1.connect("toggled", self.on_Iterationbutton_toggled, "4")
-        Iterationbutton2.connect("toggled", self.on_Iterationbutton_toggled, "16")
-        Iterationbutton3.connect("toggled", self.on_Iterationbutton_toggled, "64")
-        Iterationbutton4.connect("toggled", self.on_Iterationbutton_toggled, "256")
-
-        Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text("Number of iterations")
-        self.Number_of_Iterations = 16
+        #Buttons for coulmn offset
+        self.col_offset_value = 0
+        offset_adj = Gtk.Adjustment()
+        offset_adj.configure(0, 0, 15, 0, 0)
+        self.col_offset = Gtk.SpinButton(adjustment = offset_adj, climb_rate = 1, digits = 0)
+        self.col_offset.set_value(self.col_offset_value)
+        self.col_offset.connect("value-changed", self.offset_set)
+        col_offset_label = Gtk.Label()
+        col_offset_label.set_text("Column offset")
 
         #Startbutton
         self.Startbutton = Gtk.Button(label = "Start")
@@ -816,8 +811,8 @@ class GUI_PixelDAC_opt(Gtk.Window):
     def n_injections_set(self, event):
         self.n_injections_value = self.n_injections.get_value_as_int()
 
-    def on_Iterationbutton_toggled(self, button, name):
-        self.Number_of_Iterations = int(name)
+    def offset_set(self, event):
+        self.col_offset_value = self.col_offset.get_value_as_int()
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
@@ -825,7 +820,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
             return
 
         GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, offset = self.col_offset_value, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
         GUI.set_running_process(running_process = new_process)
 
         self.destroy()
