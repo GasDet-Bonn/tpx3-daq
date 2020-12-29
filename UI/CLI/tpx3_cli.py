@@ -8,6 +8,7 @@ from tpx3.scans.scan_threshold import ThresholdScan
 from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt_fast import PixelDAC_opt
 from tpx3.scans.equalisation_charge import Equalisation_charge
+from tpx3.scans.equalisation import Equalisation
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
 from tpx3.scans.scan_hardware import ScanHardware
