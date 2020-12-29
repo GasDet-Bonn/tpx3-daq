@@ -7,6 +7,7 @@ from tpx3.scans.ToT_calib import ToTCalib
 from tpx3.scans.scan_threshold import ThresholdScan
 from tpx3.scans.scan_testpulse import TestpulseScan
 from tpx3.scans.PixelDAC_opt_fast import PixelDAC_opt
+from tpx3.scans.equalisation_charge import Equalisation_charge
 from tpx3.scans.take_data import DataTake
 from tpx3.scans.Threshold_calib import ThresholdCalib
 from tpx3.scans.scan_hardware import ScanHardware
@@ -19,6 +20,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Threshold_Scan', 'THL_Scan', 'THL', 'threshold_scan', 'thl_scan', 'thl', 
                 'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',
                 'Pixel_DAC_Optimisation', 'Pixel_DAC', 'PDAC', 'pixel_dac_optimisation', 'pixel_dac', 'pdac', 
+                'Equalisation', 'Equal', 'EQ', 'equalisation', 'equal', 'eq',
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp', 
                 'Initialise_Hardware', 'Init_Hardware', 'Init', 'initialise_hardware', 'init_hardware', 'init',
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
@@ -47,7 +49,7 @@ expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'c
                     'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency']
 
 # In this list all functions are named which will be shown when the help command is used
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 
+help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation', 
                     'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Save_Mask', 'Load_Mask', 'Set_Mask',
                     'Unset_Mask', 'Set_Default', 'GUI', 'Chip_names', 'Help', 'Quit']
@@ -365,6 +367,57 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
         print ('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'offset =', offset)
         new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, offset = offset)
+        new_process.join()
+
+    def Equalisation(object, Vthreshold_start = None, Vthreshold_stop = None,, n_injections = None, mask_step = None):
+        if Vthreshold_start == None:
+            print('> Please enter the Vthreshold_start value (0-2911):')
+            while(1):
+                Vthreshold_start = input('>> ')
+                try:
+                    Vthreshold_start = int(Vthreshold_start)
+                    break
+                except:
+                    if Vthreshold_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            print('> Please enter the Vthreshold_stop value (0-2911):')
+            while(1):
+                Vthreshold_stop = input('>> ')
+                try:
+                    Vthreshold_stop = int(Vthreshold_stop)
+                    break
+                except:
+                    if Vthreshold_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            print('> Please enter the number of injections (1-65535):')
+            while(1):
+                n_injections = input('>> ')
+                try:
+                    n_injections = int(n_injections)
+                    break
+                except:
+                    if n_injections in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            print('> Please enter the number of steps(4, 16, 64, 256):')
+            while(1):
+                mask_step = input('>> ')
+                try:
+                    mask_step = int(mask_step)
+                    break
+                except:
+                    if mask_step in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            
+        print ('Equalisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
+        new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
         new_process.join()
 
     def Set_DAC(object, DAC_Name = None, DAC_value = None):
@@ -977,6 +1030,31 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) == 5:
                             try:
                                 function_call.Pixel_DAC_Optimisation(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), offset = int(inputlist[4]))
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 5:
+                            print ('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+
+                #Equalisation
+                elif inputlist[0] in {'Equalisation', 'Equal', 'EQ', 'equalisation', 'equal', 'eq'}:
+                    if len(inputlist) == 1:
+                        print('Equalisation')
+                        try:
+                            function_call.Equalisation()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the Equalisation. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911), the number of testpulse injections (1-65535) and the number of steps (4, 16, 64, 256).')
+                        elif len(inputlist) < 5:
+                            print ('Incomplete set of parameters:')
+                            try:
+                                function_call.Equalisation()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) == 5:
+                            try:
+                                function_call.Equalisation(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
