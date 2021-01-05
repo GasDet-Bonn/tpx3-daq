@@ -370,7 +370,7 @@ class TPX3_CLI_function_call(object):
         new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, offset = offset)
         new_process.join()
 
-    def Equalisation(object, Vthreshold_start = None, Vthreshold_stop = None,, n_injections = None, mask_step = None):
+    def Equalisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:
             print('> Please enter the Vthreshold_start value (0-2911):')
             while(1):

@@ -162,7 +162,7 @@ class Equalisation(ScanBase):
             pbar.close()
 
         if status != None:
-            status.put("iteration_finish_symbol"
+            status.put("iteration_finish_symbol")
 
         self.logger.info('Scan finished')
 
