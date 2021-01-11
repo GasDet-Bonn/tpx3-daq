@@ -185,7 +185,7 @@ end
 
 cdc_syncfifo #(
     .DSIZE(25),
-    .ASIZE(3)
+    .ASIZE(4)
 ) cdc_syncfifo_i (
     .rdata(cdc_data_out),
     .wfull(cdc_fifo_full),
@@ -203,7 +203,7 @@ wire [10:0] fifo_size_int;
 
 gerneric_fifo #(
     .DATA_SIZE(25),
-    .DEPTH(1024*8)
+    .DEPTH(1024*8*4)
 ) fifo_i (
     .clk(FIFO_CLK),
     .reset(rst_long),
