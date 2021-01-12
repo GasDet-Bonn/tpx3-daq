@@ -820,7 +820,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
             return
 
         GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, offset = self.col_offset_value, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, offset = self.col_offset_value, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), result = self.pixeldac_result)
         GUI.set_running_process(running_process = new_process)
 
         self.destroy()
@@ -2208,6 +2208,7 @@ class GUI_Main(Gtk.Window):
         self.progress_value_queue = Queue()
         self.status_queue = Queue()
         self.hardware_scan_results = Queue()
+        self.pixeldac_result = Queue()
         self.running_process = None
         self.iteration_symbol = False
 
@@ -2339,6 +2340,7 @@ class GUI_Main(Gtk.Window):
 
         GLib.timeout_add(100, self.update_progress)
         GLib.timeout_add(250, self.update_status)
+        GLib.timeout_add(500, self.update_pixeldac)
 
     #######################################################################################################     
         ### Page 2 
@@ -2628,6 +2630,13 @@ class GUI_Main(Gtk.Window):
                     self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)
         return True
+
+    def update_pixeldac(self):
+        if not self.pixeldac_result.empty():
+            TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = pixeldac_result.get())
+            TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
+        return True
+        
 
     ########################################################################################################################
     ### Functions Page2

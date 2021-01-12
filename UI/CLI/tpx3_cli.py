@@ -367,8 +367,11 @@ class TPX3_CLI_function_call(object):
                     else:
                         print('Input needs to be a number!')
         print('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'offset =', offset)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, offset = offset)
+        pixeldac_result = Queue()
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, offset = offset, result = pixeldac_result)
         new_process.join()
+        TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = pixeldac_result.get())
+        TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
 
     def Equalisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:

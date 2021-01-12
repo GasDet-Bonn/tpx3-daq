@@ -45,7 +45,7 @@ class PixelDAC_opt(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, offset = 0, progress = None, status = None, **kwargs):
+    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, offset = 0, progress = None, status = None, result = None, **kwargs):
         '''
             Main function of the pixel dac optimization. Starts the scan iterations and the analysis of
             of the individual iterations.
@@ -114,16 +114,19 @@ class PixelDAC_opt(ScanBase):
 
             iteration += 1
 
-        # Write new pixeldac into DAC YAML file
-        with open('../dacs.yml') as f:
-            doc = yaml.load(f, Loader=yaml.FullLoader)
+        if result == None:
+            # Write new pixeldac into DAC YAML file
+            with open('../dacs.yml') as f:
+                doc = yaml.load(f, Loader=yaml.FullLoader)
 
-        for register in doc['registers']:
-            if register['name'] == 'Ibias_PixelDAC':
-                register['value'] = int(pixeldac)
+            for register in doc['registers']:
+                if register['name'] == 'Ibias_PixelDAC':
+                    register['value'] = int(pixeldac)
 
-        with open('../dacs.yml', 'w') as f:
-            yaml.dump(doc, f)
+            with open('../dacs.yml', 'w') as f:
+                yaml.dump(doc, f)
+        else:
+            result.put(int(pixeldac))
 
     def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, offset=0, mask_cmds = None, mask_cmds2 = None, progress = None, status = None, **kwargs):
         '''
