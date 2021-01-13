@@ -421,8 +421,10 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
             
         print('Equalisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
-        new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step)
+        result_path = Queue()
+        new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, result_path = result_path)
         new_process.join()
+        TPX3_datalogger.write_value(name = 'Equalisation_path', value = result_path.get())
 
     def Set_DAC(object, DAC_Name = None, DAC_value = None):
         if DAC_Name == None:

@@ -1636,9 +1636,9 @@ class GUI_Equalisation(Gtk.Window):
 
         GUI.Status_window_call(function="Equalisation", subtype = self.Equalisation_Type, lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations)
         if self.Equalisation_Type == "Noise":
-            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, mask_step = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, mask_step = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), result_path = eq_result_path)
         elif self.Equalisation_Type == "Testpulse":
-            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = 100, mask_step = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue())
+            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = 100, mask_step = self.Number_of_Iterations, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), result_path = eq_result_path)
         GUI.set_running_process(running_process = new_process)
 
         self.destroy()
@@ -2209,6 +2209,7 @@ class GUI_Main(Gtk.Window):
         self.status_queue = Queue()
         self.hardware_scan_results = Queue()
         self.pixeldac_result = Queue()
+        self.eq_result_path = Queue()
         self.running_process = None
         self.iteration_symbol = False
 
@@ -2341,6 +2342,7 @@ class GUI_Main(Gtk.Window):
         GLib.timeout_add(100, self.update_progress)
         GLib.timeout_add(250, self.update_status)
         GLib.timeout_add(500, self.update_pixeldac)
+        GLib.timeout_add(500, self.update_eq_path)
 
     #######################################################################################################     
         ### Page 2 
@@ -2635,6 +2637,11 @@ class GUI_Main(Gtk.Window):
         if not self.pixeldac_result.empty():
             TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = pixeldac_result.get())
             TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
+        return True
+
+    def update_eq_path(self):
+        if not self.eq_result_path.empty()
+            TPX3_datalogger.write_value(name = 'Equalisation_path', value = eq_result_path.get())
         return True
         
 

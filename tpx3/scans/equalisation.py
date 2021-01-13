@@ -166,7 +166,7 @@ class Equalisation(ScanBase):
 
         self.logger.info('Scan finished')
 
-    def analyze(self, progress = None, status = None, **kwargs):
+    def analyze(self, progress = None, status = None, result_path = None, **kwargs):
         '''
             Analyze the data of the equalisation and calculate the equalisation matrix
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -249,6 +249,9 @@ class Equalisation(ScanBase):
                                         title='Matrix Threshold',
                                         obj=eq_matrix)
                 self.logger.info('Closing equalisation matrix file: %s' % (thrfile))
+
+            if result_path != None:
+                result_path.put(thrfile)
 
 
 if __name__ == "__main__":
