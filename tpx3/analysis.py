@@ -560,7 +560,7 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 # print param[i], stops[i], len(split[i]), split[i]
                 # sends split[i] (i.e. part of data that is currently treated) recursively
                 # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
-                int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(split[i], op_mode, last_timestamp = last_timestamp, intern = True)
+                int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(split[i], op_mode, vco, last_timestamp = last_timestamp, intern = True)
                 # reattach param_id TODO: good idea to also give timestamp here!
                 int_pix_data['scan_param_id'][:] = param[i]
                 # append data we got back to return array or create new if this is the fist bunch of data treated
