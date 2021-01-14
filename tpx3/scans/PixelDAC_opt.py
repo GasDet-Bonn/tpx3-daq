@@ -74,7 +74,7 @@ class PixelDAC_opt(ScanBase):
         # Repeat until optimization is done
         while last_delta < last_rms_delta - 2 or last_delta > last_rms_delta + 2:
             if status != None:
-                status.put("Linear regression step number {} with pixeldac {}".format(iteration + 1, pixeldac))
+                status.put("Linear regression step number {} with pixeldac {}".format(iteration + 1, int(pixeldac)))
 
             # Create argument list for the current iteration step
             args = {
