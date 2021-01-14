@@ -816,8 +816,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
             self.other_process.set_text("Other process running")
             return
 
-        GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, offset = self.col_offset_value, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), result = self.pixeldac_result)
+        GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, n_injections = self.n_injections_value)
         GUI.set_running_process(running_process = new_process)
 
         self.destroy()
@@ -2479,7 +2478,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup("<big><b>PixelDAC Optimisation</b></big>")
             self.progressbar.show()
             self.progressbar.set_fraction(progress)
-            self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
+            self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " using " + str(n_injections) + " testpulses.")
             self.statuslabel6.set_text(statusstring)
             self.statusstring4 = ''
             self.statusstring3 = ''
