@@ -759,7 +759,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         #Buttons for coulmn offset
         self.col_offset_value = 0
         offset_adj = Gtk.Adjustment()
-        offset_adj.configure(0, 0, 15, 0, 0)
+        offset_adj.configure(0, 0, 15, 1, 0, 0)
         self.col_offset = Gtk.SpinButton(adjustment = offset_adj, climb_rate = 1, digits = 0)
         self.col_offset.set_value(self.col_offset_value)
         self.col_offset.connect("value-changed", self.offset_set)
@@ -777,11 +777,8 @@ class GUI_PixelDAC_opt(Gtk.Window):
         grid.attach(self.Threshold_stop, 4, 1, 2, 1)
         grid.attach(n_injections_label, 2, 2, 2, 1)
         grid.attach(self.n_injections, 2, 3, 2, 1)
-        grid.attach(Number_of_iteration_label, 1, 4, 4, 1)
-        grid.attach(Iterationbutton1, 1, 5, 1, 1)
-        grid.attach(Iterationbutton2, 2, 5, 1, 1)
-        grid.attach(Iterationbutton3, 3, 5, 1, 1)
-        grid.attach(Iterationbutton4, 4, 5, 1, 1)
+        grid.attach(col_offset_label, 1, 4, 4, 1)
+        grid.attach(self.col_offset, 2, 5, 2, 1)
         grid.attach(Space, 0, 6, 1, 1)
         grid.attach(self.other_process, 0, 7, 4, 1)
         grid.attach(self.Startbutton, 4, 7, 2, 1)
