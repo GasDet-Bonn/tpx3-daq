@@ -2640,7 +2640,7 @@ class GUI_Main(Gtk.Window):
         return True
 
     def update_eq_path(self):
-        if not self.eq_result_path.empty()
+        if not self.eq_result_path.empty():
             TPX3_datalogger.write_value(name = 'Equalisation_path', value = eq_result_path.get())
         return True
         
