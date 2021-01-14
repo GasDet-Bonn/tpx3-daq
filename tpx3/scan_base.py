@@ -371,7 +371,12 @@ class ScanBase(object):
         run_config_table.flush()
 
         # save the general configuration
-        general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig', title='GeneralConfig', description=ConfTable)
+        # Scans without multiple iterations
+        if iteration == None:
+            general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig', title='GeneralConfig', description=ConfTable)
+        # Scans with multiple iterations
+        else:
+            general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig_' + str(iteration), title='GeneralConfig ' + str(iteration), description=ConfTable)
         for conf, value in six.iteritems(self.chip.configs):
             row = general_config_table.row
             row['configuration'] = conf
