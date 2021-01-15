@@ -67,20 +67,20 @@ class GUI_Plot(Gtk.Window):
         self.show_all()
 
     def on_Stopbutton_clicked(self, widget):
-        GObject.source_remove(self.Tag)
+        GLib.source_remove(self.Tag)
         self.plotwidget.set_plottype("occupancy")
         self.plotwidget.change_colormap(colormap = cm.viridis, vmax = self.plotwidget.get_iteration_depth("occupancy.color"))
         self.plotwidget.reset_occupancy()
         self.Tag = GObject.idle_add(self.plotwidget.update_occupancy_plot)
 
     def on_Slowbutton_clicked(self, widget):
-        GObject.source_remove(self.Tag)
+        GLib.source_remove(self.Tag)
         self.plotwidget.set_plottype("normal")
         self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
         self.Tag = GObject.timeout_add(500, self.plotwidget.update_plot)
 
     def on_Fastbutton_clicked(self, widget):
-        GObject.source_remove(self.Tag)
+        GLib.source_remove(self.Tag)
         self.plotwidget.set_plottype("normal")
         self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
         self.Tag = GObject.idle_add(self.plotwidget.update_plot)
@@ -94,7 +94,7 @@ class GUI_Plot(Gtk.Window):
         TPX3_datalogger.write_value(type = "colorsteps", value = self.plotwidget.get_iteration_depth("normal"))
         TPX3_datalogger.write_value(type = "integration_length", value = self.plotwidget.get_iteration_depth("occupancy"))
         TPX3_datalogger.write_value(type = "color_depth", value = self.plotwidget.get_iteration_depth("occupancy.color"))
-        GObject.source_remove(self.Tag)
+        GLib.source_remove(self.Tag)
         self.destroy()
 
 class GUI_Plot_settings(Gtk.Window):
@@ -2642,7 +2642,7 @@ class GUI_Main(Gtk.Window):
                     self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)
         if self.hardware_scan_results.empty() and not self.running_process.is_alive():
-            GObject.source_remove(self.hardware_scan_idle)
+            GLib.source_remove(self.hardware_scan_idle)
             self.hardware_scan_idle = None
         return True
 
@@ -2656,7 +2656,7 @@ class GUI_Main(Gtk.Window):
             fig, suffix = self.plot_queue.get()
             self.plot_from_figure(suffix, fig)
         if self.pixeldac_result.empty() and self.eq_result_path.empty() and self.plot_queue.empty() and not self.running_process.is_alive():
-            GObject.source_remove(self.running_scan_idle)
+            GLib.source_remove(self.running_scan_idle)
             self.running_scan_idle = None
         return True
 
