@@ -2222,6 +2222,7 @@ class GUI_Main(Gtk.Window):
         self.running_process = None
         self.iteration_symbol = False
         self.running_scan_idle = None
+        self.hardware_scan_idle = None
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -2350,9 +2351,6 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 13, 2, 1)
 
         GLib.timeout_add(100, self.update_progress)
-        GLib.timeout_add(250, self.update_status)
-        GLib.timeout_add(500, self.update_pixeldac)
-        GLib.timeout_add(500, self.update_eq_path)
 
     #######################################################################################################     
         ### Page 2 
@@ -2433,6 +2431,7 @@ class GUI_Main(Gtk.Window):
         GUI.Status_window_call(function = "InitHardware")
         new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', results = self.hardware_scan_results, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
+        self.hardware_scan_idle = GLib.timeout_add(250, self.update_status)
 
     def on_Resetbutton_clicked(self, widget):
         if not self.get_process_alive():
@@ -2642,24 +2641,21 @@ class GUI_Main(Gtk.Window):
                 if n == 0:
                     self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)
+        if self.hardware_scan_results.empty() and not self.running_process.is_alive():
+            GObject.source_remove(self.hardware_scan_idle)
+            self.hardware_scan_idle = None
         return True
 
-    def update_pixeldac(self):
+    def update_scan(self):
         if not self.pixeldac_result.empty():
             TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = self.pixeldac_result.get())
             TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
-        return True
-
-    def update_eq_path(self):
         if not self.eq_result_path.empty():
             TPX3_datalogger.write_value(name = 'Equalisation_path', value = self.eq_result_path.get())
-        return True
-        
-    def update_scan(self):
         if not self.plot_queue.empty():
             fig, suffix = self.plot_queue.get()
             self.plot_from_figure(suffix, fig)
-        if self.plot_queue.empty() and not self.running_process.is_alive():
+        if self.pixeldac_result.empty() and self.eq_result_path.empty() and self.plot_queue.empty() and not self.running_process.is_alive():
             GObject.source_remove(self.running_scan_idle)
             self.running_scan_idle = None
         return True
