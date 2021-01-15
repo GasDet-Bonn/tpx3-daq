@@ -187,7 +187,7 @@ class ThresholdScan(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
-    def plot(self, status = None, **kwargs):
+    def plot(self, status = None, plot_queue = None, **kwargs):
         '''
             Plot data and histograms of the scan
             If there is a status queue information about the status of the scan are put into it
@@ -214,16 +214,16 @@ class ThresholdScan(ScanBase):
 
                 # Plot the occupancy matrix
                 occ_masked = np.ma.masked_array(h5_file.root.interpreted.HistOcc[:], mask)
-                p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='median', suffix='occupancy')
+                p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='median', suffix='occupancy', plot_queue=plot_queue)
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution', plot_queue=plot_queue)
 
                 # Plot the S-Curve histogram
                 scurve_hist = h5_file.root.interpreted.HistSCurve[:].T
                 max_occ = n_injections * 5
-                p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ)
+                p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ, plot_queue=plot_queue)
 
                 # Do not plot pixels with converged  S-Curve fits
                 chi2_sel = h5_file.root.interpreted.Chi2Map[:] > 0.  # Mask not converged fits (chi2 = 0)
@@ -231,15 +231,15 @@ class ThresholdScan(ScanBase):
 
                 # Plot the threshold distribution based on the S-Curve fits
                 hist = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution')
+                p.plot_distribution(hist, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution', plot_queue=plot_queue)
 
                 # Plot the occupancy
-                p.plot_occupancy(hist, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=Vthreshold_start, z_max=Vthreshold_stop)
+                p.plot_occupancy(hist, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=Vthreshold_start, z_max=Vthreshold_stop, plot_queue=plot_queue)
 
                 # Plot the noise map
                 hist = np.ma.masked_array(h5_file.root.interpreted.NoiseMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(0.1, 20, 0.1), title='Noise distribution', suffix='noise_distribution')
-                p.plot_occupancy(hist, z_label='Noise', title='Noise', show_sum=False, suffix='noise_map', z_min=0.1, z_max=20.0)
+                p.plot_distribution(hist, plot_range=np.arange(0.1, 20, 0.1), title='Noise distribution', suffix='noise_distribution', plot_queue=plot_queue)
+                p.plot_occupancy(hist, z_label='Noise', title='Noise', show_sum=False, suffix='noise_map', z_min=0.1, z_max=20.0, plot_queue=plot_queue)
 
 
 if __name__ == "__main__":

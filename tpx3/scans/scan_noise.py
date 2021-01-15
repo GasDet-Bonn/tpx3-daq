@@ -155,7 +155,7 @@ class NoiseScan(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
-    def plot(self, status = None, **kwargs):
+    def plot(self, status = None, plot_queue = None, **kwargs):
         '''
             Plot data and histograms of the scan
             If there is a status queue information about the status of the scan are put into it
@@ -181,11 +181,11 @@ class NoiseScan(ScanBase):
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution', plot_queue=plot_queue)
 
                 # Plot the noise pixels histogram
                 noise_curve = h5_file.root.interpreted.NoiseCurve[:]
-                p._plot_1d_hist(hist = noise_curve, plot_range = list(range(Vthreshold_start, Vthreshold_stop)), x_axis_title='Threshold', y_axis_title='Number of active pixels')
+                p._plot_1d_hist(hist = noise_curve, plot_range = list(range(Vthreshold_start, Vthreshold_stop)), x_axis_title='Threshold', y_axis_title='Number of active pixels', plot_queue=plot_queue)
 
 
 if __name__ == "__main__":

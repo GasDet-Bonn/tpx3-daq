@@ -238,7 +238,7 @@ class ThresholdCalib(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(eval(interpreted_call), name='HistOcc', obj=hist_occ)
 
-    def plot(self, status = None, **kwargs):
+    def plot(self, status = None, plot_queue = None, **kwargs):
         '''
             Plot data and histograms of the scan
             If there is a status queue information about the status of the scan are put into it
@@ -263,7 +263,7 @@ class ThresholdCalib(ScanBase):
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix_0[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution', plot_queue=plot_queue)
 
                 mask = h5_file.root.configuration.mask_matrix_0[:]
 
@@ -296,7 +296,7 @@ class ThresholdCalib(ScanBase):
                     # Plot the S-Curve histogram
                     scurve_hist = eval(HistSCurve_call).T
                     max_occ = n_injections * 5
-                    p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ)
+                    p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", max_occ=max_occ, plot_queue=plot_queue)
 
                     # Do not plot pixels with converged  S-Curve fits
                     chi2_sel = eval(Chi2Map_call) > 0. # Mask not converged fits (chi2 = 0)
@@ -304,7 +304,7 @@ class ThresholdCalib(ScanBase):
 
                     # Plot the threshold distribution based on the S-Curve fits
                     hist = np.ma.masked_array(eval(ThresholdMap_call), mask)
-                    it_parameters, it_errors = p.plot_distribution(hist, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution')
+                    it_parameters, it_errors = p.plot_distribution(hist, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution', plot_queue=plot_queue)
 
                     # Fill the iteration results in the calibration parameter arrays
                     pulse_heights[iteration] = ((211 + (100 // iterations) * iteration) - 200) * 46.75
@@ -320,7 +320,7 @@ class ThresholdCalib(ScanBase):
                 h5_file.create_table(h5_file.root.calibration, 'calibration_results', calib_results)
 
                 # Create the calibration plot
-                p.plot_datapoints(pulse_heights, thresholds, x_plot_range=np.arange(0, 5500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration', suffix='threshold_calibration')
+                p.plot_datapoints(pulse_heights, thresholds, x_plot_range=np.arange(0, 5500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration', suffix='threshold_calibration', plot_queue=plot_queue)
 
 if __name__ == "__main__":
     scan = ThresholdCalib()

@@ -136,11 +136,15 @@ class Plotting(object):
 
     ''' User callable plotting functions '''
 
-    def _save_plots(self, fig, suffix=None, tight=False):
+    def _save_plots(self, fig, suffix=None, tight=False, plot_queue=None):
         increase_count = False
         bbox_inches = 'tight' if tight else ''
         if suffix is None:
             suffix = str(self.plot_cnt)
+
+        if plot_queue != None:
+            figure = fig, suffix
+            plot_queue.put(figure)
 
         if not self.out_file:
             fig.show()
@@ -301,7 +305,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='parameter_page')
 
-    def _plot_2d_scatter(self, data, title=None, x_axis_title=None, y_axis_title=None, invert_x=False, invert_y=False, log_y=False, color='b', suffix=None):
+    def _plot_2d_scatter(self, data, title=None, x_axis_title=None, y_axis_title=None, invert_x=False, invert_y=False, log_y=False, color='b', suffix=None, plot_queue=None):
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
@@ -330,10 +334,10 @@ class Plotting(object):
             ax.yaxis.set_major_formatter(plt.NullFormatter())
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
-        self._save_plots(fig, suffix=suffix)
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
     def _plot_1d_hist(self, hist, yerr=None, title=None, x_axis_title=None, y_axis_title=None, x_ticks=None, color='r',
-                      plot_range=None, log_y=False, suffix=None):
+                      plot_range=None, log_y=False, suffix=None, plot_queue=None):
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
@@ -375,7 +379,7 @@ class Plotting(object):
             ax.yaxis.set_major_formatter(plt.NullFormatter())
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
-        self._save_plots(fig, suffix=suffix)
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
     def _plot_tot(self, hist, title=None):
         if title is None:
@@ -435,7 +439,7 @@ class Plotting(object):
                            x_axis_title='Cluster ToT [25 ns]',
                            y_axis_title='# of hits', suffix='cluster_tot')
 
-    def _plot_cl_shape(self, hist):
+    def _plot_cl_shape(self, hist, plot_queue=None):
         ''' Create a histogram with selected cluster shapes '''
         x = np.arange(12)
         fig = Figure()
@@ -475,9 +479,9 @@ class Plotting(object):
             ax.yaxis.set_major_formatter(plt.NullFormatter())
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
-        self._save_plots(fig, suffix='cluster_shape')
+        self._save_plots(fig, suffix='cluster_shape', plot_queue=plot_queue)
 
-    def plot_occupancy(self, hist, electron_axis=False, use_electron_offset=True, title='Occupancy', z_label='# of hits', z_min=None, z_max=None, show_sum=True, suffix=None):
+    def plot_occupancy(self, hist, electron_axis=False, use_electron_offset=True, title='Occupancy', z_label='# of hits', z_min=None, z_max=None, show_sum=True, suffix=None, plot_queue=None):
         if z_max == 'median':
             z_max = 2 * np.ma.median(hist)
         elif z_max == 'maximum' or z_max is None:
@@ -562,7 +566,7 @@ class Plotting(object):
             cb.formatter = plt.NullFormatter()
             cb.update_ticks()
 
-        self._save_plots(fig, suffix=suffix)
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
     def _create_2d_pixel_hist(self, fig, ax, hist2d, title=None, x_axis_title=None, y_axis_title=None, z_min=0, z_max=None, cmap=None):
         extent = [0.5, 400.5, 192.5, 0.5]
@@ -587,7 +591,7 @@ class Plotting(object):
         cax = divider.append_axes("right", size="5%", pad=0.05)
         fig.colorbar(im, boundaries=bounds, cmap=cmap, norm=norm, ticks=np.linspace(start=0, stop=z_max, num=9, endpoint=True), cax=cax)
 
-    def _plot_three_way(self, hist, title, filename=None, x_axis_title=None, minimum=None, maximum=None, bins=101, cmap=None):  # the famous 3 way plot (enhanced)
+    def _plot_three_way(self, hist, title, filename=None, x_axis_title=None, minimum=None, maximum=None, bins=101, cmap=None, plot_queue=None):  # the famous 3 way plot (enhanced)
         if cmap is None:
             if maximum == 'median' or maximum is None:
                 cmap = copy.copy(cm.get_cmap('coolwarm'))
@@ -622,7 +626,7 @@ class Plotting(object):
         ax3 = fig.add_subplot(313)
         self._create_pixel_scatter_plot(ax3, hist, x_axis_title="channel=row + column*192", y_axis_title=x_axis_title, y_min=minimum, y_max=maximum)
         fig.tight_layout()
-        self._save_plots(fig, suffix='threeway')
+        self._save_plots(fig, suffix='threeway', plot_queue=plot_queue)
 
     def _create_1d_hist(self, ax, hist, title=None, x_axis_title=None, y_axis_title=None, bins=101, x_min=None, x_max=None):
         if x_min is None:
@@ -713,7 +717,7 @@ class Plotting(object):
         ax.text(0.05, 0.9, textleft, transform=ax.transAxes, fontsize=8, verticalalignment='top', bbox=props)
 
 
-    def plot_fancy_occupancy(self, hist, z_max=None):
+    def plot_fancy_occupancy(self, hist, z_max=None, plot_queue=None):
         if z_max == 'median':
             z_max = 2 * np.ma.median(hist)
         elif z_max == 'maximum' or z_max is None:
@@ -770,9 +774,9 @@ class Plotting(object):
         axHisty.ticklabel_format(style='sci', scilimits=(0, 4), axis='x')
         axHisty.set_xlabel('#')
 
-        self._save_plots(fig, suffix='fancy_occupancy')
+        self._save_plots(fig, suffix='fancy_occupancy', plot_queue=plot_queue)
 
-    def plot_scurves(self, scurves, scan_parameters, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None):
+    def plot_scurves(self, scurves, scan_parameters, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
 
         if max_occ is None:
             max_occ = np.max(scurves) + 5
@@ -834,9 +838,9 @@ class Plotting(object):
             cb.formatter = plt.NullFormatter()
             cb.update_ticks()
 
-        self._save_plots(fig, suffix='scurves')
+        self._save_plots(fig, suffix='scurves', plot_queue=plot_queue)
 
-    def plot_distribution(self, data, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None):
+    def plot_distribution(self, data, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None, plot_queue=None):
 
         if plot_range is None:
             diff = np.amax(data) - np.amin(data)
@@ -913,12 +917,12 @@ class Plotting(object):
             ax.yaxis.set_major_formatter(plt.NullFormatter())
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
-        self._save_plots(fig, suffix=suffix)
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
         if coeff is not None:
             return coeff, errors
 
-    def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None):
+    def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
         m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
         b = y[0] - m * x[0]
         p0 = (m, b)
@@ -957,13 +961,13 @@ class Plotting(object):
             ax.text(0.05, 0.9, textright, transform=ax.transAxes,
                     fontsize=8, verticalalignment='top', bbox=props)
 
-        self._save_plots(fig, suffix=suffix)
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
         if coeff is not None:
             return coeff, errors
 
     def plot_stacked_threshold(self, data, tdac_mask, plot_range=None, electron_axis=False, x_axis_title=None, y_axis_title=None,
-                                title=None, suffix=None, min_tdac=0, max_tdac=15, range_tdac=16):
+                                title=None, suffix=None, min_tdac=0, max_tdac=15, range_tdac=16, plot_queue=None):
         start_column = self.run_config['start_column']
         stop_column = self.run_config['stop_column']
         data = data[:, start_column:stop_column]
@@ -1064,7 +1068,7 @@ class Plotting(object):
             ax.yaxis.set_major_formatter(plt.NullFormatter())
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
-        self._save_plots(fig, suffix=suffix)
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
 
 

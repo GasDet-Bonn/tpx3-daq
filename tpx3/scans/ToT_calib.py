@@ -188,7 +188,7 @@ class ToTCalib(ScanBase):
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
-    def plot(self, status = None, **kwargs):
+    def plot(self, status = None, plot_queue = None, **kwargs):
         '''
             Plot data and histograms of the scan
             If there is a status queue information about the status of the scan are put into it
@@ -218,27 +218,27 @@ class ToTCalib(ScanBase):
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution')
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve histogram
                 ToT_hist = h5_file.root.interpreted.HistToTCurve[:].T
-                p.plot_scurves(ToT_hist, list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves')
+                p.plot_scurves(ToT_hist, list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter a histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.aMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(0, 20, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution')
+                p.plot_distribution(hist, plot_range=np.arange(0, 20, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter b histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.bMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(-5000, 0, 100)), x_axis_title='b', title='b distribution', suffix='b_distribution')
+                p.plot_distribution(hist, plot_range=list(range(-5000, 0, 100)), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter c histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.cMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(-10000, 0000, 200)), x_axis_title='c', title='c distribution', suffix='c_distribution')
+                p.plot_distribution(hist, plot_range=list(range(-10000, 0000, 200)), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter t histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.tMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(200, 300, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution')
+                p.plot_distribution(hist, plot_range=list(range(200, 300, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
                 
 
 
