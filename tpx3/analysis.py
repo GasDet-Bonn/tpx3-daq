@@ -165,6 +165,7 @@ def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
     n47 = np.uint64(47)
     n44 = np.uint64(44)
     n28 = np.uint64(28)
+    n14 = np.uint(14)
     n4 = np.uint64(4)
 
     n3ff = np.uint64(0x3ff)
