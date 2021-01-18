@@ -177,11 +177,10 @@ class Tpx3(Transceiver):
         if hit_count > 1: #cut noise
             self.hist_hit_count[hit_count] += 1
             self.hist_occ += hist_occ
+            self.hist_tot += np.resize(np.bincount(tot[header == 1], minlength=1024), 1024)
 
 
-        #TODO: self.hist_tot ...
         interpreted_data = {
-            #'hits': hit_data,
             'occupancy': self.hist_occ,
             'tot_hist': self.hist_tot,
             'hist_hit_count': self.hist_hit_count,

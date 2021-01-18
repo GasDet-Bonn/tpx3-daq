@@ -128,7 +128,7 @@ class Tpx3(Receiver):
         if 'meta_data' not in data:  # Histograms
             self.occupancy_img.setImage(image = data['occupancy'][:, :],
                                         autoDownsample = True)
-            self.tot_plot.setData(x=np.linspace(-0.5, 15.5, 17),
+            self.tot_plot.setData(x=np.linspace(-0.5, 1024.5, 1025),
                                   y=data['tot_hist'], fillLevel=0,
                                   brush=(0, 0, 255, 150))
             self.hist_hit_count.setData(x=np.linspace(-0.5, 100.5, 101),
