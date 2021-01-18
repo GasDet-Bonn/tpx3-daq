@@ -87,7 +87,7 @@ class TPX3_multiprocess_start(object):
         def startup_func(function, **kwargs):
             system_exit = False
             try:  
-                call_func = (function+'()')
+                call_func = (function + '()')
                 scan = eval(call_func)
                 scan.start(**kwargs)
                 scan.analyze(**kwargs)
@@ -108,7 +108,7 @@ class TPX3_multiprocess_start(object):
                 status.put("Scan finished")
 
         file_logger.write_tmp_backup()
-        new_process = Process(target=startup_func, args=(function,), kwargs=kwargs)
+        new_process = Process(target=startup_func, args=(function, ), kwargs=kwargs)
         new_process.start()
         return new_process
 
