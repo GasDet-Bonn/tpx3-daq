@@ -565,7 +565,7 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
             split = np.split(raw_data, stops)
             # remove the last element (WHY?) and process each chunk individually
             if progress == None:
-            pbar = tqdm(total = len(split[:-1]))
+                pbar = tqdm(total = len(split[:-1]))
             else:
                 step_counter = 0
             for i in range(len(split[:-1])):
@@ -581,13 +581,13 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 else:
                     ret = int_pix_data
                 if progress == None:
-                pbar.update(1)
+                    pbar.update(1)
                 else:
                     step_counter += 1
                     fraction = step_counter / (len(split[:-1]))
                     progress.put(fraction)
             if progress == None:
-            pbar.close()
+                pbar.close()
         # case used for clustering: split further into the time frames defined through one row in meta_data
         else:
             pbar = tqdm(total=meta_data.shape[0])
