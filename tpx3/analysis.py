@@ -531,7 +531,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
 
     return data_words, timestamps, last, nlast, leftoverpackage
 
-def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=None, split_fine=False, last_timestamp = 0, next_to_last_timestamp = 0, intern =False, chunk_nr = 0, leftoverpackage = []):
+def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=None, split_fine=False, last_timestamp = 0, next_to_last_timestamp = 0, intern =False, chunk_nr = 0, leftoverpackage = [], progress = None):
     '''
     Chunk the data based on scan_param and interpret
     '''
@@ -555,7 +555,10 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
             # split raw_data according to these positions into sets that all consist of entries which belong to one scan_id
             split = np.split(raw_data, stops)
             # remove the last element (WHY?) and process each chunk individually
+            if progress == None:
             pbar = tqdm(total = len(split[:-1]))
+            else:
+                step_counter = 0
             for i in range(len(split[:-1])):
                 # print param[i], stops[i], len(split[i]), split[i]
                 # sends split[i] (i.e. part of data that is currently treated) recursively
@@ -568,7 +571,13 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                     ret = np.hstack((ret, int_pix_data))
                 else:
                     ret = int_pix_data
+                if progress == None:
                 pbar.update(1)
+                else:
+                    step_counter += 1
+                    fraction = step_counter / (len(split[:-1]))
+                    progress.put(fraction)
+            if progress == None:
             pbar.close()
         # case used for clustering: split further into the time frames defined through one row in meta_data
         else:

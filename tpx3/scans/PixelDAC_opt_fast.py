@@ -280,7 +280,7 @@ class PixelDAC_opt(ScanBase):
 
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
             self.logger.info('Interpret raw data...')
-            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data)
+            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
 
             # Read needed configuration parameters
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]

@@ -157,7 +157,7 @@ class TestpulseScan(ScanBase):
             self.logger.info('Interpret raw data...')
 
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
-            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data)
+            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
 
             # Select only data which is hit data
             hit_data = hit_data[hit_data['data_header'] == 1]
