@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 import numpy as np
 import logging
+import math
+from six.moves import range
 
 from online_monitor.converter.transceiver import Transceiver
 from online_monitor.utils import utils
@@ -9,6 +11,71 @@ from zmq.utils import jsonapi
 
 import tpx3.analysis as analysis
 from numba.tests.npyufunc.test_ufunc import dtype
+
+logger = logging.getLogger('Online_Interpreter')
+
+_lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
+
+def init_lfsr_10_lut():
+    """
+    Generates a 10bit LFSR according to Manual v1.9 page 19
+    """
+    lfsr = 1023
+    dummy = 0
+    for i in range(2 ** 10):
+        _lfsr_10_lut[lfsr] = i
+        dummy = lfsr >> 9
+        lfsr = (lfsr << 1) & 0b1111111111
+        lfsr += ((lfsr & 0b10000000) >> 7) ^ dummy
+    _lfsr_10_lut[2 ** 10 - 1] = 0
+
+init_lfsr_10_lut()
+
+def _interpret_raw_data(data):
+    pixel = np.uint32(data >> np.uint32(28)) & np.uint32(0b111)
+    super_pixel = np.uint32(data >> np.uint32(31)) & np.uint32(0x3f)
+    right_col = pixel > 3
+    eoc = np.uint32(data >> np.uint32(37)) & np.uint32(0x7f)
+
+    header = (data >> np.uint32(47))
+    x = (eoc * 2 + right_col * 1)
+    y = ((super_pixel * 4) + (pixel - right_col * 4))
+    tot = _lfsr_10_lut[(data >> np.uint32(4)) & np.uint32(0x3ff)]
+
+    return header, x, y, tot
+
+def raw_data_to_dut(raw_data):
+    '''
+    Transform to 48 bit format -> fast decode_fpga
+    '''
+    if len(raw_data) % 2 != 0:
+        return np.empty(0, dtype=np.uint64)
+
+    # make a list of the header elements giving the link from where the data was received (h)
+    h = (raw_data & 0x1E000000) >> 25
+    # and a list of the data (k)
+    k = (raw_data & 0xffffff)
+    data_words = np.empty(0, dtype=np.uint64) # empty list element to store the final data_words
+    # make a single list containing the data from each link
+    for i in range(8):
+        k_i = k[h == i] # gives a list of all data for the specific link number
+        # initialize list with the needed length for temporal storage
+        data_words_i = np.empty((k_i.shape[0] // 2), dtype=np.uint64)
+        data_words_i[:] = k_i[1::2].view('>u4')
+        data_words_i = (data_words_i << 16) + (k_i[0::2].view('>u4') >> 8)
+        # append all data from this link to the list of all data
+        data_words = np.append(data_words,data_words_i)
+
+    return data_words
+
+def interpret_raw_data(raw_data):
+    '''
+    Chunk the data based on scan_param and interpret
+    '''
+    data_words = raw_data_to_dut(raw_data)
+    header, x, y, tot = _interpret_raw_data(data_words)
+
+    return header, x, y, tot
 
 class Tpx3(Transceiver):
 
@@ -97,16 +164,13 @@ class Tpx3(Transceiver):
         if isinstance(data[0][1], dict):  # Meta data
             return self._interpret_meta_data(data)
 
-        raw_data = data[0][1]
-        hit_data = analysis.interpret_raw_data(data[0][1])
-        hit_data = hit_data[hit_data['data_header'] == 1]
+        header, x, y, tot = interpret_raw_data(data[0][1])
 
-        pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256*256).astype(np.uint32)
+        pix_occ = np.bincount(x[header == 1] * 256 + y[header == 1], minlength=256*256).astype(np.uint32)
         hist_occ = np.reshape(pix_occ, (256, 256))
 
-
         hit_count = np.count_nonzero(hist_occ.flat)
-        self.total_hits += len(hit_data)
+        self.total_hits += len(header == 1)
         self.readout += 1
         self.total_events = self.readout  # ???
 
@@ -153,6 +217,6 @@ class Tpx3(Transceiver):
         # Readout number
         self.readout = 0
 
-        self.hist_occ = np.zeros((256,256), dtype=np.uint32)
-        self.hist_tot = np.zeros((16), dtype=np.uint32)
-        self.hist_hit_count = np.zeros((256*256), dtype=np.uint32) #
+        self.hist_occ = np.zeros((256,256), dtype=np.float64)
+        self.hist_tot = np.zeros((1024), dtype=np.float64)
+        self.hist_hit_count = np.zeros((256*256), dtype=np.float64)
