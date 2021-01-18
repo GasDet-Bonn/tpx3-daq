@@ -194,7 +194,7 @@ def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
         pix_data['TOA'] = _gray_14_lut[(data >> n14) & n3fff]
         pix_data['EventCounter'] = np.zeros(len(data))
         if len(ToA_Extension):
-            pix_data['TOA_Extension'] = ToA_Extension
+            pix_data['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
             pix_data['TOA_Combined'] = (ToA_Extension & 0xFFFFFFFFC000) + pix_data['TOA']
         else:
             pix_data['TOA_Extension'] = np.zeros(len(data))
@@ -204,7 +204,7 @@ def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
         pix_data['EventCounter'] = np.zeros(len(data))
         pix_data['TOT'] = np.zeros(len(data))
         if len(ToA_Extension):
-            pix_data['TOA_Extension'] = ToA_Extension
+            pix_data['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
             pix_data['TOA_Combined'] = (ToA_Extension & 0xFFFFFFFFC000) + pix_data['TOA']
         else:
             pix_data['TOA_Extension'] = np.zeros(len(data))
@@ -351,10 +351,18 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
                 timestamps_raw = timestamps_raw[:-1]
                 timestamps_indices = timestamps_indices[:-1]
                 logger.info("One left over timer package! Try to integrate in next chunk...")
-            timestamps_combined = 0b0101 << 48 | (timestamps_raw[0::2] & 0xFFFFFF) << 24 | (timestamps_raw[1::2] & 0xFFFFFF)
+            timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
+            k = (timestamps_raw & 0xFFFFFF)
+            timestamps_combined[:] = k[0::2]
+            timestamps_combined = (timestamps_combined << 24) + (k[1::2])
+            timestamps_combined = timestamps_combined | 0b0101 << 48
             timestamps_combined_indices = timestamps_indices[0::2]
         else:
-            timestamps_combined = 0b0101 << 48 | timestamps_raw[0::2] << 24 | timestamps_raw[1::2]
+            timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
+            k = (timestamps_raw & 0xFFFFFF)
+            timestamps_combined[:] = k[0::2]
+            timestamps_combined = (timestamps_combined << 24) + (k[1::2])
+            timestamps_combined = timestamps_combined | 0b0101 << 48
             timestamps_combined_indices = timestamps_indices[0::2]
 
         # Put the FPGA timestamps in a new array on their initial positions
@@ -482,7 +490,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         if len(output) == 0:
             return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.uint64), 0, 0, []
 
-        timestamps = np.concatenate([np.full(len(el)-1,el[0]) for el in output])
+        timestamps = np.concatenate([np.full((len(el)-1),el[0],dtype=np.uint64) for el in output])
         data_words = np.concatenate([el[1:] for el in output])
 
         """if wrong_hits/len(data_words) > 0.2:
