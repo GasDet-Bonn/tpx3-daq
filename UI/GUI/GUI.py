@@ -2619,9 +2619,9 @@ class GUI_Main(Gtk.Window):
             return self.running_process.is_alive()
 
     def update_progress(self):
-        if not self.progress_value_queue.empty():
+        while not self.progress_value_queue.empty():
             self.progressbar.set_fraction(self.progress_value_queue.get())
-        if not self.status_queue.empty():
+        while not self.status_queue.empty():
             self.Status_window_call(function = "status", statusstring = self.status_queue.get())
         return True
 
@@ -2652,7 +2652,7 @@ class GUI_Main(Gtk.Window):
             TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
         if not self.eq_result_path.empty():
             TPX3_datalogger.write_value(name = 'Equalisation_path', value = self.eq_result_path.get())
-        if not self.plot_queue.empty():
+        while not self.plot_queue.empty():
             fig, suffix = self.plot_queue.get()
             self.plot_from_figure(suffix, fig)
         if self.pixeldac_result.empty() and self.eq_result_path.empty() and self.plot_queue.empty() and not self.running_process.is_alive():
