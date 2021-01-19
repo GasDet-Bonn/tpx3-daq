@@ -18,6 +18,7 @@ import numpy as np
 import zmq
 from tqdm import tqdm
 import math
+from basil.utils.BitLogic import BitLogic
 
 from contextlib import contextmanager
 from .tpx3 import TPX3
@@ -109,6 +110,8 @@ class ScanBase(object):
         # Initialize the files
         self.set_directory()
         self.make_files()
+
+        self.number_of_chips = 1
         
         # Test if the link configuration is valid
         if self.test_links() == True:
@@ -219,6 +222,55 @@ class ScanBase(object):
                 break
 
         return valid
+
+    def init_links(self):
+        '''
+            Initializes the links for communication
+        '''
+        # Open the link yaml file
+        proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        yaml_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
+
+        if not yaml_file == None:
+            with open(yaml_file) as file:
+                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+
+        # Deactivate all fpga links
+        for register in yaml_data['registers']:
+            self.chip[register['name']].ENABLE = 0
+            self.chip[register['name']].reset()
+
+        self.chip._outputBlocks["chan_mask"] = 0
+
+        ID_List = []
+
+        # Iterate over all links
+        for register in yaml_data['registers']:
+            if register['chip-id'] != 0:
+                # Create the chip output channel mask and write the output block
+                self.chip._outputBlocks["chan_mask"] = self.chip._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
+
+                # Activate the current fpga link and set all its settings
+                self.chip[register['name']].ENABLE = 1
+                self.chip[register['name']].DATA_DELAY = register['data-delay']
+                self.chip[register['name']].INVERT = register['data-invert']
+                self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+
+                bit_id = BitLogic.from_value(register['chip-id'])
+
+                # Decode the Chip-ID
+                self.wafer_number = bit_id[19:8].tovalue()
+                self.x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+                self.y_position =bit_id[7:4].tovalue()
+                ID = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
+
+                # Write new Chip-ID to the list
+                if ID not in ID_List:
+                    ID_List.append(ID)
+        
+        self.number_of_chips = len(ID_List)
+        if self.number_of_chips > 1:
+            raise NotImplementedError('Handling of multiple chips is not implemented yet')
 
     def create_scan_masks(self, mask_step, pixel_threhsold = None, number = None, offset = 0, append_datadriven = True, progress = None):
         '''
@@ -457,42 +509,19 @@ class ScanBase(object):
         self.board_name = self.chip.board_version
         self.firmware_version = self.chip.fw_version
 
-        # read the chan_mask giving the activated links and writing the names of the activated ones in a list
-        rx_list_names = ['RX0','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
-        rx_list = []
-        rx_antilist = []
-        activated_links = self.chip._outputBlocks["chan_mask"]
-        for i in range(8):
-            if ((2**i)&activated_links)!=0:
-                rx_list.append(rx_list_names[i])
-        for link in rx_list_names:
-            if not link in rx_list:
-                rx_antilist.append(link)
-
-        # self.chip.init_communication()
-
         # Chip start-up sequence
         # Reset the chip
         self.chip.toggle_pin("RESET")
 
+        self.init_links()
+
         # Set the output settings of the chip
         data = self.chip.write_outputBlock_config()
-
-        # Initialize communication with receiver
-        self.fifo_readout.reset_rx()
-        self.fifo_readout.enable_rx(True)
-        for antilink in rx_antilist:
-            self.chip[antilink].ENABLE = 0
         self.fifo_readout.print_readout_status()
 
         # Enable power pulsing
         self.chip['CONTROL']['EN_POWER_PULSING'] = 1
         self.chip['CONTROL'].write()
-
-        # Set data delay of receiver
-        # TODO delays can be different for different links, so check its OK to put the same for all
-        for rx_name in rx_list:
-            self.chip[rx_name].DATA_DELAY = 21
 
         # Set PLL Config
         data = self.chip.write_pll_config(write=False)
@@ -509,20 +538,6 @@ class ScanBase(object):
             self.chip['PULSE_GEN'].set_en(True)
         else:
             self.chip['PULSE_GEN'].set_en(False)
-
-        # Get ChipID - Only readable after doing EFuse_Read once
-        data = self.chip.read_periphery_template("EFuse_Read")
-        data += [0x00]*4
-        self.chip["FIFO"].reset()
-        time.sleep(0.1)
-        self.chip.write(data)
-        time.sleep(0.1)
-        fdata = self.chip['FIFO'].get_data()
-        dout = self.chip.decode_fpga(fdata, True)
-
-        self.wafer_number = dout[1][19:8].tovalue()
-        self.y_position = dout[1][7:4].tovalue()
-        self.x_position = chr(ord('a') + dout[1][3:0].tovalue() - 1).upper()
 
         # Reset DACs and set them to the values defined in dacs.yaml
         self.chip.reset_dac_attributes(to_default = False)
