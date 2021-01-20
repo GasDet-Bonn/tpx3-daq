@@ -1,8 +1,5 @@
 #import gi
 
-#gi.require_version("Gtk", "3.0")
-#from gi.repository import Gtk
-#from gi.repository import GObject
 import numpy as np
 from matplotlib.figure import Figure
 from numpy import arange, pi, random, linspace
