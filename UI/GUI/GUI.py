@@ -386,7 +386,6 @@ class GUI_Threshold_Scan(Gtk.Window):
     def Threshold_start_set(self, event):
         self.Threshold_start_value = self.Threshold_start.get_value_as_int()
         temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
-        print("Threshold_start value is " + str(self.Threshold_start.get_value_as_int()) + ".")
         new_adjustment_start = Gtk.Adjustment()
         new_adjustment_start.configure(200, self.Threshold_start_value,2911, 1, 0, 0)
         self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
@@ -397,7 +396,6 @@ class GUI_Threshold_Scan(Gtk.Window):
     def Threshold_stop_set(self, event):
         self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
         temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
-        print("Threshold_stop value is " + str(self.Threshold_stop.get_value_as_int()) + ".")
         new_adjustment_stop = Gtk.Adjustment()
         new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
         self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
@@ -407,7 +405,6 @@ class GUI_Threshold_Scan(Gtk.Window):
 
     def n_injections_set(self, event):
         self.n_injections_value = self.n_injections.get_value_as_int()
-        print("n_injections value is " + str(self.n_injections.get_value_as_int()) + ".")
 
     def on_Iterationbutton_toggled(self, button, name):
         if button.get_active():
