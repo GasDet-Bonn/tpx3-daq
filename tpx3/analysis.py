@@ -22,7 +22,7 @@ from scipy.special import erf
 from numba import njit, prange
 import math
 from six.moves import range
-from numba import njit
+import sys
 
 logger = logging.getLogger('Analysis')
 
