@@ -19,7 +19,7 @@ import multiprocessing as mp
 from functools import partial
 from scipy.optimize import curve_fit
 from scipy.special import erf
-from numba import njit
+from numba import njit, prange
 import math
 from six.moves import range
 from numba import njit
@@ -31,11 +31,11 @@ _lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
 _lfsr_14_lut = np.zeros((2 ** 14), dtype=np.uint16)
 _gray_14_lut = np.zeros((2 ** 14), dtype=np.uint16)
 
-@njit
+@njit(parallel = True)
 def scurve_hist(hit_data, param_range):
     scurves = np.zeros((256*256, len(param_range)), dtype=np.uint16)
 
-    for i in range(hit_data.shape[0]):
+    for i in prange(hit_data.shape[0]):
         x = hit_data['x'][i]
         y = hit_data['y'][i]
         p = hit_data['scan_param_id'][i]
@@ -44,6 +44,7 @@ def scurve_hist(hit_data, param_range):
 
     return scurves
 
+@njit
 def totcurve_hist(hit_data, param_range):
     totcurves = np.zeros((256*256, len(param_range)), dtype=np.uint16)
 
@@ -56,6 +57,7 @@ def totcurve_hist(hit_data, param_range):
 
     return totcurves
 
+@njit
 def noise_pixel_count(hit_data, param_range, Vthreshold_start):
     noise_curve = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
     pixel_list = np.zeros((256*256, Vthreshold_start + len(param_range)), dtype=np.uint16)
