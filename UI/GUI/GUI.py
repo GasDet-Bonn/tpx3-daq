@@ -407,8 +407,6 @@ class GUI_Threshold_Scan(Gtk.Window):
         self.n_injections_value = self.n_injections.get_value_as_int()
 
     def on_Iterationbutton_toggled(self, button, name):
-        if button.get_active():
-            print(name, " iterations are choosen")
         self.Number_of_Iterations = int(name)
 
     def on_Startbutton_clicked(self, widget):
@@ -1238,7 +1236,6 @@ class GUI_SetDAC(Gtk.Window):
         if GUI.get_process_alive():
             subw = GUI_Process_Running
             return
-        print("Save DAC settings")
         TPX3_datalogger.write_value(name = 'Ibias_Preamp_ON', value = self.Ibias_Preamp_ON_value)
         TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_ON')
         #TPX3_datalogger.write_value(name = 'Ibias_Preamp_OFF', value = self.Ibias_Preamp_OFF_value)
@@ -1616,8 +1613,6 @@ class GUI_Equalisation(Gtk.Window):
         self.Threshold_start.connect("value-changed", self.Threshold_start_set)
 
     def on_Iterationbutton_toggled(self, button, name):
-        if button.get_active():
-            print( name," iterations are choosen")
         self.Number_of_Iterations = int(name)
 
     def on_Equalisation_Typebutton_toggled(self, button, name):
