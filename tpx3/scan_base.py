@@ -73,6 +73,16 @@ class ConfTable(tb.IsDescription):
     value = tb.UInt16Col()
 
 
+class Links(tb.IsDescription):
+    receiver = tb.StringCol(64)
+    fpga_link = tb.UInt8Col()
+    chip_link = tb.UInt8Col()
+    chip_id = tb.StringCol(64)
+    data_delay = tb.UInt8Col()
+    data_invert = tb.UInt8Col()
+    data_edge = tb.UInt8Col()
+
+
 def send_data(socket, data, scan_par_id, name='ReadoutData'):
     '''
         Sends the data of every read out (raw data and meta data)
@@ -459,6 +469,43 @@ class ScanBase(object):
         else:
             self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix_' + str(iteration), title='Mask Matrix ' + str(iteration), obj=self.chip.mask_matrix)
             self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix_' + str(iteration), title='Threshold Matrix ' + str(iteration), obj=self.chip.thr_matrix)
+
+        
+        # save the link configuration
+        # Scans without multiple iterations
+        if iteration == None:
+            link_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='links', title='Links', description=Links)
+        # Scans with multiple iterations
+        else:
+            link_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='links_' + str(iteration), title='Links ' + str(iteration), description=Links)
+
+        # Open the link yaml file
+        proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        yaml_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
+
+        if not yaml_file == None:
+            with open(yaml_file) as file:
+                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+
+        for register in yaml_data['registers']:
+            row = link_config_table.row
+            row['receiver'] = register['name']
+            row['fpga_link'] = register['fpga-link']
+            row['chip_link'] = register['chip-link']
+
+            # Decode the Chip-ID
+            bit_id = BitLogic.from_value(register['chip-id'])
+            wafer = bit_id[19:8].tovalue()
+            x = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+            y =bit_id[7:4].tovalue()
+            ID = 'W' + str(wafer) + '-' + x + str(y)
+            row['chip_id'] = ID
+
+            row['data_delay'] = register['data-delay']
+            row['data_invert'] = register['data-invert']
+            row['data_edge'] = register['data-edge']
+            row.append()
+        link_config_table.flush()
 
     def setup_files(self, iteration = None):
         '''
