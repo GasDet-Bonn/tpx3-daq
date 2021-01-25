@@ -12,15 +12,18 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 import numpy as np
 from numpy import arange, pi, random, linspace
-from multiprocessing import Queue
+from multiprocessing import Process, Queue, Pipe
 
 from UI.GUI.PlotWidget import plotwidget
 from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger
 from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import tpx3.utils as utils
+from UI.GUI.converter import utils as conv_utils
+from UI.GUI.converter.converter_manager import ConverterManager
 
-class GUI_Plot(Gtk.Window):
-    def __init__(self):
+
+class GUI_Plot1(Gtk.Window):
+    def __init__(self, data_queue):
         self.active = "False"
         Gtk.Window.__init__(self, title = "Plot")
         self.connect("delete-event", self.window_destroy)
@@ -29,7 +32,7 @@ class GUI_Plot(Gtk.Window):
         self.box = Gtk.Box(spacing = 6, orientation = Gtk.Orientation.HORIZONTAL)
         self.add(self.box)
 
-        self.plotwidget = plotwidget()
+        self.plotwidget = plotwidget(data_queue = data_queue)
         self.plotbox = Gtk.EventBox()
         self.plotbox.add(self.plotwidget.canvas)
         self.plotbox.connect("button_press_event", self.plot_right_clicked)
@@ -58,11 +61,11 @@ class GUI_Plot(Gtk.Window):
 
         if TPX3_datalogger.read_value("plottype") == "normal":
             self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(TPX3_datalogger.read_value("colorsteps")))
-            self.Tag = GObject.idle_add(self.plotwidget.update_plot)
+            self.Tag = GLib.idle_add(self.plotwidget.update_plot)
         elif TPX3_datalogger.read_value("plottype") == "occupancy":
             self.plotwidget.change_colormap(colormap = cm.viridis, vmax = TPX3_datalogger.read_value("color_depth"))
             self.plotwidget.reset_occupancy()
-            self.Tag = GObject.idle_add(self.plotwidget.update_occupancy_plot)
+            self.Tag = GLib.idle_add(self.plotwidget.update_occupancy_plot)
 
         self.show_all()
 
@@ -71,30 +74,34 @@ class GUI_Plot(Gtk.Window):
         self.plotwidget.set_plottype("occupancy")
         self.plotwidget.change_colormap(colormap = cm.viridis, vmax = self.plotwidget.get_iteration_depth("occupancy.color"))
         self.plotwidget.reset_occupancy()
-        self.Tag = GObject.idle_add(self.plotwidget.update_occupancy_plot)
+        self.Tag = GLib.idle_add(self.plotwidget.update_occupancy_plot)
 
     def on_Slowbutton_clicked(self, widget):
         GLib.source_remove(self.Tag)
         self.plotwidget.set_plottype("normal")
         self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
-        self.Tag = GObject.timeout_add(500, self.plotwidget.update_plot)
+        self.Tag = GLib.timeout_add(500, self.plotwidget.update_plot)
 
     def on_Fastbutton_clicked(self, widget):
         GLib.source_remove(self.Tag)
         self.plotwidget.set_plottype("normal")
         self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(self.plotwidget.get_iteration_depth("normal")))
-        self.Tag = GObject.idle_add(self.plotwidget.update_plot)
+        self.Tag = GLib.idle_add(self.plotwidget.update_plot)
 
     def plot_right_clicked(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
             subw = GUI_Plot_settings(self.plotwidget)
 
-    def window_destroy(event, self, widget):
-        TPX3_datalogger.write_value(type = "plottype", value = self.plotwidget.get_plottype())
-        TPX3_datalogger.write_value(type = "colorsteps", value = self.plotwidget.get_iteration_depth("normal"))
-        TPX3_datalogger.write_value(type = "integration_length", value = self.plotwidget.get_iteration_depth("occupancy"))
-        TPX3_datalogger.write_value(type = "color_depth", value = self.plotwidget.get_iteration_depth("occupancy.color"))
+    def stop_idle_job(self):
         GLib.source_remove(self.Tag)
+    
+    def window_destroy(event, self, widget):
+        TPX3_datalogger.write_value(name = "plottype", value = self.plotwidget.get_plottype())
+        TPX3_datalogger.write_value(name = "colorsteps", value = self.plotwidget.get_iteration_depth("normal"))
+        TPX3_datalogger.write_value(name = "integration_length", value = self.plotwidget.get_iteration_depth("occupancy"))
+        TPX3_datalogger.write_value(name = "color_depth", value = self.plotwidget.get_iteration_depth("occupancy.color"))
+        GLib.source_remove(self.Tag)
+        GUI.closed_plot1()
         self.destroy()
 
 class GUI_Plot_settings(Gtk.Window):
@@ -1907,7 +1914,7 @@ class GUI_Main_Settings(Gtk.Window):
         
         self.save_Equalisation_button = Gtk.Button(label = "Save Equalisation")
         self.save_Equalisation_button.connect("clicked", self.on_save_Equalisation_button_clicked)
-        
+
         self.save_Mask_button = Gtk.Button(label = "Save Mask")
         self.save_Mask_button.connect("clicked", self.on_save_Mask_button_clicked)
 
@@ -2124,7 +2131,7 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
         else:
             current_equal = TPX3_datalogger.read_value(name = 'Equalisation_path')
             copy(current_equal, full_path)
-        self.destroy()
+            self.destroy()
 
     def window_destroy(self, widget):
         self.destroy()
@@ -2211,10 +2218,17 @@ class GUI_Main(Gtk.Window):
         self.pixeldac_result = Queue()
         self.eq_result_path = Queue()
         self.plot_queue = Queue()
+        self.data_queue = Queue()
         self.running_process = None
         self.iteration_symbol = False
         self.running_scan_idle = None
         self.hardware_scan_idle = None
+        self.update_progress_idle = None
+        self.init_done = False
+        self.plot1_window_open = False
+        self.converter_process = None
+        self.plot1_window = None
+        self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -2227,6 +2241,8 @@ class GUI_Main(Gtk.Window):
         self.grid.add(self.notebook)
         self.grid.attach(self.statusbar, 0, 1, 1, 1)
 
+        self.notebook.connect('switch-page', self.switch_notebook_page)
+
         self.statusstring4 = ''
         self.statusstring3 = ''
         self.statusstring2 = ''
@@ -2236,6 +2252,9 @@ class GUI_Main(Gtk.Window):
         data = file_logger.read_backup()
         TPX3_datalogger.set_data(data)
         TPX3_datalogger.write_backup_to_yaml()
+
+        conv_utils.setup_logging('INFO')
+        
 
     #########################################################################################################
         ### Page 1
@@ -2342,7 +2361,6 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.SetMaskbutton, 8, 3, 2, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 13, 2, 1)
 
-        GLib.timeout_add(100, self.update_progress)
 
     #######################################################################################################     
         ### Page 2 
@@ -2372,12 +2390,13 @@ class GUI_Main(Gtk.Window):
         self.page2.grid.attach(self.page2.label, 0, 1, 1, 1)
         self.page2.grid.attach(self.plotbutton, 0, 2, 1, 1)
 
-        self.plotwidget = plotwidget()
+        self.plotwidget = plotwidget(data_queue = self.data_queue)
         self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
         self.page2.pack_end(self.page2.space, True, False, 0)
         self.page2.pack_end(self.page2.space1, True, False, 0)
-        GLib.timeout_add(250, self.plotwidget.update_plot)
+        self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
 
+        self.init_done = True
 
     ################################################################################################### 
     ### Overall window event
@@ -2391,6 +2410,17 @@ class GUI_Main(Gtk.Window):
 
     def set_destroyed(self):
         self.open = False
+
+    def switch_notebook_page(self, notebook, tab, index):
+        self.on_notebook_page = index
+        if self.init_done and (not self.plot1_window_open):
+            if index == 1:
+                self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
+                self.start_converter()
+            elif index == 0:
+                GLib.source_remove(self.Tag2)
+                self.terminate_converter()
+
 
     ####################################################################################################        
     ### Functions Page 1    
@@ -2471,11 +2501,58 @@ class GUI_Main(Gtk.Window):
         self.resize(1,1)
         if self.running_process == None: 
             file_logger.write_backup(file = file_logger.create_file())
+            self.terminate_converter()
             Gtk.main_quit()
         elif not self.running_process.is_alive():
+            self.terminate_converter()
+            if not self.update_progress_idle == None:
+                GLib.source_remove(self.update_progress_idle)
+                self.update_progress_idle = None
+                while not self.status_queue.empty():
+                    self.status_queue.get()
+                while not self.progress_value_queue.empty():
+                    self.progress_value_queue.get()
+            if not self.hardware_scan_idle == None:
+                GLib.source_remove(self.hardware_scan_idle)
+                self.hardware_scan_idle = None
+                while(not self.hardware_scan_results.empty()):
+                    self.hardware_scan_results.get()
+            if not self.running_scan_idle == None:
+                GLib.source_remove(self.running_scan_idle)
+                self.running_scan_idle = None
+                while(not self.pixeldac_result.empty()):
+                    self.pixeldac_result.get()
+                while(not self.eq_result_path.empty()):
+                    self.eq_result_path.get()
+                while(not self.plot_queue.empty()):
+                    self.plot_queue.get()
             self.running_process = None
+
         else:
             self.running_process.terminate()
+            if self.plot1_window_open:
+                self.terminate_converter()
+            if not self.update_progress_idle == None:
+                GLib.source_remove(self.update_progress_idle)
+                self.update_progress_idle = None
+                while not self.status_queue.empty():
+                    self.status_queue.get()
+                while not self.progress_value_queue.empty():
+                    self.progress_value_queue.get()
+            if not self.hardware_scan_idle == None:
+                GLib.source_remove(self.hardware_scan_idle)
+                self.hardware_scan_idle = None
+                while(not self.hardware_scan_results.empty()):
+                    self.hardware_scan_results.get()
+            if not self.running_scan_idle == None:
+                GLib.source_remove(self.running_scan_idle)
+                self.running_scan_idle = None
+                while(not self.pixeldac_result.empty()):
+                    self.pixeldac_result.get()
+                while(not self.eq_result_path.empty()):
+                    self.eq_result_path.get()
+                while(not self.plot_queue.empty()):
+                    self.plot_queue.get()
             self.running_process = None
 
     def Status_window_call(self, function = "default", subtype = "", lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, statusstring = "", progress = 0):
@@ -2603,6 +2680,7 @@ class GUI_Main(Gtk.Window):
     def set_running_process(self, running_process):
         self.running_process = running_process
         self.running_scan_idle = GLib.timeout_add(500, self.update_scan)
+        self.update_progress_idle = GLib.timeout_add(100, self.update_progress)
 
     def get_process_alive(self):
         if self.running_process == None:
@@ -2615,6 +2693,9 @@ class GUI_Main(Gtk.Window):
             self.progressbar.set_fraction(self.progress_value_queue.get())
         while not self.status_queue.empty():
             self.Status_window_call(function = "status", statusstring = self.status_queue.get())
+        if self.progress_value_queue.empty() and self.status_queue.empty() and not self.get_process_alive():
+            GLib.source_remove(self.update_progress_idle)
+            self.update_progress_idle = None
         return True
 
     def update_status(self):
@@ -2633,7 +2714,7 @@ class GUI_Main(Gtk.Window):
                 if n == 0:
                     self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)
-        if self.hardware_scan_results.empty() and not self.running_process.is_alive():
+        if self.hardware_scan_results.empty() and not self.get_process_alive():
             GLib.source_remove(self.hardware_scan_idle)
             self.hardware_scan_idle = None
         return True
@@ -2647,7 +2728,7 @@ class GUI_Main(Gtk.Window):
         while not self.plot_queue.empty():
             fig, suffix = self.plot_queue.get()
             self.plot_from_figure(suffix, fig)
-        if self.pixeldac_result.empty() and self.eq_result_path.empty() and self.plot_queue.empty() and not self.running_process.is_alive():
+        if self.pixeldac_result.empty() and self.eq_result_path.empty() and self.plot_queue.empty() and not self.get_process_alive():
             GLib.source_remove(self.running_scan_idle)
             self.running_scan_idle = None
         return True
@@ -2656,7 +2737,10 @@ class GUI_Main(Gtk.Window):
     ### Functions Page2
 
     def on_plotbutton_clicked(self, widget):
-        subw = GUI_Plot()
+        if not self.plot1_window_open:
+            self.plot1_window_open = True
+            GLib.source_remove(self.Tag2)
+            self.plot1_window = GUI_Plot1(data_queue = self.data_queue)
         
     def entered_text(self, widget):
         ChipName = self.page2.entry.get_text()
@@ -2679,8 +2763,42 @@ class GUI_Main(Gtk.Window):
     def plot_from_figure(self, plotname, figure, figure_width = 500, figure_height = 400):
         plotw = GUI_Plot_Box(plotname, figure, figure_width, figure_height)
 
+    ########################################################################################################################
+    ### General functions
+
+    def terminate_converter(self):
+        if self.plot1_window_open:
+            self.plot1_window.stop_idle_job()
+        elif self.on_notebook_page == 1:
+            GLib.source_remove(self.Tag2)
+        if self.converter_process == None:
+            return
+        self.pipe_source_conn.send(False)
+        time.sleep(0.1)
+        while(not self.data_queue.empty()):
+            self.data_queue.get(False)
+            time.sleep(0.001)
+        self.converter_process.terminate()
+
+    def start_converter(self):
+        cm = ConverterManager(configuration = 'tpx3_monitor.yaml', data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn)
+        self.converter_process = Process(target=cm.start)
+        self.pipe_source_conn.send(True)
+        self.converter_process.start()
+        
+
+    def closed_plot1(self):
+        self.plot1_window_open = False
+        if self.on_notebook_page == 0:
+            self.terminate_converter()
+        elif self.on_notebook_page == 1:
+            self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
+
 def quit_procedure(gui):
+    GUI.on_QuitCurrentFunctionbutton_clicked(widget = None)
+    time.sleep(0.75)
     file_logger.write_backup(file = file_logger.create_file())
+    GUI.terminate_converter()
     Gtk.main_quit()
 
 def GUI_start():
