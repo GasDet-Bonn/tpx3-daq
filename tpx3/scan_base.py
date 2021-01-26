@@ -23,7 +23,7 @@ from basil.utils.BitLogic import BitLogic
 from contextlib import contextmanager
 from .tpx3 import TPX3
 from .fifo_readout import FifoReadout
-from utils import check_user_folders
+from tpx3.utils import check_user_folders
 from tables.exceptions import NoSuchNodeError
 import six
 from six.moves import range
@@ -140,7 +140,7 @@ class ScanBase(object):
             os.makedirs(user_path)
         
         # Store runs in '~/Timepix3/data' and other scans in '~/Timepix3/scans'
-        if self.scan_id = "data_take":
+        if self.scan_id == "data_take":
             scan_path = os.path.join(user_path, 'data')
         else:
             scan_path = os.path.join(user_path, 'scans')
