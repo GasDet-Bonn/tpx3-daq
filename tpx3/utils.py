@@ -3,6 +3,7 @@ from __future__ import division
 import sys
 from basil.utils.BitLogic import BitLogic
 from six.moves import range
+import os
 
 
 # this should really be a class method of BitLogic, but to stay compatible with
