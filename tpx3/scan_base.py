@@ -138,7 +138,13 @@ class ScanBase(object):
         user_path = os.path.join(user_path, 'Timepix3')
         if not os.path.exists(user_path):
             os.makedirs(user_path)
-        scan_path = os.path.join(user_path, 'scans')
+        
+        # Store runs in '~/Timepix3/data' and other scans in '~/Timepix3/scans'
+        if self.scan_id = "data_take":
+            scan_path = os.path.join(user_path, 'data')
+        else:
+            scan_path = os.path.join(user_path, 'scans')
+
         if not os.path.exists(scan_path):
             os.makedirs(scan_path)
 
