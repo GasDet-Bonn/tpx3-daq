@@ -23,6 +23,7 @@ from basil.utils.BitLogic import BitLogic
 from contextlib import contextmanager
 from .tpx3 import TPX3
 from .fifo_readout import FifoReadout
+from utils import check_user_folders
 from tables.exceptions import NoSuchNodeError
 import six
 from six.moves import range
@@ -118,6 +119,7 @@ class ScanBase(object):
         self.chip.init()
 
         # Initialize the files
+        check_user_folders()
         self.set_directory()
         self.make_files()
 

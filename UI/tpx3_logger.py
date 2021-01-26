@@ -5,6 +5,7 @@ import glob
 import yaml
 import numpy as np
 import tables as tb
+from tpx3.utils import check_user_folders
 
 class mask_logger(object):
 
@@ -289,6 +290,7 @@ class TPX3_data_logger(object):
 
 #here the data will be logged while the programm is running this function is called as global
     def __init__(self):
+        check_user_folders()
         self.config_keys = ['Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 
                             'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name', 
                             'plottype', 'colorsteps', 'integration_length', 
