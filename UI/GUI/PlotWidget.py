@@ -69,7 +69,7 @@ class plotwidget(object):
         cmap = self.fading_colormap(5)
         self.data_queue = data_queue
         
-        self.scatter = self.ax.scatter(self.x_vals, self.y_vals, c = [], cmap = cmap, vmin = 0, vmax = 1)
+        self.scatter = self.ax.scatter(self.x_vals, self.y_vals, c = [], s = 1, marker = 's', cmap = cmap, vmin = 0, vmax = 1)
 
         self.canvas = FigureCanvas(self.fig)
         self.canvas.set_size_request(400, 400)
@@ -257,7 +257,7 @@ class plotwidget(object):
         self.ax.set_xlabel('X', size = 12)
         self.ax.set_ylabel('Y', size = 12)
         self.ax.axis([0, 255, 0, 255])
-        self.scatter = self.ax.scatter(x_vals, y_vals, c = [], cmap = cmap, vmin = vmin, vmax = vmax)
+        self.scatter = self.ax.scatter(x_vals, y_vals, c = [], s = 1, marker = 's', cmap = cmap, vmin = vmin, vmax = vmax)
         self.ax.plot()
         
         return True
