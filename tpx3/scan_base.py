@@ -23,7 +23,7 @@ from basil.utils.BitLogic import BitLogic
 from contextlib import contextmanager
 from .tpx3 import TPX3
 from .fifo_readout import FifoReadout
-from tpx3.utils import check_user_folders
+from tpx3.utils import check_user_folders, get_equal_path
 from tables.exceptions import NoSuchNodeError
 import six
 from six.moves import range
@@ -796,13 +796,13 @@ class ScanBase(object):
                                    obj=self.chip.mask_matrix)
             self.logger.info('Closing mask file: %s' % (self.maskfile))
 
-    def save_thr_mask(self):
+    def save_thr_mask(self, eq_matrix, chip_wafer, chip_x ,chip_y):
         '''
             Write the pixel threshold matrix to file
         '''
-        self.logger.info('Writing TDAC mask to file...')
+        self.logger.info('Writing equalisation matrix to file...')
         if not self.thrfile:
-            self.thrfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
+            self.thrfile = os.path.join(get_equal_path(), 'equal_W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_' + self.timestamp + '.h5')
 
         with tb.open_file(self.thrfile, 'a') as out_file:
             try:
@@ -813,7 +813,7 @@ class ScanBase(object):
             out_file.create_carray(out_file.root,
                                        name='thr_matrix',
                                        title='Matrix Threshold',
-                                       obj=self.chip.thr_matrix)
+                                       obj=eq_matrix)
             self.logger.info('Closing thr_matrix file: %s' % (self.thrfile))
 
 

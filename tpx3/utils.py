@@ -70,6 +70,9 @@ def check_user_folders():
     mask_path = os.path.join(user_path, 'masks')
     if not os.path.exists(mask_path):
         os.makedirs(mask_path)
+    equal_path = os.path.join(user_path, 'equalisations')
+    if not os.path.exists(equal_path):
+        os.makedirs(equal_path)
     scan_path = os.path.join(user_path, 'scans')
     if not os.path.exists(scan_path):
         os.makedirs(scan_path)
@@ -96,3 +99,9 @@ def check_user_folders():
     data_log_path = os.path.join(data_path, 'logs')
     if not os.path.exists(data_log_path):
         os.makedirs(data_log_path)
+
+def get_equal_path():
+    user_path = os.path.expanduser('~')
+    user_path = os.path.join(user_path, 'Timepix3')
+    equal_path = os.path.join(user_path, 'equalisations')
+    return equal_path

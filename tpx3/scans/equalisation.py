@@ -234,24 +234,10 @@ class Equalisation(ScanBase):
             mask_matrix[:, :] = 0
 
             # Write the equalisation matrix to a new HDF5 file
-            output_path = os.path.join(self.working_dir, 'hdf')
-            thrfile = os.path.join(output_path, 'equal_W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_' + self.timestamp + '.h5')
-
-            self.logger.info('Writing equalisation matrix to file...')
-            with tb.open_file(thrfile, 'a') as out_file:
-                try:
-                    out_file.remove_node(out_file.root.thr_matrix)
-                except NoSuchNodeError:
-                    self.logger.debug('Specified thrfile does not include a thr_mask yet!')
-
-                out_file.create_carray(out_file.root,
-                                        name='thr_matrix',
-                                        title='Matrix Threshold',
-                                        obj=eq_matrix)
-                self.logger.info('Closing equalisation matrix file: %s' % (thrfile))
+            self.save_thr_mask(eq_matrix, chip_wafer, chip_x ,chip_y)
 
             if result_path != None:
-                result_path.put(thrfile)
+                result_path.put(self.thrfile)
 
 
 if __name__ == "__main__":

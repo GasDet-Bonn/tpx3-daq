@@ -332,22 +332,8 @@ class PixelDAC_opt(ScanBase):
                 mask_matrix = np.zeros((256, 256), dtype=np.bool)
                 mask_matrix[:, :] = 0
 
-                # Write the equalisation matrix and the mask matrix to a new HDF5 file
-                output_path = os.path.join(self.working_dir, 'hdf')
-                thrfile = os.path.join(output_path, 'equal_W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_' + self.timestamp + '.h5')
-
-                self.logger.info('Writing equalisation matrix to file...')
-                with tb.open_file(thrfile, 'a') as out_file:
-                    try:
-                        out_file.remove_node(out_file.root.thr_matrix)
-                    except NoSuchNodeError:
-                        self.logger.debug('Specified thrfile does not include a thr_mask yet!')
-
-                    out_file.create_carray(out_file.root,
-                                            name='thr_matrix',
-                                            title='Matrix Threshold',
-                                            obj=eq_matrix)
-                    self.logger.info('Closing equalisation matrix file: %s' % (thrfile))
+                # Write the equalisation matrix to a new HDF5 file
+                self.save_thr_mask(eq_matrix, chip_wafer, chip_x ,chip_y)
 
         self.logger.info('Result of iteration: Scan with pixeldac %i - New pixeldac %i. Delta was %f with optimal delta %f' % (int(pixeldac), int(pixeldac_result[0]), pixeldac_result[1], pixeldac_result[2]))
         return pixeldac_result
