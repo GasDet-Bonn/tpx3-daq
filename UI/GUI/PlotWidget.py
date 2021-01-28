@@ -47,7 +47,7 @@ class plotwidget(object):
     def __init__(self, data_queue):
         self.plottype = "normal"
         self.fig = Figure(figsize = (4, 4), dpi = 100)
-        self.ax = self.fig.add_subplot(111)
+        self.ax = self.fig.add_subplot(111, aspect='equal')
         self.ax.set_xlabel('X', size = 12)
         self.ax.set_ylabel('Y', size = 12)
         #self.ax.yaxis.set_label_coords()
@@ -253,7 +253,7 @@ class plotwidget(object):
             self.color_depth = vmax
             
         self.ax.remove()
-        self.ax = self.fig.add_subplot(111)
+        self.ax = self.fig.add_subplot(111, aspect='equal')
         self.ax.set_xlabel('X', size = 12)
         self.ax.set_ylabel('Y', size = 12)
         self.ax.axis([0, 255, 0, 255])
