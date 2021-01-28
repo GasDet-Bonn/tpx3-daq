@@ -4,6 +4,8 @@
 
 `define BOARD_ID 3 
 
+`define ML605
+
 `include "tpx3_sfp.v"
 
 module tpx3_ml605 (

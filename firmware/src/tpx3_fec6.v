@@ -4,6 +4,8 @@
 
 `define BOARD_ID 2 //"FECv6"
 
+`define FECv6
+
 `include "tpx3_sfp.v"
 
 module tpx3_fec6 (
