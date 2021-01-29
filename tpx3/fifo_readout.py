@@ -99,7 +99,7 @@ class FifoReadout(object):
             return None
         return result / float(self._moving_average_time_period)
 
-    def start(self, callback=None, errback=None, reset_rx=False, reset_sram_fifo=False, clear_buffer=False, fill_buffer=False, no_data_timeout=None):
+    def start(self, callback=None, errback=None, reset_rx=False, reset_sram_fifo=False, reset_errors=True, clear_buffer=False, fill_buffer=False, no_data_timeout=None):
         if self._is_running:
             raise RuntimeError('Readout already running: use stop() before start()')
 
@@ -113,6 +113,8 @@ class FifoReadout(object):
             self.reset_rx()
         if reset_sram_fifo:
             self.reset_sram_fifo()
+        if reset_errors:
+            self.rx_error_reset()
         else:
             fifo_size = self.chip['FIFO']['FIFO_SIZE']
             if fifo_size != 0:
@@ -213,15 +215,18 @@ class FifoReadout(object):
             else:
                 n_words = data.shape[0]
                 last_time, curr_time = self.update_timestamp()
-                status = 0
+                discard_error = int(np.sum(self.get_rx_fifo_discard_count(), dtype=np.uint32))
+                decode_error = int(np.sum(self.get_rx_decode_error_count(), dtype=np.uint32))
                 if self.callback:
-                    self._data_deque.append((data, last_time, curr_time, status))
+                    self._data_deque.append((data, last_time, curr_time, discard_error, decode_error))
                 if self.fill_buffer:
-                    self._data_buffer.append((data, last_time, curr_time, status))
+                    self._data_buffer.append((data, last_time, curr_time, discard_error, decode_error))
                 self._words_per_read.append(n_words)
                 # FIXME: busy FE prevents scan termination? To be checked
                 if n_words == 0 and self.stop_readout.is_set():
                     break
+                if discard_error > 0 or decode_error > 0:
+                    self.reset_rx()
             finally:
                 time_wait = self.readout_interval - (time() - time_read)
             if self._calculate.is_set():
@@ -314,6 +319,13 @@ class FifoReadout(object):
         else:
             [channel for channel in self.chip.get_modules('tpx3_rx') if channel.RESET]
         sleep(0.1)  # sleep here for a while
+
+    def rx_error_reset(self, channels=None):
+        self.logger.debug('Resetting RX errors')
+        if channels:
+            [channel for channel in channels if self.chip[channel].rx_error_reset()]
+        else:
+            [channel for channel in self.chip.get_modules('tpx3_rx') if channel.rx_error_reset()]
 
     def get_rx_sync_status(self, channels=None):
         if channels:

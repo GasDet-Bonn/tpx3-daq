@@ -73,6 +73,8 @@ assign CONF_EN_RX = status_regs[2][2];
 assign RX_ENABLED = CONF_EN_RX;
 assign CONF_RX_DATA_DLY = status_regs[7][4:0];
 assign CONF_SAMPLING_EDGE = status_regs[7][5];
+wire CONF_ERROR_RESET; // BUS_ADD==7 BIT==6
+assign CONF_ERROR_RESET = status_regs[7][6];
 
 always @(posedge BUS_CLK) begin
     if(RST) begin
@@ -203,7 +205,8 @@ receiver_logic receiver_logic
     .fifo_size(fifo_size),
     .invert_rx_data(CONF_EN_INVERT_RX_DATA),
     .enable_rx(CONF_EN_RX),
-    .FIFO_CLK(FIFO_CLK)
+    .FIFO_CLK(FIFO_CLK),
+	.err_reset(CONF_ERROR_RESET)
 );
 
 endmodule

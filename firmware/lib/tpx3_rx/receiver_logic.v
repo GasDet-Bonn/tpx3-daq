@@ -24,7 +24,8 @@ module receiver_logic
     output reg [15:0]       fifo_size,
     input wire              invert_rx_data,
     input wire              enable_rx,
-    input wire              FIFO_CLK
+    input wire              FIFO_CLK,
+	input wire              err_reset
 );
 
 wire RESET_WCLK;
@@ -103,7 +104,7 @@ end
 // with CODE_ERR to detect all errors.
 
 always@(posedge WCLK) begin
-    if(RESET_WCLK)
+    if(RESET_WCLK || err_reset)
         decoder_err_cnt <= 0;
     else
         if(decoder_err && write_8b10b && decoder_err_cnt != 8'hff)
@@ -154,7 +155,7 @@ end
 wire cdc_fifo_full, cdc_fifo_empty;
 
 always@(posedge WCLK) begin
-    if(RESET_WCLK)
+    if(RESET_WCLK || err_reset)
         lost_err_cnt <= 0;
     else
         if(cdc_fifo_full && (|write_dec_in) && lost_err_cnt != 8'hff)

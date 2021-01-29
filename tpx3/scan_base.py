@@ -55,8 +55,9 @@ class MetaTable(tb.IsDescription):
     timestamp_start = tb.Float64Col(pos=3)
     timestamp_stop = tb.Float64Col(pos=4)
     scan_param_id = tb.UInt32Col(pos=5)
-    error = tb.UInt32Col(pos=6)
-    trigger = tb.Float64Col(pos=7)
+    discard_error = tb.UInt32Col(pos=6)
+    decode_error = tb.UInt32Col(pos=7)
+    trigger = tb.Float64Col(pos=8)
 
 
 class RunConfigTable(tb.IsDescription):
@@ -728,7 +729,8 @@ class ScanBase(object):
         len_raw_data = data_tuple[0].shape[0]
         self.meta_data_table.row['timestamp_start'] = data_tuple[1]
         self.meta_data_table.row['timestamp_stop'] = data_tuple[2]
-        self.meta_data_table.row['error'] = data_tuple[3]
+        self.meta_data_table.row['discard_error'] = data_tuple[3]
+        self.meta_data_table.row['decode_error'] = data_tuple[4]
         self.meta_data_table.row['data_length'] = len_raw_data
         self.meta_data_table.row['index_start'] = total_words
         total_words += len_raw_data

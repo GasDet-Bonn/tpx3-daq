@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import
 from basil.HL.RegisterHardwareLayer import RegisterHardwareLayer
-
+import time
 
 class tpx3_rx(RegisterHardwareLayer):
     '''Timepix 3 receiver controller interface for tpx3_rx FPGA module
@@ -24,6 +24,7 @@ class tpx3_rx(RegisterHardwareLayer):
                   'DECODER_ERROR_COUNTER': {'descr': {'addr': 5, 'size': 8, 'properties': ['ro']}},
                   'DATA_DELAY': {'descr': {'addr': 7, 'size': 5}},
                   'SAMPLING_EDGE': {'descr': {'addr': 7, 'size': 1, 'offset': 5}},
+                  'ERROR_RESET': {'descr': {'addr': 7, 'size': 1, 'offset': 6, 'properties': ['writeonly']}},
                   'LOST_DATA_COUNTER': {'descr': {'addr': 6, 'size': 8, 'properties': ['ro']}}}
 
     _require_version = "==1"
@@ -39,6 +40,11 @@ class tpx3_rx(RegisterHardwareLayer):
 
     def is_done(self):
         return self.is_ready
+
+    def rx_error_reset(self):
+        self.ERROR_RESET = 1
+        time.sleep(0.0001)
+        self.ERROR_RESET = 0
 
     @property
     def is_ready(self):
