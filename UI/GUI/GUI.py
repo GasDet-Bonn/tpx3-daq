@@ -1979,11 +1979,9 @@ class GUI_Main_Settings(Gtk.Window):
         backup_dialog.destroy()
 
     def on_load_Equalisation_button_clicked(self, widget):
-
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'scans')
-        user_path = os.path.join(user_path, 'hdf')
+        user_path = os.path.join(user_path, 'equalisations')
 
         equalisation_dialog = Gtk.FileChooserDialog(title="Please choose a equalisation file", parent=self, action=Gtk.FileChooserAction.OPEN)
         equalisation_dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK, )
@@ -2114,8 +2112,7 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
     def __init__(self):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'scans')
-        user_path = os.path.join(user_path, 'hdf')
+        user_path = os.path.join(user_path, 'equalisations')
 
         Gtk.Window.__init__(self, title = "Save Equalisation")
         self.connect("delete-event", self.window_destroy)
