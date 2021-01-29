@@ -495,9 +495,8 @@ class TPX3_CLI_function_call(object):
     def Load_Equalisation(object, equal_path = None):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'scans')
-        user_path = os.path.join(user_path, 'hdf')
-        
+        user_path = os.path.join(user_path, 'equalisations')
+
         if equal_path == None:
             print('> Please enter the name of the equalisation you like to load:')
             equal_path = input('>> ')
@@ -512,9 +511,8 @@ class TPX3_CLI_function_call(object):
     def Save_Equalisation(object, file_name = None):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'scans')
-        user_path = os.path.join(user_path, 'hdf')
-        
+        user_path = os.path.join(user_path, 'equalisations')
+
         if file_name == None:
             print('> Please enter the path of the name you like to save the equalisation under:')
             file_name = input('>> ')
