@@ -937,7 +937,7 @@ class GUI_Run_Datataking(Gtk.Window):
             return
 
         GUI.Status_window_call(function = "Run", lowerTHL = self.Datataking_Time_value, upperTHL = self.finish_str)
-        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = self.Datataking_Time_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
+        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = self.Datataking_Time_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue, readout_interval = TPX3_datalogger.read_value(name = 'Readout_Speed'))
         GUI.set_running_process(running_process = new_process)
 
         self.destroy()
@@ -1344,6 +1344,14 @@ class GUI_Additional_Settings(Gtk.Window):
         Op_mode_label = Gtk.Label()
         Op_mode_label.set_text('     Operation mode     ')
 
+        #Input for Readout_Speed
+        self.Readout_Speed_value = float(TPX3_datalogger.read_value('Readout_Speed'))
+        self.Readout_Speed_entry = Gtk.Entry()
+        self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
+        self.Readout_Speed_entry.connect('activate', self.readout_speed_entered)
+        Readout_Speed_entry_label = Gtk.Label()
+        Readout_Speed_entry_label.set_text('Readout Speed')
+
         #Expert check box
         self.expert_checkbox = Gtk.CheckButton(label="Expert")
         self.expert_checkbox.connect("toggled", self.on_expert_toggled)
@@ -1402,15 +1410,17 @@ class GUI_Additional_Settings(Gtk.Window):
         grid.attach(Op_mode_button1, 2, 2, 3, 1)
         grid.attach(Op_mode_button2, 2, 3, 3, 1)
         grid.attach(Op_mode_button3, 2, 4, 3, 1)
-        grid.attach(Space, 0, 5, 3, 1)
-        grid.attach(self.TP_Ext_Int_button_label, 0, 6, 2, 1)
-        grid.attach(self.TP_Ext_Int_button, 2, 6, 1, 1)
-        grid.attach(self.AckCommand_en_button_label, 0, 7, 2, 1)
-        grid.attach(self.AckCommand_en_button, 2, 7, 1, 1)
-        grid.attach(self.ClkOut_frequency_combo_label, 0, 8, 2, 1)
-        grid.attach(self.ClkOut_frequency_combo, 2, 8, 3, 1)
-        grid.attach(self.Space2, 0, 9, 3, 1)
-        grid.attach(self.Savebutton, 5, 10, 1, 1)
+        grid.attach(Readout_Speed_entry_label, 0, 5, 2, 1)
+        grid.attach(self.Readout_Speed_entry, 2, 5, 3, 1)
+        grid.attach(Space, 0, 6, 3, 1)
+        grid.attach(self.TP_Ext_Int_button_label, 0, 7, 2, 1)
+        grid.attach(self.TP_Ext_Int_button, 2, 7, 1, 1)
+        grid.attach(self.AckCommand_en_button_label, 0, 8, 2, 1)
+        grid.attach(self.AckCommand_en_button, 2, 8, 1, 1)
+        grid.attach(self.ClkOut_frequency_combo_label, 0, 9, 2, 1)
+        grid.attach(self.ClkOut_frequency_combo, 2, 9, 3, 1)
+        grid.attach(self.Space2, 0, 10, 3, 1)
+        grid.attach(self.Savebutton, 5, 11, 1, 1)
         
         self.show_all()
         self.TP_Ext_Int_button_label.hide()
@@ -1442,6 +1452,12 @@ class GUI_Additional_Settings(Gtk.Window):
             self.ClkOut_frequency_combo.hide()
             self.Space2.hide()
             self.resize(1,1)
+
+    def readout_speed_entered(self, widget):
+        try: 
+            self.Readout_Speed_value = float(self.Readout_Speed_entry.get_text())
+        except:
+            self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
 
     def set_polarity_button_toggled(self, button):
         if self.set_polarity_button.get_active():
@@ -1511,6 +1527,7 @@ class GUI_Additional_Settings(Gtk.Window):
         TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int')
         TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = self.ClkOut_frequency_src_value)
         TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src')
+        TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value)
 
     def window_destroy(self, widget, event):
         self.destroy()

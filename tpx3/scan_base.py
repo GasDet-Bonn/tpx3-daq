@@ -548,7 +548,7 @@ class ScanBase(object):
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
-    def start(self, iteration = None, status = None, **kwargs):
+    def start(self, readout_interval = 0.1, moving_average_time_period = 10, iteration = None, status = None, **kwargs):
         '''
             Prepares the scan and starts the actual test routine
         '''
@@ -560,7 +560,7 @@ class ScanBase(object):
         self.scan_param_id = 0
 
         # Initialize the communication with the chip and read the board name and firmware version
-        self.fifo_readout = FifoReadout(self.chip)
+        self.fifo_readout = FifoReadout(chip = self.chip, readout_interval = readout_interval, moving_average_time_period = moving_average_time_period)
         self.board_name = self.chip.board_version
         self.firmware_version = self.chip.fw_version
 

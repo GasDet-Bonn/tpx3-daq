@@ -43,7 +43,7 @@ class StopTimeout(Exception):
 
 class FifoReadout(object):
 
-    def __init__(self, chip):
+    def __init__(self, chip, readout_interval, moving_average_time_period):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(loglevel)
 
@@ -54,8 +54,8 @@ class FifoReadout(object):
         self.worker_thread = None
         self.watchdog_thread = None
         self.fill_buffer = False
-        self.readout_interval = 0.1
-        self._moving_average_time_period = 10.0
+        self.readout_interval = readout_interval
+        self._moving_average_time_period = moving_average_time_period
         self._data_deque = deque()
         self._data_buffer = deque()
         self._words_per_read = deque(maxlen=int(self._moving_average_time_period / self.readout_interval))

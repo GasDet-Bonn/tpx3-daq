@@ -301,7 +301,7 @@ class TPX3_data_logger(object):
                             'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
                             'Equalisation_path', 'Mask_path', 'Polarity', 'Op_mode', 'Fast_Io_en',
                             'clk_fast_out', 'ClkOut_frequency_src', 'AckCommand_en', 'SelectTP_Ext_Int',
-                            'clkphasediv', 'clkphasenum', 'PLLOutConfig']
+                            'clkphasediv', 'clkphasenum', 'PLLOutConfig', 'Readout_Speed']
         self.data = self.default_config()
 
     def default_config(self):
@@ -343,7 +343,8 @@ class TPX3_data_logger(object):
                 'SelectTP_Ext_Int' : 0,
                 'clkphasediv' : 1,
                 'clkphasenum' : 4,
-                'PLLOutConfig' : 0}
+                'PLLOutConfig' : 0,
+                'Readout_Speed': 0.1}
 
     def is_valid(self, config):
         if not isinstance(config, dict):
