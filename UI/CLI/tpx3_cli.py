@@ -39,6 +39,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Save_Mask', 'save_mask',
                 'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode',
                 'Set_Fast_Io', 'Fast_Io', 'set_fast_io', 'fast_io', 'Fast_Io_en', 'fast_io_en',
+                'Set_Readout_Intervall', 'set_readout_intervall', 'Readout_Intervall', 'readout_intervall',
                 'Expert', 'expert',
                 'Chip_names', 'chip_names', 'Who', 'who',
                 'Help', 'help', 'h', '-h',
@@ -53,7 +54,7 @@ expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'c
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation',
                     'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Save_Mask', 'Load_Mask', 'Set_Mask',
-                    'Unset_Mask', 'Set_Default', 'GUI', 'Chip_names', 'Help', 'Quit']
+                    'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'GUI', 'Chip_names', 'Help', 'Quit']
 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency']
 
@@ -762,7 +763,7 @@ class TPX3_CLI_function_call(object):
         else:
             print('{} s long data taking run started!'.format(scan_timeout))
             
-        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
+        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), readout_interval = TPX3_datalogger.read_value(name = 'Readout_Speed'))
         new_process.join()
 
     def Set_Acknowledgement(object, Acknowledgement_en = None):
@@ -782,6 +783,25 @@ class TPX3_CLI_function_call(object):
             TPX3_datalogger.write_value(name = 'AckCommand_en', value = Acknowledgement_en)
             TPX3_datalogger.write_to_yaml(name = 'AckCommand_en')
         else:
+            print('Unknown value')
+
+    def Set_Readout_Intervall(object, Readout_Intervall = None):
+        if Readout_Intervall == None:
+            print('> Please enter the readout intervall in milli seconds:')
+            while(1):
+                Readout_Intervall = input('>> ')
+                try:
+                    Readout_Intervall = float(Readout_Intervall)
+                    break
+                except:
+                    if Readout_Intervall in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        try:
+            Readout_Intervall = float(Readout_Intervall)
+            TPX3_datalogger.write_value(name = 'Readout_Speed', value = Readout_Intervall)
+        except:
             print('Unknown value')
 
     def Set_CLK_fast_mode(object, CLK_fast_mode_en = None):
@@ -1436,6 +1456,25 @@ class TPX3_CLI_TOP(object):
                             print('This is the initialise hardware function. It initialises the hardware and looks how many links and Chips are connected')
                         else :
                             print('Initialise hardware does not take parameters!')
+
+                #Set Readout Intervall
+                elif inputlist[0] in {'Set_Readout_Intervall', 'set_readout_intervall', 'Readout_Intervall', 'readout_intervall'}:
+                    if len(inputlist) == 1:
+                        print('Set Readout Intervall')
+                        try:
+                            function_call.Set_Readout_Intervall()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the set readout intervall function. As argument you can give the readout intervall in seconds')
+                        elif len(inputlist) == 2:
+                                try:
+                                    function_call.Set_Readout_Intervall(Readout_Intervall = inputlist[1])
+                                except KeyboardInterrupt:
+                                    print('User quit')
+                        elif len(inputlist) > 2:
+                            print('To many parameters! The given function takes only one parameter:\n Readout intervall.')
 
                 #Start GUI
                 elif inputlist[0] in {'GUI'}:
