@@ -1559,7 +1559,7 @@ class TPX3_CLI_TOP(object):
                                     except KeyboardInterrupt:
                                         print('User quit')
                             elif len(inputlist) > 2:
-                                print('To many parameters! The given function takes only one parameters:\n Acknowledgement enable.')
+                                print('To many parameters! The given function takes only one parameter:\n Acknowledgement enable.')
 
                     #Select TP_ext_in
                     elif inputlist[0] in {'Set_TP_ext_in', 'set_tp_ext_in', 'TP_ext_in', 'tp_ext_in'}:
@@ -1578,7 +1578,7 @@ class TPX3_CLI_TOP(object):
                                     except KeyboardInterrupt:
                                         print('User quit')
                             elif len(inputlist) > 2:
-                                print('To many parameters! The given function takes only one parameters:\n TP_ext_in enable.')
+                                print('To many parameters! The given function takes only one parameter:\n TP_ext_in enable.')
 
                     #ClkOut_frequency_source
                     elif inputlist[0] in {'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency'}:
