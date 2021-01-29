@@ -737,8 +737,8 @@ class TPX3_CLI_function_call(object):
             if os.path.isfile(full_path) == True:
                 print('File already exists')
             else:
-                current_equal = TPX3_datalogger.read_value(name = 'Mask_path')
-                copy(current_equal, full_path)
+                current_mask = TPX3_datalogger.read_value(name = 'Mask_path')
+                copy(current_mask, full_path)
         except:
             print('Could not write file')
 
