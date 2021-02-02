@@ -2788,8 +2788,11 @@ class GUI_Main(Gtk.Window):
                 print("No simulation possible while data taking")
                 return
             else:
-                path = self.select_simulation_file()
-                self.start_simulator(path)
+                path, response = self.select_simulation_file()
+                if response == Gtk.ResponseType.OK:
+                    self.start_simulator(path)
+                else:
+                    return
             self.simulationbutton.set_label("Stop Simulation")
             self.simulation_running = True
         else:
@@ -2816,7 +2819,7 @@ class GUI_Main(Gtk.Window):
 
         simulation_dialog.destroy()
 
-        return path
+        return path, response
         
     def entered_text(self, widget):
         ChipName = self.page2.entry.get_text()
