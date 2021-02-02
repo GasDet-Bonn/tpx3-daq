@@ -2215,6 +2215,40 @@ class GUI_Main_Save_Mask_Input(Gtk.Window):
     def window_destroy(self, widget):
         self.destroy()
 
+class GUI_Main_Error(Gtk.Window):
+    def __init__(self, title, text):
+        Gtk.Window.__init__(self, title = title)
+        self.connect("delete-event", self.window_destroy)
+
+        self.input_window = None
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        self.add(grid)
+
+        self.ok_button = Gtk.Button(label = "Ok")
+        self.ok_button.connect("clicked", self.on_ok_button_clicked)
+        self.label1 = Gtk.Label()
+        self.label1.set_text(" ")
+        self.label2 = Gtk.Label()
+        self.label2.set_text(text)
+        self.label3 = Gtk.Label()
+        self.label3.set_text(" ")
+
+        grid.attach(self.label1, 0, 0, 10, 1)
+        grid.attach(self.label2, 1, 1, 9, 1)
+        grid.attach(self.label3, 0, 2, 10, 1)
+        grid.attach(self.ok_button, 9, 3, 2, 1)
+
+        self.show_all()
+
+    def on_ok_button_clicked(self, widget):
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_Process_Running(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = "Error")
