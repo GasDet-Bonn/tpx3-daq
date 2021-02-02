@@ -2402,7 +2402,6 @@ class GUI_Main(Gtk.Window):
     #######################################################################################################     
         ### Page 2 
         ChipName = "Chip1"
-        TestString = "Enter Something"
         self.page2 = Gtk.Box()
         page2_label = Gtk.Label()
         page2_label.set_text(ChipName)
@@ -2412,23 +2411,17 @@ class GUI_Main(Gtk.Window):
         self.page2.grid.set_row_spacing(10)
         self.page2.grid.set_column_spacing(10)
         self.page2.add(self.page2.grid)
-        self.page2.entry = Gtk.Entry()
-        self.page2.entry.connect('activate', self.entered_text)
-        self.page2.space =Gtk.Label()
+        self.page2.space = Gtk.Label()
         self.page2.space.set_text("         ")
         self.page2.space1 = Gtk.Label()
         self.page2.space1.set_text("    ")
 
-        self.page2.label = Gtk.Label()
-        self.page2.label.set_text(TestString)
         self.plotbutton = Gtk.Button(label = "Show Plot")
         self.simulationbutton = Gtk.Button(label = "Start Simulation")
         self.plotbutton.connect("clicked", self.on_plotbutton_clicked)
         self.simulationbutton.connect("clicked", self.on_simulationbutton_clicked)
-        self.page2.grid.attach(self.page2.entry, 0, 0, 1, 1)
-        self.page2.grid.attach(self.page2.label, 0, 1, 1, 1)
-        self.page2.grid.attach(self.plotbutton, 0, 2, 1, 1)
-        self.page2.grid.attach(self.simulationbutton, 0, 3, 1, 1)
+        self.page2.grid.attach(self.plotbutton, 0, 0, 1, 1)
+        self.page2.grid.attach(self.simulationbutton, 0, 1, 1, 1)
 
         self.plotwidget = plotwidget(data_queue = self.data_queue)
         self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
