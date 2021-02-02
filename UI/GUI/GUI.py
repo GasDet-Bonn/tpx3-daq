@@ -2819,7 +2819,7 @@ class GUI_Main(Gtk.Window):
     def on_simulationbutton_clicked(self, widget):
         if self.simulation_running == False:
             if self.get_process_alive():
-                print("No simulation possible while data taking")
+                self.error_window = GUI_Main_Error(title = 'Error', text = 'Simulation can not be started during an active scan')
                 return
             else:
                 path, response = self.select_simulation_file()
