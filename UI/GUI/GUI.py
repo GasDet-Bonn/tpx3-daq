@@ -289,6 +289,9 @@ class GUI_ToT_Calib(Gtk.Window):
         if GUI.get_process_alive():
             self.other_process.set_text("Other process running")
             return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text("Simulation running")
+            return
 
         GUI.Status_window_call(function = "ToT_Calib", lowerTHL = self.Testpulse_range_start_value, upperTHL = self.Testpulse_range_stop_value, iterations = self.Number_of_Iterations)
         new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, mask_step = self.Number_of_Iterations, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
@@ -419,6 +422,9 @@ class GUI_Threshold_Scan(Gtk.Window):
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
             self.other_process.set_text("Other process running")
+            return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text("Simulation running")
             return
         GUI.Status_window_call(function = "ThresholdScan", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
@@ -566,6 +572,9 @@ class GUI_Threshold_Calib(Gtk.Window):
         if GUI.get_process_alive():
             self.other_process.set_text("Other process running")
             return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text("Simulation running")
+            return
 
         GUI.Status_window_call(function = "ThresholdCalib", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value, n_pulse_heights = self.n_pulse_heights_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, n_pulse_heights = self.n_pulse_heights_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
@@ -696,6 +705,9 @@ class GUI_Testpulse_Scan(Gtk.Window):
         if GUI.get_process_alive():
             self.other_process.set_text("Other process running")
             return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text("Simulation running")
+            return
         GUI.Status_window_call(function = "TestpulsScan", lowerTHL = self.Testpulse_range_start_value, upperTHL = self.Testpulse_range_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
@@ -817,6 +829,9 @@ class GUI_PixelDAC_opt(Gtk.Window):
         if GUI.get_process_alive():
             self.other_process.set_text("Other process running")
             return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text("Simulation running")
+            return
 
         GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, offset = self.col_offset_value, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), result = GUI.pixeldac_result, plot_queue = GUI.plot_queue)
@@ -934,6 +949,9 @@ class GUI_Run_Datataking(Gtk.Window):
         self.time_entry_text('button', 'start')
         if GUI.get_process_alive():
             self.other_process.set_text("Other process running")
+            return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text("Simulation running")
             return
 
         GUI.Status_window_call(function = "Run", lowerTHL = self.Datataking_Time_value, upperTHL = self.finish_str)
@@ -1646,6 +1664,9 @@ class GUI_Equalisation(Gtk.Window):
         if GUI.get_process_alive():
             self.other_process.set_text("Other process running")
             return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text("Simulation running")
+            return
 
         GUI.Status_window_call(function="Equalisation", subtype = self.Equalisation_Type, lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations)
         if self.Equalisation_Type == "Noise":
@@ -2243,6 +2264,8 @@ class GUI_Main(Gtk.Window):
         self.converter_process = None
         self.plot1_window = None
         self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
+        self.simulation_running = False
+        self.simulator_process = None
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -2399,10 +2422,13 @@ class GUI_Main(Gtk.Window):
         self.page2.label = Gtk.Label()
         self.page2.label.set_text(TestString)
         self.plotbutton = Gtk.Button(label = "Show Plot")
+        self.simulationbutton = Gtk.Button(label = "Start Simulation")
         self.plotbutton.connect("clicked", self.on_plotbutton_clicked)
+        self.simulationbutton.connect("clicked", self.on_simulationbutton_clicked)
         self.page2.grid.attach(self.page2.entry, 0, 0, 1, 1)
         self.page2.grid.attach(self.page2.label, 0, 1, 1, 1)
         self.page2.grid.attach(self.plotbutton, 0, 2, 1, 1)
+        self.page2.grid.attach(self.simulationbutton, 0, 3, 1, 1)
 
         self.plotwidget = plotwidget(data_queue = self.data_queue)
         self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
@@ -2515,6 +2541,7 @@ class GUI_Main(Gtk.Window):
         self.resize(1,1)
         if self.running_process == None: 
             file_logger.write_backup(file = file_logger.create_file())
+            self.terminate_simulator()
             self.terminate_converter()
             Gtk.main_quit()
         elif not self.running_process.is_alive():
@@ -2702,6 +2729,12 @@ class GUI_Main(Gtk.Window):
         else:
             return self.running_process.is_alive()
 
+    def get_simulation_alive(self):
+        if self.simulator_process == None:
+            return False
+        else:
+            return self.simulator_process.is_alive()
+
     def update_progress(self):
         while not self.progress_value_queue.empty():
             self.progressbar.set_fraction(self.progress_value_queue.get())
@@ -2755,6 +2788,42 @@ class GUI_Main(Gtk.Window):
             self.plot1_window_open = True
             GLib.source_remove(self.Tag2)
             self.plot1_window = GUI_Plot1(data_queue = self.data_queue)
+
+    def on_simulationbutton_clicked(self, widget):
+        if self.simulation_running == False:
+            if self.get_process_alive():
+                print("No simulation possible while data taking")
+                return
+            else:
+                path = self.select_simulation_file()
+                self.start_simulator(path)
+            self.simulationbutton.set_label("Stop Simulation")
+            self.simulation_running = True
+        else:
+            self.terminate_simulator()
+            self.simulationbutton.set_label("Start Simulation")
+            self.simulation_running = False
+
+    def select_simulation_file(self):
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+
+        simulation_dialog = Gtk.FileChooserDialog(title="Please choose a HDF5 file for simulation", parent=self, action=Gtk.FileChooserAction.OPEN)
+        simulation_dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK, )
+        simulation_dialog.set_current_folder(user_path)
+        simulation_dialog.set_local_only(True)
+
+        filter_simulation = Gtk.FileFilter()
+        filter_simulation.set_name('Simulation files')
+        filter_simulation.add_pattern('*.h5')
+        simulation_dialog.add_filter(filter_simulation)
+
+        response = simulation_dialog.run()
+        path = simulation_dialog.get_filename()
+
+        simulation_dialog.destroy()
+
+        return path
         
     def entered_text(self, widget):
         ChipName = self.page2.entry.get_text()
@@ -2799,7 +2868,6 @@ class GUI_Main(Gtk.Window):
         self.converter_process = Process(target=cm.start)
         self.pipe_source_conn.send(True)
         self.converter_process.start()
-        
 
     def closed_plot1(self):
         self.plot1_window_open = False
@@ -2808,10 +2876,21 @@ class GUI_Main(Gtk.Window):
         elif self.on_notebook_page == 1:
             self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
 
+    def terminate_simulator(self):
+        if self.simulator_process == None:
+            return
+        self.simulator_process.terminate()
+
+    def start_simulator(self, path):
+        sim = ProducerSimManager(configuration = 'tpx3_monitor.yaml', path = path, loglevel='INFO', delay = 0.1, kind='tpx3_sim', name='TPX3')
+        self.simulator_process = Process(target=sim.start)
+        self.simulator_process.start()
+
 def quit_procedure(gui):
     GUI.on_QuitCurrentFunctionbutton_clicked(widget = None)
     time.sleep(0.75)
     file_logger.write_backup(file = file_logger.create_file())
+    GUI.terminate_simulator()
     GUI.terminate_converter()
     Gtk.main_quit()
 
