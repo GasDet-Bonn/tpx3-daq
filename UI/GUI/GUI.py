@@ -1260,7 +1260,7 @@ class GUI_SetDAC(Gtk.Window):
 
     def on_Savebutton_clicked(self, widget):
         if GUI.get_process_alive():
-            subw = GUI_Process_Running
+            subw = GUI_Main_Error(title = "Error", text = "Process is running on the chip!")
             return
         TPX3_datalogger.write_value(name = 'Ibias_Preamp_ON', value = self.Ibias_Preamp_ON_value)
         TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_ON')
@@ -1532,7 +1532,7 @@ class GUI_Additional_Settings(Gtk.Window):
 
     def on_Savebutton_clicked(self, widget):
         if GUI.get_process_alive():
-            subw = GUI_Process_Running
+            subw = GUI_Main_Error(title = "Error", text = "Process is running on the chip!")
             return
         TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
         TPX3_datalogger.write_to_yaml(name = 'Polarity')
@@ -2250,17 +2250,6 @@ class GUI_Main_Error(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
-class GUI_Process_Running(Gtk.Window):
-    def __init__(self):
-        Gtk.Window.__init__(self, title = "Error")
-        self.connect("delete-event", self.window_destroy)
-        label = Gtk.Label()
-        label.set_text("Process is running on the chip!")
-        self.show_all()
-
-    def window_destroy(self, widget):
-        self.destroy()
-
 class GUI_Plot_Box(Gtk.Window):
     def __init__(self, plotname, figure, figure_width, figure_height):
         Gtk.Window.__init__(self, title = plotname)
@@ -2542,7 +2531,7 @@ class GUI_Main(Gtk.Window):
             self.resize(1,1)
             self.write_statusbar('Default setting initialised')
         else:
-            subw = GUI_Process_Running
+            subw = GUI_Main_Error(title = "Error", text = "Process is running on the chip!")
 
     def on_SetDACbutton_clicked(self, widget):
         subw = GUI_SetDAC()
