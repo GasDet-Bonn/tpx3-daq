@@ -20,6 +20,7 @@ from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import tpx3.utils as utils
 from UI.GUI.converter import utils as conv_utils
 from UI.GUI.converter.converter_manager import ConverterManager
+from UI.GUI.sim_producer.producer_sim_manager import ProducerSimManager
 
 
 class GUI_Plot1(Gtk.Window):
