@@ -128,14 +128,24 @@ class NoiseScan(ScanBase):
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
-            self.logger.info('Interpret raw data...')
+            # Create a group to save all data and histograms to the HDF file
+            h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
+            self.logger.info('Interpret raw data...')
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
             hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
+            raw_data = None
 
             # Select only data which is hit data
             hit_data = hit_data[hit_data['data_header'] == 1]
+            h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
+            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
+            hist_occ = np.reshape(pix_occ, (256, 256)).T
+            h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
             param_range = np.unique(meta_data['scan_param_id'])
+            meta_data = None
+            pix_occ = None
+            hist_occ = None
 
             # Read needed configuration parameters
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
@@ -143,17 +153,7 @@ class NoiseScan(ScanBase):
 
             # Create histograms for number of active pixels for individual thresholds
             noise_curve = analysis.noise_pixel_count(hit_data, param_range, Vthreshold_start)
-
-            # Save all data and histograms to the HDF file
-            h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
-
-            h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
-
             h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurve', obj=noise_curve)
-
-            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
-            hist_occ = np.reshape(pix_occ, (256, 256)).T
-            h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
     def plot(self, status = None, plot_queue = None, **kwargs):
         '''

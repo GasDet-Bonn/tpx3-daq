@@ -152,17 +152,28 @@ class ToTCalib(ScanBase):
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
-            self.logger.info('Interpret raw data...')
+            # Create group to save all data and histograms to the HDF file
+            h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
+            self.logger.info('Interpret raw data...')
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
             hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
+            raw_data = None
 
             # Select only data which is hit data
             hit_data = hit_data[hit_data['data_header'] == 1]
+            h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
+            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
+            hist_occ = np.reshape(pix_occ, (256, 256)).T
+            h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
             param_range = np.unique(meta_data['scan_param_id'])
+            meta_data = None
+            pix_occ = None
+            hist_occ = None
 
             # Create histograms for number of detected ToT clock cycles for individual testpulses
             totcurve = analysis.totcurve_hist(hit_data, param_range)
+            hit_data = None
 
             # Read needed configuration parameters
             VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
@@ -172,21 +183,12 @@ class ToTCalib(ScanBase):
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
             a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range, progress = progress)
 
-            # Save all data and histograms to the HDF file
-            h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
-
-            h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
-
             h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve', obj=totcurve)
             h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='aMap', obj=a2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='bMap', obj=b2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='cMap', obj=c2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='tMap', obj=t2D.T)
-
-            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
-            hist_occ = np.reshape(pix_occ, (256, 256)).T
-            h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
 
     def plot(self, status = None, plot_queue = None, **kwargs):
         '''

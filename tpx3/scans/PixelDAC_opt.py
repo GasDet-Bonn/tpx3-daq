@@ -276,64 +276,71 @@ class PixelDAC_opt(ScanBase):
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
-            # Interpret the raw data (2x 32 bit to 1x 48 bit)
-            self.logger.info('Interpret raw data...')
-            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
+        # Interpret the raw data (2x 32 bit to 1x 48 bit)
+        self.logger.info('Interpret raw data...')
+        hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
+        raw_data = None
 
-            # Read needed configuration parameters
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
-            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
-            pixeldac = [int(item[1]) for item in run_config if item[0] == b'pixeldac'][0]
-            last_pixeldac = [int(item[1]) for item in run_config if item[0] == b'last_pixeldac'][0]
-            last_delta = [float(item[1]) for item in run_config if item[0] == b'last_delta'][0]
-            chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
-            chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
-            chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
+        # Read needed configuration parameters
+        Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+        Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+        n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+        pixeldac = [int(item[1]) for item in run_config if item[0] == b'pixeldac'][0]
+        last_pixeldac = [int(item[1]) for item in run_config if item[0] == b'last_pixeldac'][0]
+        last_delta = [float(item[1]) for item in run_config if item[0] == b'last_delta'][0]
+        chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
+        chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
+        chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
-            # Select only data which is hit data
-            hit_data = hit_data[hit_data['data_header'] == 1]
+        # Select only data which is hit data
+        hit_data = hit_data[hit_data['data_header'] == 1]
 
-            # Divide the data into two parts - data for pixel threshold 0 and 15
-            param_range = np.unique(meta_data['scan_param_id'])
-            hit_data_th0 = hit_data[hit_data['scan_param_id'] < len(param_range) // 2]
-            param_range_th0 = np.unique(hit_data_th0['scan_param_id'])
-            hit_data_th15 = hit_data[hit_data['scan_param_id'] >= len(param_range) // 2]
-            param_range_th15 = np.unique(hit_data_th15['scan_param_id'])
+        # Divide the data into two parts - data for pixel threshold 0 and 15
+        param_range = np.unique(meta_data['scan_param_id'])
+        meta_data = None
+        hit_data_th0 = hit_data[hit_data['scan_param_id'] < len(param_range) // 2]
+        param_range_th0 = np.unique(hit_data_th0['scan_param_id'])
+        hit_data_th15 = hit_data[hit_data['scan_param_id'] >= len(param_range) // 2]
+        param_range_th15 = np.unique(hit_data_th15['scan_param_id'])
+        hit_data = None
+        
+        # Create histograms for number of detected hits for individual thresholds
+        self.logger.info('Get the global threshold distributions for all pixels...')
+        scurve_th0 = analysis.scurve_hist(hit_data_th0, np.arange(len(param_range) // 2))
+        hit_data_th0 = None
+        scurve_th15 = analysis.scurve_hist(hit_data_th15, np.arange(len(param_range) // 2, len(param_range)))
+        hit_data_th15 = None
+
+        # Fit S-Curves to the histogramms for all pixels
+        self.logger.info('Fit the scurves for all pixels...')
+        thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+        scurve_th0 = None
+        thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+        scurve_th15 = None
+
+        # Put the threshold distribution based on the fit results in two histogramms
+        self.logger.info('Get the cumulated global threshold distributions...')
+        hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
+        hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
+
+        # Use the threshold histogramms to calculate the new Ibias_PixelDAC setting
+        self.logger.info('Calculate new pixelDAC value...')
+        pixeldac_result = analysis.pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop)
+        delta = pixeldac_result[1]
+        rms_delta = pixeldac_result[2]
+
+        # In the last iteration calculate also the equalisation matrix
+        if delta > rms_delta - 2 and delta < rms_delta + 2:
+            # Use the threshold histogramms and one threshold distribution to calculate the equalisation
+            self.logger.info('Calculate the equalisation matrix...')
+            eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
             
-            # Create histograms for number of detected hits for individual thresholds
-            self.logger.info('Get the global threshold distributions for all pixels...')
-            scurve_th0 = analysis.scurve_hist(hit_data_th0, np.arange(len(param_range) // 2))
-            scurve_th15 = analysis.scurve_hist(hit_data_th15, np.arange(len(param_range) // 2, len(param_range)))
+            # Don't mask any pixels in the mask file
+            mask_matrix = np.zeros((256, 256), dtype=np.bool)
+            mask_matrix[:, :] = 0
 
-            # Fit S-Curves to the histogramms for all pixels
-            self.logger.info('Fit the scurves for all pixels...')
-            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
-            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
-
-            # Put the threshold distribution based on the fit results in two histogramms
-            self.logger.info('Get the cumulated global threshold distributions...')
-            hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
-            hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
-
-            # Use the threshold histogramms to calculate the new Ibias_PixelDAC setting
-            self.logger.info('Calculate new pixelDAC value...')
-            pixeldac_result = analysis.pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop)
-            delta = pixeldac_result[1]
-            rms_delta = pixeldac_result[2]
-
-            # In the last iteration calculate also the equalisation matrix
-            if delta > rms_delta - 2 and delta < rms_delta + 2:
-                # Use the threshold histogramms and one threshold distribution to calculate the equalisation
-                self.logger.info('Calculate the equalisation matrix...')
-                eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
-                
-                # Don't mask any pixels in the mask file
-                mask_matrix = np.zeros((256, 256), dtype=np.bool)
-                mask_matrix[:, :] = 0
-
-                # Write the equalisation matrix to a new HDF5 file
-                self.save_thr_mask(eq_matrix, chip_wafer, chip_x ,chip_y)
+            # Write the equalisation matrix to a new HDF5 file
+            self.save_thr_mask(eq_matrix, chip_wafer, chip_x ,chip_y)
 
         self.logger.info('Result of iteration: Scan with pixeldac %i - New pixeldac %i. Delta was %f with optimal delta %f' % (int(pixeldac), int(pixeldac_result[0]), pixeldac_result[1], pixeldac_result[2]))
         return pixeldac_result
