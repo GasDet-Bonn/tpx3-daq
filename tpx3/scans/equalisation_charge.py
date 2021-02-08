@@ -42,7 +42,7 @@ class Equalisation_charge(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2000, n_injections = 16, mask_step = 32, progress = None, status = None, **kwargs):
+    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2000, n_injections = 16, mask_step = 32, tp_period = 1, progress = None, status = None, **kwargs):
         '''
             Takes data for equalisation. Therefore a threshold scan is performed for all pixel thresholds at 0 and at 15.
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -66,7 +66,7 @@ class Equalisation_charge(ScanBase):
 
         # Write to the test pulse registers of the Timepix3
         # Write to period and phase tp registers
-        data = self.chip.write_tp_period(1, 0)
+        data = self.chip.write_tp_period(tp_period, 0)
 
         # Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)

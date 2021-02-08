@@ -39,7 +39,7 @@ class ToTCalib(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, VTP_fine_start=210, VTP_fine_stop=511, mask_step=64, progress = None, status = None, **kwargs):
+    def scan(self, VTP_fine_start=210, VTP_fine_stop=511, mask_step=64, tp_period = 1, progress = None, status = None, **kwargs):
         '''
             Takes data for the ToT calibration in a range of testpulses
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -63,7 +63,7 @@ class ToTCalib(ScanBase):
         # Write to period and phase tp registers
         # If TP_Period is to short there is not enough time for discharging the capacitor
         # This effect becomes stronger if the Ikurm DAC is small
-        data = self.chip.write_tp_period(3, 0)
+        data = self.chip.write_tp_period(tp_period, 0)
 
         # Write to pulse number tp register - only inject once per pixel
         self.chip.write_tp_pulsenumber(1)

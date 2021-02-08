@@ -40,7 +40,7 @@ class TestpulseScan(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, VTP_fine_start = 100, VTP_fine_stop = 200, n_injections = 100, mask_step = 16, progress = None, status = None, **kwargs):
+    def scan(self, VTP_fine_start = 100, VTP_fine_stop = 200, n_injections = 100, tp_period = 1, mask_step = 16, progress = None, status = None, **kwargs):
         '''
             Takes data for testpulse scan over a range of testpulses with a defined number of pulses per iteration
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -64,7 +64,7 @@ class TestpulseScan(ScanBase):
 
         # Write to the test pulse registers of the Timepix3
         # Write to period and phase tp registers
-        data = self.chip.write_tp_period(1, 0)
+        data = self.chip.write_tp_period(tp_period, 0)
 
         # Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)

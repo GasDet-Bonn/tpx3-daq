@@ -45,7 +45,7 @@ class PixelDAC_opt(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, offset = 0, progress = None, status = None, result = None, **kwargs):
+    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, tp_period = 1, offset = 0, progress = None, status = None, result = None, **kwargs):
         '''
             Main function of the pixel dac optimization. Starts the scan iterations and the analysis of
             of the individual iterations.
@@ -90,6 +90,7 @@ class PixelDAC_opt(ScanBase):
                 'Vthreshold_start' : Vthreshold_start,
                 'Vthreshold_stop'  : Vthreshold_stop,
                 'n_injections'     : n_injections,
+                'tp_period'        : tp_period,
                 'mask_cmds'        : mask_cmds,
                 'mask_cmds2'       : mask_cmds2
             }
@@ -128,7 +129,7 @@ class PixelDAC_opt(ScanBase):
         else:
             result.put(int(pixeldac))
 
-    def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, offset=0, mask_cmds = None, mask_cmds2 = None, progress = None, status = None, **kwargs):
+    def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, tp_period = 1, offset=0, mask_cmds = None, mask_cmds2 = None, progress = None, status = None, **kwargs):
         '''
             Takes data for one iteration of the optimization. Therefore a threshold scan is performed for all pixel thresholds at 0 and at 15.
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -140,7 +141,7 @@ class PixelDAC_opt(ScanBase):
 
         # Write to the test pulse registers of the Timepix3
         # Write to period and phase tp register
-        data = self.chip.write_tp_period(1, 0)
+        data = self.chip.write_tp_period(tp_period, 0)
 
         # Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)

@@ -42,7 +42,7 @@ class ThresholdCalib(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1350, Vthreshold_stop = 2911, n_injections = 100, mask_step = 16, n_pulse_heights = 5, progress = None, status = None, **kwargs):
+    def scan(self, Vthreshold_start = 1350, Vthreshold_stop = 2911, n_injections = 100, tp_period = 1, mask_step = 16, n_pulse_heights = 5, progress = None, status = None, **kwargs):
         '''
             Threshold scan main loop
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -73,7 +73,8 @@ class ThresholdCalib(ScanBase):
                 'Vthreshold_start' : Vthreshold_start,
                 'Vthreshold_stop'  : Vthreshold_stop,
                 'n_injections'     : n_injections,
-                'n_pulse_heights'  : n_pulse_heights
+                'n_pulse_heights'  : n_pulse_heights,
+                'tp_period'        : tp_period,
             }
 
             # In the 0th iteration all files and tables are already created by the start() function of scan_base
@@ -92,7 +93,7 @@ class ThresholdCalib(ScanBase):
         self.plot(status = status)
 
 
-    def scan_iteration(self, iteration, n_pulse_heights, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, mask_step=16, progress = None, status = None, **kwargs):
+    def scan_iteration(self, iteration, n_pulse_heights, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, tp_period = 1, mask_step=16, progress = None, status = None, **kwargs):
         '''
             Takes data for one iteration of the calibration. Therefore a threshold scan is performed for all pixel thresholds
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -104,7 +105,7 @@ class ThresholdCalib(ScanBase):
 
         # Write to the test pulse registers of the Timepix3
         # Write to period and phase tp registers
-        data = self.chip.write_tp_period(1, 0)
+        data = self.chip.write_tp_period(tp_period, 0)
 
         # Write to pulse number tp register
         self.chip.write_tp_pulsenumber(n_injections)
