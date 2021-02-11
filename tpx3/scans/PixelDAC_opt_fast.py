@@ -197,8 +197,8 @@ class PixelDAC_opt(ScanBase):
                         fraction = step_counter / len(cal_high_range)
                         progress.put(fraction)
                 self.chip.stop_readout()
-                self.chip.reset_sequential()
                 time.sleep(0.001)
+            self.chip.reset_sequential()
 
         if progress == None:
             # Close the progress bar
@@ -239,8 +239,8 @@ class PixelDAC_opt(ScanBase):
                         fraction = step_counter / len(cal_high_range)
                         progress.put(fraction)
                 self.chip.stop_readout()
-                self.chip.reset_sequential()
                 time.sleep(0.001)
+            self.chip.reset_sequential()
 
         if progress == None:
             # Close the progress bar
