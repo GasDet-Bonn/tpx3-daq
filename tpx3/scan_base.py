@@ -333,10 +333,11 @@ class ScanBase(object):
 
             # Switch on pixels and test pulses for pixels based on mask_step
             # e.g. for mask_step=16 every 4th pixel in x and y is active
-            self.chip.test_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
-                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.TP_ON
-            self.chip.mask_matrix[(i//(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step))),
-                                  (i%(mask_step//int(math.sqrt(mask_step))))::(mask_step//int(math.sqrt(mask_step)))] = self.chip.MASK_ON
+            column_start = i//(mask_step//int(math.sqrt(mask_step)))
+            row_start = i%(mask_step//int(math.sqrt(mask_step)))
+            step = mask_step//int(math.sqrt(mask_step))
+            self.chip.test_matrix[column_start::step, row_start::step] = self.chip.TP_ON
+            self.chip.mask_matrix[column_start::step, row_start::step] = self.chip.MASK_ON
 
             # If a pixel threshold is defined set it to all pixels
             if pixel_threhsold != None:
