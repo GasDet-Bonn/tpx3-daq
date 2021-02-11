@@ -172,6 +172,7 @@ class Equalisation(ScanBase):
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
             If there is a status queue information about the status of the scan are put into it
         '''
+
         h5_filename = self.output_filename + '.h5'
 
         self.logger.info('Starting data analysis...')
@@ -181,17 +182,39 @@ class Equalisation(ScanBase):
         # Open the HDF5 which contains all data of the equalisation
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters
-            raw_data = h5_file.root.raw_data[:]
             meta_data = h5_file.root.meta_data[:]
             run_config = h5_file.root.configuration.run_config[:]
             general_config = h5_file.root.configuration.generalConfig[:]
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
-        self.logger.info('Interpret raw data...')
-        # Interpret the raw data (2x 32 bit to 1x 48 bit)
-        hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
-        raw_data = None
+            self.logger.info('Interpret raw data...')
+
+            # THR = 0
+            param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
+            meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
+            param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
+            
+            # THR = 15
+            meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
+            param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
+
+            # shift indices so that they start with zero
+            start = meta_data_th15['index_start'][0]
+            meta_data_th15['index_start'] = meta_data_th15['index_start']-start
+            meta_data_th15['index_stop'] = meta_data_th15['index_stop']-start
+
+            self.logger.info('THR = 0')
+            #THR = 0
+            raw_data_thr0 = h5_file.root.raw_data[:meta_data_th0['index_stop'][-1]]
+            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, meta_data_th0, progress = progress)
+            raw_data_thr0 = None
+
+            self.logger.info('THR = 15')
+            #THR = 15
+            raw_data_thr15 = h5_file.root.raw_data[meta_data_th0['index_stop'][-1]:]
+            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, meta_data_th15, progress = progress)
+            raw_data_thr15 = None
 
         # Read needed configuration parameters
         Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
@@ -201,23 +224,21 @@ class Equalisation(ScanBase):
         chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
         # Select only data which is hit data
-        hit_data = hit_data[hit_data['data_header'] == 1]
+        hit_data_thr0 = hit_data_thr0[hit_data_thr0['data_header'] == 1]
+        hit_data_thr15 = hit_data_thr15[hit_data_thr15['data_header'] == 1]
 
         # Divide the data into two parts - data for pixel threshold 0 and 15
         param_range = np.unique(meta_data['scan_param_id'])
         meta_data = None
-        hit_data_th0 = hit_data[hit_data['scan_param_id'] < len(param_range) // 2]
-        param_range_th0 = np.unique(hit_data_th0['scan_param_id'])
-        hit_data_th15 = hit_data[hit_data['scan_param_id'] >= len(param_range) // 2]
-        param_range_th15 = np.unique(hit_data_th15['scan_param_id'])
-        hit_data = None
+        param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
+        param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
         
         # Create histograms for number of detected hits for individual thresholds
         self.logger.info('Get the global threshold distributions for all pixels...')
-        scurve_th0 = analysis.scurve_hist(hit_data_th0, param_range_th0)
-        hit_data_th0 = None
-        scurve_th15 = analysis.scurve_hist(hit_data_th15, param_range_th15)
-        hit_data_th15 = None
+        scurve_th0 = analysis.scurve_hist(hit_data_thr0, param_range_th0)
+        hit_data_thr0 = None
+        scurve_th15 = analysis.scurve_hist(hit_data_thr15, param_range_th15)
+        hit_data_thr15 = None
 
         # Calculate the mean of the threshold distributions for all pixels
         self.logger.info('Calculate the mean of the global threshold distributions for all pixels...')
