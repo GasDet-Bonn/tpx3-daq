@@ -1681,10 +1681,27 @@ class GUI_Equalisation(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Set_Mask_Coord_Window(Gtk.Window):
+    def __init__(self, coords):
+        Gtk.Window.__init__(self, title = "Coords")
+        self.connect("delete-event", self.window_destroy)
+        self.set_decorated(False)
+        self.set_position(Gtk.WindowPosition.MOUSE)
+        self.move((self.get_position()[0] + 100), (self.get_position()[1] + 80))
+        label = Gtk.Label()
+        label.set_text(coords)
+        self.add(label)
+
+        self.show_all()
+
+    def window_destroy(self, widget, event = True):
+        self.destroy()
+
 class GUI_Set_Mask(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = "Set Mask")
         self.connect("delete-event", self.window_destroy)
+        self.coord_window = None
         
         if  isinstance(mask_logger.get_mask(), bool):
             self.np_mask_list = np.zeros((256 * 256, ), dtype=bool)
@@ -1812,6 +1829,7 @@ class GUI_Set_Mask(Gtk.Window):
         
         self.map_area.add(self.map)
         self.map_area.connect ('button-press-event', self.on_drawing_area_button_press)
+        self.map_area.connect ('button-release-event', self.on_drawing_area_button_release)
         self.mapview.add(self.map_area)
         
         Space = Gtk.Label()
@@ -1909,11 +1927,13 @@ class GUI_Set_Mask(Gtk.Window):
         elif event.button == 3:
             x_coord = (int(event.x / 10) - 4)
             y_coord = 255 - (int(event.y / 10) - 4)
-            self.coord_label.set_text(str(x_coord) + ', ' + str(y_coord))
-            self.popover.show_all()
-            self.popover.popup()
-        
-        
+            coord_string = ('x=' + str(x_coord) + ', y=' + str(y_coord))
+            self.coord_window = GUI_Set_Mask_Coord_Window(coord_string)
+
+    def on_drawing_area_button_release(self, widget, event):
+        if event.button == 3:
+            self.coord_window.window_destroy(widget = widget)
+
     def on_Savebutton_clicked(self, widget):
         mask_array = self.np_mask_list.reshape((256,256))
         mask_logger.write_full_mask(full_mask = mask_array)
