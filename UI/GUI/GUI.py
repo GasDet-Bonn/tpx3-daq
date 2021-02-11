@@ -2116,7 +2116,6 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
 
         Gtk.Window.__init__(self, title = "Save Backup")
         self.connect("delete-event", self.window_destroy)
-        self.set_decorated(False)
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         self.add(grid)
@@ -2147,7 +2146,7 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
             file_logger.write_backup(file = file)
             self.destroy()
 
-    def window_destroy(self, widget):
+    def window_destroy(self, widget, event = True):
         self.destroy()
 
 class GUI_Main_Save_Equalisation_Input(Gtk.Window):
@@ -2158,7 +2157,6 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
 
         Gtk.Window.__init__(self, title = "Save Equalisation")
         self.connect("delete-event", self.window_destroy)
-        self.set_decorated(False)
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         self.add(grid)
@@ -2189,7 +2187,7 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
             copy(current_equal, full_path)
             self.destroy()
 
-    def window_destroy(self, widget):
+    def window_destroy(self, widget, event = True):
         self.destroy()
 
 class GUI_Main_Save_Mask_Input(Gtk.Window):
@@ -2202,7 +2200,6 @@ class GUI_Main_Save_Mask_Input(Gtk.Window):
 
         Gtk.Window.__init__(self, title = "Save Mask")
         self.connect("delete-event", self.window_destroy)
-        self.set_decorated(False)
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         self.add(grid)
@@ -2233,7 +2230,7 @@ class GUI_Main_Save_Mask_Input(Gtk.Window):
             copy(current_equal, full_path)
             self.destroy()
 
-    def window_destroy(self, widget):
+    def window_destroy(self, widget, event = True):
         self.destroy()
 
 class GUI_Main_Error(Gtk.Window):
