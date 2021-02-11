@@ -1402,7 +1402,7 @@ class TPX3_CLI_TOP(object):
                                 except KeyboardInterrupt:
                                     print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n polarity.')
+                            print('To many parameters! The given function takes only one parameters:\n operation mode.')
 
                 #Set Fast Io mode
                 elif inputlist[0] in {'Set_Fast_Io', 'Fast_Io', 'Fast_Io_en', 'set_fast_io', 'fast_io', 'fast_io_en'}:
