@@ -176,7 +176,7 @@ class PixelDAC_opt(ScanBase):
                 for i, mask_step_cmd in enumerate(mask_cmds):
                     # Only activate testpulses for columns with active pixels
                     self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
-                    
+
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
 
@@ -195,7 +195,7 @@ class PixelDAC_opt(ScanBase):
                     self.chip.reset_sequential()
                     time.sleep(0.001)
                 time.sleep(0.001)
-        
+
         if progress == None:
             # Close the progress bar
             pbar.close()
@@ -220,7 +220,7 @@ class PixelDAC_opt(ScanBase):
                 for i, mask_step_cmd in enumerate(mask_cmds2):
                     # Only activate testpulses for columns with active pixels
                     self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
-                    
+
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
 
@@ -266,8 +266,6 @@ class PixelDAC_opt(ScanBase):
         # Open the HDF5 which contains all data of the optimization iteration
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters for the current iteration
-            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[:]')
-            raw_data = eval(raw_data_call)
             meta_data_call = ('h5_file.root.' + 'meta_data_' + str(iteration) + '[:]')
             meta_data = eval(meta_data_call)
             run_config_call = ('h5_file.root.' + 'configuration.run_config_' + str(iteration) + '[:]')
@@ -277,10 +275,35 @@ class PixelDAC_opt(ScanBase):
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
-        # Interpret the raw data (2x 32 bit to 1x 48 bit)
-        self.logger.info('Interpret raw data...')
-        hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
-        raw_data = None
+            self.logger.info('Interpret raw data...')
+
+            # THR = 0
+            param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
+            meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
+            param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
+            
+            # THR = 15
+            meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
+            param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
+
+            # shift indices so that they start with zero
+            start = meta_data_th15['index_start'][0]
+            meta_data_th15['index_start'] = meta_data_th15['index_start']-start
+            meta_data_th15['index_stop'] = meta_data_th15['index_stop']-start
+
+            self.logger.info('THR = 0')
+            #THR = 0
+            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[:' + meta_data_th0['index_stop'][-1] + ']')
+            raw_data_thr0 = eval(raw_data_call)
+            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, meta_data_th0, progress = progress)
+            raw_data_thr0 = None
+
+            self.logger.info('THR = 15')
+            #THR = 15
+            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[' + meta_data_th0['index_stop'][-1] + ':]')
+            raw_data_thr15 = eval(raw_data_call)
+            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, meta_data_th15, progress = progress)
+            raw_data_thr15 = None
 
         # Read needed configuration parameters
         Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
@@ -294,23 +317,21 @@ class PixelDAC_opt(ScanBase):
         chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
         # Select only data which is hit data
-        hit_data = hit_data[hit_data['data_header'] == 1]
+        hit_data_thr0 = hit_data_thr0[hit_data_thr0['data_header'] == 1]
+        hit_data_thr15 = hit_data_thr15[hit_data_thr15['data_header'] == 1]
 
         # Divide the data into two parts - data for pixel threshold 0 and 15
         param_range = np.unique(meta_data['scan_param_id'])
         meta_data = None
-        hit_data_th0 = hit_data[hit_data['scan_param_id'] < len(param_range) // 2]
-        param_range_th0 = np.unique(hit_data_th0['scan_param_id'])
-        hit_data_th15 = hit_data[hit_data['scan_param_id'] >= len(param_range) // 2]
-        param_range_th15 = np.unique(hit_data_th15['scan_param_id'])
-        hit_data = None
+        param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
+        param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
         
         # Create histograms for number of detected hits for individual thresholds
         self.logger.info('Get the global threshold distributions for all pixels...')
-        scurve_th0 = analysis.scurve_hist(hit_data_th0, np.arange(len(param_range) // 2))
-        hit_data_th0 = None
-        scurve_th15 = analysis.scurve_hist(hit_data_th15, np.arange(len(param_range) // 2, len(param_range)))
-        hit_data_th15 = None
+        scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
+        hit_data_thr0 = None
+        scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
+        hit_data_thr15 = None
 
         # Fit S-Curves to the histogramms for all pixels
         self.logger.info('Fit the scurves for all pixels...')
@@ -335,7 +356,7 @@ class PixelDAC_opt(ScanBase):
             # Use the threshold histogramms and one threshold distribution to calculate the equalisation
             self.logger.info('Calculate the equalisation matrix...')
             eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
-            
+
             # Don't mask any pixels in the mask file
             mask_matrix = np.zeros((256, 256), dtype=np.bool)
             mask_matrix[:, :] = 0
@@ -350,5 +371,3 @@ class PixelDAC_opt(ScanBase):
 if __name__ == "__main__":
     scan = PixelDAC_opt()
     scan.start(iteration = 0, **local_configuration)
-    
-    
