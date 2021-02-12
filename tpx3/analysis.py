@@ -597,9 +597,9 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 index_start = meta_data['index_start'][l]
                 index_stop = meta_data['index_stop'][l]
                 if index_start<index_stop:
-                    int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(raw_data[index_start:index_stop], op_mode, last_timestamp = last_timestamp, next_to_last_timestamp = next_to_last_timestamp, intern = True, chunk_nr = l, leftoverpackage = leftoverpackage)
+                    int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(raw_data[index_start:index_stop], op_mode, vco, last_timestamp = last_timestamp, next_to_last_timestamp = next_to_last_timestamp, intern = True, chunk_nr = l, leftoverpackage = leftoverpackage)
                     # reattach timestamp
-                    int_pix_data['chunk_start_time'] = meta_data['timestamp_start'][l]
+                    int_pix_data['chunk_start_time'][:] = meta_data['timestamp_start'][l]
                     # append data we got back to return array or create new if this is the fist bunch of data treated
                     if len(ret):
                         ret = np.hstack((ret, int_pix_data))
