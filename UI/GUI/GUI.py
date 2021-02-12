@@ -2419,6 +2419,7 @@ class GUI_Main(Gtk.Window):
         self.Statusbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 6)
         Status.add(self.Statusbox)
         self.progressbar = Gtk.ProgressBar()
+        self.progressbar.set_show_text(True)
         self.statuslabel = Gtk.Label()
         self.statuslabel2 = Gtk.Label()
         self.statuslabel3 = Gtk.Label()
