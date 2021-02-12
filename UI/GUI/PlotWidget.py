@@ -10,11 +10,11 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 class plotwidget2(object):#For tests
     def __init__(self):
         self.active = True
-        self.fig = Figure(figsize = (5, 5), dpi = 100)
+        self.fig = Figure(figsize = (6, 6), dpi = 100)
         self.ax = self.fig.add_subplot(111, projection = 'polar')
         
         self.canvas = FigureCanvas(self.fig)
-        self.canvas.set_size_request(400, 400)
+        self.canvas.set_size_request(500, 500)
 
         N = 20
         theta = linspace(0.0, 2 * pi, N, endpoint = False)
@@ -46,7 +46,7 @@ class plotwidget2(object):#For tests
 class plotwidget(object):
     def __init__(self, data_queue):
         self.plottype = "normal"
-        self.fig = Figure(figsize = (4, 4), dpi = 100)
+        self.fig = Figure(figsize = (5, 5), dpi = 100)
         self.ax = self.fig.add_subplot(111, aspect='equal')
         self.ax.set_xlabel('X', size = 12)
         self.ax.set_ylabel('Y', size = 12)
@@ -72,7 +72,7 @@ class plotwidget(object):
         self.scatter = self.ax.scatter(self.x_vals, self.y_vals, c = [], s = 1, marker = 's', cmap = cmap, vmin = 0, vmax = 1)
 
         self.canvas = FigureCanvas(self.fig)
-        self.canvas.set_size_request(400, 400)
+        self.canvas.set_size_request(500, 500)
         
         self.ax.plot()
     
