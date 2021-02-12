@@ -592,7 +592,10 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 pbar.close()
         # case used for clustering: split further into the time frames defined through one row in meta_data
         else:
-            pbar = tqdm(total=meta_data.shape[0])
+            if progress == None:
+                pbar = tqdm(total = meta_data.shape[0])
+            else:
+                step_counter = 0
             for l in range(meta_data.shape[0]):
                 index_start = meta_data['index_start'][l]
                 index_stop = meta_data['index_stop'][l]
@@ -605,8 +608,14 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                         ret = np.hstack((ret, int_pix_data))
                     else:
                         ret = int_pix_data
-                    pbar.update(1)
-            pbar.close()
+                    if progress == None:
+                        pbar.update(1)
+                    else:
+                        step_counter += 1
+                        fraction = step_counter / (meta_data.shape[0])
+                        progress.put(fraction)
+            if progress == None:
+                pbar.close()
     else:
         #it can be chunked and multithreaded here
         data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage  = raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
