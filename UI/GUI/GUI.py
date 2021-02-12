@@ -2453,13 +2453,13 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
         page1.grid.attach(self.NoiseScanbutton, 0, 7, 2, 1)
         page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
-        page1.grid.attach(Status, 2, 8, 6, 5)
+        page1.grid.attach(Status, 2, 8, 12, 5)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
-        page1.grid.attach(self.SetDACbutton, 8, 0, 2, 1)
-        page1.grid.attach(self.AddSetbutton, 8, 1, 2, 1)
-        page1.grid.attach(self.SetMaskbutton, 8, 3, 2, 1)
-        page1.grid.attach(self.QuitCurrentFunctionbutton, 8, 13, 2, 1)
+        page1.grid.attach(self.SetDACbutton, 14, 0, 3, 1)
+        page1.grid.attach(self.AddSetbutton, 14, 1, 3, 1)
+        page1.grid.attach(self.SetMaskbutton, 14, 3, 3, 1)
+        page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
 
     #######################################################################################################     
