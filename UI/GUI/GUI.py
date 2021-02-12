@@ -297,6 +297,7 @@ class GUI_ToT_Calib(Gtk.Window):
         GUI.Status_window_call(function = "ToT_Calib", lowerTHL = self.Testpulse_range_start_value, upperTHL = self.Testpulse_range_stop_value, iterations = self.Number_of_Iterations)
         new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, mask_step = self.Number_of_Iterations, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
 
         self.destroy()
 
@@ -430,6 +431,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         GUI.Status_window_call(function = "ThresholdScan", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
 
         self.destroy()
 
@@ -580,6 +582,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         GUI.Status_window_call(function = "ThresholdCalib", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value, n_pulse_heights = self.n_pulse_heights_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), n_pulse_heights = self.n_pulse_heights_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
 
         self.destroy()
 
@@ -712,6 +715,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         GUI.Status_window_call(function = "TestpulsScan", lowerTHL = self.Testpulse_range_start_value, upperTHL = self.Testpulse_range_stop_value, iterations = self.Number_of_Iterations, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = self.Testpulse_range_start_value, VTP_fine_stop = self.Testpulse_range_stop_value, n_injections = self.n_injections_value, mask_step = self.Number_of_Iterations, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
 
         self.destroy()
 
@@ -837,6 +841,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         GUI.Status_window_call(function = "PixelDAC_opt", lowerTHL = self.Threshold_start_value, upperTHL = self.Threshold_stop_value, n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = self.n_injections_value, offset = self.col_offset_value, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), result = GUI.pixeldac_result, plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
 
         self.destroy()
 
@@ -958,6 +963,7 @@ class GUI_Run_Datataking(Gtk.Window):
         GUI.Status_window_call(function = "Run", lowerTHL = self.Datataking_Time_value, upperTHL = self.finish_str)
         new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = self.Datataking_Time_value, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue, readout_interval = TPX3_datalogger.read_value(name = 'Readout_Speed'))
         GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
 
         self.destroy()
 
@@ -1691,6 +1697,7 @@ class GUI_Equalisation(Gtk.Window):
         elif self.Equalisation_Type == "Testpulse":
             new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', Vthreshold_start = self.Threshold_start_value, Vthreshold_stop = self.Threshold_stop_value, n_injections = 100, mask_step = self.Number_of_Iterations, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), result_path = GUI.eq_result_path, plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
 
         self.destroy()
 
@@ -2539,9 +2546,10 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Run_Datataking()
 
     def on_Startupbutton_clicked(self, widget):
-        GUI.Status_window_call(function = "InitHardware")
+        self.Status_window_call(function = "InitHardware")
         new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', results = self.hardware_scan_results, progress = GUI.get_progress_value_queue(), status = GUI.get_status_queue(), plot_queue = GUI.plot_queue)
-        GUI.set_running_process(running_process = new_process)
+        self.set_running_process(running_process = new_process)
+        self.set_quit_scan_label()
         self.hardware_scan_idle = GLib.timeout_add(250, self.update_status)
 
     def on_Resetbutton_clicked(self, widget):
@@ -2616,6 +2624,7 @@ class GUI_Main(Gtk.Window):
                     self.eq_result_path.get()
                 while(not self.plot_queue.empty()):
                     self.plot_queue.get()
+            self.QuitCurrentFunctionbutton.set_label('Quit')
             self.running_process = None
 
         else:
@@ -2643,6 +2652,7 @@ class GUI_Main(Gtk.Window):
                     self.eq_result_path.get()
                 while(not self.plot_queue.empty()):
                     self.plot_queue.get()
+            self.QuitCurrentFunctionbutton.set_label('Quit')
             self.running_process = None
 
     def Status_window_call(self, function = "default", subtype = "", lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, statusstring = "", progress = 0):
@@ -2767,6 +2777,9 @@ class GUI_Main(Gtk.Window):
     def get_status_queue(self):
         return self.status_queue
 
+    def set_quit_scan_label(self):
+        self.QuitCurrentFunctionbutton.set_label('Quit Scan')
+
     def set_running_process(self, running_process):
         self.running_process = running_process
         self.running_scan_idle = GLib.timeout_add(500, self.update_scan)
@@ -2788,7 +2801,10 @@ class GUI_Main(Gtk.Window):
         while not self.progress_value_queue.empty():
             self.progressbar.set_fraction(self.progress_value_queue.get())
         while not self.status_queue.empty():
-            self.Status_window_call(function = "status", statusstring = self.status_queue.get())
+            statusstring = self.status_queue.get()
+            if statusstring == 'Scan finished':
+                self.QuitCurrentFunctionbutton.set_label('Quit')
+            self.Status_window_call(function = "status", statusstring = statusstring)
         if self.progress_value_queue.empty() and self.status_queue.empty() and not self.get_process_alive():
             GLib.source_remove(self.update_progress_idle)
             self.update_progress_idle = None
