@@ -350,7 +350,20 @@ class TPX3_data_logger(object):
         if not isinstance(config, dict):
             # depending on impl may also just return False
             raise TypeError("Invalid type for configuration")
+        config = self.complete(config)
         return sorted(list(config)) == sorted(self.config_keys)
+
+    def complete(self, config):
+        for key in self.config_keys:
+            try:
+                config[key]
+            except KeyError:
+                config[key] = self.get_default_value(key)
+        return config
+
+    def get_default_value(self, key):
+        defaults = self.default_config()
+        return defaults[key]
 
     def name_valid(self, name):
         for key in self.config_keys:
