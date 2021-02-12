@@ -802,6 +802,27 @@ class TPX3_CLI_function_call(object):
         except:
             print('Unknown value')
 
+    def TP_Period(object, TP_Period = None):
+        if TP_Period == None:
+            print('> Please enter the period (0-255):')
+            while(1):
+                TP_Period = input('>> ')
+                try:
+                    TP_Period = int(TP_Period)
+                    if TP_Period not in range(256):
+                        raise ValueError
+                    break
+                except:
+                    if TP_Period in exit_list:
+                        return
+                    else:
+                        print('Input needs to be an integer between 0 and 255!')
+        try:
+            TP_Period = int(TP_Period)
+            TPX3_datalogger.write_value(name = 'TP_Period', value = TP_Period)
+        except:
+            print('Unknown value')
+
     def Set_CLK_fast_mode(object, CLK_fast_mode_en = None):
         if CLK_fast_mode_en == None:
             print('> Please enter the CLK_fast_mode enable (0 for off or 1 for on):')
@@ -1283,6 +1304,24 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) > 2:
                             print('To many parameters! The given function takes only one parameters:\n backup file name.')
 
+                #Set TP_Period
+                elif inputlist[0] in {'TP_Period', 'tp_period'}:
+                    if len(inputlist) == 1:
+                        print('Set TP_Period')
+                        try:
+                            function_call.TP_Period()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the set tp_period function. As argument you can give the period between 0 and 255.')
+                        elif len(inputlist) == 2:
+                                try:
+                                    function_call.TP_Period(TP_Period = inputlist[1])
+                                except KeyboardInterrupt:
+                                    print('User quit')
+                        elif len(inputlist) > 2:
+                            print('To many parameters! The given function takes only one parameter:\n tp_period.')
 
                 #Set polarity
                 elif inputlist[0] in {'Set_Polarity', 'Set_Pol', 'Polarity', 'Pol','set_polarity', 'set_pol', 'polarity','pol'}:
