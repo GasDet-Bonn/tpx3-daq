@@ -216,7 +216,7 @@ class ToTCalib(ScanBase):
 
                 # Plot the occupancy matrix
                 occ_masked = np.ma.masked_array(h5_file.root.interpreted.HistOcc[:], mask)
-                p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='maximum', suffix='occupancy')
+                p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='maximum', suffix='occupancy', plot_queue=plot_queue)
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
@@ -228,19 +228,19 @@ class ToTCalib(ScanBase):
 
                 # Plot the ToT-Curve fit parameter a histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.aMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(np.median(hist)-3, np.median(hist)+3, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution')
+                p.plot_distribution(hist, plot_range=np.arange(np.ma.median(hist)-3, np.ma.median(hist)+3, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter b histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.bMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(int(np.median(hist))-2000, int(np.median(hist))+2000, 50)), x_axis_title='b', title='b distribution', suffix='b_distribution')
+                p.plot_distribution(hist, plot_range=list(range(int(np.ma.median(hist))-2000, int(np.ma.median(hist))+2000, 50)), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter c histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.cMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(int(np.median(hist))-100000, int(np.median(hist))+100000, 2000)), x_axis_title='c', title='c distribution', suffix='c_distribution')
+                p.plot_distribution(hist, plot_range=list(range(int(np.ma.median(hist))-100000, int(np.ma.median(hist))+100000, 2000)), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter t histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.tMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(int(np.median(hist))-100, int(np.median(hist))+100, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution')
+                p.plot_distribution(hist, plot_range=list(range(int(np.ma.median(hist))-100, int(np.ma.median(hist))+100, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
 
 
 if __name__ == "__main__":
