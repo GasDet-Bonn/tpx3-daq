@@ -4,6 +4,7 @@ import sys
 from basil.utils.BitLogic import BitLogic
 from six.moves import range
 import os
+from string import Template
 
 
 # this should really be a class method of BitLogic, but to stay compatible with
@@ -105,3 +106,16 @@ def get_equal_path():
     user_path = os.path.join(user_path, 'Timepix3')
     equal_path = os.path.join(user_path, 'equalisations')
     return equal_path
+
+class DeltaTemplate(Template):
+    delimiter = "%"
+
+def strfdelta(tdelta, fmt):
+    d = {"D": tdelta.days}
+    hours, rem = divmod(tdelta.seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    d["H"] = '{:02d}'.format(hours)
+    d["M"] = '{:02d}'.format(minutes)
+    d["S"] = '{:02d}'.format(seconds)
+    t = DeltaTemplate(fmt)
+    return t.substitute(**d)

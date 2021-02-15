@@ -2308,6 +2308,7 @@ class GUI_Main(Gtk.Window):
         current_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         png_path = os.path.join(current_path, 'UI' + os.sep + 'GUI' + os.sep + 'GasDet3.png')
         Gtk.Window.__init__(self, title = "TPX3 control")
+
         self.set_icon_from_file(png_path)
         self.connect("button_press_event", self.window_on_button_press_event)
         self.progress_value_queue = Queue()
@@ -2329,6 +2330,7 @@ class GUI_Main(Gtk.Window):
         self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
         self.simulation_running = False
         self.simulator_process = None
+        self.step_starttime = None
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -2419,7 +2421,7 @@ class GUI_Main(Gtk.Window):
         self.Statusbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 6)
         Status.add(self.Statusbox)
         self.progressbar = Gtk.ProgressBar()
-        self.progressbar.set_show_text(True)
+        self.show_progress_text = False
         self.statuslabel = Gtk.Label()
         self.statuslabel2 = Gtk.Label()
         self.statuslabel3 = Gtk.Label()
@@ -2596,6 +2598,7 @@ class GUI_Main(Gtk.Window):
         self.statusstring2 = ''
         self.statusstring1 = ''
         self.progressbar.set_fraction(0.0)
+        self.progressbar.set_show_text(False)
         self.resize(1,1)
         if self.running_process == None: 
             file_logger.write_backup(file = file_logger.create_file())
@@ -2663,6 +2666,7 @@ class GUI_Main(Gtk.Window):
             self.progressbar.set_fraction(progress)
             self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " using " + str(n_injections) + " testpulses.")
             self.statuslabel6.set_text(statusstring)
+            self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2673,6 +2677,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step")
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2683,6 +2688,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel2.set_text("For testpulses ranging from " + utils.print_nice(lowerTHL * 0.5) + "\u200AmV to " + utils.print_nice(upperTHL * 0.5) + "\u200AmV with " + str(iterations) + " iterations per step")
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2693,6 +2699,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel2.set_text("From THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2703,6 +2710,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel2.set_text("Scanning " + str(n_pulse_heights) + " puls heights from THL\u200A=\u200A" + str(lowerTHL) + " to THL\u200A=\u200A" + str(upperTHL) + " with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2713,6 +2721,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel2.set_text("Scanning over all FPGA and chip links.")
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2723,6 +2732,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel2.set_text("For testpulses ranging from " + utils.print_nice(lowerTHL * 0.5) + "\u200AmV to " + utils.print_nice(upperTHL * 0.5) + "\u200AmV with " + str(iterations) + " iterations per step using " + str(n_injections) + " testpulses.")
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2734,6 +2744,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel2.set_text("Run datataking for " + str(lowerTHL) + "\u200As. " + upperTHL + '.')
             self.statuslabel6.set_text(statusstring)
             self.progressbar.set_fraction(progress)
+            self.show_progress_text = False
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2744,6 +2755,9 @@ class GUI_Main(Gtk.Window):
                 self.statusstring4 = self.statusstring3
                 self.statusstring3 = self.statusstring2
                 self.statusstring2 = self.statusstring1
+                self.step_starttime = datetime.now()
+                runtime = datetime.now() - self.step_starttime
+                self.progressbar.set_text(str(int(0)) + " %, Step time " + utils.strfdelta(runtime, "%M:%S") + " / " + "xx:xx")
                 return
             elif statusstring == 'iteration_finish_symbol':
                 self.iteration_symbol = False
@@ -2755,6 +2769,10 @@ class GUI_Main(Gtk.Window):
                 self.statusstring3 = self.statusstring2
                 self.statusstring2 = self.statusstring1
                 self.statusstring1 = statusstring
+                self.step_starttime = datetime.now()
+                runtime = datetime.now() - self.step_starttime
+                self.progressbar.set_show_text(self.show_progress_text)
+                self.progressbar.set_text(str(int(0)) + " %, Step time " + utils.strfdelta(runtime, "%M:%S") + " / " + "xx:xx")
             self.statuslabel3.set_text(self.statusstring4)
             self.statuslabel4.set_text(self.statusstring3)
             self.statuslabel5.set_text(self.statusstring2)
@@ -2800,11 +2818,17 @@ class GUI_Main(Gtk.Window):
 
     def update_progress(self):
         while not self.progress_value_queue.empty():
-            self.progressbar.set_fraction(self.progress_value_queue.get())
+            fraction = self.progress_value_queue.get()
+            self.progressbar.set_fraction(fraction)
+            runtime = datetime.now() - self.step_starttime
+            estimate = runtime / fraction
+            self.progressbar.set_text(str(int(fraction * 100)) + " %, Step time " + utils.strfdelta(runtime, "%M:%S") + " / " + utils.strfdelta(estimate, "%M:%S"))
         while not self.status_queue.empty():
             statusstring = self.status_queue.get()
             if statusstring == 'Scan finished':
                 self.QuitCurrentFunctionbutton.set_label('Quit')
+                self.show_progress_text = False
+                self.progressbar.set_show_text(self.show_progress_text)
             self.Status_window_call(function = "status", statusstring = statusstring)
         if self.progress_value_queue.empty() and self.status_queue.empty() and not self.get_process_alive():
             GLib.source_remove(self.update_progress_idle)
