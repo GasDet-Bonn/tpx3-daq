@@ -228,20 +228,19 @@ class ToTCalib(ScanBase):
 
                 # Plot the ToT-Curve fit parameter a histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.aMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(0, 20, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
+                p.plot_distribution(hist, plot_range=np.arange(np.median(hist)-3, np.median(hist)+3, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution')
 
                 # Plot the ToT-Curve fit parameter b histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.bMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(-5000, 0, 100)), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
+                p.plot_distribution(hist, plot_range=list(range(int(np.median(hist))-2000, int(np.median(hist))+2000, 50)), x_axis_title='b', title='b distribution', suffix='b_distribution')
 
                 # Plot the ToT-Curve fit parameter c histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.cMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(-10000, 0000, 200)), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
+                p.plot_distribution(hist, plot_range=list(range(int(np.median(hist))-100000, int(np.median(hist))+100000, 2000)), x_axis_title='c', title='c distribution', suffix='c_distribution')
 
                 # Plot the ToT-Curve fit parameter t histogram
                 hist = np.ma.masked_array(h5_file.root.interpreted.tMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(200, 300, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
-                
+                p.plot_distribution(hist, plot_range=list(range(int(np.median(hist))-100, int(np.median(hist))+100, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution')
 
 
 if __name__ == "__main__":
