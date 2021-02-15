@@ -2821,7 +2821,7 @@ class GUI_Main(Gtk.Window):
             fraction = self.progress_value_queue.get()
             self.progressbar.set_fraction(fraction)
             runtime = datetime.now() - self.step_starttime
-            estimate = runtime / fraction
+            estimate = runtime / fraction - runtime
             self.progressbar.set_text(str(int(fraction * 100)) + " %, Step time " + utils.strfdelta(runtime, "%M:%S") + " / " + utils.strfdelta(estimate, "%M:%S"))
         while not self.status_queue.empty():
             statusstring = self.status_queue.get()
