@@ -879,7 +879,7 @@ def fit_scurves_multithread(scurves, scan_param_range,
     sigmas = []
 
     if progress == None:
-        pbar = tqdm(total=_scurves.shape[0] * _scurves.shape[1])
+        pbar = tqdm(total=_scurves.shape[0])
     else:
         step_counter = 0
 
@@ -899,11 +899,12 @@ def fit_scurves_multithread(scurves, scan_param_range,
                               invert_x=invert_x)
             sigmas.append(sigma)
 
-            if progress == None:
-                pbar.update(1)
-            else:
-                step_counter += 1
-                fraction = step_counter / (_scurves.shape[0] * _scurves.shape[1])
+        step_counter += 1
+        if progress == None:
+            pbar.update(1)
+        else:
+            if step_counter % int(_scurves.shape[0] / 100) == 0:
+                fraction = step_counter / (_scurves.shape[0])
                 progress.put(fraction)
 
     if progress == None:
