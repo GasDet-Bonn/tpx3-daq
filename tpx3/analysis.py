@@ -899,10 +899,10 @@ def fit_scurves_multithread(scurves, scan_param_range,
                               invert_x=invert_x)
             sigmas.append(sigma)
 
-        step_counter += 1
         if progress == None:
             pbar.update(1)
         else:
+            step_counter += 1
             if step_counter % int(_scurves.shape[0] / 100) == 0:
                 fraction = step_counter / (_scurves.shape[0])
                 progress.put(fraction)
