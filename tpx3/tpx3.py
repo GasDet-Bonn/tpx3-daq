@@ -971,12 +971,11 @@ class TPX3(Dut):
         columnMask = BitLogic(256)
 
         # set the bits for all except the selected columns to 1
-        for col in range(256):
-            # all bits 0 which are elements of columns, else 1
-            if ctpr is False:
-                columnMask[col] = 0 if col in columns else 1
-            else:
-                columnMask[col] = 1 if col in columns else 0
+        for col in columns:
+            columnMask[col] = 1
+
+        if ctpr is False:
+            columnMask.invert()
 
         data = []
 
