@@ -345,16 +345,21 @@ class ScanBase(object):
 
             # Create the list of mask commands - only for columns that changed the pcr
             column_list = list(range(column_start, 256, step))
-            if column_start == (i-1)//(mask_step//int(math.sqrt(mask_step))):
-                for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                    mask_step_cmd.append(self.chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+            if i == offset:
+                for i in range(256 // 4):
+                    mask_step_cmd.append(self.chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
             else:
-                previous_column_list = [x - 1 for x in column_list]
-                if previous_column_list[0] < 0:
-                    previous_column_list = previous_column_list[1:]
-                for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                    mask_step_cmd.append(self.chip.write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
-                    mask_step_cmd.append(self.chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                if column_start == (i-1)//(mask_step//int(math.sqrt(mask_step))):
+                    for j in range((256 // int(math.sqrt(mask_step))) // 4):
+                        mask_step_cmd.append(self.chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                else:
+                    previous_column_list = list([x - 1 for x in column_list])
+                    if previous_column_list[0] < 0:
+                        previous_column_list = previous_column_list[1:]
+                        previous_column_list.append(255)
+                    for j in range((256 // int(math.sqrt(mask_step))) // 4):
+                        mask_step_cmd.append(self.chip.write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
+                        mask_step_cmd.append(self.chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
 
             if append_datadriven == True:
                 # Append the command for initializing a data driven readout
