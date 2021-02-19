@@ -66,11 +66,11 @@ class GUI_Plot1(Gtk.Window):
 
             if TPX3_datalogger.read_value('plottype') == 'normal':
                 self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(TPX3_datalogger.read_value('colorsteps')))
-            self.Tag = GLib.idle_add(self.plotwidget.update_plot)
+                self.Tag = GLib.idle_add(self.plotwidget.update_plot)
             elif TPX3_datalogger.read_value('plottype') == 'occupancy':
                 self.plotwidget.change_colormap(colormap = cm.viridis, vmax = TPX3_datalogger.read_value('color_depth'))
-            self.plotwidget.reset_occupancy()
-            self.Tag = GLib.idle_add(self.plotwidget.update_occupancy_plot)
+                self.plotwidget.reset_occupancy()
+                self.Tag = GLib.idle_add(self.plotwidget.update_occupancy_plot)
 
         if self.started_from == 'CLI':
             self.plotwidget.set_plottype(plottype)
@@ -127,7 +127,7 @@ class GUI_Plot1(Gtk.Window):
                     ' color_depth=' + str(self.plotwidget.get_iteration_depth('occupancy.color')))
         GLib.source_remove(self.Tag)
         if self.started_from == 'GUI':
-        GUI.closed_plot1()
+            GUI.closed_plot1()
         self.destroy()
 
 class GUI_Plot_settings(Gtk.Window):
