@@ -1,8 +1,11 @@
 import readline
 import sys
 import os
-from multiprocessing import Process, Queue
+import time
+from multiprocessing import Process, Queue, Pipe
+from subprocess import Popen, PIPE
 from shutil import copy
+
 from tpx3.scans.ToT_calib import ToTCalib
 from tpx3.scans.scan_threshold import ThresholdScan
 from tpx3.scans.scan_testpulse import TestpulseScan
@@ -14,6 +17,8 @@ from tpx3.scans.Threshold_calib import ThresholdCalib
 from tpx3.scans.scan_hardware import ScanHardware
 from tpx3.scan_base import ConfigError
 from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
+from UI.GUI.converter import utils as conv_utils
+from UI.GUI.converter.converter_manager import ConverterManager
 
 
 # In this part all callable function names should be in the list functions
@@ -41,6 +46,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode',
                 'Set_Fast_Io', 'Fast_Io', 'set_fast_io', 'fast_io', 'Fast_Io_en', 'fast_io_en',
                 'Set_Readout_Intervall', 'set_readout_intervall', 'Readout_Intervall', 'readout_intervall',
+                'Plot', 'plot',
+                'Stop_Plot', 'stop_plot',
                 'Expert', 'expert',
                 'Chip_names', 'chip_names', 'Who', 'who',
                 'Help', 'help', 'h', '-h',
@@ -55,6 +62,7 @@ expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'c
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation',
                     'TP_Period', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Save_Mask', 'Load_Mask', 'Set_Mask',
+                    'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names', 'Help', 'Quit']
 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency']
 
@@ -905,6 +913,8 @@ class TPX3_CLI_TOP(object):
         TPX3_datalogger.set_data(data)
         TPX3_datalogger.write_backup_to_yaml()
         print('\n Welcome to the Timepix3 control Software\n')
+        self.data_queue = None
+        self.plot_window_process = None
 
         if not ext_input_list == None:
             cmd_list_element = []
@@ -1527,6 +1537,78 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) > 1:
                             print('GUI takes no parameters')
 
+                #Start Plot window
+                elif inputlist[0] in {'Plot', 'plot'}:
+                    if len(inputlist) == 1:
+                        if self.plot_window_process == None:
+                            plottype = ('plottype=' + str(TPX3_datalogger.read_value('plottype')))
+                            integration_length = ('integration_length=' + str(TPX3_datalogger.read_value('integration_length')))
+                            color_depth = ('color_depth=' + str(TPX3_datalogger.read_value('color_depth')))
+                            colorsteps = ('colorsteps=' + str(TPX3_datalogger.read_value('colorsteps')))
+
+                            self.plot_window_process = Popen(['python', 'CLI_Plot_main.py', 
+                                                                                plottype, 
+                                                                                integration_length,
+                                                                                color_depth,
+                                                                                colorsteps], 
+                                                                                stdout = PIPE, 
+                                                                                text = True)
+                        else:
+                            print('The Plot window is still open or not stoped vie "stop_plot". This will be done for you now.')
+                            try:
+                                self.plot_window_process.terminate()
+                            except:
+                                pass
+                            try:
+                                return_values, signal = self.plot_window_process.communicate()
+                                for key, value in dict(arg.split('=') for arg in return_values.split()[0:]).items():
+                                    if key == 'plottype':
+                                        TPX3_datalogger.write_value(name = 'plottype', value = value)
+                                    elif key == 'integration_length':
+                                        TPX3_datalogger.write_value(name = 'integration_length', value = int(value))
+                                    elif key == 'color_depth':
+                                        TPX3_datalogger.write_value(name = 'color_depth', value = int(value))
+                                    elif key == 'colorsteps':
+                                        TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
+                            except:
+                                print('Error: I did not recieve any values from plotting window')
+                            self.plot_window_process = None
+
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This will start the a online ploting window for the data taken')
+                        elif len(inputlist) > 1:
+                            print('Plot takes no parameters')
+
+                #Stop Plot window
+                elif inputlist[0] in {'Stop_Plot', 'stop_plot'}:
+                    if len(inputlist) == 1:
+                        if self.plot_window_process != None:
+                            try:
+                                self.plot_window_process.terminate()
+                            except:
+                                pass
+                            try:
+                                return_values, signal = self.plot_window_process.communicate()
+                                for key, value in dict(arg.split('=') for arg in return_values.split()[0:]).items():
+                                    if key == 'plottype':
+                                        TPX3_datalogger.write_value(name = 'plottype', value = value)
+                                    elif key == 'integration_length':
+                                        TPX3_datalogger.write_value(name = 'integration_length', value = int(value))
+                                    elif key == 'color_depth':
+                                        TPX3_datalogger.write_value(name = 'color_depth', value = int(value))
+                                    elif key == 'colorsteps':
+                                        TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
+                            except:
+                                print('Error: I did not recieve any values from plotting window')
+                            self.plot_window_process = None
+                        
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This will start the a online ploting window for the data taken')
+                        elif len(inputlist) > 1:
+                            print('Plot takes no parameters')
+
                 #Set expert mode
                 elif inputlist[0] in {'Expert', 'expert'}:
                     if expertmode == False:
@@ -1552,6 +1634,25 @@ class TPX3_CLI_TOP(object):
                 
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
+                    if self.plot_window_process != None:
+                        try:
+                            self.plot_window_process.terminate()
+                        except:
+                            pass
+                        try:
+                            return_values, signal = self.plot_window_process.communicate()
+                            for key, value in dict(arg.split('=') for arg in return_values.split()[0:]).items():
+                                if key == 'plottype':
+                                    TPX3_datalogger.write_value(name = 'plottype', value = value)
+                                elif key == 'integration_length':
+                                    TPX3_datalogger.write_value(name = 'integration_length', value = int(value))
+                                elif key == 'color_depth':
+                                    TPX3_datalogger.write_value(name = 'color_depth', value = int(value))
+                                elif key == 'colorsteps':
+                                    TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
+                        except:
+                            print('Error: I did not recieve any values from plotting window')
+                        self.plot_window_process = None
                     file_logger.write_backup(file = file_logger.create_file())
                     file_logger.delete_tmp_backups()
                     print('Goodbye and have a nice day.')

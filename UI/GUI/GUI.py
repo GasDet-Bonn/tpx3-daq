@@ -24,11 +24,14 @@ from UI.GUI.sim_producer.producer_sim_manager import ProducerSimManager
 
 
 class GUI_Plot1(Gtk.Window):
-    def __init__(self, data_queue):
-        self.active = "False"
-        Gtk.Window.__init__(self, title = "Plot")
-        self.connect("delete-event", self.window_destroy)
+    def __init__(self, data_queue, startet_from = 'GUI', plottype = None, integration_length = None, color_depth = None, colorsteps = None):
+        self.active = 'False'
+        Gtk.Window.__init__(self, title = 'Plot')
+        self.connect('delete-event', self.window_destroy)
+
         self.set_default_size(400, 400)
+        self.started_from = startet_from 
+        self.Tag = None
 
         self.box = Gtk.Box(spacing = 6, orientation = Gtk.Orientation.HORIZONTAL)
         self.add(self.box)
@@ -55,18 +58,33 @@ class GUI_Plot1(Gtk.Window):
         self.box.grid.attach(self.Slowbutton, 0, 1, 1, 1)
         self.box.grid.attach(self.Fastbutton, 0, 2, 1, 1)
 
-        self.plotwidget.set_plottype(TPX3_datalogger.read_value("plottype"))
-        self.plotwidget.set_occupancy_length(TPX3_datalogger.read_value("integration_length"))
-        self.plotwidget.set_color_depth(TPX3_datalogger.read_value("color_depth"))
-        self.plotwidget.set_color_steps(TPX3_datalogger.read_value("colorsteps"))
+        if self.started_from == 'GUI':
+            self.plotwidget.set_plottype(TPX3_datalogger.read_value('plottype'))
+            self.plotwidget.set_occupancy_length(TPX3_datalogger.read_value('integration_length'))
+            self.plotwidget.set_color_depth(TPX3_datalogger.read_value('color_depth'))
+            self.plotwidget.set_color_steps(TPX3_datalogger.read_value('colorsteps'))
 
-        if TPX3_datalogger.read_value("plottype") == "normal":
-            self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(TPX3_datalogger.read_value("colorsteps")))
+            if TPX3_datalogger.read_value('plottype') == 'normal':
+                self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(TPX3_datalogger.read_value('colorsteps')))
             self.Tag = GLib.idle_add(self.plotwidget.update_plot)
-        elif TPX3_datalogger.read_value("plottype") == "occupancy":
-            self.plotwidget.change_colormap(colormap = cm.viridis, vmax = TPX3_datalogger.read_value("color_depth"))
+            elif TPX3_datalogger.read_value('plottype') == 'occupancy':
+                self.plotwidget.change_colormap(colormap = cm.viridis, vmax = TPX3_datalogger.read_value('color_depth'))
             self.plotwidget.reset_occupancy()
             self.Tag = GLib.idle_add(self.plotwidget.update_occupancy_plot)
+
+        if self.started_from == 'CLI':
+            self.plotwidget.set_plottype(plottype)
+            self.plotwidget.set_occupancy_length(integration_length)
+            self.plotwidget.set_color_depth(color_depth)
+            self.plotwidget.set_color_steps(colorsteps)
+
+            if plottype == 'normal':
+                self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(colorsteps))
+                self.Tag = GLib.idle_add(self.plotwidget.update_plot)
+            elif plottype == 'occupancy':
+                self.plotwidget.change_colormap(colormap = cm.viridis, vmax = color_depth)
+                self.plotwidget.reset_occupancy()
+                self.Tag = GLib.idle_add(self.plotwidget.update_occupancy_plot)
 
         self.show_all()
 
@@ -96,12 +114,19 @@ class GUI_Plot1(Gtk.Window):
     def stop_idle_job(self):
         GLib.source_remove(self.Tag)
     
-    def window_destroy(event, self, widget):
-        TPX3_datalogger.write_value(name = "plottype", value = self.plotwidget.get_plottype())
-        TPX3_datalogger.write_value(name = "colorsteps", value = self.plotwidget.get_iteration_depth("normal"))
-        TPX3_datalogger.write_value(name = "integration_length", value = self.plotwidget.get_iteration_depth("occupancy"))
-        TPX3_datalogger.write_value(name = "color_depth", value = self.plotwidget.get_iteration_depth("occupancy.color"))
+    def window_destroy(self, event, widget):
+        if self.started_from == 'GUI':
+            TPX3_datalogger.write_value(name = 'plottype', value = self.plotwidget.get_plottype())
+            TPX3_datalogger.write_value(name = 'colorsteps', value = self.plotwidget.get_iteration_depth('normal'))
+            TPX3_datalogger.write_value(name = 'integration_length', value = self.plotwidget.get_iteration_depth('occupancy'))
+            TPX3_datalogger.write_value(name = 'color_depth', value = self.plotwidget.get_iteration_depth('occupancy.color'))
+        if self.started_from == 'CLI':
+            print('plottype=' + str(self.plotwidget.get_plottype()) + 
+                    ' colorsteps=' + str(self.plotwidget.get_iteration_depth('normal')) + 
+                    ' integration_length=' + str(self.plotwidget.get_iteration_depth('occupancy')) + 
+                    ' color_depth=' + str(self.plotwidget.get_iteration_depth('occupancy.color')))
         GLib.source_remove(self.Tag)
+        if self.started_from == 'GUI':
         GUI.closed_plot1()
         self.destroy()
 
@@ -2968,6 +2993,8 @@ class GUI_Main(Gtk.Window):
             self.terminate_converter()
         elif self.on_notebook_page == 1:
             self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
+        else:
+            self.terminate_converter()
 
     def terminate_simulator(self):
         if self.simulator_process == None:

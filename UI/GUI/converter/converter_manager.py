@@ -50,6 +50,10 @@ class ConverterManager(object):
             logging.info('System exit, shutting down %d converters', len(self.configuration['converter']))
             for converter in converters:
                 converter.shutdown()
+        except:
+            logging.info('Other exit, shutting down %d converters', len(self.configuration['converter']))
+            for converter in converters:
+                converter.shutdown()
 
         for converter in converters:
             converter.join()
