@@ -2315,14 +2315,53 @@ class GUI_Main_Error(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Plot_Box_close_all(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Close all')
+        #self.set_decorated(False)
+        self.connect('delete-event', self.window_destroy)
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        self.add(grid)
+
+        self.yes_button = Gtk.Button(label = 'Yes')
+        self.yes_button.connect('clicked', self.on_yes_button_clicked)
+        self.no_button = Gtk.Button(label = 'No')
+        self.no_button.connect('clicked', self.on_no_button_clicked)
+        label1 = Gtk.Label()
+        label1.set_text('Close all plots?')
+
+        grid.attach(label1, 0, 0, 2, 1)
+        grid.attach(self.yes_button, 0, 1, 1, 1)
+        grid.attach(self.no_button, 1, 1, 1, 1)
+
+        self.show_all()
+
+    def on_yes_button_clicked(self, widget):
+        GUI.delete_all_plot_windows()
+        self.destroy()
+
+    def on_no_button_clicked(self, widget):
+        self.destroy()
+
+    def window_destroy(self, widget, event = True):
+        self.destroy()
+
 class GUI_Plot_Box(Gtk.Window):
     def __init__(self, plotname, figure, figure_width, figure_height):
         Gtk.Window.__init__(self, title = plotname)
-        self.connect("delete-event", self.window_destroy)
+        self.connect('delete-event', self.window_destroy)
+        self.connect('button_press_event', self.window_on_button_press_event)
         canvas = FigureCanvas(figure)
         canvas.set_size_request(figure_width, figure_height)
         self.add(canvas)
         self.show_all()
+
+    def window_on_button_press_event(self, widget, event):
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
+            subw = GUI_Plot_Box_close_all()
 
     def window_destroy(self, widget, event = True):
         self.destroy()        
@@ -2841,6 +2880,11 @@ class GUI_Main(Gtk.Window):
         else:
             return self.simulator_process.is_alive()
 
+    def delete_all_plot_windows(self):
+        while self.plot_window_list:
+            plot_window = self.plot_window_list.pop()
+            plot_window.window_destroy(widget = 'GUI')
+
     def update_progress(self):
         while not self.progress_value_queue.empty():
             fraction = self.progress_value_queue.get()
@@ -2963,6 +3007,7 @@ class GUI_Main(Gtk.Window):
 
     def plot_from_figure(self, plotname, figure, figure_width = 500, figure_height = 400):
         plotw = GUI_Plot_Box(plotname, figure, figure_width, figure_height)
+        self.plot_window_list.append(plotw)
 
     ########################################################################################################################
     ### General functions
