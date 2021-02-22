@@ -31,8 +31,8 @@ class ScanHardware(object):
                 yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
         # Initialize the chip communication
-        chip = TPX3()
-        chip.init()
+        self.chip = TPX3()
+        self.chip.init()
 
         rx_list_names = ['RX0','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
 
@@ -54,52 +54,52 @@ class ScanHardware(object):
                 status.put("Scan for {} (Iteration {} of {})".format(fpga_link, fpga_link_number + 1, len(rx_list_names)))
             
             # Reset the chip
-            chip['CONTROL']['RESET'] = 1
-            chip['CONTROL'].write()
-            chip['CONTROL']['RESET'] = 0
-            chip['CONTROL'].write()
+            self.chip['CONTROL']['RESET'] = 1
+            self.chip['CONTROL'].write()
+            self.chip['CONTROL']['RESET'] = 0
+            self.chip['CONTROL'].write()
 
             # Write the PLL 
-            data = chip.write_pll_config()
+            data = self.chip.write_pll_config()
 
             # Iterate over all chip links
             for chip_link in range(8):
                 link_found = False
 
                 # Create the chip output channel mask and write the output block
-                chip._outputBlocks["chan_mask"] = 0b1 << chip_link
-                data = chip.write_outputBlock_config()
+                self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
+                data = self.chip.write_outputBlock_config()
 
                 # Iterate over all possible data delays
                 for delay in range(32):
 
                     # Deactivate all fpga links
                     for i in range(len(rx_list_names)):
-                        chip[rx_list_names[i]].ENABLE = 0
-                        chip[rx_list_names[i]].reset()
+                        self.chip[rx_list_names[i]].ENABLE = 0
+                        self.chip[rx_list_names[i]].reset()
 
                     # Aktivate the current fpga link and set all its settings
-                    chip[fpga_link].ENABLE = 1
-                    chip[fpga_link].DATA_DELAY = delay
-                    chip[fpga_link].INVERT = 0
-                    chip[fpga_link].SAMPLING_EDGE = 0
+                    self.chip[fpga_link].ENABLE = 1
+                    self.chip[fpga_link].DATA_DELAY = delay
+                    self.chip[fpga_link].INVERT = 0
+                    self.chip[fpga_link].SAMPLING_EDGE = 0
 
                     # Reset and clean the FIFO
-                    chip['FIFO'].reset()
+                    self.chip['FIFO'].reset()
                     time.sleep(0.01)
-                    chip['FIFO'].get_data()
+                    self.chip['FIFO'].get_data()
 
                     # Send the EFuse_Read command multiple times for statistics
                     for _ in range(50):
-                        data = chip.read_periphery_template("EFuse_Read")
+                        data = self.chip.read_periphery_template("EFuse_Read")
                         data += [0x00]*4
-                        chip.write(data)
+                        self.chip.write(data)
 
                     # Only proceed for settings which lead to no decoder errors and a ready signal of the receiver
-                    if chip[fpga_link].get_decoder_error_counter() == 0 and chip[fpga_link].is_ready:
+                    if self.chip[fpga_link].get_decoder_error_counter() == 0 and self.chip[fpga_link].is_ready:
                         # Get the data from the chip
-                        fdata = chip['FIFO'].get_data()
-                        dout = chip.decode_fpga(fdata, True)
+                        fdata = self.chip['FIFO'].get_data()
+                        dout = self.chip.decode_fpga(fdata, True)
 
                         # Only proceed if we got the expected number of data packages
                         if len(dout) == 100:
