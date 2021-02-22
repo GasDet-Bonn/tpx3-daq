@@ -904,7 +904,7 @@ class TPX3_CLI_function_call(object):
 
 
 class TPX3_CLI_TOP(object):
-    def __init__(self, ext_input_list = None):
+    def __init__(self, Gui, ext_input_list = None):
         readline.set_completer(completer)
         readline.parse_and_bind("tab: complete")
         function_call = TPX3_CLI_function_call()
@@ -915,6 +915,7 @@ class TPX3_CLI_TOP(object):
         print('\n Welcome to the Timepix3 control Software\n')
         self.data_queue = None
         self.plot_window_process = None
+        self.Gui_activated = Gui
 
         if not ext_input_list == None:
             cmd_list_element = []
@@ -1525,89 +1526,98 @@ class TPX3_CLI_TOP(object):
 
                 #Start GUI
                 elif inputlist[0] in {'GUI'}:
-                    if len(inputlist) == 1:
-                        file_logger.write_backup(file = file_logger.create_file())
-                        GUI.GUI_start()
-                        backup_data = file_logger.read_backup()
-                        TPX3_datalogger.set_data(config = backup_data)
-                        TPX3_datalogger.write_backup_to_yaml()
+                    if self.Gui_activated == True:
+                        if len(inputlist) == 1:
+                            file_logger.write_backup(file = file_logger.create_file())
+                            GUI.GUI_start()
+                            backup_data = file_logger.read_backup()
+                            TPX3_datalogger.set_data(config = backup_data)
+                            TPX3_datalogger.write_backup_to_yaml()
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This will start the GUI')
+                            elif len(inputlist) > 1:
+                                print('GUI takes no parameters')
                     else:
-                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This will start the GUI')
-                        elif len(inputlist) > 1:
-                            print('GUI takes no parameters')
+                        print('This is only aviable with a graphic backend')
 
                 #Start Plot window
                 elif inputlist[0] in {'Plot', 'plot'}:
-                    if len(inputlist) == 1:
-                        if self.plot_window_process == None:
-                            plottype = ('plottype=' + str(TPX3_datalogger.read_value('plottype')))
-                            integration_length = ('integration_length=' + str(TPX3_datalogger.read_value('integration_length')))
-                            color_depth = ('color_depth=' + str(TPX3_datalogger.read_value('color_depth')))
-                            colorsteps = ('colorsteps=' + str(TPX3_datalogger.read_value('colorsteps')))
+                    if self.Gui_activated == True:
+                        if len(inputlist) == 1:
+                            if self.plot_window_process == None:
+                                plottype = ('plottype=' + str(TPX3_datalogger.read_value('plottype')))
+                                integration_length = ('integration_length=' + str(TPX3_datalogger.read_value('integration_length')))
+                                color_depth = ('color_depth=' + str(TPX3_datalogger.read_value('color_depth')))
+                                colorsteps = ('colorsteps=' + str(TPX3_datalogger.read_value('colorsteps')))
 
-                            self.plot_window_process = Popen(['python', 'CLI_Plot_main.py', 
-                                                                                plottype, 
-                                                                                integration_length,
-                                                                                color_depth,
-                                                                                colorsteps], 
-                                                                                stdout = PIPE, 
-                                                                                text = True)
+                                self.plot_window_process = Popen(['python', 'CLI_Plot_main.py', 
+                                                                                    plottype, 
+                                                                                    integration_length,
+                                                                                    color_depth,
+                                                                                    colorsteps], 
+                                                                                    stdout = PIPE, 
+                                                                                    text = True)
+                            else:
+                                print('The Plot window is still open or not stoped vie "stop_plot". This will be done for you now.')
+                                try:
+                                    self.plot_window_process.terminate()
+                                except:
+                                    pass
+                                try:
+                                    return_values, signal = self.plot_window_process.communicate()
+                                    for key, value in dict(arg.split('=') for arg in return_values.split()[0:]).items():
+                                        if key == 'plottype':
+                                            TPX3_datalogger.write_value(name = 'plottype', value = value)
+                                        elif key == 'integration_length':
+                                            TPX3_datalogger.write_value(name = 'integration_length', value = int(value))
+                                        elif key == 'color_depth':
+                                            TPX3_datalogger.write_value(name = 'color_depth', value = int(value))
+                                        elif key == 'colorsteps':
+                                            TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
+                                except:
+                                    print('Error: I did not recieve any values from plotting window')
+                                self.plot_window_process = None
+
                         else:
-                            print('The Plot window is still open or not stoped vie "stop_plot". This will be done for you now.')
-                            try:
-                                self.plot_window_process.terminate()
-                            except:
-                                pass
-                            try:
-                                return_values, signal = self.plot_window_process.communicate()
-                                for key, value in dict(arg.split('=') for arg in return_values.split()[0:]).items():
-                                    if key == 'plottype':
-                                        TPX3_datalogger.write_value(name = 'plottype', value = value)
-                                    elif key == 'integration_length':
-                                        TPX3_datalogger.write_value(name = 'integration_length', value = int(value))
-                                    elif key == 'color_depth':
-                                        TPX3_datalogger.write_value(name = 'color_depth', value = int(value))
-                                    elif key == 'colorsteps':
-                                        TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
-                            except:
-                                print('Error: I did not recieve any values from plotting window')
-                            self.plot_window_process = None
-
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This will start the a online ploting window for the data taken')
+                            elif len(inputlist) > 1:
+                                print('Plot takes no parameters')
                     else:
-                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This will start the a online ploting window for the data taken')
-                        elif len(inputlist) > 1:
-                            print('Plot takes no parameters')
+                        print('This is only aviable with a graphic backend')
 
                 #Stop Plot window
                 elif inputlist[0] in {'Stop_Plot', 'stop_plot'}:
-                    if len(inputlist) == 1:
-                        if self.plot_window_process != None:
-                            try:
-                                self.plot_window_process.terminate()
-                            except:
-                                pass
-                            try:
-                                return_values, signal = self.plot_window_process.communicate()
-                                for key, value in dict(arg.split('=') for arg in return_values.split()[0:]).items():
-                                    if key == 'plottype':
-                                        TPX3_datalogger.write_value(name = 'plottype', value = value)
-                                    elif key == 'integration_length':
-                                        TPX3_datalogger.write_value(name = 'integration_length', value = int(value))
-                                    elif key == 'color_depth':
-                                        TPX3_datalogger.write_value(name = 'color_depth', value = int(value))
-                                    elif key == 'colorsteps':
-                                        TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
-                            except:
-                                print('Error: I did not recieve any values from plotting window')
-                            self.plot_window_process = None
-                        
+                    if self.Gui_activated == True:
+                        if len(inputlist) == 1:
+                            if self.plot_window_process != None:
+                                try:
+                                    self.plot_window_process.terminate()
+                                except:
+                                    pass
+                                try:
+                                    return_values, signal = self.plot_window_process.communicate()
+                                    for key, value in dict(arg.split('=') for arg in return_values.split()[0:]).items():
+                                        if key == 'plottype':
+                                            TPX3_datalogger.write_value(name = 'plottype', value = value)
+                                        elif key == 'integration_length':
+                                            TPX3_datalogger.write_value(name = 'integration_length', value = int(value))
+                                        elif key == 'color_depth':
+                                            TPX3_datalogger.write_value(name = 'color_depth', value = int(value))
+                                        elif key == 'colorsteps':
+                                            TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
+                                except:
+                                    print('Error: I did not recieve any values from plotting window')
+                                self.plot_window_process = None
+
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This will start the a online ploting window for the data taken')
+                            elif len(inputlist) > 1:
+                                print('Plot takes no parameters')
                     else:
-                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This will start the a online ploting window for the data taken')
-                        elif len(inputlist) > 1:
-                            print('Plot takes no parameters')
+                        print('This is only aviable with a graphic backend')
 
                 #Set expert mode
                 elif inputlist[0] in {'Expert', 'expert'}:
@@ -1634,7 +1644,7 @@ class TPX3_CLI_TOP(object):
                 
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
-                    if self.plot_window_process != None:
+                    if self.Gui_activated == True and self.plot_window_process != None:
                         try:
                             self.plot_window_process.terminate()
                         except:
@@ -1769,11 +1779,17 @@ class TPX3_CLI_TOP(object):
                 else:
                     print('Unknown command: ', cmd_input, ' Use a language I understand.')
 
-if __name__ == "__main__":
-    import UI.GUI.GUI as GUI
+if __name__ == '__main__':
+    Gui = None
+    try:
+        import UI.GUI.GUI as GUI
+        Gui = True
+    except:
+        print('The GUI module could not be loaded. This means the plot and the GUI functions are disabeled')
+        Gui = False
     ext_input_list = sys.argv
     ext_input_list.pop(0)
     if ext_input_list == []:
-        tpx3_cli = TPX3_CLI_TOP()
+        tpx3_cli = TPX3_CLI_TOP(Gui = Gui)
     else:
-        tpx3_cli = TPX3_CLI_TOP(ext_input_list = ext_input_list)
+        tpx3_cli = TPX3_CLI_TOP(Gui = Gui, ext_input_list = ext_input_list)
