@@ -5,6 +5,21 @@ from basil.utils.BitLogic import BitLogic
 from six.moves import range
 import os
 from string import Template
+import subprocess
+import pkg_resources
+
+
+def get_software_version():
+    '''
+        Tries to get the software version based on the git commit and branch. If this does not
+        work the version defined in __init__.py is used
+    '''
+    try:
+        rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
+        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
+        return branch + '@' + rev
+    except:
+        return pkg_resources.get_distribution("tpx3-daq").version
 
 
 # this should really be a class method of BitLogic, but to stay compatible with

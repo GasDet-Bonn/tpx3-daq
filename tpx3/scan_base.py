@@ -11,8 +11,6 @@ import time
 import os
 import yaml
 import logging
-import subprocess
-import pkg_resources
 import tables as tb
 import numpy as np
 import zmq
@@ -23,26 +21,12 @@ from basil.utils.BitLogic import BitLogic
 from contextlib import contextmanager
 from .tpx3 import TPX3
 from .fifo_readout import FifoReadout
-from tpx3.utils import check_user_folders, get_equal_path
+from tpx3.utils import check_user_folders, get_equal_path, get_software_version
 from tables.exceptions import NoSuchNodeError
 import six
 from six.moves import range
 
-VERSION = pkg_resources.get_distribution("tpx3-daq").version
 loglevel = logging.getLogger('TPX3').getEffectiveLevel()
-
-
-def get_software_version():
-    '''
-        Tries to get the software version based on the git commit and branch. If this does not
-        work the version defined in __init__.py is used
-    '''
-    try:
-        rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
-        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
-        return branch + '@' + rev
-    except:
-        return VERSION
 
 
 class ConfigError(Exception):
