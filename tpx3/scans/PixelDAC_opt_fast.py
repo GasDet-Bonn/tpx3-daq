@@ -295,14 +295,14 @@ class PixelDAC_opt(ScanBase):
 
             self.logger.info('THR = 0')
             #THR = 0
-            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[:' + meta_data_th0['index_stop'][-1] + ']')
+            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[:' + str(meta_data_th0['index_stop'][-1]) + ']')
             raw_data_thr0 = eval(raw_data_call)
             hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, meta_data_th0, progress = progress)
             raw_data_thr0 = None
 
             self.logger.info('THR = 15')
             #THR = 15
-            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[' + meta_data_th0['index_stop'][-1] + ':]')
+            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[' + str(meta_data_th0['index_stop'][-1]) + ':]')
             raw_data_thr15 = eval(raw_data_call)
             hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, meta_data_th15, progress = progress)
             raw_data_thr15 = None
