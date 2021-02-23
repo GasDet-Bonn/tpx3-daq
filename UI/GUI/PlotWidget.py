@@ -2,47 +2,10 @@
 
 import numpy as np
 from matplotlib.figure import Figure
-from numpy import arange, pi, random, linspace
 import matplotlib.cm as cm
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
 
-class plotwidget2(object):#For tests
-    def __init__(self):
-        self.active = True
-        self.fig = Figure(figsize = (6, 6), dpi = 100)
-        self.ax = self.fig.add_subplot(111, projection = 'polar')
-        
-        self.canvas = FigureCanvas(self.fig)
-        self.canvas.set_size_request(500, 500)
-
-        N = 20
-        theta = linspace(0.0, 2 * pi, N, endpoint = False)
-        radii = 10 * random.rand(N)
-        width = pi / 4 * random.rand(N)
-
-        self.bars = self.ax.bar(theta, radii, width = width, bottom = 0.0)
-        for r, bar in zip(radii, self.bars):
-            bar.set_facecolor(cm.jet(r / 10.))
-            bar.set_alpha(0.5)
-        self.ax.plot()
-    
-    def update_plot(self):
-        print("upsate")
-        self.ax.cla()
-        N = 20
-        theta = linspace(0.0, 2 * pi, N, endpoint = False)
-        radii = 10 * random.rand(N)
-        width = pi / 4 * random.rand(N)
-
-        self.bars = self.ax.bar(theta, radii, width = width, bottom = 0.0)
-
-        for r, bar in zip(radii, self.bars):
-            bar.set_facecolor(cm.jet(r / 10.))
-            bar.set_alpha(0.5)
-        self.canvas.draw()
-        return True
-        
 class plotwidget(object):
     def __init__(self, data_queue):
         self.plottype = "normal"
