@@ -2394,6 +2394,8 @@ class GUI_Main(Gtk.Window):
         self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
         self.simulation_running = False
         self.simulator_process = None
+        self.software_version = utils.get_software_version()
+        self.firmware_version = 'x.x'
         self.plot_window_list = []
 
         self.grid = Gtk.Grid()
@@ -2478,8 +2480,9 @@ class GUI_Main(Gtk.Window):
         self.SetMaskbutton = Gtk.Button(label = "Set Mask")
         self.SetMaskbutton.connect("clicked", self.on_SetMaskbutton_clicked)
 
-        self.QuitCurrentFunctionbutton = Gtk.Button(label = "Quit")
-        self.QuitCurrentFunctionbutton.connect("clicked", self.on_QuitCurrentFunctionbutton_clicked)
+        self.about_label = Gtk.Label()
+        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+                                    '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
 
         Status = Gtk.Frame()
         self.Statusbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 6)
@@ -2523,9 +2526,10 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(Status, 2, 8, 12, 5)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
-        page1.grid.attach(self.SetDACbutton, 14, 0, 3, 1)
-        page1.grid.attach(self.AddSetbutton, 14, 1, 3, 1)
-        page1.grid.attach(self.SetMaskbutton, 14, 3, 3, 1)
+        page1.grid.attach(self.about_label, 14, 0, 3, 2)
+        page1.grid.attach(self.SetDACbutton, 14, 3, 3, 1)
+        page1.grid.attach(self.AddSetbutton, 14, 4, 3, 1)
+        page1.grid.attach(self.SetMaskbutton, 14, 6, 3, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
 
