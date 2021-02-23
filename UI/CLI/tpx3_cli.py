@@ -19,6 +19,7 @@ from tpx3.scan_base import ConfigError
 from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
 from UI.GUI.converter import utils as conv_utils
 from UI.GUI.converter.converter_manager import ConverterManager
+from tpx3.utils import get_software_version
 
 
 # In this part all callable function names should be in the list functions
@@ -51,6 +52,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Expert', 'expert',
                 'Chip_names', 'chip_names', 'Who', 'who',
                 'Help', 'help', 'h', '-h',
+                'About', 'about',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 
 expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'clk_fast_mode',
@@ -912,6 +914,9 @@ class TPX3_CLI_TOP(object):
         data = file_logger.read_backup()
         TPX3_datalogger.set_data(data)
         TPX3_datalogger.write_backup_to_yaml()
+        self.software_version = get_software_version()
+        TPX3_datalogger.write_value(name = 'software_version', value = self.software_version)
+        self.firmware_version = 'x.x'
         print('\n Welcome to the Timepix3 control Software\n')
         self.data_queue = None
         self.plot_window_process = None
@@ -1495,8 +1500,11 @@ class TPX3_CLI_TOP(object):
                         try:
                             Chip_List = function_call.Initialise_Hardware()
                             for n, chip in enumerate(Chip_List):
-                                name = 'Chip' + str(n) + '_name'
-                                TPX3_datalogger.write_value(name = name, value = chip)
+                                if n == 0:
+                                    self.firmware_version = chip
+                                else:
+                                    name = 'Chip' + str(n - 1) + '_name'
+                                    TPX3_datalogger.write_value(name = name, value = chip)
                         except KeyboardInterrupt:
                             print('User quit')
                     else:
@@ -1641,6 +1649,13 @@ class TPX3_CLI_TOP(object):
                             print(Chipname + ' on ' + str(number_of_links) + ' link')
                         else:
                             print(Chipname + ' on ' + str(number_of_links) + ' links')
+
+                # About
+                elif inputlist[0] in {'About', 'about'}:
+                    print('TPX3 CLI')
+                    print('Software version: ' + str(self.software_version))
+                    print('Firmware version: ' + str(self.firmware_version))
+                    print('GasDet Bonn 2019-2021')
                 
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
