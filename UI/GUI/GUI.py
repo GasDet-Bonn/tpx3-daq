@@ -2394,7 +2394,7 @@ class GUI_Main(Gtk.Window):
         self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
         self.simulation_running = False
         self.simulator_process = None
-        self.step_starttime = None
+        self.plot_window_list = []
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
