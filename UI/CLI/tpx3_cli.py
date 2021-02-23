@@ -1499,12 +1499,18 @@ class TPX3_CLI_TOP(object):
                         print('Initialise Hardware')
                         try:
                             Chip_List = function_call.Initialise_Hardware()
-                            for n, chip in enumerate(Chip_List):
-                                if n == 0:
-                                    self.firmware_version = chip
+                            for n in range(0,8):
+                                if n == 0 and Chip_List:
+                                    self.firmware_version = Chip_List.pop(0)
+                                    TPX3_datalogger.write_value(name = 'firmware_version', value = Chip_List.pop(0))
+                                    self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+                                                                '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+                                elif Chip_List:
+                                    name = 'Chip' + str(n - 1) + '_name'
+                                    TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
                                 else:
                                     name = 'Chip' + str(n - 1) + '_name'
-                                    TPX3_datalogger.write_value(name = name, value = chip)
+                                    TPX3_datalogger.write_value(name = name, value = [None])
                         except KeyboardInterrupt:
                             print('User quit')
                     else:

@@ -291,7 +291,8 @@ class TPX3_data_logger(object):
 #here the data will be logged while the programm is running this function is called as global
     def __init__(self):
         check_user_folders()
-        self.config_keys = ['Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 
+        self.config_keys = ['software_version', 'firmware_version', 
+                            'Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 
                             'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name', 
                             'plottype', 'colorsteps', 'integration_length', 
                             'color_depth', 'Ibias_Preamp_ON', 'VPreamp_NCAS', 
@@ -305,7 +306,9 @@ class TPX3_data_logger(object):
         self.data = self.default_config()
 
     def default_config(self):
-        return {'Chip0_name' : [None],#[W?_??, [FPGA n, link n , delay, data-invert, data-edge], [FPGA m, link m , delay, data-invert, data-edge], ... ]
+        return {'software_version' : 'x.x',
+                'firmware_version' : 'x.x',
+                'Chip0_name' : [None],#[W?_??, [FPGA n, link n , delay, data-invert, data-edge], [FPGA m, link m , delay, data-invert, data-edge], ... ]
                 'Chip1_name' : [None],
                 'Chip2_name' : [None],
                 'Chip3_name' : [None],
