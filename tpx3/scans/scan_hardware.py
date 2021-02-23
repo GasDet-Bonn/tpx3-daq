@@ -189,7 +189,7 @@ class ScanHardware(object):
         if results == None:
             return Chip_List
         else:
-            results.put(Chip_List)
+            results.put([self.chip.fw_version] + Chip_List)
 
     def analyze(self, **kwargs):
         raise NotImplementedError('scan_hardware.analyze() not implemented')
