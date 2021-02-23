@@ -113,11 +113,6 @@ class plotwidget(object):
             self.t_vals = np.append(self.t_vals, t)
             max_value = np.amax(self.t_vals) # This has to be changed to a more general way
             t = t/max_value
-        
-        #n = np.random.randint(1, 5)
-        #x = np.random.randint(255, size = n)
-        #y = np.random.randint(255, size = n)
-        #t = (1 - (np.random.rand(n) / self.colorsteps))
 
         return x, y, t
 
