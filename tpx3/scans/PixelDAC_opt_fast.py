@@ -158,7 +158,7 @@ class PixelDAC_opt(ScanBase):
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
         self.logger.info('Starting scan for THR = 0...')
         if status != None:
-            status.put("Starting scan")
+            status.put("Starting scan for THR = 0")
         if status != None:
             status.put("iteration_symbol")
 
@@ -175,16 +175,14 @@ class PixelDAC_opt(ScanBase):
         # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
         self.chip.write(mask_cmds)
 
-        for scan_param_id, vcal in enumerate(cal_high_range):
+        scan_param_id = 0
+        for vcal in cal_high_range:
             # Set the threshold
             self.chip.set_threshold(vcal)
 
             self.chip.read_pixel_matrix_datadriven()
 
             with self.readout(scan_param_id=scan_param_id):
-                if status != None:
-                    status.put("Scan iteration {} of {} for THR = 0".format(scan_param_id + 1, len(cal_high_range)))
-
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
                     time.sleep(0.01)
@@ -199,6 +197,7 @@ class PixelDAC_opt(ScanBase):
                 self.chip.stop_readout()
                 time.sleep(0.001)
             self.chip.reset_sequential()
+            scan_param_id += 1
 
         if progress == None:
             # Close the progress bar
@@ -206,6 +205,10 @@ class PixelDAC_opt(ScanBase):
 
         # Scan with all masks over the given threshold range for pixelthreshold 15
         self.logger.info('Starting scan for THR = 15...')
+        if status != None:
+            status.put("Starting scan for THR = 15")
+        if status != None:
+            status.put("iteration_symbol")
 
         if progress == None:
             # Initialize progress bar
@@ -217,16 +220,14 @@ class PixelDAC_opt(ScanBase):
         # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
         self.chip.write(mask_cmds2)
 
-        for scan_param_id, vcal in enumerate(cal_high_range):
+        scan_param_id = 0
+        for vcal in cal_high_range:
             # Set the threshold
             self.chip.set_threshold(vcal)
 
             self.chip.read_pixel_matrix_datadriven()
 
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
-                if status != None:
-                    status.put("Scan iteration {} of {} for THR = 15".format(scan_param_id + 1, len(cal_high_range)))
-
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
                     time.sleep(0.01)
@@ -241,6 +242,7 @@ class PixelDAC_opt(ScanBase):
                 self.chip.stop_readout()
                 time.sleep(0.001)
             self.chip.reset_sequential()
+            scan_param_id += 1
 
         if progress == None:
             # Close the progress bar

@@ -155,7 +155,7 @@ class PixelDAC_opt(ScanBase):
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
         self.logger.info('Starting scan for THR = 0...')
         if status != None:
-            status.put("Starting scan")
+            status.put("Starting scan for THR = 0")
         if status != None:
             status.put("iteration_symbol")
 
@@ -166,16 +166,16 @@ class PixelDAC_opt(ScanBase):
             # Initailize counter for progress
             step_counter = 0
 
-        for scan_param_id, vcal in enumerate(cal_high_range):
+        scan_param_id = 0
+        for cal in cal_high_range:
             # Set the threshold
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id):
-                if status != None:
-                    status.put("Scan iteration {} of {} for THR = 0".format(scan_param_id + 1, len(cal_high_range)))
-                for i, mask_step_cmd in enumerate(mask_cmds):
+                step = 0
+                for mask_step_cmd in mask_cmds:
                     # Only activate testpulses for columns with active pixels
-                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
+                    self.chip.write_ctpr(list(range(step//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
 
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
@@ -193,8 +193,10 @@ class PixelDAC_opt(ScanBase):
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
+                    step += 1
                 self.chip.reset_sequential()
                 time.sleep(0.001)
+            scan_param_id += 1
 
         if progress == None:
             # Close the progress bar
@@ -202,6 +204,10 @@ class PixelDAC_opt(ScanBase):
 
         # Scan with all masks over the given threshold range for pixelthreshold 15
         self.logger.info('Starting scan for THR = 15...')
+        if status != None:
+            status.put("Starting scan for THR = 15")
+        if status != None:
+            status.put("iteration_symbol")
 
         if progress == None:
             # Initialize progress bar
@@ -210,16 +216,16 @@ class PixelDAC_opt(ScanBase):
             # Initailize counter for progress
             step_counter = 0
 
-        for scan_param_id, vcal in enumerate(cal_high_range):
+        scan_param_id = 0
+        for vcal in cal_high_range:
             # Set the threshold
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
-                if status != None:
-                    status.put("Scan iteration {} of {} for THR = 15".format(scan_param_id + 1, len(cal_high_range)))
-                for i, mask_step_cmd in enumerate(mask_cmds2):
+                step = 0
+                for mask_step_cmd in mask_cmds2:
                     # Only activate testpulses for columns with active pixels
-                    self.chip.write_ctpr(list(range(i//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
+                    self.chip.write_ctpr(list(range(step//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
 
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
@@ -237,8 +243,10 @@ class PixelDAC_opt(ScanBase):
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
+                    step += 1
                 self.chip.reset_sequential()
                 time.sleep(0.001)
+            scan_param_id += 1
 
         if progress == None:
             # Close the progress bar

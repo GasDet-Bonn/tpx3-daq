@@ -71,7 +71,8 @@ class NoiseScan(ScanBase):
             # Initailize counter for progress
             step_counter = 0
 
-        for scan_param_id, vcal in enumerate(cal_high_range):
+        scan_param_id = 0
+        for vcal in cal_high_range:
             # Initialize data-driven readout
             self.chip.read_pixel_matrix_datadriven()
 
@@ -79,8 +80,6 @@ class NoiseScan(ScanBase):
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id):
-                if status != None:
-                    status.put("Scan iteration {} of {}".format(scan_param_id + 1, len(cal_high_range)))           
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
                     time.sleep(0.01)
@@ -95,6 +94,7 @@ class NoiseScan(ScanBase):
                 self.chip.stop_readout()
                 time.sleep(0.001)
             self.chip.reset_sequential()
+            scan_param_id += 1
 
         if progress == None:
             # Close the progress bar
