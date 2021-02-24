@@ -1,5 +1,4 @@
 import gi
-
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from multiprocessing import Process, Queue, Pipe
@@ -13,7 +12,6 @@ from UI.GUI.converter.converter_manager import ConverterManager
 
 class CLI_Plot():
     def __init__(self, **kwargs):
-
         signal.signal(signal.SIGTERM, self.window_destroy)
 
         self.converter_process = None
@@ -24,7 +22,7 @@ class CLI_Plot():
         self.integration_length = None
         self.color_depth = None
         self.colorsteps = None
-        
+
         for key, v in kwargs.items():
             if key == 'plottype':
                 self.plottype = v
@@ -34,7 +32,7 @@ class CLI_Plot():
                 self.color_depth = int(v)
             elif key == 'colorsteps':
                 self.colorsteps = int(v)
-        
+
         self.start_converter()
 
         self.Plot_window = GUI_Plot1(data_queue = self.data_queue, 
@@ -43,7 +41,6 @@ class CLI_Plot():
                                         integration_length = self.integration_length, 
                                         color_depth = self.color_depth, 
                                         colorsteps = self.colorsteps)
-        
 
     def start_converter(self):
         conv_utils.setup_logging('INFO')
