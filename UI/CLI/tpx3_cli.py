@@ -22,7 +22,7 @@ from UI.GUI.converter.converter_manager import ConverterManager
 from tpx3.utils import get_software_version
 
 
-# In this part all callable function names should be in the list functions
+# In this part all callable normal function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Threshold_Scan', 'THL_Scan', 'THL', 'threshold_scan', 'thl_scan', 'thl',
                 'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',
@@ -55,7 +55,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'About', 'about',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 
-expert_functions =['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'clk_fast_mode',
+# In this part all callable expert function names should be in the list expert_functions
+expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'clk_fast_mode',
                     'Set_Acknowledgement', 'set_acknowledgement', 'Acknowledgement', 'acknowledgement',
                     'Set_TP_ext_in', 'set_tp_ext_in', 'TP_ext_in', 'tp_ext_in',
                     'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency']
@@ -108,7 +109,7 @@ class TPX3_multiprocess_start(object):
             except ValueError as e:
                 print(e)
             except ConfigError:
-                print("The current link configuration is not valid. Please start 'Init' or check your hardware.")
+                print('The current link configuration is not valid. Please start "Init" or check your hardware.')
             except NotImplementedError:
                 pass
             except SystemExit:
@@ -116,10 +117,10 @@ class TPX3_multiprocess_start(object):
 
             status = kwargs.pop('status', None)
             if status != None and system_exit != True:
-                status.put("Scan finished")
+                status.put('Scan finished')
 
         file_logger.write_tmp_backup()
-        new_process = Process(target=startup_func, args=(function, ), kwargs=kwargs)
+        new_process = Process(target = startup_func, args = (function, ), kwargs = kwargs)
         new_process.start()
         return new_process
 
@@ -632,7 +633,7 @@ class TPX3_CLI_function_call(object):
         for mask in mask_list:
             if mask[0] in {'row', 'Row'}:
                 if len(mask) >= 2:
-                    if int(mask[1]) >=0 and int(mask[1]) <256:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256:
                         print('Mask row', int(mask[1]))
                         mask_logger.write_mask(mask_element = ['row', int(mask[1])])
                     else:
@@ -641,7 +642,7 @@ class TPX3_CLI_function_call(object):
                     print('Error: No row number given!')
             elif mask[0] in {'column', 'Column'}:
                 if len(mask) >= 2:
-                    if int(mask[1]) >=0 and int(mask[1]) <256:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256:
                         print('Mask column', int(mask[1]))
                         mask_logger.write_mask(mask_element = ['column', int(mask[1])])
                     else:
@@ -650,12 +651,12 @@ class TPX3_CLI_function_call(object):
                     print('Error: No column number given!')
             elif mask[0] in {'pixel', 'Pixel'}:
                 if len(mask) >= 3:
-                    if int(mask[1]) >=0 and int(mask[1]) <256 and int(mask[2]) >=0 and int(mask[2]) <256:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256 and int(mask[2]) >= 0 and int(mask[2]) < 256:
                         print('Mask pixel', int(mask[1]), int(mask[2]))
                         mask_logger.write_mask(mask_element = ['pixel', int(mask[1]), int(mask[2])])
                     else:
                         print('Pixel number out of range: There is only 0 to 255 for x and y')
-                else: 
+                else:
                     print('Error: No full set of pixel coordinates. Needs x and y!')
             else:
                 print('Unknown type:', mask)
@@ -680,7 +681,7 @@ class TPX3_CLI_function_call(object):
             for mask in mask_list:
                 if mask[0] in {'row', 'Row'}:
                     if len(mask) >= 2:
-                        if int(mask[1]) >=0 and int(mask[1]) <256:
+                        if int(mask[1]) >= 0 and int(mask[1]) < 256:
                             print('Unmask row', int(mask[1]))
                             mask_logger.delete_mask(mask_element = ['row', int(mask[1])])
                         else:
@@ -689,7 +690,7 @@ class TPX3_CLI_function_call(object):
                         print('Error: No row number given!')
                 elif mask[0] in {'column', 'Column'}:
                     if len(mask) >= 2:
-                        if int(mask[1]) >=0 and int(mask[1]) <256:
+                        if int(mask[1]) >= 0 and int(mask[1]) < 256:
                             print('Unmask column', int(mask[1]))
                             mask_logger.delete_mask(mask_element = ['column', int(mask[1])])
                         else:
@@ -698,12 +699,12 @@ class TPX3_CLI_function_call(object):
                         print('Error: No column number given!')
                 elif mask[0] in {'pixel', 'Pixel'}:
                     if len(mask) >= 3:
-                        if int(mask[1]) >=0 and int(mask[1]) <256 and int(mask[2]) >=0 and int(mask[2]) <256:
+                        if int(mask[1]) >= 0 and int(mask[1]) < 256 and int(mask[2]) >= 0 and int(mask[2]) < 256:
                             print('Unmask pixel', int(mask[1]), int(mask[2]))
                             mask_logger.delete_mask(mask_element = ['pixel', int(mask[1]), int(mask[2])])
                         else:
                             print('Pixel number out of range: There is only 0 to 255 for x and y')
-                    else: 
+                    else:
                         print('Error: No full set of pixel coordinates. Needs x and y!')
                 elif mask[0] in {'all', 'All'}:
                     print('Unmask all')
@@ -906,7 +907,7 @@ class TPX3_CLI_function_call(object):
 class TPX3_CLI_TOP(object):
     def __init__(self, Gui, ext_input_list = None):
         readline.set_completer(completer)
-        readline.parse_and_bind("tab: complete")
+        readline.parse_and_bind('tab: complete')
         function_call = TPX3_CLI_function_call()
         expertmode = False
         data = file_logger.read_backup()
@@ -934,7 +935,7 @@ class TPX3_CLI_TOP(object):
             # Exit loop at the end
             cmd_list.append(['Quit'])
 
-        # Here the main part of the CLI starts. Every usercommand needs to be processed here.
+        # Here the main part of the CLI starts. Every user command needs to be processed here.
         while 1:
 
             #if no external input is given
