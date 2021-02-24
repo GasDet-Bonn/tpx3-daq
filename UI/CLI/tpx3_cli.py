@@ -629,7 +629,6 @@ class TPX3_CLI_function_call(object):
                 mask_element = []
         mask_list.append(mask_element)
         mask_list.pop(0)
-        #print(mask_list)
         for mask in mask_list:
             if mask[0] in {'row', 'Row'}:
                 if len(mask) >= 2:
@@ -678,7 +677,6 @@ class TPX3_CLI_function_call(object):
                     mask_element = []
             mask_list.append(mask_element)
             mask_list.pop(0)
-            #print(mask_list)
             for mask in mask_list:
                 if mask[0] in {'row', 'Row'}:
                     if len(mask) >= 2:
