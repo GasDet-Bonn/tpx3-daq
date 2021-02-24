@@ -2996,7 +2996,14 @@ class GUI_Main(Gtk.Window):
             self.progressbar.set_fraction(fraction)
             runtime = datetime.now() - self.step_starttime
             estimate = runtime / fraction - runtime
-            self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + utils.strfdelta(estimate, '%M:%S'))
+            if runtime.seconds < 3600 and estimate.seconds < 3600:
+                self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + utils.strfdelta(estimate, '%M:%S'))
+            elif runtime.seconds >= 3600 and estimate.seconds < 3600:
+                self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%H:%M:%S') + ' / ' + utils.strfdelta(estimate, '%M:%S'))
+            elif estimate.seconds >= 3600 and runtime.seconds < 3600: 
+                self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + utils.strfdelta(estimate, '%H:%M:%S'))
+            else:
+                self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%H:%M:%S') + ' / ' + utils.strfdelta(estimate, '%H:%M:%S'))
         while not self.status_queue.empty():
             statusstring = self.status_queue.get()
             if statusstring == 'Scan finished':
