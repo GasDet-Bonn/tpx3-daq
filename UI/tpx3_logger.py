@@ -22,11 +22,11 @@ class mask_logger(object):
             print('not implemented')
 
         if filename == None:
-            filename = Chip + "_mask_" + time.strftime("%Y-%m-%d_%H-%M-%S")
-        if os.path.isfile(user_path + os.sep + filename + ".h5") == False:
+            filename = Chip + '_mask_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+        if os.path.isfile(user_path + os.sep + filename + '.h5') == False:
             full_path = user_path + os.sep + filename + ".h5"
             return full_path
-        elif os.path.isfile(user_path + os.sep + filename + ".h5") == True:
+        elif os.path.isfile(user_path + os.sep + filename + '.h5') == True:
             print('File exists already')
 
     def write_mask(mask_element, mask = None):
@@ -44,7 +44,7 @@ class mask_logger(object):
             user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
-            path = user_path + os.sep + mask + ".h5"
+            path = user_path + os.sep + mask + '.h5'
 
         #open file if existing and writing set data to mask_matrix
         if os.path.isfile(path):
@@ -80,7 +80,7 @@ class mask_logger(object):
             user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
-            path = user_path + os.sep + mask + ".h5"
+            path = user_path + os.sep + mask + '.h5'
 
         #open file if existing and writing set data to mask_matrix
         if os.path.isfile(path):
@@ -117,7 +117,7 @@ class mask_logger(object):
             user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
-            path = user_path + os.sep + mask + ".h5"
+            path = user_path + os.sep + mask + '.h5'
 
         #delete last mask
         if os.path.isfile(path):
@@ -141,7 +141,7 @@ class mask_logger(object):
             user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
-            path = user_path + os.sep + mask + ".h5"
+            path = user_path + os.sep + mask + '.h5'
 
         with tb.open_file(path, 'r') as infile:
             mask_matrix = infile.root.mask_matrix[:]
@@ -170,15 +170,15 @@ class file_logger(object):
             print('not implemented')
 
         if filename == None:
-            filename = Chip + "_backup_" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".TPX3"
+            filename = Chip + '_backup_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.TPX3'
         if os.path.isdir(user_path) == False:
             os.mkdir(user_path)
             if os.path.isfile(user_path + os.sep + filename) == False:
-                backup_file = open(user_path + os.sep + filename, "w")
+                backup_file = open(user_path + os.sep + filename, 'w')
                 return backup_file
         elif os.path.isdir(user_path) == True:
             if os.path.isfile(user_path + os.sep + filename) == False:
-                backup_file = open(user_path + os.sep + filename, "w")
+                backup_file = open(user_path + os.sep + filename, 'w')
                 return backup_file
 
     def write_backup(file, data = None):
@@ -197,10 +197,10 @@ class file_logger(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'tmp')
-        filename = "backup_" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".TPX3"
+        filename = 'backup_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.TPX3'
 
         if os.path.isfile(user_path + os.sep + filename) == False:
-            backup_file = open(user_path + os.sep + filename, "w")
+            backup_file = open(user_path + os.sep + filename, 'w')
             data = TPX3_datalogger.get_data()
             json.dump(data, backup_file)
             return True
@@ -216,16 +216,16 @@ class file_logger(object):
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'tmp')
 
-        #time in days before file will be removed if none is given
+        # Time in days before file will be removed if none is given
         if days_to_hold == None:
             days_to_hold = 14
 
-        #look if there are older files
+        # Look if there are older files
         now = time.time()
 
         for f in os.listdir(user_path):
             if os.stat(os.path.join(user_path, f)).st_mtime < now - days_to_hold * 86400:
-                if os.path.isfile(os.path.join(user_path, f)) and f.endswith(".TPX3"):
+                if os.path.isfile(os.path.join(user_path, f)) and f.endswith('.TPX3'):
                     os.remove(os.path.join(user_path, f))
 
 
@@ -239,15 +239,15 @@ class file_logger(object):
         if file == None:
             #Get most recent file
             file = file_logger.get_newest_backup_file()
-            data = json.load(open(file, "r"))
+            data = json.load(open(file, 'r'))
             return data
         else:
             file = file
             if os.path.isfile(user_path + os.sep + file) == True:
-                data = json.load(open(user_path + os.sep + file, "r"))
+                data = json.load(open(user_path + os.sep + file, 'r'))
                 return data
             else:
-                print("Error! File does not exist")
+                print('Error: File does not exist')
                 return False
 
     def get_newest_backup_file():
@@ -263,7 +263,7 @@ class file_logger(object):
         user_path_tmp = os.path.join(user_path, 'tmp')
         #Look for newest backup in backup folder
         if os.path.isdir(user_path) == True:
-            list_of_files = glob.glob(user_path + os.sep + "*.TPX3")
+            list_of_files = glob.glob(user_path + os.sep + '*.TPX3')
             if list_of_files:
                 file = max(list_of_files, key=os.path.getctime)
                 #return file
@@ -273,7 +273,7 @@ class file_logger(object):
             file = None
         #Look for newest backup in tmp folder
         if os.path.isdir(user_path_tmp) == True:
-            list_of_files = glob.glob(user_path_tmp + os.sep + "*.TPX3")
+            list_of_files = glob.glob(user_path_tmp + os.sep + '*.TPX3')
             if list_of_files:
                 file_tmp = max(list_of_files, key=os.path.getctime)
             else:
@@ -301,7 +301,7 @@ class file_logger(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
-        filename = "default.TPX3"
+        filename = 'default.TPX3'
         if os.path.isdir(user_path) == False:
             os.mkdir(user_path)
         default_file = open(user_path + os.sep + filename, "w")
@@ -317,8 +317,8 @@ class file_logger(object):
         if TPX3_datalogger.name_valid(name) == True:
             value = backup_data[name]
             return value
-        print("Error: Unknown data name")
-        return False    
+        print('Error: Unknown data name')
+        return False
 
 
 class TPX3_data_logger(object):
@@ -390,7 +390,7 @@ class TPX3_data_logger(object):
     def is_valid(self, config):
         if not isinstance(config, dict):
             # depending on impl may also just return False
-            raise TypeError("Invalid type for configuration")
+            raise TypeError('Invalid type for configuration')
         config = self.complete(config)
         return sorted(list(config)) == sorted(self.config_keys)
 
@@ -416,14 +416,14 @@ class TPX3_data_logger(object):
         if self.name_valid(name) == True:
             self.data[name] = value
             return True
-        print("Error: Unknown data name")
+        print('Error: Unknown data name')
         return False
 
     def read_value(self, name):
         if self.name_valid(name) == True:
             value = self.data[name]
             return value
-        print("Error: Unknown data name")
+        print('Error: Unknown data name')
         return False    
 
     def get_data(self):
@@ -431,9 +431,9 @@ class TPX3_data_logger(object):
 
     def set_data(self, config):
         if self.is_valid(config):
-            self.data = config    
+            self.data = config
             return True
-        print("Error: Corrupted data")
+        print('Error: Corrupted data')
         return False
 
     def get_chipnames(self):
