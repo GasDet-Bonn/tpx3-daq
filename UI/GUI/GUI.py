@@ -2487,6 +2487,7 @@ class GUI_Main(Gtk.Window):
         self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
         self.simulation_running = False
         self.simulator_process = None
+        self.step_starttime = datetime.now()
         self.software_version = utils.get_software_version()
         self.firmware_version = 'x.x'
         self.plot_window_list = []
