@@ -11,7 +11,6 @@ import matplotlib.cm as cm
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 import numpy as np
-from numpy import arange, pi, random, linspace
 from multiprocessing import Process, Queue, Pipe
 
 from UI.GUI.PlotWidget import plotwidget
