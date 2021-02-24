@@ -3105,16 +3105,6 @@ class GUI_Main(Gtk.Window):
         print(ChipName)
         self.notebook.set_tab_label_text(self.page2, ChipName)
 
-
-    ########################################################################################################################
-    ### Functions right click menu
-
-    def on_load_backup_clicked(self, widget):
-        print("Load Backup")
-
-    def on_load_default_clicked(self, widget):
-        print("Set to default")
-
     ########################################################################################################################
     ### Function plot
 
