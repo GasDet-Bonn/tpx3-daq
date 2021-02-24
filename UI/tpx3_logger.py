@@ -8,7 +8,9 @@ import tables as tb
 from tpx3.utils import check_user_folders
 
 class mask_logger(object):
-
+    '''
+        The mask logger takes care of the mask file, adds and removes items
+    '''
     def create_file(filename = None):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
@@ -28,6 +30,10 @@ class mask_logger(object):
             print('File exists already')
 
     def write_mask(mask_element, mask = None):
+        '''
+            This will mask the 'pixel', 'row' or 'column' given to it via mask_element.
+            Additionally the mask file to cahnge can be given via mask. 
+        '''
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
@@ -61,6 +67,10 @@ class mask_logger(object):
             out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
 
     def delete_mask(mask_element, mask = None):
+        '''
+            This will unmask the 'pixel', 'row' or 'column' given to it via mask_element. 
+            Additionally the mask file to cahnge can be given via mask.
+        '''
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
@@ -95,6 +105,9 @@ class mask_logger(object):
                 out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
 
     def write_full_mask(full_mask, mask = None):
+        '''
+            This overwrites the complete mask, so a proper mask has to be given via full_mask
+        '''
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
             if path == None:
@@ -117,6 +130,9 @@ class mask_logger(object):
         return True
 
     def get_mask(mask = None):
+        '''
+            This returns the mask matrix as a list.
+        '''
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
             if path == None:
@@ -133,10 +149,14 @@ class mask_logger(object):
 
 
 class file_logger(object):
-    #This class contains the functions to write the setting to a file which will then be call next time the GUI is started
-
+    '''
+        This class contains the functions to write the setting to a file
+        which will then be call next time the GUI is started
+    '''
     def create_file(filename = None):
-        #Creates backup folder and file if not existing
+        '''
+            Creates backup folder and file if not existing
+        '''
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
@@ -162,15 +182,18 @@ class file_logger(object):
                 return backup_file
 
     def write_backup(file, data = None):
-        #writes the backup to the file given
+        '''
+            Writes the backup to the file given
+        '''
         file = file
         if data == None:
             data = TPX3_datalogger.get_data()
         json.dump(data, file)
 
-
     def write_tmp_backup():
-        #writes temp backup
+        '''
+            Writes temporary backup
+        '''
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'tmp')
@@ -186,7 +209,9 @@ class file_logger(object):
             return False
 
     def delete_tmp_backups(days_to_hold = None):
-        #deletes old temporary backups
+        '''
+            Deletes old temporary backups which are older then 'days_to_hold' days.
+        '''
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'tmp')
@@ -205,7 +230,9 @@ class file_logger(object):
 
 
     def read_backup(file = None):
-        #reads backup and returns the data
+        '''
+            reads backup and returns the data
+        '''
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
@@ -224,6 +251,9 @@ class file_logger(object):
                 return False
 
     def get_newest_backup_file():
+        '''
+            This function looks for the most recent backup file in the backup folder
+        '''
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
@@ -265,6 +295,9 @@ class file_logger(object):
             return file
 
     def create_default_file():
+        '''
+            This function creates a default backup file
+        '''
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
@@ -277,6 +310,9 @@ class file_logger(object):
         return file
 
     def get_backup_value(name, file = None):
+        '''
+            This returns the backup value 'name'
+        '''
         backup_data = file_logger.read_backup(file)
         if TPX3_datalogger.name_valid(name) == True:
             value = backup_data[name]
@@ -285,10 +321,11 @@ class file_logger(object):
         return False    
 
 
-
 class TPX3_data_logger(object):
-
-#here the data will be logged while the programm is running this function is called as global
+    '''
+        here the data will be logged while the programm is
+        running this function is called as global
+    '''
     def __init__(self):
         check_user_folders()
         self.config_keys = ['software_version', 'firmware_version', 
