@@ -2513,7 +2513,7 @@ class GUI_Main(Gtk.Window):
         data = file_logger.read_backup()
         TPX3_datalogger.set_data(data)
         TPX3_datalogger.write_backup_to_yaml()
-
+        TPX3_datalogger.write_value(name = 'software_version', value = self.software_version)
         conv_utils.setup_logging('INFO')
         
 
