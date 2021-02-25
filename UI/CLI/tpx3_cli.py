@@ -1498,20 +1498,10 @@ class TPX3_CLI_TOP(object):
                         print('Initialise Hardware')
                         try:
                             Chip_List = function_call.Initialise_Hardware()
-                            for n in range(0,8):
+                            for n in range(0,9):
                                 if n == 0 and Chip_List:
                                     self.firmware_version = Chip_List.pop(0)
-                                    TPX3_datalogger.write_value(name = 'firmware_version', value = Chip_List.pop(0))
-                                    try:
-                                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
-                                                                    '\nFirmware version: ' + str(self.firmware_version) +
-                                                                    '\nGit branch: ' + str(utils.get_git_branch()) +
-                                                                    '\nGit commit: ' + str(utils.get_git_commit()) +
-                                                                    '\nGit date: ' + str(utils.get_git_date()) +
-                                                                    '\n<small>GasDet Bonn 2019-2021</small>')
-                                    except:
-                                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
-                                                                    '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+                                    TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)
                                 elif Chip_List:
                                     name = 'Chip' + str(n - 1) + '_name'
                                     TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))

@@ -3033,10 +3033,10 @@ class GUI_Main(Gtk.Window):
     def update_status(self):
         if not self.hardware_scan_results.empty():
             Chip_List = self.hardware_scan_results.get()
-            for n in range(0,8):
+            for n in range(0,9):
                 if n == 0 and Chip_List:
                     self.firmware_version = Chip_List.pop(0)
-                    TPX3_datalogger.write_value(name = 'firmware_version', value = Chip_List.pop(0))
+                    TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)
                     try:
                         self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
                                                     '\nFirmware version: ' + str(self.firmware_version) +
