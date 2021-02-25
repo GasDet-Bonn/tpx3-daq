@@ -7,20 +7,36 @@ import os
 from string import Template
 import subprocess
 import pkg_resources
+from datetime import datetime
 
 
-def get_software_version():
+def get_software_version(git = True):
     '''
         Tries to get the software version based on the git commit and branch. If this does not
         work the version defined in __init__.py is used
     '''
-    try:
-        rev = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
-        branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
-        return branch + '@' + rev
-    except:
+    if git:
+        try:
+            rev = get_git_commit()
+            branch = get_git_branch()
+            return branch + '@' + rev
+        except:
+            return pkg_resources.get_distribution("tpx3-daq").version
+    else:
         return pkg_resources.get_distribution("tpx3-daq").version
 
+def get_git_branch():
+    return subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
+
+def get_git_commit():
+    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode()
+
+def get_git_date(short = True):
+    time = int(subprocess.check_output(['git', 'log', '-1', '--format=%at']).strip().decode().strip())
+    if short:
+        return datetime.utcfromtimestamp(time).strftime('%d.%m.%Y')
+    else:
+        return datetime.utcfromtimestamp(time).strftime('%d.%m.%Y %H:%M:%S')
 
 # this should really be a class method of BitLogic, but to stay compatible with
 # the current basil version, we add it at runtime
