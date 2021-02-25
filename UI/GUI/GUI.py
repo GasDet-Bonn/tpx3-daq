@@ -1840,6 +1840,9 @@ class GUI_Set_Mask_Coord_Window(Gtk.Window):
 
 class GUI_Set_Mask(Gtk.Window):
     def __init__(self):
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'appdata')
         Gtk.Window.__init__(self, title = 'Set Mask')
         self.connect('delete-event', self.window_destroy)
         self.coord_window = None
@@ -1930,9 +1933,9 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.rectangle(x_coord * 10, y_coord * 10, 10, 10)
             self.cr.fill()
                 
-        self.row_numbers.write_to_png('row_number.png')
-        self.column_numbers.write_to_png('column_number.png')
-        self.surface.write_to_png('chip_mask.png')
+        self.row_numbers.write_to_png(user_path + os.sep + 'row_number.png')
+        self.column_numbers.write_to_png(user_path + os.sep + 'column_number.png')
+        self.surface.write_to_png(user_path + os.sep + 'chip_mask.png')
         
         self.map_area = Gtk.EventBox()
         self.mapview = Gtk.ScrolledWindow()
@@ -1942,7 +1945,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.mapview.set_policy(Gtk.PolicyType.ALWAYS, Gtk.PolicyType.ALWAYS)
         self.mapview.add_events(Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.BUTTON1_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
         self.map = Gtk.Image()
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file('chip_mask.png')
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'chip_mask.png')
         self.map.set_from_pixbuf(self.pixbuf)
         
         self.columnview = Gtk.ScrolledWindow()
@@ -1951,7 +1954,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.columnview.set_border_width(0)
         self.columnview.set_policy(Gtk.PolicyType.ALWAYS, Gtk.PolicyType.NEVER)
         self.column = Gtk.Image()
-        self.column_pixbuf = GdkPixbuf.Pixbuf.new_from_file('column_number.png')
+        self.column_pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'column_number.png')
         self.column.set_from_pixbuf(self.column_pixbuf)
         self.columnview.add(self.column)
         
@@ -1964,7 +1967,7 @@ class GUI_Set_Mask(Gtk.Window):
         #motion-notify-event
         #self.rowview.set_sensitive(False)
         self.row = Gtk.Image()
-        self.row_pixbuf = GdkPixbuf.Pixbuf.new_from_file('row_number.png')
+        self.row_pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'row_number.png')
         self.row.set_from_pixbuf(self.row_pixbuf)
         self.rowview.add(self.row)
         
@@ -2029,8 +2032,8 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.set_source_rgb(1, 0, 0)
             self.cr.rectangle(x_coord * 10, y_coord * 10, 10, 10)
             self.cr.fill()
-        self.surface.write_to_png('chip_mask.png')
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file('chip_mask.png')
+        self.surface.write_to_png(user_path + os.sep + 'chip_mask.png')
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'chip_mask.png')
         self.map.set_from_pixbuf(self.pixbuf)
                 
     def on_drawing_area_button_press(self, widget, event):
