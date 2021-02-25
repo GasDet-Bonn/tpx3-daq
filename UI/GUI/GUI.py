@@ -2631,7 +2631,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(Status, 2, 8, 12, 5)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
-        page1.grid.attach(self.about_label, 14, 0, 3, 2)
+        page1.grid.attach(self.about_label, 14, 0, 3, 3)
         page1.grid.attach(self.SetDACbutton, 14, 3, 3, 1)
         page1.grid.attach(self.AddSetbutton, 14, 4, 3, 1)
         page1.grid.attach(self.SetMaskbutton, 14, 6, 3, 1)
