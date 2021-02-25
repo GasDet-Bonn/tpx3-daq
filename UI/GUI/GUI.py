@@ -1994,6 +1994,9 @@ class GUI_Set_Mask(Gtk.Window):
         self.show_all()
         
     def draw_clicked(self):
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'appdata')
         self.cr.rectangle(0, 0, 2610, 2610)
         self.cr.set_source_rgb(1, 1, 1)
         self.cr.fill()
