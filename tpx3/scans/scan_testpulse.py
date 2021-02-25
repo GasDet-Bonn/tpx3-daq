@@ -76,6 +76,9 @@ class TestpulseScan(ScanBase):
         # Create the masks for all steps
         mask_cmds = self.create_scan_masks(mask_step, progress = progress)
 
+        # Get the shutter sleep time
+        sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = n_injections)
+
         # Start the scan
         self.logger.info('Starting scan...')
         if status != None:
@@ -107,7 +110,7 @@ class TestpulseScan(ScanBase):
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(0.001)
+                        time.sleep(sleep_time)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)

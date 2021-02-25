@@ -79,6 +79,9 @@ class Equalisation_charge(ScanBase):
         mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0, progress = progress)
         mask_cmds2 = self.create_scan_masks(mask_step, pixel_threhsold = 15, progress = progress)
 
+        # Get the shutter sleep time
+        sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = n_injections)
+
         # Scan with pixel threshold 0
         self.logger.info('Starting scan for THR = 0...')
         if status != None:
@@ -110,7 +113,7 @@ class Equalisation_charge(ScanBase):
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(0.01)
+                        time.sleep(sleep_time)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)
@@ -160,7 +163,7 @@ class Equalisation_charge(ScanBase):
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(0.01)
+                        time.sleep(sleep_time)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)

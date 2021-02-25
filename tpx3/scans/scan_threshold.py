@@ -72,6 +72,9 @@ class ThresholdScan(ScanBase):
         if status != None:
             status.put("Preparing injection masks")
 
+        # Get the shutter sleep time
+        sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = n_injections)
+
         # Create the masks for all steps
         mask_cmds = self.create_scan_masks(mask_step, progress = progress)
 
@@ -106,7 +109,7 @@ class ThresholdScan(ScanBase):
                     
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(0.001)
+                        time.sleep(sleep_time)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)

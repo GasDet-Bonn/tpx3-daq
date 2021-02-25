@@ -132,6 +132,9 @@ class PixelDAC_opt(ScanBase):
         # Set general configuration registers of the Timepix3 
         self.chip.write_general_config()
 
+        # Get the shutter sleep time
+        sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = n_injections)
+
         # Write to the test pulse registers of the Timepix3
         # Write to period and phase tp register
         data = self.chip.write_tp_period(tp_period, 0)
@@ -182,7 +185,7 @@ class PixelDAC_opt(ScanBase):
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(0.01)
+                        time.sleep(sleep_time)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)
@@ -232,7 +235,7 @@ class PixelDAC_opt(ScanBase):
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(0.01)
+                        time.sleep(sleep_time)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)

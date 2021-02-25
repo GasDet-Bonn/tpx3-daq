@@ -367,6 +367,30 @@ class ScanBase(object):
 
         return mask_cmds
 
+    def get_shutter_sleep_time(self, sys_clock = 40, n_injections = 100, tp_period = 1, TOT = False):
+        '''
+            Calculates the shutter sleep time for scans. It is based on the number of testpulses,
+            the tp_period and the system clock frequency in MHz as those define the length of
+            the testpulse injections.
+            An additional factor is used for ToT-based scans as there is additional time needed
+            for ToT counting.
+        '''
+        # The testpulse is 64 clock cycles times the tp_period low and then for the same time high
+        period_time = 64 * 2 * tp_period * 1.0 / sys_clock # time in µs
+
+        # For each pulse one period_time is needed
+        pulse_time = period_time * n_injections / 1000.0 # time in ms
+
+        # Multiply with a factor to give time for the radout
+        sleep_time = pulse_time * 1.5 / 1000.0 # time in s
+
+        # In case of a TOT data taking give additional time for TOT counting
+        if TOT:
+            sleep_time *= 5
+
+        return sleep_time
+
+
     def dump_configuration(self, iteration = None, **kwargs):
         '''
             Dumps the current configuration in tables of the configuration group in the HDF5 file.
