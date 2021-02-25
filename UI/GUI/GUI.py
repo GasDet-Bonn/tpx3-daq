@@ -2488,7 +2488,7 @@ class GUI_Main(Gtk.Window):
         self.simulation_running = False
         self.simulator_process = None
         self.step_starttime = datetime.now()
-        self.software_version = utils.get_software_version()
+        self.software_version = utils.get_software_version(git = False)
         self.firmware_version = 'x.x'
         self.plot_window_list = []
 
@@ -2578,8 +2578,16 @@ class GUI_Main(Gtk.Window):
         self.QuitCurrentFunctionbutton.connect('clicked', self.on_QuitCurrentFunctionbutton_clicked)
 
         self.about_label = Gtk.Label()
-        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
-                                    '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+        try:
+            self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
+                                        '\nFirmware version: ' + str(self.firmware_version) +
+                                        '\nGit branch: ' + str(utils.get_git_branch()) +
+                                        '\nGit commit: ' + str(utils.get_git_commit()) +
+                                        '\nGit date: ' + str(utils.get_git_date()) +
+                                        '\n<small>GasDet Bonn 2019-2021</small>')
+        except:
+            self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+                                        '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
 
         Status = Gtk.Frame()
         self.Statusbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 6)
@@ -3023,8 +3031,16 @@ class GUI_Main(Gtk.Window):
                 if n == 0 and Chip_List:
                     self.firmware_version = Chip_List.pop(0)
                     TPX3_datalogger.write_value(name = 'firmware_version', value = Chip_List.pop(0))
-                    self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
-                                                '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+                    try:
+                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
+                                                    '\nFirmware version: ' + str(self.firmware_version) +
+                                                    '\nGit branch: ' + str(utils.get_git_branch()) +
+                                                    '\nGit commit: ' + str(utils.get_git_commit()) +
+                                                    '\nGit date: ' + str(utils.get_git_date()) +
+                                                    '\n<small>GasDet Bonn 2019-2021</small>')
+                    except:
+                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+                                                    '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
                 elif Chip_List:
                     name = 'Chip' + str(n - 1) + '_name'
                     TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
