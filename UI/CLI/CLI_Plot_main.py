@@ -3,6 +3,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from multiprocessing import Process, Queue, Pipe
 import signal
+import os
 import sys
 import time
 from UI.GUI.GUI import GUI_Plot1
@@ -43,8 +44,9 @@ class CLI_Plot():
                                         colorsteps = self.colorsteps)
 
     def start_converter(self):
+        current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         conv_utils.setup_logging('INFO')
-        cm = ConverterManager(configuration = 'tpx3_monitor.yaml', data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn)
+        cm = ConverterManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn)
         self.converter_process = Process(target=cm.start, name = 'TPX3 Converter')
         self.pipe_source_conn.send(True)
         self.converter_process.start()

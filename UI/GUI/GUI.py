@@ -3157,7 +3157,8 @@ class GUI_Main(Gtk.Window):
         self.converter_process.terminate()
 
     def start_converter(self):
-        cm = ConverterManager(configuration = 'tpx3_monitor.yaml', data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn)
+        current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        cm = ConverterManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn)
         self.converter_process = Process(target = cm.start)
         self.pipe_source_conn.send(True)
         self.converter_process.start()
@@ -3177,7 +3178,8 @@ class GUI_Main(Gtk.Window):
         self.simulator_process.terminate()
 
     def start_simulator(self, path):
-        sim = ProducerSimManager(configuration = 'tpx3_monitor.yaml', path = path, loglevel = 'INFO', delay = 0.1, kind = 'tpx3_sim', name = 'TPX3')
+        current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sim = ProducerSimManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', path = path, loglevel = 'INFO', delay = 0.1, kind = 'tpx3_sim', name = 'TPX3')
         self.simulator_process = Process(target = sim.start)
         self.simulator_process.start()
 
