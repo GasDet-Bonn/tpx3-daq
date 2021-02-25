@@ -1813,7 +1813,7 @@ class TPX3_CLI_TOP(object):
                 else:
                     print('Unknown command: ', cmd_input, ' Use a language I understand.')
 
-if __name__ == '__main__':
+def main():
     Gui = None
     try:
         import UI.GUI.GUI as GUI
@@ -1827,3 +1827,6 @@ if __name__ == '__main__':
         tpx3_cli = TPX3_CLI_TOP(Gui = Gui)
     else:
         tpx3_cli = TPX3_CLI_TOP(Gui = Gui, ext_input_list = ext_input_list)
+
+if __name__ == '__main__':
+    main()

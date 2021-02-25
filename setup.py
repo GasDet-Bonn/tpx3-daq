@@ -39,7 +39,9 @@ setup(
     platforms='any',
     entry_points={
         'console_scripts': [
-            'tpx3_monitor = tpx3.online_monitor.start_tpx3_monitor:main'
+            'tpx3_monitor = tpx3.online_monitor.start_tpx3_monitor:main',
+            'tpx3_cli = UI.CLI.tpx3_cli:main',
+            'tpx3_gui = UI.GUI.GUI:main'
         ]
     },
 

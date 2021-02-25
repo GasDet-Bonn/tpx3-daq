@@ -3199,8 +3199,11 @@ def GUI_start():
 
 GUI = GUI_Main()
 
-if __name__ == '__main__':
+def main():
     GUI.connect('destroy', quit_procedure)
     GUI.show_all()
     GUI.progressbar.hide()
     Gtk.main()
+
+if __name__ == '__main__':
+    main()
