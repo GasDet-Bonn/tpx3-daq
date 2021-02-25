@@ -117,6 +117,9 @@ def check_user_folders():
     picture_path = os.path.join(user_path, 'pictures')
     if not os.path.exists(picture_path):
         os.makedirs(picture_path)
+    appdata_path = os.path.join(user_path, 'appdata')
+    if not os.path.exists(appdata_path):
+        os.makedirs(appdata_path)
 
     scan_hdf_path = os.path.join(scan_path, 'hdf')
     if not os.path.exists(scan_hdf_path):
