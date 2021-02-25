@@ -19,7 +19,7 @@ from tpx3.scan_base import ConfigError
 from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
 from UI.GUI.converter import utils as conv_utils
 from UI.GUI.converter.converter_manager import ConverterManager
-from tpx3.utils import get_software_version
+from tpx3.utils import get_software_version, get_git_branch, get_git_commit, get_git_date
 
 
 # In this part all callable normal function names should be in the list functions
@@ -913,7 +913,7 @@ class TPX3_CLI_TOP(object):
         data = file_logger.read_backup()
         TPX3_datalogger.set_data(data)
         TPX3_datalogger.write_backup_to_yaml()
-        self.software_version = get_software_version()
+        self.software_version = get_software_version(git = False)
         TPX3_datalogger.write_value(name = 'software_version', value = self.software_version)
         self.firmware_version = 'x.x'
         print('\n Welcome to the Timepix3 control Software\n')
@@ -1502,8 +1502,16 @@ class TPX3_CLI_TOP(object):
                                 if n == 0 and Chip_List:
                                     self.firmware_version = Chip_List.pop(0)
                                     TPX3_datalogger.write_value(name = 'firmware_version', value = Chip_List.pop(0))
-                                    self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
-                                                                '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+                                    try:
+                                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
+                                                                    '\nFirmware version: ' + str(self.firmware_version) +
+                                                                    '\nGit branch: ' + str(utils.get_git_branch()) +
+                                                                    '\nGit commit: ' + str(utils.get_git_commit()) +
+                                                                    '\nGit date: ' + str(utils.get_git_date()) +
+                                                                    '\n<small>GasDet Bonn 2019-2021</small>')
+                                    except:
+                                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+                                                                    '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
                                 elif Chip_List:
                                     name = 'Chip' + str(n - 1) + '_name'
                                     TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
@@ -1660,6 +1668,12 @@ class TPX3_CLI_TOP(object):
                     print('TPX3 CLI')
                     print('Software version: ' + str(self.software_version))
                     print('Firmware version: ' + str(self.firmware_version))
+                    try:
+                        print('Git branch: ' + str(get_git_branch()))
+                        print('Git commit: ' + str(get_git_commit()))
+                        print('Git date: ' + str(get_git_date(short = False)))
+                    except:
+                        pass
                     print('GasDet Bonn 2019-2021')
                 
                 #Quit
