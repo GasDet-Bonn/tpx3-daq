@@ -80,15 +80,6 @@ def interpret_raw_data(raw_data):
     return header, x, y, tot
 
 class Tpx3(Transceiver):
-
-    def setup_transceiver(self):
-        ''' Called at the beginning
-
-            We want to be able to change the histogrammmer settings
-            thus bidirectional communication needed
-        '''
-        self.set_bidirectional_communication()
-
     def setup_interpretation(self):
         ''' Objects defined here are available in interpretation process '''
         utils.setup_logging(self.loglevel)
