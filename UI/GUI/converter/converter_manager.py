@@ -42,16 +42,8 @@ class ConverterManager(object):
         try:
             while True:
                 time.sleep(2)
-        except KeyboardInterrupt:
-            logging.info('CRTL-C pressed, shutting down %d converters', len(self.configuration['converter']))
-            for converter in converters:
-                converter.shutdown()
-        except SystemExit:
-            logging.info('System exit, shutting down %d converters', len(self.configuration['converter']))
-            for converter in converters:
-                converter.shutdown()
         except:
-            logging.info('Other exit, shutting down %d converters', len(self.configuration['converter']))
+            logging.info('Shutting down %d converters', len(self.configuration['converter']))
             for converter in converters:
                 converter.shutdown()
 

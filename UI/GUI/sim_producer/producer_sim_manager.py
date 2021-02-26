@@ -41,11 +41,8 @@ class ProducerSimManager(object):
         try:
             while True:
                 time.sleep(1)
-        except KeyboardInterrupt:
-            logging.info('CRTL-C pressed, shutting down %d producer simulations', 1)
-            producer_sim.shutdown()
-        except SystemExit:
-            logging.info('System exit, shutting down %d producer simulations', 1)
+        except:
+            logging.info('Shutting down %d producer simulations', 1)
             producer_sim.shutdown()
 
         producer_sim.join()
