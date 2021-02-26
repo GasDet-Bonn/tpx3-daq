@@ -118,9 +118,6 @@ test_si_udp.lxt
 # IDE settings
 .vscode/
 
-# Scan output data
-tpx3/scans/output_data/*
-
 .metadata/
 *.lprof
 
@@ -128,14 +125,9 @@ tpx3/scans/output_data/*
 .dvt
 dvt_build.log
 *.pydevproject
-**/output_data/*
 
 # Textfiles
 .txt
 
 # Datafiles
 .h5
-
-# GUI pictures
-UI/GUI/*.png
-!UI/GUI/GasDet3.png
