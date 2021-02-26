@@ -3129,11 +3129,6 @@ class GUI_Main(Gtk.Window):
         simulation_dialog.destroy()
 
         return path, response
-        
-    def entered_text(self, widget):
-        ChipName = self.page2.entry.get_text()
-        print(ChipName)
-        self.notebook.set_tab_label_text(self.page2, ChipName)
 
     ########################################################################################################################
     ### Function plot
