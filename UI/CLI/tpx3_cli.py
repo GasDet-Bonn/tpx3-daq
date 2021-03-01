@@ -59,7 +59,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
 expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'clk_fast_mode',
                     'Set_Acknowledgement', 'set_acknowledgement', 'Acknowledgement', 'acknowledgement',
                     'Set_TP_ext_in', 'set_tp_ext_in', 'TP_ext_in', 'tp_ext_in',
-                    'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency']
+                    'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency',
+                    'Set_Sense_DAC', 'set_sense_DAC', 'Sense_DAC', 'sense_DAC']
 
 # In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
@@ -67,7 +68,7 @@ help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 
                     'TP_Period', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Save_Mask', 'Load_Mask', 'Set_Mask',
                     'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names', 'About', 'Help', 'Quit']
 
-help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency']
+help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency', 'Set_Sense_DAC']
 
 expert_help_functions = help_functions + help_expert
 
@@ -889,6 +890,26 @@ class TPX3_CLI_function_call(object):
         else:
             print('Unknown value')
 
+    def Set_Sense_DAC(object, DAC = None):
+        print(DAC)
+        if DAC == None:
+            print('> Please enter the desired DAC Number: Off["0"]; Ibias_Preamp_ON["1"]; Ibias_Preamp_OFF["2"]; VPreamp_NCAS["3"]; Ibias_Ikrum["4"]; Vfbk["5"]; Vthreshold_fine["6"]; Vtreshold_corse["7"]; IBias_DiscS1_ON["8"]; IBias_DiscS1_OFF["9"]; IBias_DiscS2_ON["10"]; IBias_DiscS2_OFF["11"]; IBias_PixelDAC["12"]; IBias_TPbufferIn["13"]; IBias_TPbufferOut["14"]; VTP_coarse["15"]; VTP_fine["16"]; Ibias_CP_PLL["17"]; PLL_Vcntrl["18"]; BandGap_output["28"]; BandGap_Temp["29"]; Ibias_dac["30"]; Ibias_dac_cas["31"]')
+            while(1):
+                DAC = input('>> ')
+                try:
+                    DAC = int(DAC)
+                    break
+                except:
+                    if DAC in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        if DAC in {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 28, 29, 30, 31}:
+            TPX3_datalogger.write_value(name = 'Sense_DAC', value = DAC)
+            TPX3_datalogger.write_to_yaml(name = 'Sense_DAC')
+        else:
+            print('Unknown value')
+        
     def Initialise_Hardware(object):
         hardware_scan_results = Queue()
         new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', results = hardware_scan_results)
@@ -1794,6 +1815,27 @@ class TPX3_CLI_TOP(object):
                             elif len(inputlist) > 2:
                                 print('To many parameters! The given function takes only one parameters:\n ClkOut_frequency.')
 
+                    #Set Sense DAC
+                    elif inputlist[0] in {'Set_Sense_DAC', 'set_sense_DAC', 'Sense_DAC', 'sense_DAC'}:
+                        if len(inputlist) == 1:
+                            print('Set Sense_DAC')
+                            try:
+                                function_call.Set_Sense_DAC()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This is the set Sense_DAC function. As argument you can give the DAC you like to read out: Off["0"]; Ibias_Preamp_ON["1"]; Ibias_Preamp_OFF["2"]; VPreamp_NCAS["3"]; Ibias_Ikrum["4"]; Vfbk["5"]; Vthreshold_fine["6"]; Vtreshold_corse["7"]; IBias_DiscS1_ON["8"]; IBias_DiscS1_OFF["9"]; IBias_DiscS2_ON["10"]; IBias_DiscS2_OFF["11"]; IBias_PixelDAC["12"]; IBias_TPbufferIn["13"]; IBias_TPbufferOut["14"]; VTP_coarse["15"]; VTP_fine["16"]; Ibias_CP_PLL["17"]; PLL_Vcntrl["18"]; BandGap_output["28"]; BandGap_Temp["29"]; Ibias_dac["30"]; Ibias_dac_cas["31"]')
+                            elif len(inputlist) == 2:
+                                if inputlist[1] in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '28', '29', '30', '31'}:
+                                    try:
+                                        function_call.Set_Sense_DAC(DAC = int(inputlist[1]))
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                                else:
+                                    print('Unknown argument')
+                            elif len(inputlist) > 2:
+                                print('To many parameters! The given function takes only one parameters:\n DAC number.')
 
                     #Unknown command
                     else:

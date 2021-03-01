@@ -216,14 +216,7 @@ class TPX3(Dut):
     # number of bits a value for a DAC can have maximally
     DAC_VALUE_BITS = 9
 
-    # monitoring voltage maps
-    monitoring_map = {"PLL_Vcntrl": 0b10010,
-                      "BandGap_output": 0b11100,
-                      "BandGap_Temp": 0b11101,
-                      "Ibias_dac": 0b11110,
-                      "Ibias_dac_cas": 0b11111,
-                      "SenseOFF": 0b00000}
-
+    # PCR Definitions
     MASK_ON = 0
     MASK_OFF = 1
     TP_ON = 1
@@ -476,8 +469,12 @@ class TPX3(Dut):
         # Note: here we can now iterate over self.dacs instead of self._dacs
         # due to the `dacs` property!
         for dac, val in six.iteritems(self.dacs):
-            data = self.set_dac(dac, val, write = False)
-            self.write(data, True)
+            if dac != 'Sense_DAC':
+                data = self.set_dac(dac, val, write = False)
+                self.write(data, True)
+            else:
+                data = self.sense_dac_sel(dac = val, write = False)
+                self.write(data, True)
 
     def read_dacs(self):
         """
@@ -644,7 +641,7 @@ class TPX3(Dut):
 
         # add DAC code to last 4 bit of final 16 bit
         bits = BitLogic(16)
-        bits[4:0] = self.monitoring_map[dac]
+        bits[4:0] = dac
         # add 16 bits as list of byte to result
         data += bits.toByteList()
 

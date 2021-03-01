@@ -339,7 +339,7 @@ class TPX3_data_logger(object):
                             'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
                             'Equalisation_path', 'Mask_path', 'Polarity', 'Op_mode', 'Fast_Io_en',
                             'clk_fast_out', 'ClkOut_frequency_src', 'AckCommand_en', 'SelectTP_Ext_Int',
-                            'clkphasediv', 'clkphasenum', 'PLLOutConfig', 'Readout_Speed', 'TP_Period']
+                            'clkphasediv', 'clkphasenum', 'PLLOutConfig', 'Readout_Speed', 'TP_Period', 'Sense_DAC']
         self.data = self.default_config()
 
     def default_config(self):
@@ -385,7 +385,8 @@ class TPX3_data_logger(object):
                 'clkphasenum' : 4,
                 'PLLOutConfig' : 0,
                 'Readout_Speed': 0.1,
-                'TP_Period': 3}
+                'TP_Period': 3,
+                'Sense_DAC': 29}
 
     def is_valid(self, config):
         if not isinstance(config, dict):
@@ -512,7 +513,7 @@ class TPX3_data_logger(object):
         else:
             if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 
-                            'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
+                            'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Sense_DAC'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
             elif name in {'clk_fast_out', 'ClkOut_frequency_src'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
@@ -585,7 +586,7 @@ class TPX3_data_logger(object):
                     yaml.dump(yaml_data, file)
 
             else:
-                if key in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
+                if key in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Sense_DAC'}:
                     yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
 
                 elif key in {'clk_fast_out', 'ClkOut_frequency_src'}:

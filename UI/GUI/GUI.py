@@ -1411,6 +1411,11 @@ class GUI_Additional_Settings(Gtk.Window):
         Gtk.Window.__init__(self, title = 'Settings')
         self.connect('delete-event', self.window_destroy)
         self.expert_value = False
+        self.sense_DAC_dict = {'Off' : 0, 'Ibias_Preamp_ON' : 1, 'Ibias_Preamp_OFF' : 2, 'VPreamp_NCAS' : 3, 'Ibias_Ikrum' : 4, 'Vfbk' : 5, 
+                            'Vthreshold_fine' : 6, 'Vtreshold_corse' : 7, 'IBias_DiscS1_ON' : 8, 'IBias_DiscS1_OFF' : 9, 'IBias_DiscS2_ON' : 10, 
+                            'IBias_DiscS2_OFF' : 11, 'IBias_PixelDAC' : 12, 'IBias_TPbufferIn' : 13, 'IBias_TPbufferOut' : 14, 'VTP_coarse' : 15,
+                            'VTP_fine' : 16, 'Ibias_CP_PLL' : 17, 'PLL_Vcntrl' : 18, 'BandGap_output' : 28, 'BandGap_Temp' : 29,
+                            'Ibias_dac' : 30, 'Ibias_dac_cas' : 31}
 
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
@@ -1530,6 +1535,43 @@ class GUI_Additional_Settings(Gtk.Window):
         self.ClkOut_frequency_combo_label = Gtk.Label()
         self.ClkOut_frequency_combo_label.set_text('ClkOut_frequency_src')
 
+        #rop down for sense DAC
+        self.sense_DAC_value = TPX3_datalogger.read_value('Sense_DAC')
+        self.dropdown = Gtk.ComboBoxText()
+        self.dropdown.append_text('Off')
+        self.dropdown.append_text('Ibias_Preamp_ON')
+        self.dropdown.append_text('Ibias_Preamp_OFF')
+        self.dropdown.append_text('VPreamp_NCAS')
+        self.dropdown.append_text('Ibias_Ikrum')
+        self.dropdown.append_text('Vfbk')
+        self.dropdown.append_text('Vthreshold_fine')
+        self.dropdown.append_text('Vtreshold_corse')
+        self.dropdown.append_text('IBias_DiscS1_ON')
+        self.dropdown.append_text('IBias_DiscS1_OFF')
+        self.dropdown.append_text('IBias_DiscS2_ON')
+        self.dropdown.append_text('IBias_DiscS2_OFF')
+        self.dropdown.append_text('IBias_PixelDAC')
+        self.dropdown.append_text('IBias_TPbufferIn')
+        self.dropdown.append_text('IBias_TPbufferOut')
+        self.dropdown.append_text('VTP_coarse')
+        self.dropdown.append_text('VTP_fine')
+        self.dropdown.append_text('Ibias_CP_PLL')
+        self.dropdown.append_text('PLL_Vcntrl')
+        self.dropdown.append_text('BandGap_output')
+        self.dropdown.append_text('BandGap_Temp')
+        self.dropdown.append_text('Ibias_dac')
+        self.dropdown.append_text('Ibias_dac_cas')
+
+        if self.sense_DAC_value in range(19):
+            self.dropdown.set_active(self.sense_DAC_value)
+        elif self.sense_DAC_value in range(28, 32):
+            self.dropdown.set_active(self.sense_DAC_value - 9)
+        else:
+            print('Error at set sense Dac')
+        self.dropdown.connect('changed', self.dropdown_changed)
+        self.dropdown_label = Gtk.Label()
+        self.dropdown_label.set_text('Sense DAC')
+
         #Save Button
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
@@ -1554,8 +1596,10 @@ class GUI_Additional_Settings(Gtk.Window):
         grid.attach(self.AckCommand_en_button, 2, 9, 1, 1)
         grid.attach(self.ClkOut_frequency_combo_label, 0, 10, 2, 1)
         grid.attach(self.ClkOut_frequency_combo, 2, 10, 3, 1)
-        grid.attach(self.Space2, 0, 11, 3, 1)
-        grid.attach(self.Savebutton, 5, 12, 1, 1)
+        grid.attach(self.dropdown_label, 0, 11, 2, 1)
+        grid.attach(self.dropdown, 2, 11, 3, 1)
+        grid.attach(self.Space2, 0, 12, 3, 1)
+        grid.attach(self.Savebutton, 5, 13, 1, 1)
         
         self.show_all()
         self.TP_Ext_Int_button_label.hide()
@@ -1564,6 +1608,8 @@ class GUI_Additional_Settings(Gtk.Window):
         self.AckCommand_en_button.hide()
         self.ClkOut_frequency_combo_label.hide()
         self.ClkOut_frequency_combo.hide()
+        self.dropdown_label.hide()
+        self.dropdown.hide()
         self.Space2.hide()
         self.resize(1,1)
 
@@ -1579,6 +1625,8 @@ class GUI_Additional_Settings(Gtk.Window):
             self.AckCommand_en_button.show()
             self.ClkOut_frequency_combo_label.show()
             self.ClkOut_frequency_combo.show()
+            self.dropdown_label.show()
+            self.dropdown.show()
             self.Space2.show()
             self.resize(1,1)
         else:
@@ -1588,6 +1636,8 @@ class GUI_Additional_Settings(Gtk.Window):
             self.AckCommand_en_button.hide()
             self.ClkOut_frequency_combo_label.hide()
             self.ClkOut_frequency_combo.hide()
+            self.dropdown_label.hide()
+            self.dropdown.hide()
             self.Space2.hide()
             self.resize(1,1)
 
@@ -1649,6 +1699,9 @@ class GUI_Additional_Settings(Gtk.Window):
         elif text == 'external':
             self.ClkOut_frequency_src_value = 5
 
+    def dropdown_changed(self, widget):
+        self.sense_DAC_value = self.sense_DAC_dict[self.dropdown.get_active_text()]
+
     def on_Savebutton_clicked(self, widget):
         if GUI.get_process_alive():
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
@@ -1665,6 +1718,8 @@ class GUI_Additional_Settings(Gtk.Window):
         TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int')
         TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = self.ClkOut_frequency_src_value)
         TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src')
+        TPX3_datalogger.write_value(name = 'Sense_DAC', value = self.sense_DAC_value)
+        TPX3_datalogger.write_to_yaml(name = 'Sense_DAC')
         TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value)
         TPX3_datalogger.write_value(name = 'TP_Period', value = self.TP_Period_value)
 
