@@ -231,12 +231,12 @@ class GUI_ToT_Calib(Gtk.Window):
         Testpulse_range_label.set_text('Testpulse range')
 
         #default values
-        self.Testpulse_range_start_value = 210
-        self.Testpulse_range_stop_value = 510
+        self.Testpulse_range_start_value = 200
+        self.Testpulse_range_stop_value = 500
 
         #Testpulse_range_start
         Testpulse_range_start_adj = Gtk.Adjustment()
-        Testpulse_range_start_adj.configure(210, 0, self.Testpulse_range_stop_value, 1, 0, 0)
+        Testpulse_range_start_adj.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
         self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
         self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
         self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
@@ -245,7 +245,7 @@ class GUI_ToT_Calib(Gtk.Window):
 
         #Testpulse_range_stop
         Testpulse_range_stop_adj = Gtk.Adjustment()
-        Testpulse_range_stop_adj.configure(510, self.Testpulse_range_start_value, 511, 1, 0, 0)
+        Testpulse_range_stop_adj.configure(500, self.Testpulse_range_start_value, 511, 1, 0, 0)
         self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
         self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
         self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
@@ -364,9 +364,9 @@ class GUI_Threshold_Scan(Gtk.Window):
         self.other_process.set_text('')
 
         #Threshold_start
-        self.Threshold_start_value = 200
+        self.Threshold_start_value = 1400
         Threshold_start_adj = Gtk.Adjustment()
-        Threshold_start_adj.configure(200, 0, 2911, 1, 0, 0)
+        Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
         self.Threshold_start.set_value(self.Threshold_start_value) 
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
@@ -374,9 +374,9 @@ class GUI_Threshold_Scan(Gtk.Window):
         Threshold_start_label.set_text('Start ')
 
         #Threshold_stop
-        self.Threshold_stop_value = 1600
+        self.Threshold_stop_value = 2900
         Threshold_stop_adj = Gtk.Adjustment()
-        Threshold_stop_adj.configure(1600, 0, 2911, 1, 0, 0)
+        Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
         self.Threshold_stop.set_value(self.Threshold_stop_value) 
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
@@ -510,9 +510,9 @@ class GUI_Threshold_Calib(Gtk.Window):
         self.other_process.set_text('')
 
         #Threshold_start
-        self.Threshold_start_value = 200
+        self.Threshold_start_value = 1400
         Threshold_start_adj = Gtk.Adjustment()
-        Threshold_start_adj.configure(200, 0, 2911, 1, 0, 0)
+        Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
         self.Threshold_start.set_value(self.Threshold_start_value) 
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
@@ -520,9 +520,9 @@ class GUI_Threshold_Calib(Gtk.Window):
         Threshold_start_label.set_text('Start ')
 
         #Threshold_stop
-        self.Threshold_stop_value = 1600
+        self.Threshold_stop_value = 2900
         Threshold_stop_adj = Gtk.Adjustment()
-        Threshold_stop_adj.configure(1600, 0, 2911, 1, 0, 0)
+        Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
         self.Threshold_stop.set_value(self.Threshold_stop_value) 
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
@@ -555,9 +555,9 @@ class GUI_Threshold_Calib(Gtk.Window):
         self.Number_of_Iterations = 16
 
         #n_pulse_heights
-        self.n_pulse_heights_value = 50
+        self.n_pulse_heights_value = 4
         n_pulse_heights_adj = Gtk.Adjustment()
-        n_pulse_heights_adj.configure(50, 2, 100, 1, 0, 0)
+        n_pulse_heights_adj.configure(4, 2, 100, 1, 0, 0)
         self.n_pulse_heights = Gtk.SpinButton(adjustment = n_pulse_heights_adj, climb_rate = 1, digits = 0)
         self.n_pulse_heights.set_value(self.n_pulse_heights_value) 
         self.n_pulse_heights.connect('value-changed', self.n_pulse_heights_set)
@@ -677,9 +677,9 @@ class GUI_Testpulse_Scan(Gtk.Window):
         self.other_process.set_text('')
 
         #Testpulse_range_start
-        self.Testpulse_range_start_value = 210
+        self.Testpulse_range_start_value = 200
         Testpulse_range_start_adj = Gtk.Adjustment()
-        Testpulse_range_start_adj.configure(210, 0, 511, 1, 0, 0)
+        Testpulse_range_start_adj.configure(200, 0, 511, 1, 0, 0)
         self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
         self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
         self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
@@ -687,9 +687,9 @@ class GUI_Testpulse_Scan(Gtk.Window):
         Testpulse_range_start_label.set_text('Start ')
 
         #Testpulse_range_stop
-        self.Testpulse_range_stop_value = 510
+        self.Testpulse_range_stop_value = 500
         Testpulse_range_stop_adj = Gtk.Adjustment()
-        Testpulse_range_stop_adj.configure(510, 0, 511, 1, 0, 0)
+        Testpulse_range_stop_adj.configure(500, 0, 511, 1, 0, 0)
         self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
         self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
         self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
@@ -823,9 +823,9 @@ class GUI_PixelDAC_opt(Gtk.Window):
         self.other_process.set_text('')
 
         #Threshold_start
-        self.Threshold_start_value = 200
+        self.Threshold_start_value = 1400
         Threshold_start_adj = Gtk.Adjustment()
-        Threshold_start_adj.configure(200, 0, 2911, 1, 0, 0)
+        Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
         self.Threshold_start.set_value(self.Threshold_start_value) 
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
@@ -833,9 +833,9 @@ class GUI_PixelDAC_opt(Gtk.Window):
         Threshold_start_label.set_text('Start ')
 
         #Threshold_stop
-        self.Threshold_stop_value = 1600
+        self.Threshold_stop_value = 2900
         Threshold_stop_adj = Gtk.Adjustment()
-        Threshold_stop_adj.configure(1600, 0, 2911, 1, 0, 0)
+        Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
         self.Threshold_stop.set_value(self.Threshold_stop_value) 
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
@@ -1475,7 +1475,7 @@ class GUI_Additional_Settings(Gtk.Window):
         #TP_Period setting
         self.TP_Period_value = TPX3_datalogger.read_value(name = 'TP_Period')
         TP_Period_adj = Gtk.Adjustment()
-        TP_Period_adj.configure(3, 0, 255, 1, 0, 0)
+        TP_Period_adj.configure(1, 0, 255, 1, 0, 0)
         self.TP_Period = Gtk.SpinButton(adjustment = TP_Period_adj, climb_rate = 1, digits = 0)
         self.TP_Period.set_value(self.TP_Period_value)
         self.TP_Period.connect('value-changed', self.TP_Period_set)
@@ -1755,9 +1755,9 @@ class GUI_Equalisation(Gtk.Window):
         self.Equalisation_Type = 'Noise'
 
         #Threshold_start
-        self.Threshold_start_value = 1500
+        self.Threshold_start_value = 1400
         Threshold_start_adj = Gtk.Adjustment()
-        Threshold_start_adj.configure(200, 0, 2911, 1, 0, 0)
+        Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
         self.Threshold_start.set_value(self.Threshold_start_value) 
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
@@ -1765,9 +1765,9 @@ class GUI_Equalisation(Gtk.Window):
         Threshold_start_label.set_text('Start')
 
         #Threshold_stop
-        self.Threshold_stop_value = 2500
+        self.Threshold_stop_value = 2900
         Threshold_stop_adj = Gtk.Adjustment()
-        Threshold_stop_adj.configure(1600, 0, 2911, 1, 0, 0)
+        Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
         self.Threshold_stop.set_value(self.Threshold_stop_value) 
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
