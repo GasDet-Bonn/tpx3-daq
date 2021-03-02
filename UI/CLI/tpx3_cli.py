@@ -131,7 +131,7 @@ class TPX3_CLI_function_call(object):
 
     def ToT_Calibration(object, VTP_fine_start = None, VTP_fine_stop = None, mask_step = None):
         if VTP_fine_start == None:
-            print('> Please enter the VTP_fine_start value (0-511):')
+            print('> Please enter the VTP_fine_start value (0-511)[200]:')
             while(1):
                 VTP_fine_start = input('>> ')
                 try:
@@ -142,7 +142,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the VTP_fine_stop value (0-511):')
+            print('> Please enter the VTP_fine_stop value (0-511)[500]:')
             while(1):
                 VTP_fine_stop = input('>> ')
                 try:
@@ -153,7 +153,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of steps(4, 16, 64, 256):')
+            print('> Please enter the number of steps(4, 16, 64, 256)[16]:')
             while(1):
                 mask_step = input('>> ')
                 try:
@@ -171,7 +171,7 @@ class TPX3_CLI_function_call(object):
 
     def Threshold_Scan(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:
-            print('> Please enter the Vthreshold_start value (0-2911):')
+            print('> Please enter the Vthreshold_start value (0-2911)[1400]:')
             while(1):
                 Vthreshold_start = input('>> ')
                 try:
@@ -182,7 +182,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the Vthreshold_stop value (0-2911):')
+            print('> Please enter the Vthreshold_stop value (0-2911)[2900]:')
             while(1):
                 Vthreshold_stop = input('>> ')
                 try:
@@ -193,7 +193,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of injections (1-65535):')
+            print('> Please enter the number of injections (1-65535)[100]:')
             while(1):
                 n_injections = input('>> ')
                 try:
@@ -204,7 +204,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of steps(4, 16, 64, 256):')
+            print('> Please enter the number of steps(4, 16, 64, 256)[16]:')
             while(1):
                 mask_step = input('>> ')
                 try:
@@ -222,7 +222,7 @@ class TPX3_CLI_function_call(object):
 
     def Threshold_Calib(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None, n_pulse_heights = None):
         if Vthreshold_start == None:
-            print('> Please enter the Vthreshold_start value (0-2911):')
+            print('> Please enter the Vthreshold_start value (0-2911)[1400]:')
             while(1):
                 Vthreshold_start = input('>> ')
                 try:
@@ -233,7 +233,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the Vthreshold_stop value (0-2911):')
+            print('> Please enter the Vthreshold_stop value (0-2911)[2900]:')
             while(1):
                 Vthreshold_stop = input('>> ')
                 try:
@@ -244,7 +244,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of injections (1-65535):')
+            print('> Please enter the number of injections (1-65535)[100]:')
             while(1):
                 n_injections = input('>> ')
                 try:
@@ -255,7 +255,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of steps(4, 16, 64, 256):')
+            print('> Please enter the number of steps(4, 16, 64, 256)[16]:')
             while(1):
                 mask_step = input('>> ')
                 try:
@@ -266,7 +266,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of pulse height steps(2-100):')
+            print('> Please enter the number of pulse height steps(2-100)[4]:')
             while(1):
                 n_pulse_heights = input('>> ')
                 try:
@@ -284,7 +284,7 @@ class TPX3_CLI_function_call(object):
 
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
         if VTP_fine_start == None:
-            print('> Please enter the VTP_fine_start value (0-511):')
+            print('> Please enter the VTP_fine_start value (0-511)[200]:')
             while(1):
                 VTP_fine_start = input('>> ')
                 try:
@@ -295,7 +295,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the VTP_fine_stop value (0-511):')
+            print('> Please enter the VTP_fine_stop value (0-511)[500]:')
             while(1):
                 VTP_fine_stop = input('>> ')
                 try:
@@ -306,7 +306,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of injections (1-65535):')
+            print('> Please enter the number of injections (1-65535)[100]:')
             while(1):
                 n_injections = input('>> ')
                 try:
@@ -317,7 +317,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of steps(4, 16, 64, 256):')
+            print('> Please enter the number of steps(4, 16, 64, 256)[16]:')
             while(1):
                 mask_step = input('>> ')
                 try:
@@ -335,7 +335,7 @@ class TPX3_CLI_function_call(object):
 
     def Pixel_DAC_Optimisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, offset = None):
         if Vthreshold_start == None:
-            print('> Please enter the Vthreshold_start value (0-2911):')
+            print('> Please enter the Vthreshold_start value (0-2911)[1400]:')
             while(1):
                 Vthreshold_start = input('>> ')
                 try:
@@ -346,7 +346,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the Vthreshold_stop value (0-2911):')
+            print('> Please enter the Vthreshold_stop value (0-2911)[2900]:')
             while(1):
                 Vthreshold_stop = input('>> ')
                 try:
@@ -357,7 +357,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of injections (1-65535):')
+            print('> Please enter the number of injections (1-65535)[100]:')
             while(1):
                 n_injections = input('>> ')
                 try:
@@ -368,7 +368,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the column offset (0-15):')
+            print('> Please enter the column offset (0-15)[0]:')
             while(1):
                 offset = input('>> ')
                 try:
@@ -388,7 +388,7 @@ class TPX3_CLI_function_call(object):
 
     def Equalisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
         if Vthreshold_start == None:
-            print('> Please enter the Vthreshold_start value (0-2911):')
+            print('> Please enter the Vthreshold_start value (0-2911)[1400]:')
             while(1):
                 Vthreshold_start = input('>> ')
                 try:
@@ -399,7 +399,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the Vthreshold_stop value (0-2911):')
+            print('> Please enter the Vthreshold_stop value (0-2911)[2900]:')
             while(1):
                 Vthreshold_stop = input('>> ')
                 try:
@@ -410,7 +410,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of injections (1-65535):')
+            print('> Please enter the number of injections (1-65535)[100]:')
             while(1):
                 n_injections = input('>> ')
                 try:
@@ -421,7 +421,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            print('> Please enter the number of steps(4, 16, 64, 256):')
+            print('> Please enter the number of steps(4, 16, 64, 256)[16]:')
             while(1):
                 mask_step = input('>> ')
                 try:
