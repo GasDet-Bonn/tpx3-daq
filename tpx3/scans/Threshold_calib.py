@@ -42,7 +42,7 @@ class ThresholdCalib(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1350, Vthreshold_stop = 2911, n_injections = 100, tp_period = 1, mask_step = 16, n_pulse_heights = 5, progress = None, status = None, **kwargs):
+    def scan(self, Vthreshold_start = 1350, Vthreshold_stop = 2911, n_injections = 100, tp_period = 1, mask_step = 16, n_pulse_heights = 5, progress = None, status = None, plot_queue = None, **kwargs):
         '''
             Threshold scan main loop
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -90,7 +90,7 @@ class ThresholdCalib(ScanBase):
             opt_results = self.analyze_iteration(iteration, progress = progress, status = status)
 
         # Create the plots for the full calibration
-        self.plot(status = status)
+        self.plot(status = status, plot_queue = plot_queue)
 
 
     def scan_iteration(self, iteration, n_pulse_heights, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, tp_period = 1, mask_step=16, progress = None, status = None, **kwargs):
