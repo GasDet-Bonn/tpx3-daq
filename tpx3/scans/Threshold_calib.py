@@ -124,7 +124,7 @@ class ThresholdCalib(ScanBase):
         self.logger.info('Threshold calibration iteration %i', iteration)
         self.logger.info('Starting scan...')
         if status != None:
-            status.put("Starting scan iteration %i", iteration)
+            status.put("Starting scan")
         if status != None:
             status.put("iteration_symbol")
         cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
