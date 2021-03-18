@@ -73,7 +73,7 @@ class ToTCalib(ScanBase):
             status.put("Preparing injection masks")
 
         # Create the masks for all steps
-        mask_cmds = self.create_scan_masks(mask_step, progress = progress)
+        mask_cmds = self.create_scan_masks(mask_step, progress = progress, append_datadriven = False)
 
         # Get the shutter sleep time
         sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = 1, TOT = True)
@@ -107,22 +107,25 @@ class ToTCalib(ScanBase):
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
 
-                    # Open the shutter, take data and update the progress bar
-                    with self.shutter():
-                        time.sleep(sleep_time)
-                        if progress == None:
-                            # Update the progress bar
-                            pbar.update(1)
-                        else:
-                            # Update the progress fraction and put it in the queue
-                            step_counter += 1
-                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
-                            progress.put(fraction)
-                    self.chip.stop_readout()
+                    for pulse in range(10):
+                        # Open the shutter, take data and update the progress bar
+                        self.chip.read_pixel_matrix_datadriven()
+                        with self.shutter():
+                            time.sleep(sleep_time)
+                        self.chip.stop_readout()
+                        self.chip.reset_sequential()
+                        time.sleep(0.001)
+                    if progress == None:
+                        # Update the progress bar
+                        pbar.update(1)
+                    else:
+                        # Update the progress fraction and put it in the queue
+                        step_counter += 1
+                        fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                        progress.put(fraction)
+                        step += 1
+                    self.chip.reset_sequential()
                     time.sleep(0.001)
-                    step += 1
-                self.chip.reset_sequential()
-                time.sleep(0.001)
             scan_param_id += 1
 
         if progress == None:
@@ -176,7 +179,14 @@ class ToTCalib(ScanBase):
             hist_occ = None
 
             # Create histograms for number of detected ToT clock cycles for individual testpulses
-            totcurve = analysis.totcurve_hist(hit_data, param_range)
+            full, count = analysis.totcurve_hist(hit_data, param_range)
+
+            # Calculate the mean ToT per pixel per pulse
+            totcurve = np.divide(full, count)
+            totcurve = np.nan_to_num(totcurve)
+
+            # Only use pixel which saw exactly all pulses
+            totcurve[count != 10] = 0
             hit_data = None
 
             # Read needed configuration parameters
@@ -188,6 +198,8 @@ class ToTCalib(ScanBase):
             a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range, progress = progress)
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve', obj=totcurve)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve Full', obj=full)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve Count', obj=count)
             h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='aMap', obj=a2D.T)
             h5_file.create_carray(h5_file.root.interpreted, name='bMap', obj=b2D.T)
@@ -228,23 +240,51 @@ class ToTCalib(ScanBase):
 
                 # Plot the ToT-Curve histogram
                 ToT_hist = h5_file.root.interpreted.HistToTCurve[:].T
-                p.plot_scurves(ToT_hist, list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
+                p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter a histogram
-                hist = np.ma.masked_array(h5_file.root.interpreted.aMap[:], mask)
-                p.plot_distribution(hist, plot_range=np.arange(np.ma.median(hist)-3, np.ma.median(hist)+3, 0.1), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
+                hist_a = np.ma.masked_array(h5_file.root.interpreted.aMap[:], mask)
+                plot_min = np.ma.median(hist_a)-0.5*np.ma.median(hist_a)
+                plot_max = np.ma.median(hist_a)+0.5*np.ma.median(hist_a)
+                if plot_max > plot_min:
+                    step_size = (plot_max-plot_min) / 50.0
+                    p.plot_distribution(hist_a, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
+                else:
+                    step_size = (plot_min-plot_max) / 50.0
+                    p.plot_distribution(hist_a, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter b histogram
-                hist = np.ma.masked_array(h5_file.root.interpreted.bMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(int(np.ma.median(hist))-2000, int(np.ma.median(hist))+2000, 50)), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
+                hist_b = np.ma.masked_array(h5_file.root.interpreted.bMap[:], mask)
+                plot_min = np.ma.median(hist_b)-0.5*np.ma.median(hist_b)
+                plot_max = np.ma.median(hist_b)+0.5*np.ma.median(hist_b)
+                if plot_max > plot_min:
+                    step_size = (plot_max-plot_min) / 50.0
+                    p.plot_distribution(hist_b, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
+                else:
+                    step_size = (plot_min-plot_max) / 50.0
+                    p.plot_distribution(hist_b, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter c histogram
-                hist = np.ma.masked_array(h5_file.root.interpreted.cMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(int(np.ma.median(hist))-100000, int(np.ma.median(hist))+100000, 2000)), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
+                hist_c = np.ma.masked_array(h5_file.root.interpreted.cMap[:], mask)
+                plot_min = -5*np.ma.median(hist_c)
+                plot_max = 5*np.ma.median(hist_c)
+                if plot_max > plot_min:
+                    step_size = (plot_max-plot_min) / 200.0
+                    p.plot_distribution(hist_c, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
+                else:
+                    step_size = (plot_min-plot_max) / 200.0
+                    p.plot_distribution(hist_c, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
 
                 # Plot the ToT-Curve fit parameter t histogram
-                hist = np.ma.masked_array(h5_file.root.interpreted.tMap[:], mask)
-                p.plot_distribution(hist, plot_range=list(range(int(np.ma.median(hist))-100, int(np.ma.median(hist))+100, 2)), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
+                hist_t = np.ma.masked_array(h5_file.root.interpreted.tMap[:], mask)
+                plot_min = np.ma.median(hist_t)-0.05*np.ma.median(hist_t)
+                plot_max = np.ma.median(hist_t)+0.05*np.ma.median(hist_t)
+                if plot_max > plot_min:
+                    step_size = (plot_max-plot_min) / 100.0
+                    p.plot_distribution(hist_t, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
+                else:
+                    step_size = (plot_min-plot_max) / 100.0
+                    p.plot_distribution(hist_t, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
 
 
 if __name__ == "__main__":

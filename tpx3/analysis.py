@@ -46,16 +46,18 @@ def scurve_hist(hit_data, param_range):
 
 @njit
 def totcurve_hist(hit_data, param_range):
-    totcurves = np.zeros((256*256, len(param_range)), dtype=np.uint16)
+    totcurves_means = np.zeros((256*256, len(param_range)), dtype=np.uint16)
+    totcurves_hits = np.zeros((256*256, len(param_range)), dtype=np.uint16)
 
     for i in range(hit_data.shape[0]):
         x = hit_data['x'][i]
         y = hit_data['y'][i]
         p = hit_data['scan_param_id'][i]
         c = hit_data['TOT'][i]
-        totcurves[x*256+y,p] += c
+        totcurves_means[x*256+y,p] += c
+        totcurves_hits[x*256+y,p] += 1
 
-    return totcurves
+    return totcurves_means, totcurves_hits
 
 @njit
 def noise_pixel_count(hit_data, param_range, Vthreshold_start):
@@ -717,6 +719,8 @@ def zcurve(x, A, mu, sigma):
 def totcurve(x, a, b, c, t):
     return a*x + b - c / (x-t)
 
+def linear(x, a, b):
+    return a*x + b
 
 def get_threshold(x, y, n_injections, invert_x=False):
     ''' Fit less approximation of threshold from s-curve.
@@ -934,7 +938,7 @@ def fit_scurves_multithread(scurves, scan_param_range,
     return thr2D, sig2D, chi2ndf2D
 
 
-def fit_ToT(tot_data, scan_param_range):
+def fit_ToT(tot_data, scan_param_range, t_est):
     '''
         Fit one pixel data with totcurve.
         Has to be global function for the multiprocessing module.
@@ -946,19 +950,28 @@ def fit_ToT(tot_data, scan_param_range):
     tot_data = np.array(tot_data, dtype=np.float)
 
     # Deselect masked values (== nan)
-    x = ((scan_param_range[~np.isnan(tot_data)])/2)*2.5
-    y = (tot_data[~np.isnan(tot_data)])*25
+    x = np.where(np.all([tot_data != 0, ~np.isnan(tot_data)], axis = 0))[0]
+    y = tot_data[np.all([tot_data != 0, ~np.isnan(tot_data)], axis = 0)]
 
     # Only fit data that is fittable
     if np.all(y == 0) or np.all(np.isnan(y)) or x.shape[0] < 3:
         return (0., 0., 0., 0., 0.)
 
-    p0 = [10, -1300, 13000, 230]
+    try:
+        popt_lin = curve_fit(f=linear, xdata=x, ydata=y)[0]
+        a = popt_lin[0]
+        b = popt_lin[1]
+    except RuntimeError:  # fit failed
+        return (0., 0., 0., 0., 0.)
+
+    p0 = [a, b, 500, t_est]
 
     try:
         popt = curve_fit(f=totcurve, xdata=x, ydata=y, p0=p0)[0]
         chi2 = np.sum((y - totcurve(x, *popt)) ** 2)
     except RuntimeError:  # fit failed
+        return (0., 0., 0., 0., 0.)
+    except ValueError:  # fit failed
         return (0., 0., 0., 0., 0.)
 
     return (popt[0], popt[1], popt[2], popt[3], chi2 / (y.shape[0] - 3 - 1))
@@ -970,7 +983,8 @@ def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
 
     logger.info("Start ToT-curve fit on %d CPU core(s)", mp.cpu_count())
 
-    partialfit_totcurves = partial(fit_ToT, scan_param_range=scan_param_range)
+    t_est = np.average(np.where((totcurves > 0) & (totcurves <= 5))[1])
+    partialfit_totcurves = partial(fit_ToT, scan_param_range=scan_param_range, t_est = t_est)
 
     result_list = imap_bar(partialfit_totcurves, totcurves.tolist(), progress = progress)
     result_array = np.array(result_list)
