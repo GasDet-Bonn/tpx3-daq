@@ -1070,6 +1070,30 @@ class Plotting(object):
 
         self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
+    def plot_two_functions(self, x1, y1, x1_err, y1_err, x2, y2, label_1 = "data", label_2 = "fit", x_plot_range=None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
+        """
+            Plot two functions (1 = data function, 2 = fit of data function)
+        """
+        fig = Figure()
+        FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        self._add_text(fig)
+
+        ax.errorbar(x1, y1, y1_err, label = label_1, ls = 'None', marker = '.', ms = 4, alpha = 0.8, zorder=0)
+        ax.plot(x2, y2, label = label_2, alpha=0.8, zorder=1)
+
+        ax.set_ylim(0, 1.5*max(y1))
+
+        if title:
+            ax.set_title(title, color=TITLE_COLOR)
+        if x_axis_title is not None:
+            ax.set_xlabel(x_axis_title)
+        if y_axis_title is not None:
+            ax.set_ylabel(y_axis_title)
+        ax.grid(True)
+        ax.legend()
+
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
 
 if __name__ == "__main__":

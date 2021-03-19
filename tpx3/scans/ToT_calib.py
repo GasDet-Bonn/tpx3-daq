@@ -195,16 +195,25 @@ class ToTCalib(ScanBase):
 
             # Fit ToT-Curves to the histogramms for all pixels
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
-            a2D, b2D, c2D, t2D, chi2ndf2D = analysis.fit_totcurves_multithread(totcurve, scan_param_range=param_range, progress = progress)
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve', obj=totcurve)
-            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve Full', obj=full)
-            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve Count', obj=count)
-            h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
-            h5_file.create_carray(h5_file.root.interpreted, name='aMap', obj=a2D.T)
-            h5_file.create_carray(h5_file.root.interpreted, name='bMap', obj=b2D.T)
-            h5_file.create_carray(h5_file.root.interpreted, name='cMap', obj=c2D.T)
-            h5_file.create_carray(h5_file.root.interpreted, name='tMap', obj=t2D.T)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve_Full', obj=full)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve_Count', obj=count)
+
+            mean, popt, pcov = analysis.fit_totcurves_mean(totcurve, scan_param_range=param_range, progress = progress)
+
+            h5_file.create_table(h5_file.root.interpreted, 'mean_curve', mean)
+
+            data_type = {'names': ['param', 'value', 'stddev'],
+                        'formats': ['S1', 'float32', 'float32']}
+
+            parameter_table = np.recarray(4, dtype=data_type)
+            parameter_table['param'] = ['a', 'b', 'c', 't']
+            parameter_table['value'] = [popt[0], popt[1], popt[2], popt[3]]
+            parameter_table['stddev'] = [np.sqrt(pcov[0][0]), np.sqrt(pcov[1][1]), np.sqrt(pcov[2][2]), np.sqrt(pcov[3][3])]
+
+            h5_file.create_table(h5_file.root.interpreted, 'fit_params', parameter_table)
+
 
     def plot(self, status = None, plot_queue = None, **kwargs):
         '''
@@ -242,49 +251,25 @@ class ToTCalib(ScanBase):
                 ToT_hist = h5_file.root.interpreted.HistToTCurve[:].T
                 p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
 
-                # Plot the ToT-Curve fit parameter a histogram
-                hist_a = np.ma.masked_array(h5_file.root.interpreted.aMap[:], mask)
-                plot_min = np.ma.median(hist_a)-0.5*np.ma.median(hist_a)
-                plot_max = np.ma.median(hist_a)+0.5*np.ma.median(hist_a)
-                if plot_max > plot_min:
-                    step_size = (plot_max-plot_min) / 50.0
-                    p.plot_distribution(hist_a, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
-                else:
-                    step_size = (plot_min-plot_max) / 50.0
-                    p.plot_distribution(hist_a, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='a', title='a distribution', suffix='a_distribution', plot_queue=plot_queue)
+                # Plot the mean ToT-Curve with fit
+                mean = h5_file.root.interpreted.mean_curve[:]
 
-                # Plot the ToT-Curve fit parameter b histogram
-                hist_b = np.ma.masked_array(h5_file.root.interpreted.bMap[:], mask)
-                plot_min = np.ma.median(hist_b)-0.5*np.ma.median(hist_b)
-                plot_max = np.ma.median(hist_b)+0.5*np.ma.median(hist_b)
-                if plot_max > plot_min:
-                    step_size = (plot_max-plot_min) / 50.0
-                    p.plot_distribution(hist_b, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
-                else:
-                    step_size = (plot_min-plot_max) / 50.0
-                    p.plot_distribution(hist_b, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='b', title='b distribution', suffix='b_distribution', plot_queue=plot_queue)
+                fit_params = h5_file.root.interpreted.fit_params[:]
+                a = [float(item["value"]) for item in fit_params if item[0] == b'a'][0]
+                ac = [float(item["stddev"]) for item in fit_params if item[0] == b'a'][0]
+                b = [float(item["value"]) for item in fit_params if item[0] == b'b'][0]
+                bc = [float(item["stddev"]) for item in fit_params if item[0] == b'b'][0]
+                c = [float(item["value"]) for item in fit_params if item[0] == b'c'][0]
+                cc = [float(item["stddev"]) for item in fit_params if item[0] == b'c'][0]
+                t = [float(item["value"]) for item in fit_params if item[0] == b't'][0]
+                tc = [float(item["stddev"]) for item in fit_params if item[0] == b't'][0]
 
-                # Plot the ToT-Curve fit parameter c histogram
-                hist_c = np.ma.masked_array(h5_file.root.interpreted.cMap[:], mask)
-                plot_min = -5*np.ma.median(hist_c)
-                plot_max = 5*np.ma.median(hist_c)
-                if plot_max > plot_min:
-                    step_size = (plot_max-plot_min) / 200.0
-                    p.plot_distribution(hist_c, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
-                else:
-                    step_size = (plot_min-plot_max) / 200.0
-                    p.plot_distribution(hist_c, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='c', title='c distribution', suffix='c_distribution', plot_queue=plot_queue)
+                mean['tot']
+                mean['tot_error']
+                points = np.linspace(t*1.001, len(mean['tot']), 500)
+                fit = analysis.totcurve(points, a, b, c, t)
 
-                # Plot the ToT-Curve fit parameter t histogram
-                hist_t = np.ma.masked_array(h5_file.root.interpreted.tMap[:], mask)
-                plot_min = np.ma.median(hist_t)-0.05*np.ma.median(hist_t)
-                plot_max = np.ma.median(hist_t)+0.05*np.ma.median(hist_t)
-                if plot_max > plot_min:
-                    step_size = (plot_max-plot_min) / 100.0
-                    p.plot_distribution(hist_t, plot_range=np.arange(plot_min, plot_max, step_size), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
-                else:
-                    step_size = (plot_min-plot_max) / 100.0
-                    p.plot_distribution(hist_t, plot_range=np.arange(plot_max, plot_min, step_size), x_axis_title='t', title='t distribution', suffix='t_distribution', plot_queue=plot_queue)
+                p.plot_two_functions(range(len(mean['tot'])), mean['tot'], range(len(mean['tot'])), mean['tot_error'], points, fit, y_plot_range = [0, np.amax(fit[1])], label_1 = 'mean ToT', label_2='fit with \na=(%.2f+/-%.2f), \nb=(%.2f+/-%.2f), \nc=(%.2f+/-%.2f), \nt=(%.2f+/-%.2f)'%(a, ac, b, bc, c, cc, t ,tc), x_axis_title='VTP [2.5 mV]', y_axis_title='ToT Clock Cycles [25 ns]', title='ToT fit', suffix='ToT fit', plot_queue=plot_queue )
 
 
 if __name__ == "__main__":

@@ -1003,6 +1003,52 @@ def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
     chi2ndf2D = np.reshape(chi2ndf, (256, 256))
     return a2D, b2D, c2D, t2D, chi2ndf2D
 
+def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
+    """
+        Fit the the ToT curves for all pixels simultaneously, by only
+        fitting the mean for each VTP_fine slice.
+    """
+    # Set data with no tot to nan to cut it later
+    totcurves[totcurves == 0] = np.nan
+
+    # Get mean and standard deviation for non nan data
+    totcurve_mean = np.nanmean(totcurves, axis=0)
+    totcurve_std = np.nanstd(totcurves, axis=0)
+
+    # Get the start value for t with data close to the start of the curve
+    t_est = np.average(np.where((totcurve_mean > 0) & (totcurve_mean <= 5)))
+
+    # Use only pulse height with at least 60% aktive pixels
+    active_pixels = np.count_nonzero(totcurves > 0, axis=0)
+    totcurve_mean[active_pixels < 0.4 * 256 * 256] = 0
+    totcurve_std[active_pixels < 0.4 * 256 * 256] = 0
+
+    # use only data which contains tot data
+    x = np.where(totcurve_mean>0)[0]
+    y = totcurve_mean[totcurve_mean > 0]
+    y_err = totcurve_std[totcurve_mean > 0]
+
+    # fit with a linear function to get start values for a and b
+    popt, pcov = curve_fit(f=linear, xdata=x, ydata=y)
+    a = popt[0]
+    b = popt[1]
+    ac = np.sqrt(pcov[0][0])
+    bc = np.sqrt(pcov[1][1])
+
+    # fit whole function with the complete totcurve-function
+    p0 = [a, b, 200, t_est]
+    popt, pcov = curve_fit(f=totcurve, xdata=x, ydata=y, sigma = y_err, p0=p0)
+
+    # prepare data for fit and ToT mean for return
+    data_type = {'names': ['tot', 'tot_error'],
+               'formats': ['float32', 'float32']}
+
+    mean = np.recarray(len(totcurve_mean), dtype=data_type)
+    mean['tot'] = totcurve_mean
+    mean['tot_error'] = totcurve_std
+
+    return mean, popt, pcov
+
 
 # init LUTs
 init_lfsr_4_lut()
