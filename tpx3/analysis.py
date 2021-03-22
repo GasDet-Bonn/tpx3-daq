@@ -45,17 +45,16 @@ def scurve_hist(hit_data, param_range):
     return scurves
 
 @njit
-def totcurve_hist(hit_data, param_range):
-    totcurves_means = np.zeros((256*256, len(param_range)), dtype=np.uint16)
-    totcurves_hits = np.zeros((256*256, len(param_range)), dtype=np.uint16)
+def totcurve_hist(hit_data):
+    totcurves_means = np.zeros(256*256, dtype=np.uint16)
+    totcurves_hits = np.zeros(256*256, dtype=np.uint16)
 
     for i in range(hit_data.shape[0]):
         x = hit_data['x'][i]
         y = hit_data['y'][i]
-        p = hit_data['scan_param_id'][i]
         c = hit_data['TOT'][i]
-        totcurves_means[x*256+y,p] += c
-        totcurves_hits[x*256+y,p] += 1
+        totcurves_means[x*256+y] += c
+        totcurves_hits[x*256+y] += 1
 
     return totcurves_means, totcurves_hits
 

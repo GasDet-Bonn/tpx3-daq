@@ -152,7 +152,6 @@ class ToTCalib(ScanBase):
         # Open the HDF5 which contains all data of the calibration
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters
-            raw_data = h5_file.root.raw_data[:]
             meta_data = h5_file.root.meta_data[:]
             run_config = h5_file.root.configuration.run_config[:]
             general_config = h5_file.root.configuration.generalConfig[:]
@@ -160,33 +159,65 @@ class ToTCalib(ScanBase):
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
             # Create group to save all data and histograms to the HDF file
+            try:
+                h5_file.remove_node(h5_file.root.interpreted, recursive=True)
+            except:
+                pass
+
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
             self.logger.info('Interpret raw data...')
-            # Interpret the raw data (2x 32 bit to 1x 48 bit)
-            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
-            raw_data = None
-
-            # Select only data which is hit data
-            hit_data = hit_data[hit_data['data_header'] == 1]
-            h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
-            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
-            hist_occ = np.reshape(pix_occ, (256, 256)).T
-            h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
             param_range = np.unique(meta_data['scan_param_id'])
-            meta_data = None
-            pix_occ = None
-            hist_occ = None
 
-            # Create histograms for number of detected ToT clock cycles for individual testpulses
-            full, count = analysis.totcurve_hist(hit_data, param_range)
+            # Create arrays for interpreted data for all scan parameter IDs
+            totcurves_means = np.zeros((256*256, len(param_range)), dtype=np.uint16)
+            totcurves_hits = np.zeros((256*256, len(param_range)), dtype=np.uint16)
+
+            if progress == None:
+                pbar = tqdm(total = len(param_range))
+            else:
+                step_counter = 0
+
+            # Interpret data seperately per scan parameter id to save RAM
+            for param_id in param_range:
+                start_index = meta_data[meta_data['scan_param_id'] == param_id]
+                stop_index = meta_data[meta_data['scan_param_id'] == param_id]
+                # Interpret the raw data (2x 32 bit to 1x 48 bit)
+                raw_data_tmp = h5_file.root.raw_data[start_index['index_start'][0]:stop_index['index_stop'][-1]]
+                hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, progress = progress)
+                raw_data_tmp = None
+
+                # Select only data which is hit data
+                hit_data_tmp = hit_data_tmp[hit_data_tmp['data_header'] == 1]
+
+                # Create histograms for number of detected ToT clock cycles for individual testpulses
+                full_tmp, count_tmp = analysis.totcurve_hist(hit_data_tmp)
+
+                # Put results of current scan parameter ID in overall arrays
+                totcurves_means[:, param_id] = full_tmp
+                full_tmp = None
+                totcurves_hits[:, param_id] = count_tmp
+                count_tmp = None
+                hit_data_tmp = None
+
+                if progress == None:
+                    pbar.update(1)
+                else:
+                    step_counter += 1
+                    fraction = step_counter / (len(param_range))
+                    progress.put(fraction)
+
+            if progress == None:
+                pbar.close()
+
+            meta_data = None
 
             # Calculate the mean ToT per pixel per pulse
-            totcurve = np.divide(full, count)
+            totcurve = np.divide(totcurves_means, totcurves_hits)
             totcurve = np.nan_to_num(totcurve)
 
             # Only use pixel which saw exactly all pulses
-            totcurve[count != 10] = 0
+            totcurve[totcurves_hits != 10] = 0
             hit_data = None
 
             # Read needed configuration parameters
@@ -197,8 +228,8 @@ class ToTCalib(ScanBase):
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve', obj=totcurve)
-            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve_Full', obj=full)
-            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve_Count', obj=count)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve_Full', obj=totcurves_means)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve_Count', obj=totcurves_hits)
 
             mean, popt, pcov = analysis.fit_totcurves_mean(totcurve, scan_param_range=param_range, progress = progress)
 
@@ -238,10 +269,6 @@ class ToTCalib(ScanBase):
                 p.plot_parameter_page()
 
                 mask = h5_file.root.configuration.mask_matrix[:]
-
-                # Plot the occupancy matrix
-                occ_masked = np.ma.masked_array(h5_file.root.interpreted.HistOcc[:], mask)
-                p.plot_occupancy(occ_masked, title='Integrated Occupancy', z_max='maximum', suffix='occupancy', plot_queue=plot_queue)
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
