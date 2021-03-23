@@ -1036,7 +1036,14 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
 
     # fit whole function with the complete totcurve-function
     p0 = [a, b, 200, t_est]
-    popt, pcov = curve_fit(f=totcurve, xdata=x, ydata=y, sigma = y_err, p0=p0)
+    try:
+        popt, pcov = curve_fit(f=totcurve, xdata=x, ydata=y, sigma = y_err, p0=p0, maxfev= 10000)
+    except RuntimeError:  # fit failed
+        popt = [a, b, 0, 0]
+        pcov = [[pcov[0][0], pcov[0][1], 0, 0], [pcov[1][0], pcov[1][1], 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+    except ValueError:  # fit failed
+        popt = [a, b, 0, 0]
+        pcov = [[pcov[0][0], pcov[0][1], 0, 0], [pcov[1][0], pcov[1][1], 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
 
     # prepare data for fit and ToT mean for return
     data_type = {'names': ['tot', 'tot_error'],
