@@ -138,6 +138,7 @@ class mask_logger(object):
             if path == None:
                 print('No mask set')
                 return False
+        else:
             user_path = os.path.expanduser('~')
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
