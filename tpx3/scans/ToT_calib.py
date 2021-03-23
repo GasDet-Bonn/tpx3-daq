@@ -123,7 +123,7 @@ class ToTCalib(ScanBase):
                         step_counter += 1
                         fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
                         progress.put(fraction)
-                        step += 1
+                    step += 1
                     self.chip.reset_sequential()
                     time.sleep(0.001)
             scan_param_id += 1
