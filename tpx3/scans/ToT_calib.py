@@ -213,7 +213,7 @@ class ToTCalib(ScanBase):
             meta_data = None
 
             # Calculate the mean ToT per pixel per pulse
-            totcurve = np.divide(totcurves_means, totcurves_hits)
+            totcurve = np.divide(totcurves_means, totcurves_hits, where = totcurves_hits > 0)
             totcurve = np.nan_to_num(totcurve)
 
             # Only use pixel which saw exactly all pulses
