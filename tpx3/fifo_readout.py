@@ -226,7 +226,8 @@ class FifoReadout(object):
                 if n_words == 0 and self.stop_readout.is_set():
                     break
                 if discard_error > 0 or decode_error > 0:
-                    self.reset_rx()
+                    self.logger.warning('There were {} discard errors and {} decode errors - Resetting error counters'.format(discard_error + decode_error))
+                    self.rx_error_reset()
             finally:
                 time_wait = self.readout_interval - (time() - time_read)
             if self._calculate.is_set():
