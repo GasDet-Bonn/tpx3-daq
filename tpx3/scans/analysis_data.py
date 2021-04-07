@@ -25,7 +25,7 @@ import matplotlib.colors as colors
 import logging
 import six
 
-#from tpx3.scan_base import ScanBase
+from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
 
@@ -45,7 +45,7 @@ local_configuration = {
 }
 
 
-class DataAnalysis():
+class DataAnalysis(ScanBase):
 
     scan_id = "DataAnalysis"
     wafer_number = 0
@@ -763,59 +763,6 @@ class DataAnalysis():
         with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
             h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
 
-    def set_directory(self,sub_dir=None):
-        # Get the user directory
-        user_path = os.path.expanduser('~')
-        user_path = os.path.join(user_path, 'Timepix3')
-        if not os.path.exists(user_path):
-            os.makedirs(user_path)
-        
-        # Store runs in '~/Timepix3/data' and other scans in '~/Timepix3/scans'
-        if self.scan_id == "data_take":
-            scan_path = os.path.join(user_path, 'data')
-        else:
-            scan_path = os.path.join(user_path, 'scans')
-
-        if not os.path.exists(scan_path):
-            os.makedirs(scan_path)
-
-        # Setup the output_data directory
-        if sub_dir:
-            self.working_dir = os.path.join(scan_path, sub_dir)
-            if not os.path.exists(self.working_dir):
-                os.makedirs(self.working_dir)
-        else:
-            self.working_dir = scan_path
-
-    def make_files(self):
-        # Create the filename for the HDF5 file and the logger by combining timestamp and run_name
-        self.timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-        self.run_name = self.scan_id + '_' + self.timestamp
-        output_path = os.path.join(self.working_dir, 'hdf')
-        self.output_filename = os.path.join(output_path, self.run_name)
-
-        # Setup the logger and the logfile
-        self.logger = logging.getLogger("DataAnalysis")
-        self.logger.setLevel(logging.INFO)
-        self.setup_logfile()
-        self.logger.info('Initializing %s...', self.__class__.__name__)
-
-    def setup_logfile(self):
-        '''
-            Setup the logfile
-        '''
-        output_path = os.path.join(self.working_dir, 'logs')
-        logger_filename = os.path.join(output_path, self.run_name)
-        self.fh = logging.FileHandler(logger_filename + '.log')
-        self.fh.setLevel(logging.INFO)
-        self.fh.setFormatter(logging.Formatter("%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s"))
-        for lg in six.itervalues(logging.Logger.manager.loggerDict):
-            if isinstance(lg, logging.Logger):
-                lg.addHandler(self.fh)
-
-        return self.fh
-            
-
 
 
 if __name__ == "__main__":
@@ -848,7 +795,7 @@ if __name__ == "__main__":
         user_path = os.path.join(user_path, 'hdf')
         datafile = user_path + os.sep +file_name
     # analyze and plot
-    plotter = DataAnalysis()
+    plotter = DataAnalysis(no_chip = True)
     plotter.set_directory()
     plotter.make_files()
     plotter.analyze(datafile, args_dict)
