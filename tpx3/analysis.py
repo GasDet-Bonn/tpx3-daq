@@ -160,8 +160,8 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
 
 
 def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
-    data_type = {'names': ['data_header', 'header', 'x',     'y',     'TOA',    'TOT',    'EventCounter', 'HitCounter', 'FTOA',  'scan_param_id', 'chunk_start_time', 'iTOT',   'TOA_Extension', 'TOA_Combined'],
-               'formats': ['uint8',       'uint8',  'uint8', 'uint8', 'uint16', 'uint16', 'uint16',       'uint8',      'uint8', 'uint16',        'float',            'uint16', 'uint64',        'uint64']}
+    data_type = {'names': ['data_header', 'header', 'hit_index', 'x',     'y',     'TOA',    'TOT',    'EventCounter', 'HitCounter', 'FTOA',  'scan_param_id', 'chunk_start_time', 'iTOT',   'TOA_Extension', 'TOA_Combined'],
+               'formats': ['uint8',       'uint8',  'uint64', 'uint8', 'uint8', 'uint16', 'uint16', 'uint16',       'uint8',      'uint8', 'uint16',        'float',            'uint16', 'uint64',        'uint64']}
 
     pix_data = np.recarray((data.shape[0]), dtype=data_type)
 

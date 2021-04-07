@@ -4,14 +4,14 @@ registers:
   address: 0
   size: 1
   default: 1
-  value: 1
+  value: 0
 - name: Op_mode
   description: Sets pixel operation mode (0b00 = ToA and ToT, 0b01 = ToA, 0b10 = Event
     and iToT)
   address: 1
   size: 2
   default: 0
-  value: 2
+  value: 0
 - name: Gray_count_en
   description: Enables/Diables EoC Gray counter (0 = disabled, 1 = enabled)
   address: 3
