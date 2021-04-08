@@ -28,19 +28,19 @@ registers:
   description: Vfbk
   name: Vfbk
   size: 8
-  value: 140
+  value: 132
 - address: 6
   default: 256
   description: Fine control of Pixel Threshold
   name: Vthreshold_fine
   size: 9
-  value: 360
+  value: 255
 - address: 7
   default: 8
   description: Coarse Control of Pixel Threshold
   name: Vthreshold_coarse
   size: 4
-  value: 4
+  value: 7
 - address: 8
   default: 128
   description: Ibias_DiscS1 switched on
@@ -70,7 +70,7 @@ registers:
   description: Ibias Pixel DAC value
   name: Ibias_PixelDAC
   size: 8
-  value: 104
+  value: 120
 - address: 13
   default: 128
   description: Test Pulse Buffer input
@@ -88,13 +88,13 @@ registers:
   description: Coarse control of V TestPulse
   name: VTP_coarse
   size: 8
-  value: 20
+  value: 100
 - address: 16
   default: 256
   description: Fine control of V TestPulse
   name: VTP_fine
   size: 9
-  value: 500
+  value: 300
 - address: 17
   default: 128
   description: Ibias_CP_PLL value
