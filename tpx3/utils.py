@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 import sys
-from basil.utils.BitLogic import BitLogic
+#from basil.utils.BitLogic import BitLogic
 from six.moves import range
 import os
 from string import Template
@@ -67,6 +67,7 @@ def bitword_to_byte_list(data, string=False):
     """
     Given a 32 bit word, convert it to a list of bytes using BitLogic
     """
+    from basil.utils.BitLogic import BitLogic
     result = BitLogic(32)
     result[31:0] = int(data)
     result = toByteList(result, string)
