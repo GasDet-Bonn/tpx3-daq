@@ -240,7 +240,7 @@ class DataAnalysis(ScanBase):
             # for large data_sets we might want to split it into smaller parts to speed up analysis and save RAM
             if big == True:
                 # customize number of meta data chunks to be analyzed at once here
-                chunk_length = 1000
+                chunk_length = 3000
                 meta_length = len(meta_data)
 
                 # array of indices of the meta_data chunks each package of chunks begins with
@@ -390,16 +390,40 @@ class DataAnalysis(ScanBase):
                 first = True
 
                 # iterate over all run_* groups in the hdf5 file and build arrays for the histograms
+                i = 0
                 for group in h5_file.root.reconstruction:
                     hist_size = np.concatenate((hist_size, group.hits[:]), axis = None)
                     hist_sum = np.concatenate((hist_sum, group.sumTOT[:]), axis = None)
                     if first == False:
-                        histcha = np.concatenate((histcha, group.TOT[:]), axis = 0)
-                        histtoa = np.concatenate((histcha, group.TOA[:]), axis = 0)
+                        # It is necessary to differentiate here, because numpy treats arrays of arrays with the same length
+                        # as 2d errors, which lead to a ValueError during concatenate
+                        if np.array(group.TOT[:],dtype=object).ndim == 1:
+                            histcha = np.concatenate((histcha, np.array(group.TOT[:],dtype=object)), axis = 0)
+                            histtoa = np.concatenate((histtoa, np.array(group.TOA[:],dtype=object)), axis = 0)
+                        else:
+                            tot_list = group.TOT[:]
+                            toa_list = group.TOA[:]
+                            tot_list.append(np.zeros(len(tot_list[0])+1))
+                            toa_list.append(np.zeros(len(toa_list[0])+1))
+                            histcha = np.concatenate((histcha, np.array(tot_list, dtype=object)), axis = 0)
+                            histtoa = np.concatenate((histtoa, np.array(toa_list, dtype=object)), axis = 0)
+                            histcha = histcha[:-1]
+                            histtoa = histtoa[:-1]
                     else:
-                        histcha = np.array(group.TOT[:],dtype=object)
-                        histtoa = np.array(group.TOA[:],dtype=object)
+                        if np.array(group.TOT[:],dtype=object).ndim == 1:
+                            histcha = np.array(group.TOT[:],dtype=object)
+                            histtoa = np.array(group.TOA[:],dtype=object)
+                        else:
+                            tot_list = group.TOT[:]
+                            toa_list = group.TOA[:]
+                            tot_list.append(np.zeros(len(tot_list[0])+1))
+                            toa_list.append(np.zeros(len(toa_list[0])+1))
+                            histcha = np.concatenate((histcha, np.array(tot_list, dtype=object)), axis = 0)
+                            histtoa = np.concatenate((histtoa, np.array(toa_list, dtype=object)), axis = 0)
+                            histcha = histcha[:-1]
+                            histtoa = histtoa[:-1]
                         first = False
+                    i+=1
 
                 # Plot cluster properties
 
@@ -441,8 +465,13 @@ class DataAnalysis(ScanBase):
                 #t = 236.44
                 histch = np.zeros(len(histcha))
                 for i,el in enumerate(histcha):
-                    for value in  el:
+                    if len(el) > 1:
+                        for value in  el:
+                            histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
+                    else:
+                        value = el[0]
                         histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
+                    
 
                 #p.plot_distribution(histch, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster', y_axis_title='# of clusters', title='Number of electrons per cluster', suffix='Number of electrons per cluster', fit=False)
 
