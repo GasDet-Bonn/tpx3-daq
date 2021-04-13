@@ -107,3 +107,9 @@ registers:
   name: PLL_Vcntrl
   size: 8
   value: 128
+- address: 19
+  default: 29
+  description: Sense DAC output selection
+  name: Sense_DAC
+  size: 5
+  value: 29
