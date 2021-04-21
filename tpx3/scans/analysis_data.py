@@ -251,6 +251,7 @@ class DataAnalysis(ScanBase):
 
             cluster_sum = 0
             hit_sum = 0
+            hit_sum_b = 0
 
             hit_index = 0
             # iterate over all sets of chunks
@@ -273,75 +274,80 @@ class DataAnalysis(ScanBase):
                 meta_data_tmp['index_stop'] = meta_data_tmp['index_stop']-start
                 # analyze data
                 hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, meta_data_tmp, split_fine=True)
-                hit_data_tmp = hit_data_tmp[hit_data_tmp['data_header'] == 1]
-                hit_data_tmp['hit_index'] = range(hit_index,hit_index+hit_data_tmp.shape[0])
-                hit_index += hit_data_tmp.shape[0]
-
-                # cluster data
-                self.logger.info("Start clustering...")
-                cluster_data = self.cluster(hit_data_tmp, cluster_radius, cluster_dt)
-                self.logger.info("Done with clustering")
-
-                # save hit_data
-                h5_file.create_table(h5_file.root.interpreted, 'hit_data_'+str(num), hit_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
-
-                # create group for cluster data
-                group = h5_file.create_group(h5_file.root.reconstruction, 'run_'+str(num), 'Cluster Data of Chunk '+str(num))
-
-                # write cluster data into h5 file
-                self.logger.info("Start writing into h5 file...")
-                vlarray = h5_file.create_vlarray(group, 'x', tb.Int32Atom(shape=()), "x-values", filters=tb.Filters(complib='zlib', complevel=5))
-                for i in range(cluster_data.shape[0]):
-                    vlarray.append(cluster_data['x'][i])
-
-                vlarray = h5_file.create_vlarray(group, 'y', tb.Int32Atom(shape=()), "y-values", filters=tb.Filters(complib='zlib', complevel=5))
-                for i in range(cluster_data.shape[0]):
-                    vlarray.append(cluster_data['y'][i])
-
-                vlarray = h5_file.create_vlarray(group, 'TOA', tb.Int64Atom(shape=()), "TOA-values", filters=tb.Filters(complib='zlib', complevel=5))
-                for i in range(cluster_data.shape[0]):
-                    vlarray.append(cluster_data['TOA'][i])
-
-                vlarray = h5_file.create_vlarray(group, 'TOT', tb.Int32Atom(shape=()), "TOT-values", filters=tb.Filters(complib='zlib', complevel=5))
-                for i in range(cluster_data.shape[0]):
-                    vlarray.append(cluster_data['TOT'][i])
-
-                vlarray = h5_file.create_vlarray(group, 'EventCounter', tb.Int32Atom(shape=()), "EventCounter-values", filters=tb.Filters(complib='zlib', complevel=5))
-                for i in range(cluster_data.shape[0]):
-                    vlarray.append(cluster_data['EventCounter'][i])
-
-                vlarray = h5_file.create_vlarray(group, 'TOA_Extension', tb.Int64Atom(shape=()), "TOA_Extension-values", filters=tb.Filters(complib='zlib', complevel=5))
-                for i in range(cluster_data.shape[0]):
-                    vlarray.append(cluster_data['TOA_Extension'][i])
-
-                vlarray = h5_file.create_vlarray(group, 'hit_index', tb.Int64Atom(shape=()), "hit_index-values", filters=tb.Filters(complib='zlib', complevel=5))
-                for i in range(cluster_data.shape[0]):
-                    vlarray.append(cluster_data['hit_index'][i])
-
-                vlarray = h5_file.create_array(group, 'cluster_nr', cluster_data['cluster_nr'], "cluster_nr-values")
                 
-                h5_file.create_array(group, 'chunk_start_time', cluster_data['chunk_start_time'], "chunk_start_time-values")
+                print(hit_data_tmp.shape[0])
+                if hit_data_tmp.shape[0] != 0:
+                    hit_data_tmp = hit_data_tmp[hit_data_tmp['data_header'] == 1]
+                    hit_data_tmp['hit_index'] = range(hit_index,hit_index+hit_data_tmp.shape[0])
+                    hit_index += hit_data_tmp.shape[0]
 
-                h5_file.create_array(group, 'hits', cluster_data['hits'], "size of cluster")
+                    # cluster data
+                    self.logger.info("Start clustering...")
+                    cluster_data = self.cluster(hit_data_tmp, cluster_radius, cluster_dt)
+                    self.logger.info("Done with clustering")
 
-                h5_file.create_array(group, 'centerX', cluster_data['centerX'], "mean of the x values")
+                    # save hit_data
+                    h5_file.create_table(h5_file.root.interpreted, 'hit_data_'+str(num), hit_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
 
-                h5_file.create_array(group, 'centerY', cluster_data['centerY'], "mean of the y values")
+                    # create group for cluster data
+                    group = h5_file.create_group(h5_file.root.reconstruction, 'run_'+str(num), 'Cluster Data of Chunk '+str(num))
 
-                h5_file.create_array(group, 'sumTOT', cluster_data['sumTOT'], "sum of the ToT in the cluster")
+                    # write cluster data into h5 file
+                    self.logger.info("Start writing into h5 file...")
+                    vlarray = h5_file.create_vlarray(group, 'x', tb.Int32Atom(shape=()), "x-values", filters=tb.Filters(complib='zlib', complevel=5))
+                    for i in range(cluster_data.shape[0]):
+                        vlarray.append(cluster_data['x'][i])
 
-                # print out cluster information
-                print("# cluster in chunk: "+str(len(cluster_data['hits'])))
-                if len(cluster_data['hits']) != 0:
-                    print("average size: "+str(np.mean(cluster_data['hits'])))
-                print("total hits in chunk: "+str(np.sum(cluster_data['hits'])))
+                    vlarray = h5_file.create_vlarray(group, 'y', tb.Int32Atom(shape=()), "y-values", filters=tb.Filters(complib='zlib', complevel=5))
+                    for i in range(cluster_data.shape[0]):
+                        vlarray.append(cluster_data['y'][i])
 
-                cluster_sum += len(cluster_data['hits'])
-                hit_sum += np.sum(cluster_data['hits'])
+                    vlarray = h5_file.create_vlarray(group, 'TOA', tb.Int64Atom(shape=()), "TOA-values", filters=tb.Filters(complib='zlib', complevel=5))
+                    for i in range(cluster_data.shape[0]):
+                        vlarray.append(cluster_data['TOA'][i])
+
+                    vlarray = h5_file.create_vlarray(group, 'TOT', tb.Int32Atom(shape=()), "TOT-values", filters=tb.Filters(complib='zlib', complevel=5))
+                    for i in range(cluster_data.shape[0]):
+                        vlarray.append(cluster_data['TOT'][i])
+
+                    vlarray = h5_file.create_vlarray(group, 'EventCounter', tb.Int32Atom(shape=()), "EventCounter-values", filters=tb.Filters(complib='zlib', complevel=5))
+                    for i in range(cluster_data.shape[0]):
+                        vlarray.append(cluster_data['EventCounter'][i])
+
+                    vlarray = h5_file.create_vlarray(group, 'TOA_Extension', tb.Int64Atom(shape=()), "TOA_Extension-values", filters=tb.Filters(complib='zlib', complevel=5))
+                    for i in range(cluster_data.shape[0]):
+                        vlarray.append(cluster_data['TOA_Extension'][i])
+
+                    vlarray = h5_file.create_vlarray(group, 'hit_index', tb.Int64Atom(shape=()), "hit_index-values", filters=tb.Filters(complib='zlib', complevel=5))
+                    for i in range(cluster_data.shape[0]):
+                        vlarray.append(cluster_data['hit_index'][i])
+
+                    vlarray = h5_file.create_array(group, 'cluster_nr', cluster_data['cluster_nr'], "cluster_nr-values")
+                    
+                    h5_file.create_array(group, 'chunk_start_time', cluster_data['chunk_start_time'], "chunk_start_time-values")
+
+                    h5_file.create_array(group, 'hits', cluster_data['hits'], "size of cluster")
+
+                    h5_file.create_array(group, 'centerX', cluster_data['centerX'], "mean of the x values")
+
+                    h5_file.create_array(group, 'centerY', cluster_data['centerY'], "mean of the y values")
+
+                    h5_file.create_array(group, 'sumTOT', cluster_data['sumTOT'], "sum of the ToT in the cluster")
+
+                    # print out cluster information
+                    print("# cluster in chunk: "+str(len(cluster_data['hits'])))
+                    if len(cluster_data['hits']) != 0:
+                        print("average size: "+str(np.mean(cluster_data['hits'])))
+                    print("total hits in chunk: "+str(np.sum(cluster_data['hits'])))
+
+                    cluster_sum += len(cluster_data['hits'])
+                    hit_sum += np.sum(cluster_data['hits'])
+                    hit_sum_b += hit_data_tmp.shape[0]
             
             # print out final information on clustering
             print("# cluster in total: "+str(cluster_sum))
             print("# hits in total: "+str(hit_sum))
+            print("# hits in total alternative calc: "+str(hit_sum))
 
 
     def plot(self,file_name):
@@ -390,40 +396,23 @@ class DataAnalysis(ScanBase):
                 first = True
 
                 # iterate over all run_* groups in the hdf5 file and build arrays for the histograms
-                i = 0
                 for group in h5_file.root.reconstruction:
                     hist_size = np.concatenate((hist_size, group.hits[:]), axis = None)
                     hist_sum = np.concatenate((hist_sum, group.sumTOT[:]), axis = None)
                     if first == False:
-                        # It is necessary to differentiate here, because numpy treats arrays of arrays with the same length
-                        # as 2d errors, which lead to a ValueError during concatenate
-                        if np.array(group.TOT[:],dtype=object).ndim == 1:
-                            histcha = np.concatenate((histcha, np.array(group.TOT[:],dtype=object)), axis = 0)
-                            histtoa = np.concatenate((histtoa, np.array(group.TOA[:],dtype=object)), axis = 0)
-                        else:
-                            tot_list = group.TOT[:]
-                            toa_list = group.TOA[:]
-                            tot_list.append(np.zeros(len(tot_list[0])+1))
-                            toa_list.append(np.zeros(len(toa_list[0])+1))
-                            histcha = np.concatenate((histcha, np.array(tot_list, dtype=object)), axis = 0)
-                            histtoa = np.concatenate((histtoa, np.array(toa_list, dtype=object)), axis = 0)
-                            histcha = histcha[:-1]
-                            histtoa = histtoa[:-1]
+                        histcha = np.concatenate((histcha, group.TOT[:]), axis = 0)
+                        histtoa = np.concatenate((histtoa, group.TOA[:]), axis = 0)
+                        histindex = np.concatenate((histindex, group.hit_index[:]), axis = 0)
                     else:
-                        if np.array(group.TOT[:],dtype=object).ndim == 1:
-                            histcha = np.array(group.TOT[:],dtype=object)
-                            histtoa = np.array(group.TOA[:],dtype=object)
-                        else:
-                            tot_list = group.TOT[:]
-                            toa_list = group.TOA[:]
-                            tot_list.append(np.zeros(len(tot_list[0])+1))
-                            toa_list.append(np.zeros(len(toa_list[0])+1))
-                            histcha = np.concatenate((histcha, np.array(tot_list, dtype=object)), axis = 0)
-                            histtoa = np.concatenate((histtoa, np.array(toa_list, dtype=object)), axis = 0)
-                            histcha = histcha[:-1]
-                            histtoa = histtoa[:-1]
+                        histcha = np.array(group.TOT[:],dtype=object)
+                        histtoa = np.array(group.TOA[:],dtype=object)
+                        histindex = np.array(group.hit_index[:],dtype=object)
                         first = False
-                    i+=1
+
+                """histindex = histindex.flatten()
+                u, c = np.unique(histindex, return_counts=True)
+                dup = u[c > 1]
+                print(dup)"""
 
                 # Plot cluster properties
 
@@ -465,13 +454,8 @@ class DataAnalysis(ScanBase):
                 #t = 236.44
                 histch = np.zeros(len(histcha))
                 for i,el in enumerate(histcha):
-                    if len(el) > 1:
-                        for value in  el:
-                            histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
-                    else:
-                        value = el[0]
+                    for value in  el:
                         histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
-                    
 
                 #p.plot_distribution(histch, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster', y_axis_title='# of clusters', title='Number of electrons per cluster', suffix='Number of electrons per cluster', fit=False)
 
@@ -501,296 +485,17 @@ class DataAnalysis(ScanBase):
                 p.plot_distribution(hist, plot_range = np.arange(0-0.5, np.median(hist) *7, 500), x_axis_title='Number of electrons per pixel', y_axis_title='# of pixels', title='Number of electrons per pixel', suffix='Number of electrons per pixel', fit=False)
 
                 # plot the ToA spread in the clusters
-                hist_spread = np.empty(len(toa_comb))
+                hist_spread = np.empty(len(tot))
                 ind = 0
                 for i,el in enumerate(histtoa):
-                    m = np.mean(el)
-                    for value in  el:
-                        hist_spread[ind] = value-m
-                        ind += 1
-                p.plot_distribution(hist_spread, plot_range = np.arange(-10.25, 10.25, 0.5), x_axis_title='Deviation from mean ToA of cluster', y_axis_title='# of pixels', title='Deviation from mean ToA of cluster', suffix='Deviation from mean ToA of cluster', fit=False)
+                    if not len(el) == 1:
+                        m = np.mean(el)
+                        for value in  el:
+                            hist_spread[ind] = value-m
+                            ind += 1
+                p.plot_distribution(hist_spread, plot_range = np.arange(-10.125, 10.125, 0.25), x_axis_title='Deviation from mean ToA of cluster', y_axis_title='# of pixels', title='Deviation from mean ToA of cluster', suffix='Deviation from mean ToA of cluster', fit=True)
 
-
-
-    def convert_to_silab_format(self,file_name, trigger_data, trigger_width = 5, trigger_offset = 0):
-        self.logger.info('Start Conversion to SiLab format...')
-        output_file_name = file_name[:-3] + "_converted.h5"
-        hit_data = None
-        with tb.open_file(file_name, 'r+') as h5_file:
-            data_type = {'names': ['event_number', 'frame', 'column', 'row', 'charge'],
-               'formats': ['int64', 'uint64', 'uint16',  'uint16', 'float32']}
-
-            for group in h5_file.root.interpreted:
-                if hit_data:
-                    hit_data = np.hstack((hit_data, group[:]))
-                else:
-                    hit_data = group[:]
-
-        hit_data.sort(order="TOA_Combined") # sort according to ToA_Combined in order to make trigger assignment easier and possible
-        hits = np.recarray((hit_data.shape[0]), dtype=data_type)
-
-        hits["column"] = [x+1 for x in hit_data['x']]
-        hits["row"] = [y+1 for y in hit_data['y']]
-        hits["frame"] = hit_data["TOA_Combined"]
-
-        # K7
-        #a = 10.17
-        #b = -4307.6
-        #c = -52649.2
-        #t = 268.85
-        # I7 THR=800
-        #a = 8.8
-        #b = -3910.2
-        #c = -66090.6
-        #t = 258.61
-        # I7 THR=1000
-        a = 8.0
-        b = -2964.3
-        c = -46339.0
-        t = 206.31
-        # I7 THR=1100
-        #a = 7.4
-        #b = -2288.9
-        #c = -7204.0
-        #t = 236.44
-        hits["charge"] = [3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4 for value in hit_data["TOT"]]
-        hits["frame"] = hit_data["TOA_Combined"]
-
-        print("last data timestamp = %d"%(hit_data["TOA_Combined"][-1]))
-
-        if np.any(hits["column"]<1):
-            print("COLUMN PROBLEM")
-        if np.any(hits["row"]<1):
-            print("ROW PROBLEM")
-
-        assigned = np.full(hit_data.shape[0], False)
-        hits_add = np.recarray((hit_data.shape[0]), dtype=data_type)
-        # assign triggers
-
-        hits_index = 0
-        first_hit_data_index = 0
-        curr_add = 0
-        for i in range(trigger_data.shape[0]):
-            curr_hit_data = first_hit_data_index
-            while curr_hit_data < len(hit_data) and (hit_data["TOA_Combined"][curr_hit_data] < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
-                    if assigned[curr_hit_data] == False:
-                        hits["event_number"][curr_hit_data] = trigger_data["trigger_number"][i]
-                        assigned[curr_hit_data] = True
-                    else: #TODO: Evtl. doppelt zugeordnete Hits ganz rausschmeissen mit TLU?
-                        # duplicate hit if necessary
-                        hits_add["event_number"][curr_add] = trigger_data["trigger_number"][i]
-                        hits_add["frame"][curr_add] = hits["frame"][curr_hit_data]
-                        hits_add["row"][curr_add] = hits["row"][curr_hit_data]
-                        hits_add["column"][curr_add] = hits["column"][curr_hit_data]
-                        hits_add["charge"][curr_add] = hits["charge"][curr_hit_data]
-                        curr_add += 1
-                        if curr_add == len(hits_add):
-                            hits_add2 = np.recarray((hit_data.shape[0]), dtype=data_type)
-                            hits_add = np.hstack((hits_add, hits_add2))
-                else:
-                    first_hit_data_index = curr_hit_data
-                curr_hit_data += 1
-
-        n = len(assigned)-np.sum(assigned)
-        print("%d Hits could not be assigned to a trigger. Throw them away?"%(n))
-        print("There were %d additional assignments."%(curr_add))
-        
-        hits = np.hstack((hits, hits_add[:curr_add]))
-        hits.sort(order="frame")
-
-        
-        with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
-            h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
-
-    def generate_trigger_from_DUT1(self,filename, min_size = 0, min_charge = 0):
-        hist_size = []
-        first = True
-        with tb.open_file(filename, 'r+') as h5_file:
-            for group in h5_file.root.reconstruction:
-                hist_size = np.concatenate((hist_size, group.hits[:]), axis = None)
-                if first == False:
-                    histcha = np.concatenate((histcha, group.TOT[:]), axis = 0)
-                    histtoa = np.concatenate((histtoa, group.TOA[:]), axis = 0)
-                    hitindex = np.concatenate((histtoa, group.hit_index[:]), axis = 0)
-                else:
-                    histcha = np.array(group.TOT[:],dtype=object)
-                    histtoa = np.array(group.TOA[:],dtype=object)
-                    hitindex = np.array(group.hit_index[:],dtype=object)
-                    first = False
-
-
-        # K7
-        #a = 10.17
-        #b = -4307.6
-        #c = -52649.2
-        #t = 268.85
-        # I7 THR=800
-        #a = 8.8
-        #b = -3910.2
-        #c = -66090.6
-        #t = 258.61
-        # I7 THR=1000
-        a = 8.0
-        b = -2964.3
-        c = -46339.0
-        t = 206.31
-        # I7 THR=1100
-        #a = 7.4
-        #b = -2288.9
-        #c = -7204.0
-        #t = 236.44
-        # calculate total cluster charge
-        histch = np.zeros(len(histcha))
-        for i,el in enumerate(histcha):
-            for value in  el:
-                histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
-
-        # calculate mean ToA_Combined
-        hist_toa_m = [np.mean(toa) for toa in histtoa] 
-
-        # make table for triggers
-        select = (hist_size >= min_size) & (histch >= min_charge)
-
-        data_type = {'names': ['trigger_number', 'trigger_timestamp'],
-            'formats': ['int64', 'float64']}
-        trigger = np.recarray((np.sum(select)), dtype=data_type)
-        trigger['trigger_timestamp'] = np.array(hist_toa_m,dtype=np.uint64)[select]
-        trigger.sort(order="trigger_timestamp")
-        trigger['trigger_number'] = range(np.sum(select))
-
-        histtoa = None
-        histcha = None
-        histch = None
-
-        dif = np.empty(trigger.shape[0]-1)
-        for i in range(trigger.shape[0]-1):
-            dif[i] = trigger['trigger_timestamp'][i+1]-trigger['trigger_timestamp'][i]
-
-        plt.hist(dif, range=(np.amin(dif)-0.25, 30+0.25), bins = 50)
-        plt.savefig("spread_clusters.png")
-
-        self.logger.info('Start Conversion to SiLab format for trigger plane...')
-        output_file_name = filename[:-3] + "_converted.h5"
-        hit_data = None
-        with tb.open_file(filename, 'r+') as h5_file:
-            data_type = {'names': ['event_number', 'frame', 'column', 'row', 'charge'],
-               'formats': ['int64', 'uint64', 'uint16',  'uint16', 'float32']}
-
-            for group in h5_file.root.interpreted:
-                if hit_data:
-                    hit_data = np.hstack((hit_data, group[:]))
-                else:
-                    hit_data = group[:]
-
-        hit_data.sort(order="hit_index")
-
-        hits = np.recarray((hit_data.shape[0]), dtype=data_type)
-
-        #hits["event_number"] = np.full(hit_data.shape[0])
-        #hits["event_number"] = [math.floor(n/1000) for n in range(hit_data.shape[0])]
-        hits["column"] = [x+1 for x in hit_data['x']]
-        hits["row"] = [y+1 for y in hit_data['y']]
-        hits["frame"] = hit_data["TOA_Combined"]
-
-        # K7
-        #a = 10.17
-        #b = -4307.6
-        #c = -52649.2
-        #t = 268.85
-        # I7 THR=800
-        #a = 8.8
-        #b = -3910.2
-        #c = -66090.6
-        #t = 258.61
-        # I7 THR=1000
-        a = 8.0
-        b = -2964.3
-        c = -46339.0
-        t = 206.31
-        # I7 THR=1100
-        #a = 7.4
-        #b = -2288.9
-        #c = -7204.0
-        #t = 236.44
-        hits["charge"] = [3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4 for value in hit_data["TOT"]]
-        hits["frame"] = hit_data["TOA_Combined"]
-
-        for i, idx in enumerate(hitindex):
-            for l in idx:
-                #hits["event_number"][hit_data["hit_index"]==l] = i
-                hits["event_number"][l] = i
-
-        hits.sort(order="event_number")
-
-        if np.any(hits["column"]<1):
-            print("COLUMN PROBLEM")
-        if np.any(hits["row"]<1):
-            print("ROW PROBLEM")
-
-        with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
-            h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
-
-        return trigger
-
-    def assign_event_number_by_toa(self,filename, toa_width = 10000):
-
-        self.logger.info('Start Conversion to SiLab format with fixed event length...')
-        output_file_name = filename[:-3] + "_converted_toa.h5"
-        hit_data = None
-        with tb.open_file(filename, 'r+') as h5_file:
-
-            for group in h5_file.root.interpreted:
-                if hit_data:
-                    hit_data = np.hstack((hit_data, group[:]))
-                else:
-                    hit_data = group[:]
-
-        hit_data.sort(order="hit_index")
-
-        data_type = {'names': ['event_number', 'frame', 'column', 'row', 'charge'],
-               'formats': ['int64', 'uint64', 'uint16',  'uint16', 'float32']}
-
-        hits = np.recarray((hit_data.shape[0]), dtype=data_type)
-
-        hits["column"] = [x+1 for x in hit_data['x']]
-        hits["row"] = [y+1 for y in hit_data['y']]
-        hits["frame"] = hit_data["TOA_Combined"]
-
-        # K7
-        #a = 10.17
-        #b = -4307.6
-        #c = -52649.2
-        #t = 268.85
-        # I7 THR=800
-        #a = 8.8
-        #b = -3910.2
-        #c = -66090.6
-        #t = 258.61
-        # I7 THR=1000
-        a = 8.0
-        b = -2964.3
-        c = -46339.0
-        t = 206.31
-        # I7 THR=1100
-        #a = 7.4
-        #b = -2288.9
-        #c = -7204.0
-        #t = 236.44
-        hits["charge"] = [3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4 for value in hit_data["TOT"]]
-        hits["frame"] = hit_data["TOA_Combined"]
-
-        hits["event_number"] = np.floor(hits["frame"]/toa_width)
-
-        hits.sort(order="event_number")
-
-        if np.any(hits["column"]<1):
-            print("COLUMN PROBLEM")
-        if np.any(hits["row"]<1):
-            print("ROW PROBLEM")
-
-        with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
-            h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
+            
 
 
 
@@ -827,7 +532,7 @@ if __name__ == "__main__":
     plotter = DataAnalysis(no_chip = True)
     plotter.set_directory()
     plotter.make_files()
-    plotter.analyze(datafile, args_dict)
+    #plotter.analyze(datafile, args_dict)
     plotter.plot(datafile)
     #plotter.convert_to_silab_format(datafile)
     #trigger_list = plotter.generate_trigger_from_DUT1(datafile)
