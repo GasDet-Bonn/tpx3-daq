@@ -111,6 +111,14 @@ NET "TPX3_1_DataIn_N"               LOC = "H9";
 NET "TPX3_1_ENPowerPulsing_N"       LOC = "J10"; 
 NET "TPX3_1_ENPowerPulsing_P"       LOC = "J11";
 
+#TO_SYNC_TO_EXT
+NET "TPX3_1_T0_Sync_Ext1"           LOC = "B16";
+NET "TPX3_1_T0_Sync_Ext2"           LOC = "D16";
+
+#RESET_TO_EXT
+NET "TPX3_1_Reset_Ext1"             LOC = "C15";
+NET "TPX3_1_Reset_Ext2"             LOC = "C16";
+
 ###
 ###
 ###
