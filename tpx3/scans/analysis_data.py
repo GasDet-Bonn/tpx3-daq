@@ -204,7 +204,7 @@ class DataAnalysis(ScanBase):
         return cluster_data[:cluster_nr]
 
 
-    def analyze(self, file_name, big = False, cluster_radius = 1.1, cluster_dt = 10, progress = None):
+    def analyze(self, file_name, big = False, cluster_radius = 1.1, cluster_dt = 5, progress = None):
 
         big = args_dict["big"]
 
@@ -250,6 +250,7 @@ class DataAnalysis(ScanBase):
                 iteration_array = [0]
 
             cluster_sum = 0
+            cluster_sum_g1 = 0
             hit_sum = 0
             hit_sum_b = 0
 
@@ -341,11 +342,13 @@ class DataAnalysis(ScanBase):
                     print("total hits in chunk: "+str(np.sum(cluster_data['hits'])))
 
                     cluster_sum += len(cluster_data['hits'])
+                    cluster_sum_g1 += len(cluster_data['hits'][cluster_data['hits']>1])
                     hit_sum += np.sum(cluster_data['hits'])
                     hit_sum_b += hit_data_tmp.shape[0]
             
             # print out final information on clustering
             print("# cluster in total: "+str(cluster_sum))
+            print("# cluster with more than one hit: "+str(cluster_sum_g1))
             print("# hits in total: "+str(hit_sum))
             print("# hits in total alternative calc: "+str(hit_sum))
 
@@ -465,7 +468,6 @@ class DataAnalysis(ScanBase):
                 histchm1 = histch[hist_size!=1]
                 p.plot_distribution(histchm1, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with more than one pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with more than one pixel', suffix='Number of electrons per cluster for clusters with more than one pixel', fit=False)
 
-
                 histche1 = histch[hist_size==1]
                 p.plot_distribution(histche1, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with only one pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with only one pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
 
@@ -515,29 +517,10 @@ if __name__ == "__main__":
         print('OK, thanks.')
     else:
         print("Please choose a correct data file")
-    user_path = '~'
-    user_path = os.path.expanduser(user_path)
-    user_path = os.path.join(user_path, 'Timepix3')
-    user_path = os.path.join(user_path, 'data')
-    user_path = os.path.join(user_path, 'hdf')
-    datafile = user_path + os.sep +file_name
-    if not os.path.isfile(datafile): 
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'scans')
-        user_path = os.path.join(user_path, 'hdf')
-        datafile = user_path + os.sep +file_name
+
     # analyze and plot
     plotter = DataAnalysis(no_chip = True)
     plotter.set_directory()
     plotter.make_files()
-    #plotter.analyze(datafile, args_dict)
-    plotter.plot(datafile)
-    #plotter.convert_to_silab_format(datafile)
-    #trigger_list = plotter.generate_trigger_from_DUT1(datafile)
-    #plotter.assign_event_number_by_toa(datafile)
-    #print("# triggers found: %d"%(trigger_list.shape[0]))
-    #print("last trigger timestamp = %d"%(trigger_list["trigger_timestamp"][-1]))
-    #plotter.convert_to_silab_format(datafile, trigger_list)
-
+    plotter.analyze(file_name, args_dict)
+    plotter.plot(file_name)
