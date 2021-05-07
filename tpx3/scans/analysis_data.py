@@ -6,8 +6,8 @@
 #
 
 '''
-    This script scans over different amounts of injected charge
-    to find the effective threshold of the enabled pixels.
+    This script analyses run data ot the Timepix3 in terms of a hit clustering
+    and plots the data.
 '''
 from __future__ import print_function
 
@@ -204,6 +204,12 @@ class DataAnalysis(ScanBase):
         return cluster_data[:cluster_nr]
 
 
+    """
+        analyze the raw data, cluster ist with the given cluster parameters and store the results in
+        the same h5 file the raw data was in. 
+        big specifies, whether the raw data is analyzed as a whole (False) or split into parts which
+        are then analyzed seperately (True)
+    """
     def analyze(self, file_name, big = False, cluster_radius = 1.1, cluster_dt = 5, progress = None):
 
         big = args_dict["big"]
@@ -353,10 +359,10 @@ class DataAnalysis(ScanBase):
             print("# hits in total alternative calc: "+str(hit_sum))
 
 
+    '''
+        Plot data and histograms of the data taking
+    '''
     def plot(self,file_name):
-        '''
-            Plot data and histograms of the data taking
-        '''
 
         self.logger.info('Starting plotting...')
         with tb.open_file(file_name, 'r+') as h5_file:
@@ -520,7 +526,7 @@ if __name__ == "__main__":
 
     # analyze and plot
     plotter = DataAnalysis(no_chip = True)
-    plotter.set_directory()
-    plotter.make_files()
+    #plotter.set_directory()
+    #plotter.make_files()
     plotter.analyze(file_name, args_dict)
     plotter.plot(file_name)
