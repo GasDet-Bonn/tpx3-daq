@@ -98,24 +98,26 @@ class ScanBase(object):
         Base class for scan- / tune- / analyze-class.
     '''
 
-    def __init__(self, dut_conf=None):
+    def __init__(self, dut_conf=None, no_chip=False):
         # Initialize the chip
-        self.chip = TPX3(dut_conf)
-        self.chip.init()
+        if no_chip == False:
+            self.chip = TPX3(dut_conf)
+            self.chip.init()
 
         # Initialize the files
         check_user_folders()
         self.set_directory()
         self.make_files()
 
-        self.number_of_chips = 1
-        
-        # Test if the link configuration is valid
-        if self.test_links() == True:
-            self.logger.info("Validity check of link configuration successful")
-        else:
-            self.logger.info("Validity check of link configuration failed")
-            raise ConfigError("Link configuration is not valid for current setup")
+        if no_chip == False:
+            self.number_of_chips = 1
+            
+            # Test if the link configuration is valid
+            if self.test_links() == True:
+                self.logger.info("Validity check of link configuration successful")
+            else:
+                self.logger.info("Validity check of link configuration failed")
+                raise ConfigError("Link configuration is not valid for current setup")
 
     def set_directory(self,sub_dir=None):
         # Get the user directory
