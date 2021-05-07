@@ -200,7 +200,6 @@ class DataAnalysis(ScanBase):
             pbar.close()
         if n!=0:
             self.logger.info("Average looking size "+str(s/n))
-        self.logger.info("Done with clustering.")
         return cluster_data[:cluster_nr]
 
 
@@ -210,21 +209,32 @@ class DataAnalysis(ScanBase):
         big specifies, whether the raw data is analyzed as a whole (False) or split into parts which
         are then analyzed seperately (True)
     """
-    def analyze(self, file_name, big = False, cluster_radius = 1.1, cluster_dt = 5, progress = None):
+    def analyze(self, file_name, args, cluster_radius = 1.1, cluster_dt = 5, progress = None):
 
         big = args_dict["big"]
+        new_file = args_dict["new_file"]
 
         self.logger.info('Starting data analysis of '+str(file_name)+' ...')
+
+        if new_file:
+            output_filename = self.create_output_file(file_name)
+        else:
+            output_filename = file_name
+
         #if file_name != "":
         self.h5_filename = file_name
+        self.h5_filename_out = output_filename
         file_extension = file_name.split('/')[-1]
-        with tb.open_file(self.h5_filename, 'r+') as h5_file:
-            meta_data = h5_file.root.meta_data[:]
-            run_config = h5_file.root.configuration.run_config[:]
-            general_config = h5_file.root.configuration.generalConfig[:]
-            op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
-            #vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
-            vco = False            
+        #with tb.open_file(self.h5_filename, 'r+') as h5_file_in:
+        h5_file_in = tb.open_file(self.h5_filename, 'r+')
+        meta_data = h5_file_in.root.meta_data[:]
+        run_config = h5_file_in.root.configuration.run_config[:]
+        general_config = h5_file_in.root.configuration.generalConfig[:]
+        op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
+        #vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
+        vco = False
+
+        with tb.open_file(self.h5_filename_out, 'r+') as h5_file:            
     
             # create structures to write the hit_data and cluster data in
             try:
@@ -274,7 +284,7 @@ class DataAnalysis(ScanBase):
                     self.logger.info("Start analysis of part %d/%d" % (num+1,math.ceil(meta_length/chunk_length)))
                     meta_data_tmp = meta_data[i:]
                 # get raw_data
-                raw_data_tmp = h5_file.root.raw_data[meta_data_tmp['index_start'][0]:meta_data_tmp['index_stop'][-1]]
+                raw_data_tmp = h5_file_in.root.raw_data[meta_data_tmp['index_start'][0]:meta_data_tmp['index_stop'][-1]]
                 # shift indices in meta_data to start a zero
                 start = meta_data_tmp['index_start'][0]
                 meta_data_tmp['index_start'] = meta_data_tmp['index_start']-start
@@ -291,7 +301,7 @@ class DataAnalysis(ScanBase):
                     # cluster data
                     self.logger.info("Start clustering...")
                     cluster_data = self.cluster(hit_data_tmp, cluster_radius, cluster_dt)
-                    self.logger.info("Done with clustering")
+                    self.logger.info("Done with clustering.")
 
                     # save hit_data
                     h5_file.create_table(h5_file.root.interpreted, 'hit_data_'+str(num), hit_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
@@ -362,9 +372,14 @@ class DataAnalysis(ScanBase):
     '''
         Plot data and histograms of the data taking
     '''
-    def plot(self,file_name):
+    def plot(self,file_name, args):
 
         self.logger.info('Starting plotting...')
+
+        new_file = args_dict["new_file"]
+        if new_file:
+            file_name = file_name.replace("data_take", "analysis")
+
         with tb.open_file(file_name, 'r+') as h5_file:
             with plotting.Plotting(file_name) as p:
                 p.plot_parameter_page()
@@ -504,8 +519,16 @@ class DataAnalysis(ScanBase):
                 p.plot_distribution(hist_spread, plot_range = np.arange(-10.125, 10.125, 0.25), x_axis_title='Deviation from mean ToA of cluster', y_axis_title='# of pixels', title='Deviation from mean ToA of cluster', suffix='Deviation from mean ToA of cluster', fit=True)
 
             
+    def create_output_file(self, input_file):
 
+        output_file_name = input_file.replace("data_take", "analysis")
 
+        with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file_out:
+            with tb.open_file(input_file, mode='r+') as h5_file:
+                h5_file_out.create_group(h5_file_out.root, 'configuration', 'Configuration')
+                h5_file.copy_children(h5_file.root.configuration, h5_file_out.root.configuration)
+        
+        return output_file_name
 
 if __name__ == "__main__":
     # get command line arguments
@@ -516,6 +539,9 @@ if __name__ == "__main__":
     parser.add_argument('--big',
                         action='store_true',
                         help="Use this if your data is to big to analyse efficiently in one chunk")
+    parser.add_argument('--new_file',
+                        action='store_true',
+                        help="Use this if you want the analysed data stored in a seperate file")
     args_dict = vars(parser.parse_args())
     file_name = args_dict['filename']
     # convert file name to path
@@ -528,5 +554,5 @@ if __name__ == "__main__":
     plotter = DataAnalysis(no_chip = True)
     #plotter.set_directory()
     #plotter.make_files()
-    plotter.analyze(file_name, args_dict)
-    plotter.plot(file_name)
+    plotter.analyze(file_name, args = args_dict)
+    plotter.plot(file_name, args = args_dict)
