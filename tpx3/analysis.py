@@ -390,7 +390,7 @@ def check_wrong_hits(timestamp_splits, data0_splits, data1_splits, chunk_nr):
                     logger.info("Found Hit, that is delayed by more than 1 w.r.t. the extension, i.e. by "
                                 + str(diff) + " Chunk nr. " + str(chunk_nr))
                     logger.info("Information to this hit: ToA = {}".format(str(_gray_14_lut[shr14and3f(tjl)]))
-                                + ", ToT= {}, x = {}, y = {}".format(
+                                + ", ToT = {}, x = {}, y = {}".format(
                                     str(_lfsr_10_lut[(int(tjl) >> 4) & 0x3ff]),
                                     str(x),
                                     str(y)
@@ -517,7 +517,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         if len(output) == 0:
             return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.uint64), 0, 0, []
 
-        timestamps = np.concatenate([np.full((len(el)-1),el[0],dtype=np.uint64) for el in output])
+        timestamps = np.concatenate([np.full((len(el)-1), el[0], dtype=np.uint64) for el in output])
         data_words = np.concatenate([el[1:] for el in output])
 
         """if wrong_hits/len(data_words) > 0.2:
@@ -615,27 +615,31 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
         data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage  = raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
         ret = _interpret_raw_data(data_words, op_mode, vco, timestamp)
 
+    if chunk_nr == 1:
+        print(ret)
+        np.savetxt("/tmp/python.csv", ret, delimiter = ",", fmt = "%d")
+        quit()
+
     if intern == True:
         return ret, last_timestamp, next_to_last_timestamp, leftoverpackage
     else:
         return ret
 
 def init_lfsr_4_lut():
-        """
+    """
         Generates a 4bit LFSR according to Manual v1.9 page 19
         """
-        lfsr = BitLogic(4)
-        lfsr[3:0] = 0xF
-        dummy = 0
-        for i in range(2**4):
-            _lfsr_4_lut[BitLogic.tovalue(lfsr)] = i
-            dummy = lfsr[3]
-            lfsr[3] = lfsr[2]
-            lfsr[2] = lfsr[1]
-            lfsr[1] = lfsr[0]
-            lfsr[0] = lfsr[3] ^ dummy
-        _lfsr_4_lut[2 ** 4 - 1] = 0
-
+    lfsr = BitLogic(4)
+    lfsr[3:0] = 0xF
+    dummy = 0
+    for i in range(2**4):
+        _lfsr_4_lut[BitLogic.tovalue(lfsr)] = i
+        dummy = lfsr[3]
+        lfsr[3] = lfsr[2]
+        lfsr[2] = lfsr[1]
+        lfsr[1] = lfsr[0]
+        lfsr[0] = lfsr[3] ^ dummy
+    _lfsr_4_lut[2 ** 4 - 1] = 0
 
 def init_lfsr_10_lut():
     """
