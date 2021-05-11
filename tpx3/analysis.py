@@ -321,7 +321,6 @@ def raw_data_to_dut_impl(raw_data, indices):
 
 def combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr):
     # Iterates over all 8 data links and combines the link data into coherent data
-    # NOTE: this mutates `data_combined`, `data0` and `data1`
     links = 8
     chunk_len = 0
     # Get link-sorted data packages and combine the 32 bit words
@@ -361,12 +360,13 @@ def combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, 
     data1 = np.delete(data1, data_combined == 0)
     data_combined = np.delete(data_combined, data_combined == 0)
 
+    return (data_combined, data0, data1)
+
 def and3shr12(x):
     return int(x) & 0x3000 >> 12
 
 def shr14and3f(x):
     return int(x) >> 14 & 0x3fff
-
 
 def check_wrong_hits(timestamp_splits, data0_splits, data1_splits, chunk_nr):
     # Checks for wrong hits in the data. Mainly used for debugging
@@ -447,9 +447,8 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         # Put the FPGA timestamps in a new array on their initial positions
         np.put(data_combined, timestamps_combined_indices, timestamps_combined)
         np.put(index_combined, timestamps_combined_indices, timestamps_combined_indices)
-
         # mutate `data_*` by combining multiple link data
-        combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr)
+        data_combined, data0, data1 = combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr)
 
         # Split the array into smaller arrays starting with a fpga timestamp
         timestamp_combined_filter = (data_combined & 0xF000000000000) >> 48 == 0b0101
@@ -526,7 +525,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
 
     else:
         # mutate `data_*` by combining multiple link data
-        combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr)
+        data_combined, _, _ = combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr)
 
         data_words = data_combined
         timestamps = np.empty(0,dtype=np.uint64)
