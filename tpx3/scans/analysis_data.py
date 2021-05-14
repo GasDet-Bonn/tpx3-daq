@@ -433,10 +433,6 @@ class DataAnalysis(ScanBase):
                         histindex = np.array(group.hit_index[:],dtype=object)
                         first = False
 
-                """histindex = histindex.flatten()
-                u, c = np.unique(histindex, return_counts=True)
-                dup = u[c > 1]
-                print(dup)"""
 
                 # Plot cluster properties
 
@@ -552,7 +548,5 @@ if __name__ == "__main__":
 
     # analyze and plot
     plotter = DataAnalysis(no_chip = True)
-    #plotter.set_directory()
-    #plotter.make_files()
     plotter.analyze(file_name, args = args_dict)
     plotter.plot(file_name, args = args_dict)
