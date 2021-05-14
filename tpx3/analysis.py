@@ -297,7 +297,7 @@ def save_and_correct_timer(raw_data, indices):
     return raw_data, indices, num
 
 
-def raw_data_to_dut_old(raw_data, indices):
+def raw_data_to_dut_impl(raw_data, indices):
     '''
     2x 32 bit to 1x 47 bit
     '''
@@ -319,7 +319,90 @@ def raw_data_to_dut_old(raw_data, indices):
     package1 = raw_data[0::2]
     return data_words, indices, package0, package1, leftoverpackage
 
+def combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr):
+    # Iterates over all 8 data links and combines the link data into coherent data
+    links = 8
+    chunk_len = 0
+    # Get link-sorted data packages and combine the 32 bit words
+    for link in range(links):
+        link_filter = (raw_data & 0xfe000000) >> 25 == link
+        chunk_len+=np.sum(link_filter)
+        if np.sum(link_filter) == 0:
+            continue
+        if np.sum(link_filter) % 2 != 0:
+            logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)
+                         + " Chunk nr. {}, length {} correcting...".format(
+                             str(chunk_nr),
+                             str(np.sum(link_filter)))
+                         )
+            #logger.info("len(link_filter) before correction: "+str(len(link_filter)))
+            #continue
+        link_raw_data = raw_data[link_filter]
+        link_indices = np.where(link_filter)[0]
+        link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_impl(link_raw_data,link_indices)
+        if leftoverpackage_pot!=None:
+            leftoverpackage.append(leftoverpackage_pot)
+        #if len(link_filter) % 2 != 0:
+            #logger.info("len after correction: ",len(link_combined)*2)
+        if len(link_indices) % 2 != 0:
+            logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)
+                         + " Chunk nr. {} after correction.".format(str(chunk_nr)))
+            continue
+        link_combined_indices = link_indices[0::2]
+        link_combined_indices2 = link_indices[1::2]
+        # Put the chip data in the new array on their initial positions
+        np.put(data_combined, link_combined_indices, link_combined)
+        np.put(data0, link_combined_indices, package0)
+        np.put(data1, link_combined_indices, package1)
+
+    # Delete array elements with no data - as all data is combined half of the array should be 0
+    data0 = np.delete(data0, data_combined == 0)
+    data1 = np.delete(data1, data_combined == 0)
+    data_combined = np.delete(data_combined, data_combined == 0)
+
+    return (data_combined, data0, data1)
+
+def and3shr12(x):
+    return int(x) & 0x3000 >> 12
+
+def shr14and3f(x):
+    return int(x) >> 14 & 0x3fff
+
+def check_wrong_hits(timestamp_splits, data0_splits, data1_splits, chunk_nr):
+    # Checks for wrong hits in the data. Mainly used for debugging
+    wrong_hits = 0
+    for j in range(len(timestamp_splits)):
+        for l in range(1,len(timestamp_splits[j])):
+            tj0 = timestamp_splits[j][0]
+            tjl = timestamp_splits[j][l]
+            if tjl != 0:
+                if not (and3shr12(tj0) - and3shr12(_gray_14_lut[shr14and3f(tjl)])) in [1,0,-3]:
+                    print("Chunk length: ",len(timestamp_splits)-1)
+                    diff = int(-(and3shr12(tj0) - and3shr12(_gray_14_lut[shr14and3f(tjl)])))
+                    data = int(tjl)
+                    pixel = (data >> 28) & 0b111
+                    super_pixel = (data >> 31) & 0x3f
+                    right_col = pixel > 3
+                    eoc = (data >> 37) & 0x7f
+
+                    y = (super_pixel * 4) + (pixel - right_col * 4)
+                    x = eoc * 2 + right_col * 1
+                    logger.info("Found Hit, that is delayed by more than 1 w.r.t. the extension, i.e. by "
+                                + str(diff) + " Chunk nr. " + str(chunk_nr))
+                    logger.info("Information to this hit: ToA = {}".format(str(_gray_14_lut[shr14and3f(tjl)]))
+                                + ", ToT = {}, x = {}, y = {}".format(
+                                    str(_lfsr_10_lut[(int(tjl) >> 4) & 0x3ff]),
+                                    str(x),
+                                    str(y)
+                                ))
+                    logger.info("Paket 0: " + bin(int(data0_splits[j][l]) & 0x1ffffff))
+                    logger.info("Paket 1: " + bin(int(data1_splits[j][l]) & 0x1ffffff))
+                    wrong_hits += 1
+
 def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0, leftoverpackage=[]):
+    # Toggle to enable/disable checking for wrong hits. Currently enabled by default
+    to_check_wrong_hits = True
+
     # reintegrate leftover package if present
     if len(leftoverpackage):
         logger.info("Integrate package(s) in chunk nr. "+str(chunk_nr))
@@ -354,57 +437,18 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
                 timestamps_raw = timestamps_raw[:-1]
                 timestamps_indices = timestamps_indices[:-1]
                 logger.info("One left over timer package! Try to integrate in next chunk...")
-            timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
-            k = (timestamps_raw & 0xFFFFFF)
-            timestamps_combined[:] = k[0::2]
-            timestamps_combined = (timestamps_combined << 24) + (k[1::2])
-            timestamps_combined = timestamps_combined | 0b0101 << 48
-            timestamps_combined_indices = timestamps_indices[0::2]
-        else:
-            timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
-            k = (timestamps_raw & 0xFFFFFF)
-            timestamps_combined[:] = k[0::2]
-            timestamps_combined = (timestamps_combined << 24) + (k[1::2])
-            timestamps_combined = timestamps_combined | 0b0101 << 48
-            timestamps_combined_indices = timestamps_indices[0::2]
+        timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
+        k = (timestamps_raw & 0xFFFFFF)
+        timestamps_combined[:] = k[0::2]
+        timestamps_combined = (timestamps_combined << 24) + (k[1::2])
+        timestamps_combined = timestamps_combined | 0b0101 << 48
+        timestamps_combined_indices = timestamps_indices[0::2]
 
         # Put the FPGA timestamps in a new array on their initial positions
         np.put(data_combined, timestamps_combined_indices, timestamps_combined)
         np.put(index_combined, timestamps_combined_indices, timestamps_combined_indices)
-
-        links = 8
-        chunk_len = 0
-        # Get link-sorted data packages and combine the 32 bit words
-        for link in range(links):
-            link_filter = (raw_data & 0xfe000000) >> 25 == link
-            chunk_len+=np.sum(link_filter)
-            if np.sum(link_filter) == 0:
-                continue
-            if np.sum(link_filter) % 2 != 0:
-                logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+ ", length "+str(np.sum(link_filter))+" correcting...")
-                #logger.info("len(link_filter) before correction: "+str(len(link_filter)))
-                #continue
-            link_raw_data = raw_data[link_filter]
-            link_indices = np.where(link_filter)[0]
-            link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
-            if leftoverpackage_pot!=None:
-                leftoverpackage.append(leftoverpackage_pot)
-            #if len(link_filter) % 2 != 0: 
-                #logger.info("len after correction: ",len(link_combined)*2)
-            if len(link_indices) % 2 != 0:
-                logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+" after correction.")
-                continue
-            link_combined_indices = link_indices[0::2]
-            link_combined_indices2 = link_indices[1::2]
-            # Put the chip data in the new array on their initial positions
-            np.put(data_combined, link_combined_indices, link_combined)
-            np.put(data0, link_combined_indices, package0)
-            np.put(data1, link_combined_indices, package1)
-
-        # Delete array elements with no data - as all data is combined half of the array should be 0
-        data0 = np.delete(data0, data_combined == 0)
-        data1 = np.delete(data1, data_combined == 0)
-        data_combined = np.delete(data_combined, data_combined == 0)
+        # mutate `data_*` by combining multiple link data
+        data_combined, data0, data1 = combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr)
 
         # Split the array into smaller arrays starting with a fpga timestamp
         timestamp_combined_filter = (data_combined & 0xF000000000000) >> 48 == 0b0101
@@ -438,31 +482,10 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             data0_splits[0] = np.insert(data0_splits[0],0,0,axis=0)
             data1_splits[0] = np.insert(data1_splits[0],0,0,axis=0)
             minus = 1
-        
-        # Check for packages that are shifted by more than 1 wrt the extension. Keep for future debugging
-        num = 0
-        wrong_hits = 0
-        for j in range(len(timestamp_splits)):
-            for l in range(1,len(timestamp_splits[j])):
-                if timestamp_splits[j][l]!=0:
-                    if not int((((int(timestamp_splits[j][0]) & 0x3000) >> 12) - ((int(_gray_14_lut[(int(timestamp_splits[j][l]) >> 14) & 0x3fff]) & 0x3000) >> 12))) in [1,0,-3]:
-                        print("Chunk length: ",len(timestamp_splits)-1)
-                        diff = int(-(((int(timestamp_splits[j][0]) & 0x3000) >> 12) - ((int(_gray_14_lut[(int(timestamp_splits[j][l]) >> 14) & 0x3fff]) & 0x3000) >> 12)))
-                        #diff = (diff+3)%3
-                        data = int(timestamp_splits[j][l])
-                        pixel = (data >> 28) & 0b111
-                        super_pixel = (data >> 31) & 0x3f
-                        right_col = pixel > 3
-                        eoc = (data >> 37) & 0x7f
 
-                        y = (super_pixel * 4) + (pixel - right_col * 4)
-                        x = eoc * 2 + right_col * 1
-                        logger.info("Found Hit, that is delayed by more than 1 w.r.t. the extension, i.e. by "+str(diff)+" Chunk nr. "+str(chunk_nr))
-                        logger.info("Information to this hit: ToA="+str(_gray_14_lut[(int(timestamp_splits[j][l]) >> 14) & 0x3fff])+", ToT="+str(_lfsr_10_lut[(int(timestamp_splits[j][l]) >> 4) & 0x3ff])+", x="+str(x)+", y="+str(y))
-                        logger.info("Paket 0: "+bin(int(data0_splits[j][l]) & 0x1ffffff))
-                        logger.info("Paket 1: "+bin(int(data1_splits[j][l]) & 0x1ffffff))
-                        wrong_hits += 1
-            num += len(timestamp_splits[j])
+        # Check for packages that are shifted by more than 1 wrt the extension. Keep for future debugging
+        if to_check_wrong_hits:
+            check_wrong_hits(timestamp_splits, data0_splits, data1_splits, chunk_nr)
 
         # Iterate over the smaller arrays and put chip data with wrong fpga overlap in the previous array
         #for i in range(len(timestamp_splits)-1,0,-1):
@@ -477,7 +500,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             old_toas_indices = np.where(old_toa_filter)[0]
             timestamp_splits[i-1] = np.append(timestamp_splits[i-1], old_toas)
             timestamp_splits[i] = np.delete(timestamp_splits[i], old_toas_indices+1)
-            
+
         try:
             last = timestamp_splits[-1][0]
         except IndexError:
@@ -493,47 +516,16 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         if len(output) == 0:
             return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.uint64), 0, 0, []
 
-        timestamps = np.concatenate([np.full((len(el)-1),el[0],dtype=np.uint64) for el in output])
+        timestamps = np.concatenate([np.full((len(el)-1), el[0], dtype=np.uint64) for el in output])
         data_words = np.concatenate([el[1:] for el in output])
 
         """if wrong_hits/len(data_words) > 0.2:
             logger.error("Removed Chunk nr. "+str(chunk_nr)+" from data due to too many iregularities.")
             return np.empty(0,dtype=np.uint64),np.empty(0,dtype=np.uint64),last,nlast"""
-    
-    else:
-        links = 8
-        chunk_len = 0
-        # Get link-sorted data packages and combine the 32 bit words
-        for link in range(links):
-            link_filter = (raw_data & 0xfe000000) >> 25 == link
-            chunk_len+=np.sum(link_filter)
-            if np.sum(link_filter) == 0:
-                continue
-            if np.sum(link_filter) % 2 != 0:
-                logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+ ", length "+str(np.sum(link_filter))+" correcting...")
-                #logger.info("len(link_filter) before correction: "+str(len(link_filter)))
-                #continue
-            link_raw_data = raw_data[link_filter]
-            link_indices = np.where(link_filter)[0]
-            link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
-            if leftoverpackage_pot!=None:
-                leftoverpackage.append(leftoverpackage_pot)
-            #if len(link_filter) % 2 != 0: 
-                #logger.info("len after correction: ",len(link_combined)*2)
-            if len(link_indices) % 2 != 0:
-                logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+" after correction.")
-                continue
-            link_combined_indices = link_indices[0::2]
-            link_combined_indices2 = link_indices[1::2]
-            # Put the chip data in the new array on their initial positions
-            np.put(data_combined, link_combined_indices, link_combined)
-            np.put(data0, link_combined_indices, package0)
-            np.put(data1, link_combined_indices, package1)
 
-        # Delete array elements with no data - as all data is combined half of the array should be 0
-        data0 = np.delete(data0, data_combined == 0)
-        data1 = np.delete(data1, data_combined == 0)
-        data_combined = np.delete(data_combined, data_combined == 0)
+    else:
+        # mutate `data_*` by combining multiple link data
+        data_combined, _, _ = combine_multi_links(raw_data, data_combined, data0, data1, leftoverpackage, chunk_nr)
 
         data_words = data_combined
         timestamps = np.empty(0,dtype=np.uint64)
@@ -622,27 +614,31 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
         data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage  = raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
         ret = _interpret_raw_data(data_words, op_mode, vco, timestamp)
 
+    if chunk_nr == 1:
+        print(ret)
+        np.savetxt("/tmp/python.csv", ret, delimiter = ",", fmt = "%d")
+        quit()
+
     if intern == True:
         return ret, last_timestamp, next_to_last_timestamp, leftoverpackage
     else:
         return ret
 
 def init_lfsr_4_lut():
-        """
+    """
         Generates a 4bit LFSR according to Manual v1.9 page 19
         """
-        lfsr = BitLogic(4)
-        lfsr[3:0] = 0xF
-        dummy = 0
-        for i in range(2**4):
-            _lfsr_4_lut[BitLogic.tovalue(lfsr)] = i
-            dummy = lfsr[3]
-            lfsr[3] = lfsr[2]
-            lfsr[2] = lfsr[1]
-            lfsr[1] = lfsr[0]
-            lfsr[0] = lfsr[3] ^ dummy
-        _lfsr_4_lut[2 ** 4 - 1] = 0
-
+    lfsr = BitLogic(4)
+    lfsr[3:0] = 0xF
+    dummy = 0
+    for i in range(2**4):
+        _lfsr_4_lut[BitLogic.tovalue(lfsr)] = i
+        dummy = lfsr[3]
+        lfsr[3] = lfsr[2]
+        lfsr[2] = lfsr[1]
+        lfsr[1] = lfsr[0]
+        lfsr[0] = lfsr[3] ^ dummy
+    _lfsr_4_lut[2 ** 4 - 1] = 0
 
 def init_lfsr_10_lut():
     """
