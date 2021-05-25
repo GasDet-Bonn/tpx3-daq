@@ -220,6 +220,26 @@ class Plotting(object):
 #         ax2.set_xlabel(r'Electrons ($x \cdot %1.2f \; \frac{e^-}{\Delta VCAL} + %1.2f \; e^-$)' % (ELECTRON_CONVERSION['slope'], ELECTRON_CONVERSION['offset']), labelpad=7)
         ax2.set_xlabel('Electrons', labelpad=7)
 
+    def plot_analysis_info_page(self, cluster_nr, hit_nr, first_time, last_time):
+        fig = Figure()
+        FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+
+        text = 'Hits in Run: %d' % hit_nr
+        ax.text(0.01, 1, text, fontsize=10)
+        text2 = 'Cluster in Run: %d' % cluster_nr
+        ax.text(0.01, 0.9, text2, fontsize=10)
+        text3 = 'First timestamp in Run: %d' % first_time
+        ax.text(0.01, 0.8, text3, fontsize=10)
+        text4 = 'Last timestamp in Run: %d' % last_time
+        ax.text(0.01, 0.7, text4, fontsize=10)
+        text5 = 'Total rate in Run: %.2f' % (hit_nr/((last_time-first_time)*25*10**(-9)))
+        ax.text(0.01, 0.6, text5, fontsize=10)
+        text6 = 'Mean cluster size in Run: %.2f' % (hit_nr/cluster_nr)
+        ax.text(0.01, 0.5, text6, fontsize=10)
+        self._save_plots(fig, suffix='analysis_info_page')
+
     def plot_parameter_page(self):
         fig = Figure()
         FigureCanvas(fig)

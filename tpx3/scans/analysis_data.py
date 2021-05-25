@@ -192,7 +192,7 @@ class DataAnalysis(ScanBase):
                 pbar.update(1)
             else:
                 step_counter += 1
-                fraction = step_counter / (len(split[:-1]))
+                fraction = step_counter / (len(start_times[:-1]))
                 progress.put(fraction)
 
         # cut to the number of actual clusters (remove empty rows) and return
@@ -211,7 +211,6 @@ class DataAnalysis(ScanBase):
     """
     def analyze(self, file_name, args, cluster_radius = 1.1, cluster_dt = 5, progress = None):
 
-        big = args_dict["big"]
         new_file = args_dict["new_file"]
 
         self.logger.info('Starting data analysis of '+str(file_name)+' ...')
@@ -226,148 +225,155 @@ class DataAnalysis(ScanBase):
         self.h5_filename_out = output_filename
         file_extension = file_name.split('/')[-1]
         #with tb.open_file(self.h5_filename, 'r+') as h5_file_in:
-        h5_file_in = tb.open_file(self.h5_filename, 'r+')
-        meta_data = h5_file_in.root.meta_data[:]
-        run_config = h5_file_in.root.configuration.run_config[:]
-        general_config = h5_file_in.root.configuration.generalConfig[:]
-        op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
-        #vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
-        vco = False
+        with tb.open_file(self.h5_filename, 'r+') as h5_file_in:
+            meta_data = h5_file_in.root.meta_data[:]
+            run_config = h5_file_in.root.configuration.run_config[:]
+            general_config = h5_file_in.root.configuration.generalConfig[:]
+            op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
+            #vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
+            vco = False
 
-        with tb.open_file(self.h5_filename_out, 'r+') as h5_file:            
-    
-            # create structures to write the hit_data and cluster data in
-            try:
-                h5_file.remove_node(h5_file.root.interpreted, recursive=True)
-                print("Node interpreted allready there")
-            except:
-                print("Create node interpreted")
+            with tb.open_file(self.h5_filename_out, 'r+') as h5_file:            
+        
+                # create structures to write the hit_data and cluster data in
+                try:
+                    h5_file.remove_node(h5_file.root.interpreted, recursive=True)
+                    print("Node interpreted allready there")
+                except:
+                    print("Create node interpreted")
 
-            h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
+                h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
-            try:
-                h5_file.remove_node(h5_file.root.reconstruction, recursive=True)
-                print("Node reconstrution allready there")
-            except:
-                print("Create node reconstrution")
+                try:
+                    h5_file.remove_node(h5_file.root.reconstruction, recursive=True)
+                    print("Node reconstrution allready there")
+                except:
+                    print("Create node reconstrution")
 
-            h5_file.create_group(h5_file.root, 'reconstruction', 'Reconstructed Data')
+                h5_file.create_group(h5_file.root, 'reconstruction', 'Reconstructed Data')
 
-            # for large data_sets we might want to split it into smaller parts to speed up analysis and save RAM
-            if big == True:
-                # customize number of meta data chunks to be analyzed at once here
-                chunk_length = 3000
-                meta_length = len(meta_data)
+                # for large data_sets we might want to split it into smaller parts to speed up analysis and save RAM
 
-                # array of indices of the meta_data chunks each package of chunks begins with
-                iteration_array = range(0, meta_length, chunk_length)
-            # for smaller data we just analyse everything at once -> only one set    chunks, involving all data
-            else:
+                data_length = 50000000
+                meta_stop = meta_data["index_stop"]
+
                 iteration_array = [0]
+                chunk_nr = 1
+                last_meta_read = 0
+                while ((chunk_nr*data_length) < meta_stop[-1]):
+                    read_til = np.argmax(meta_stop>(meta_stop[last_meta_read]+data_length)) - 1
+                    if read_til == last_meta_read:
+                        print("Chunk %d exceeds the read limit, this might reduce performance."%(read_til+1))
+                        read_til+=1
+                    if last_meta_read == 0:
+                        iteration_array = [0,read_til]
+                    else:
+                        iteration_array = np.append(iteration_array,read_til)
+                    last_meta_read = read_til
+                    chunk_nr+=1
+                if not (last_meta_read == len(meta_data)-1):
+                    iteration_array = np.append(iteration_array,len(meta_data)-1)
 
-            cluster_sum = 0
-            cluster_sum_g1 = 0
-            hit_sum = 0
-            hit_sum_b = 0
+                print(iteration_array)
 
-            hit_index = 0
-            # iterate over all sets of chunks
-            for num, i in enumerate(iteration_array):
-                # Split meta_data
-                if big == False: # take all data
-                    self.logger.info("Start analysis of part 1/1")
-                    meta_data_tmp = meta_data[:]
-                elif i < meta_length-chunk_length: # take all data in chunks
-                    self.logger.info("Start analysis of part %d/%d" % (num+1,math.ceil(meta_length/chunk_length)))
-                    meta_data_tmp = meta_data[i:i+chunk_length]
-                else: # take all data until the end
-                    self.logger.info("Start analysis of part %d/%d" % (num+1,math.ceil(meta_length/chunk_length)))
-                    meta_data_tmp = meta_data[i:]
-                # get raw_data
-                raw_data_tmp = h5_file_in.root.raw_data[meta_data_tmp['index_start'][0]:meta_data_tmp['index_stop'][-1]]
-                # shift indices in meta_data to start a zero
-                start = meta_data_tmp['index_start'][0]
-                meta_data_tmp['index_start'] = meta_data_tmp['index_start']-start
-                meta_data_tmp['index_stop'] = meta_data_tmp['index_stop']-start
-                # analyze data
-                hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, meta_data_tmp, split_fine=True)
-                
-                print(hit_data_tmp.shape[0])
-                if hit_data_tmp.shape[0] != 0:
-                    hit_data_tmp = hit_data_tmp[hit_data_tmp['data_header'] == 1]
-                    hit_data_tmp['hit_index'] = range(hit_index,hit_index+hit_data_tmp.shape[0])
-                    hit_index += hit_data_tmp.shape[0]
+                cluster_sum = 0
+                cluster_sum_g1 = 0
+                hit_sum = 0
+                hit_sum_b = 0
 
-                    # cluster data
-                    self.logger.info("Start clustering...")
-                    cluster_data = self.cluster(hit_data_tmp, cluster_radius, cluster_dt)
-                    self.logger.info("Done with clustering.")
-
-                    # save hit_data
-                    h5_file.create_table(h5_file.root.interpreted, 'hit_data_'+str(num), hit_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
-
-                    # create group for cluster data
-                    group = h5_file.create_group(h5_file.root.reconstruction, 'run_'+str(num), 'Cluster Data of Chunk '+str(num))
-
-                    # write cluster data into h5 file
-                    self.logger.info("Start writing into h5 file...")
-                    vlarray = h5_file.create_vlarray(group, 'x', tb.Int32Atom(shape=()), "x-values", filters=tb.Filters(complib='zlib', complevel=5))
-                    for i in range(cluster_data.shape[0]):
-                        vlarray.append(cluster_data['x'][i])
-
-                    vlarray = h5_file.create_vlarray(group, 'y', tb.Int32Atom(shape=()), "y-values", filters=tb.Filters(complib='zlib', complevel=5))
-                    for i in range(cluster_data.shape[0]):
-                        vlarray.append(cluster_data['y'][i])
-
-                    vlarray = h5_file.create_vlarray(group, 'TOA', tb.Int64Atom(shape=()), "TOA-values", filters=tb.Filters(complib='zlib', complevel=5))
-                    for i in range(cluster_data.shape[0]):
-                        vlarray.append(cluster_data['TOA'][i])
-
-                    vlarray = h5_file.create_vlarray(group, 'TOT', tb.Int32Atom(shape=()), "TOT-values", filters=tb.Filters(complib='zlib', complevel=5))
-                    for i in range(cluster_data.shape[0]):
-                        vlarray.append(cluster_data['TOT'][i])
-
-                    vlarray = h5_file.create_vlarray(group, 'EventCounter', tb.Int32Atom(shape=()), "EventCounter-values", filters=tb.Filters(complib='zlib', complevel=5))
-                    for i in range(cluster_data.shape[0]):
-                        vlarray.append(cluster_data['EventCounter'][i])
-
-                    vlarray = h5_file.create_vlarray(group, 'TOA_Extension', tb.Int64Atom(shape=()), "TOA_Extension-values", filters=tb.Filters(complib='zlib', complevel=5))
-                    for i in range(cluster_data.shape[0]):
-                        vlarray.append(cluster_data['TOA_Extension'][i])
-
-                    vlarray = h5_file.create_vlarray(group, 'hit_index', tb.Int64Atom(shape=()), "hit_index-values", filters=tb.Filters(complib='zlib', complevel=5))
-                    for i in range(cluster_data.shape[0]):
-                        vlarray.append(cluster_data['hit_index'][i])
-
-                    vlarray = h5_file.create_array(group, 'cluster_nr', cluster_data['cluster_nr'], "cluster_nr-values")
+                hit_index = 0
+                # iterate over all sets of chunks
+                for num in range(len(iteration_array)-1):
+                    # Split meta_data
+                    self.logger.info("Start analysis of part %d/%d" % (num+1,len(iteration_array)))
+                    meta_data_tmp = meta_data[iteration_array[num]:iteration_array[num+1]]
+                    # get raw_data
+                    raw_data_tmp = h5_file_in.root.raw_data[meta_data_tmp['index_start'][0]:meta_data_tmp['index_stop'][-1]]
+                    # shift indices in meta_data to start a zero
+                    start = meta_data_tmp['index_start'][0]
+                    meta_data_tmp['index_start'] = meta_data_tmp['index_start']-start
+                    meta_data_tmp['index_stop'] = meta_data_tmp['index_stop']-start
+                    # analyze data
+                    hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, meta_data_tmp, split_fine=True)
                     
-                    h5_file.create_array(group, 'chunk_start_time', cluster_data['chunk_start_time'], "chunk_start_time-values")
+                    if hit_data_tmp.shape[0] != 0:
+                        hit_data_tmp = hit_data_tmp[hit_data_tmp['data_header'] == 1]
+                        hit_data_tmp['hit_index'] = range(hit_index,hit_index+hit_data_tmp.shape[0])
+                        hit_index += hit_data_tmp.shape[0]
 
-                    h5_file.create_array(group, 'hits', cluster_data['hits'], "size of cluster")
+                        # cluster data
+                        self.logger.info("Start clustering...")
+                        cluster_data = self.cluster(hit_data_tmp, cluster_radius, cluster_dt)
+                        self.logger.info("Done with clustering.")
 
-                    h5_file.create_array(group, 'centerX', cluster_data['centerX'], "mean of the x values")
+                        num_hits = hit_data_tmp.shape[0]
+                        time_range = (np.amax(hit_data_tmp["TOA_Extension"])-np.amin(hit_data_tmp["TOA_Extension"]))*25*10**(-9)
+                        print("Rate: "+str(num_hits/time_range))
 
-                    h5_file.create_array(group, 'centerY', cluster_data['centerY'], "mean of the y values")
+                        # save hit_data
+                        h5_file.create_table(h5_file.root.interpreted, 'hit_data_'+str(num), hit_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
 
-                    h5_file.create_array(group, 'sumTOT', cluster_data['sumTOT'], "sum of the ToT in the cluster")
+                        # create group for cluster data
+                        group = h5_file.create_group(h5_file.root.reconstruction, 'run_'+str(num), 'Cluster Data of Chunk '+str(num))
 
-                    # print out cluster information
-                    print("# cluster in chunk: "+str(len(cluster_data['hits'])))
-                    if len(cluster_data['hits']) != 0:
-                        print("average size: "+str(np.mean(cluster_data['hits'])))
-                    print("total hits in chunk: "+str(np.sum(cluster_data['hits'])))
+                        # write cluster data into h5 file
+                        self.logger.info("Start writing into h5 file...")
+                        vlarray = h5_file.create_vlarray(group, 'x', tb.Int32Atom(shape=()), "x-values", filters=tb.Filters(complib='zlib', complevel=5))
+                        for i in range(cluster_data.shape[0]):
+                            vlarray.append(cluster_data['x'][i])
 
-                    cluster_sum += len(cluster_data['hits'])
-                    cluster_sum_g1 += len(cluster_data['hits'][cluster_data['hits']>1])
-                    hit_sum += np.sum(cluster_data['hits'])
-                    hit_sum_b += hit_data_tmp.shape[0]
-            
-            # print out final information on clustering
-            print("# cluster in total: "+str(cluster_sum))
-            print("# cluster with more than one hit: "+str(cluster_sum_g1))
-            print("# hits in total: "+str(hit_sum))
-            print("# hits in total alternative calc: "+str(hit_sum))
+                        vlarray = h5_file.create_vlarray(group, 'y', tb.Int32Atom(shape=()), "y-values", filters=tb.Filters(complib='zlib', complevel=5))
+                        for i in range(cluster_data.shape[0]):
+                            vlarray.append(cluster_data['y'][i])
 
+                        vlarray = h5_file.create_vlarray(group, 'TOA', tb.Int64Atom(shape=()), "TOA-values", filters=tb.Filters(complib='zlib', complevel=5))
+                        for i in range(cluster_data.shape[0]):
+                            vlarray.append(cluster_data['TOA'][i])
+
+                        vlarray = h5_file.create_vlarray(group, 'TOT', tb.Int32Atom(shape=()), "TOT-values", filters=tb.Filters(complib='zlib', complevel=5))
+                        for i in range(cluster_data.shape[0]):
+                            vlarray.append(cluster_data['TOT'][i])
+
+                        vlarray = h5_file.create_vlarray(group, 'EventCounter', tb.Int32Atom(shape=()), "EventCounter-values", filters=tb.Filters(complib='zlib', complevel=5))
+                        for i in range(cluster_data.shape[0]):
+                            vlarray.append(cluster_data['EventCounter'][i])
+
+                        vlarray = h5_file.create_vlarray(group, 'TOA_Extension', tb.Int64Atom(shape=()), "TOA_Extension-values", filters=tb.Filters(complib='zlib', complevel=5))
+                        for i in range(cluster_data.shape[0]):
+                            vlarray.append(cluster_data['TOA_Extension'][i])
+
+                        vlarray = h5_file.create_vlarray(group, 'hit_index', tb.Int64Atom(shape=()), "hit_index-values", filters=tb.Filters(complib='zlib', complevel=5))
+                        for i in range(cluster_data.shape[0]):
+                            vlarray.append(cluster_data['hit_index'][i])
+
+                        vlarray = h5_file.create_array(group, 'cluster_nr', cluster_data['cluster_nr'], "cluster_nr-values")
+                        
+                        h5_file.create_array(group, 'chunk_start_time', cluster_data['chunk_start_time'], "chunk_start_time-values")
+
+                        h5_file.create_array(group, 'hits', cluster_data['hits'], "size of cluster")
+
+                        h5_file.create_array(group, 'centerX', cluster_data['centerX'], "mean of the x values")
+
+                        h5_file.create_array(group, 'centerY', cluster_data['centerY'], "mean of the y values")
+
+                        h5_file.create_array(group, 'sumTOT', cluster_data['sumTOT'], "sum of the ToT in the cluster")
+                        
+                        # print out cluster information
+                        self.logger.info("# cluster in chunk: "+str(len(cluster_data['hits'])))
+                        if len(cluster_data['hits']) != 0:
+                            self.logger.info("average size: "+str(np.mean(cluster_data['hits'])))
+                        self.logger.info("total hits in chunk: "+str(np.sum(cluster_data['hits'])))
+
+                        cluster_sum += len(cluster_data['hits'])
+                        cluster_sum_g1 += len(cluster_data['hits'][cluster_data['hits']>1])
+                        hit_sum += np.sum(cluster_data['hits'])
+                        hit_sum_b += hit_data_tmp.shape[0]
+                
+                # print out final information on clustering
+                self.logger.info("# cluster in total: "+str(cluster_sum))
+                self.logger.info("# cluster with more than one hit: "+str(cluster_sum_g1))
+                self.logger.info("# hits in total: "+str(hit_sum))
+                self.logger.info("# hits in total alternative calc: "+str(hit_sum))
 
     '''
         Plot data and histograms of the data taking
@@ -381,7 +387,7 @@ class DataAnalysis(ScanBase):
             file_name = file_name.replace("data_take", "analysis")
 
         with tb.open_file(file_name, 'r+') as h5_file:
-            with plotting.Plotting(file_name) as p:
+            with plotting.Plotting(file_name, pdf_file=file_name[:-2]+"pdf") as p:
                 p.plot_parameter_page()
 
                 hit_data_x = np.empty(0, dtype = np.uint32)
@@ -404,7 +410,15 @@ class DataAnalysis(ScanBase):
                 # Plot the occupancy matrix
                 pix_occ = np.bincount(hit_data_x * 256 + hit_data_y, minlength=256 * 256).astype(np.uint32)
                 hist_occ = np.reshape(pix_occ, (256, 256)).T
-                p.plot_occupancy(hist_occ, title='Integrated Occupancy', z_max='maximum', suffix='occupancy')
+                p.plot_occupancy(hist_occ, title='Integrated Occupancy', z_max='median', suffix='occupancy')
+
+                # print suggestions for masking pixels
+                """median_occ = np.ma.median(hist_occ)
+                for i in range(hist_occ.shape[0]):
+                    for j in range(hist_occ.shape[1]):
+                        if hist_occ[i][j] > 1000*median_occ:
+                            print("Suggesting to masc pixel x="+str(i)+" y="+str(j))"""
+
 
                 # Plot the ToT-Curve histogram
                 p.plot_distribution(tot, plot_range = np.arange(np.amin(tot)-0.5, np.median(tot) * 7, 5), x_axis_title='ToT', title='ToT distribution', suffix='ToT_distribution', fit=False)
@@ -413,7 +427,9 @@ class DataAnalysis(ScanBase):
                 p.plot_distribution(toa, plot_range = np.arange(np.amin(toa)-0.5, np.amax(toa), 100), x_axis_title='ToA', title='ToA distribution', suffix='ToA_distribution', fit=False)
 
                 # Plot the ToA_Combined-Curve histogram
-                p.plot_distribution(toa_comb, plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//100), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+                p.plot_distribution(toa_comb, plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//500), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+                #p.plot_distribution(toa_comb, plot_range = np.arange(0.5375*10**9-0.5, 0.539*10**9+0.5, 5000), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+    
 
                 hist_size = np.empty(0, dtype=np.uint32)
                 hist_sum = np.empty(0, dtype=np.uint32)
@@ -435,7 +451,6 @@ class DataAnalysis(ScanBase):
 
 
                 # Plot cluster properties
-
                 num_cluster = len(hist_size)
 
                 # Plot the Cluster Size
@@ -513,6 +528,13 @@ class DataAnalysis(ScanBase):
                             hist_spread[ind] = value-m
                             ind += 1
                 p.plot_distribution(hist_spread, plot_range = np.arange(-10.125, 10.125, 0.25), x_axis_title='Deviation from mean ToA of cluster', y_axis_title='# of pixels', title='Deviation from mean ToA of cluster', suffix='Deviation from mean ToA of cluster', fit=True)
+                
+                p.plot_analysis_info_page(len(hist_sum), len(tot), np.amin(toa_comb), np.amax(toa_comb))
+                time_interval = (np.amax(toa_comb)-np.amin(toa_comb))*25*10**(-9)
+                hits_tot = len(toa_comb)
+                rate_all = hits_tot/time_interval
+
+                self.logger.info("Total rate over the whole time: "+str(rate_all)+" Hz")
 
             
     def create_output_file(self, input_file):
@@ -532,9 +554,6 @@ if __name__ == "__main__":
     parser.add_argument('filename', 
                         metavar='datafile', 
                         help='Name of the file to be analysed')
-    parser.add_argument('--big',
-                        action='store_true',
-                        help="Use this if your data is to big to analyse efficiently in one chunk")
     parser.add_argument('--new_file',
                         action='store_true',
                         help="Use this if you want the analysed data stored in a seperate file")
@@ -548,5 +567,5 @@ if __name__ == "__main__":
 
     # analyze and plot
     plotter = DataAnalysis(no_chip = True)
-    plotter.analyze(file_name, args = args_dict)
+    #plotter.analyze(file_name, args = args_dict)
     plotter.plot(file_name, args = args_dict)
