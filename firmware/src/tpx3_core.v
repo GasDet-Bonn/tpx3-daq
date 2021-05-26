@@ -46,13 +46,19 @@ module tpx3_core (
         input wire CLK40, CLK32, CLK320,
 
         output wire        ExtTPulse,
-        output wire        T0_Sync,
-		//input wire         T0_Sync,
+		  `ifdef host
+		      output wire        T0_Sync,
+	     `elsif client
+		      input wire         T0_Sync,
+	     `endif
         output wire        EnableIn,
         output wire        DataIn,
         output wire        Shutter,
-        output wire        Reset,
-	    //input wire         Reset,
+		  `ifdef host
+		      output wire        Reset,
+	     `elsif client
+		      input wire         Reset,
+	     `endif
         output wire        ENPowerPulsing,
         output wire        Data_MUX_select,
 
@@ -137,11 +143,15 @@ module tpx3_core (
         .IO      (GPIO         )
     );
 
-    assign Reset = GPIO[0];
+	 `ifdef host
+		      assign Reset = GPIO[0];
+	 `endif
     //assign EnableIn = GPIO[1];
     assign Shutter = GPIO[2];
     assign ExtTPulse = GPIO[3];
-    assign T0_Sync = GPIO[4];
+	 `ifdef host
+		      assign T0_Sync = GPIO[4];
+	 `endif
     assign ENPowerPulsing = GPIO[5];
     assign Data_MUX_select = GPIO[6];
     assign LED = GPIO[15:8];

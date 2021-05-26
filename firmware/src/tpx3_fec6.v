@@ -6,6 +6,8 @@
 
 `define FECv6
 
+`define host
+
 `include "tpx3_sfp.v"
 
 module tpx3_fec6 (
@@ -47,12 +49,17 @@ module tpx3_fec6 (
         output wire       TPX3_1_Shutter_P,
         output wire       TPX3_1_ENPowerPulsing_N,
         output wire       TPX3_1_ENPowerPulsing_P,
-		output wire       TPX3_1_T0_Sync_Ext1,
-		output wire       TPX3_1_T0_Sync_Ext2,
-		output wire       TPX3_1_Reset_Ext1,
-		output wire       TPX3_1_Reset_Ext2,
-		//input wire        TPX3_1_T0_Sync_Ext1,
-		//input wire        TPX3_1_Reset_Ext1,
+		  `ifdef host
+		      output wire       TPX3_1_T0_Sync_Ext1,
+            output wire       TPX3_1_T0_Sync_Ext2,
+            output wire       TPX3_1_Reset_Ext1,
+            output wire       TPX3_1_Reset_Ext2,
+	     `elsif client
+		      input wire       TPX3_1_T0_Sync_Ext1,
+				input wire       TPX3_1_T0_Sync_Ext2,
+            input wire       TPX3_1_Reset_Ext1,
+				input wire       TPX3_1_Reset_Ext2,
+	     `endif
 
         input wire [7:0] TPX3_1_DataOut_N, TPX3_1_DataOut_P,
         
@@ -112,10 +119,15 @@ module tpx3_fec6 (
         .TPX3_1_Shutter_P       (TPX3_1_Shutter_P       ),
         .TPX3_1_ENPowerPulsing_N(TPX3_1_ENPowerPulsing_N),
         .TPX3_1_ENPowerPulsing_P(TPX3_1_ENPowerPulsing_P),
-		.TPX3_1_T0_Sync_Ext1    (TPX3_1_T0_Sync_Ext1    ),
-		.TPX3_1_T0_Sync_Ext2    (TPX3_1_T0_Sync_Ext2    ),
-		.TPX3_1_Reset_Ext1      (TPX3_1_Reset_Ext1      ),
-		.TPX3_1_Reset_Ext2      (TPX3_1_Reset_Ext2      ),
+		  `ifdef host
+		      .TPX3_1_T0_Sync_Ext1    (TPX3_1_T0_Sync_Ext1    ),
+			   .TPX3_1_T0_Sync_Ext2    (TPX3_1_T0_Sync_Ext2    ),
+		      .TPX3_1_Reset_Ext1      (TPX3_1_Reset_Ext1      ),
+		      .TPX3_1_Reset_Ext2      (TPX3_1_Reset_Ext2      ),
+	     `elsif client
+		      .TPX3_1_T0_Sync_Ext1    (TPX3_1_T0_Sync_Ext1    ),
+            .TPX3_1_Reset_Ext1      (TPX3_1_Reset_Ext1      ),
+	     `endif
 
         .TPX3_1_DataOut_N       (TPX3_1_DataOut_N       ),
         .TPX3_1_DataOut_P       (TPX3_1_DataOut_P       ),
