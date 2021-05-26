@@ -32,7 +32,7 @@
 `include "../lib/tpx3_rx/decode_8b10b.v"
 `include "utils/flag_domain_crossing.v"
 
-`define FW_VERSION 4
+`define FW_VERSION 5
 
 module tpx3_core (
         input  wire        BUS_CLK,
@@ -52,7 +52,7 @@ module tpx3_core (
         output wire        DataIn,
         output wire        Shutter,
         output wire        Reset,
-		//input wire         Reset,
+	    //input wire         Reset,
         output wire        ENPowerPulsing,
         output wire        Data_MUX_select,
 

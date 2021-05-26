@@ -390,7 +390,7 @@ module tpx3_sfp (
     `ifdef ML605
         ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
     `elsif FECv6
-        ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b1), .D2(1'b0), .R(1'b0), .S(1'b0));
+        ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
     `endif
 
     OBUFDS #(.IOSTANDARD("DEFAULT")) OBUFDS_inst_TPX3_1_ClkIn40 ( .O(TPX3_1_ClkIn40_P), .OB(TPX3_1_ClkIn40_N), .I(TPX3_1_ClkIn40_reg) );
@@ -401,10 +401,10 @@ module tpx3_sfp (
 
     `ifdef ML605
         assign to_out_buf = {TPX3_1_ExtTPulse, TPX3_1_T0_Sync, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, TPX3_1_Reset, TPX3_1_ENPowerPulsing};
-	     //assign to_out_buf = {TPX3_1_ExtTPulse, TPX3_1_T0_Sync_Ext1, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, TPX3_1_Reset_Ext1, TPX3_1_ENPowerPulsing};
+	    //assign to_out_buf = {TPX3_1_ExtTPulse, TPX3_1_T0_Sync_Ext1, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, TPX3_1_Reset_Ext1, TPX3_1_ENPowerPulsing};
 	 `elsif FECv6
-        assign to_out_buf = {!TPX3_1_ExtTPulse, TPX3_1_T0_Sync, !TPX3_1_EnableIn, !TPX3_1_DataIn, !TPX3_1_Shutter, !TPX3_1_Reset, TPX3_1_ENPowerPulsing};
-		  //assign to_out_buf = {TPX3_1_ExtTPulse, TPX3_1_T0_Sync_Ext1, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, TPX3_1_Reset_Ext1, TPX3_1_ENPowerPulsing};
+        assign to_out_buf = {!TPX3_1_ExtTPulse, !TPX3_1_T0_Sync, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, !TPX3_1_Reset, !TPX3_1_ENPowerPulsing};
+	    //assign to_out_buf = {!TPX3_1_ExtTPulse, !TPX3_1_T0_Sync_Ext1, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, !TPX3_1_Reset_Ext1, !TPX3_1_ENPowerPulsing};
     `endif
     
 	assign {TPX3_1_ExtTPulse_N, TPX3_1_T0_Sync_N, TPX3_1_EnableIn_N, TPX3_1_DataIn_N, TPX3_1_Shutter_N, TPX3_1_Reset_N, TPX3_1_ENPowerPulsing_N} = to_out_buf_n;
@@ -413,6 +413,8 @@ module tpx3_sfp (
 	 assign TPX3_1_T0_Sync_Ext2 = TPX3_1_T0_Sync;
 	 assign TPX3_1_Reset_Ext1 = TPX3_1_Reset;
 	 assign TPX3_1_Reset_Ext2 = TPX3_1_Reset;
+	 //assign TPX3_1_T0_Sync_Ext = TPX3_1_T0_Sync_Ext1;
+	 //assign TPX3_1_Reset_Ext = TPX3_1_Reset_Ext1;
     genvar h;
     generate
         for (h = 0; h < 7; h = h + 1) begin: out_buf_gen
@@ -452,12 +454,12 @@ module tpx3_sfp (
         .RX_DATA        (RX_DATA              ),
         .ExtTPulse      (TPX3_1_ExtTPulse     ),
         .T0_Sync        (TPX3_1_T0_Sync       ),
-		  //.T0_Sync        (TPX3_1_T0_Sync_Ext1  ),
+		//.T0_Sync        (TPX3_1_T0_Sync_Ext   ),
         .EnableIn       (TPX3_1_EnableIn      ),
         .DataIn         (TPX3_1_DataIn        ),
         .Shutter        (TPX3_1_Shutter       ),
         .Reset          (TPX3_1_Reset         ),
-		  //.Reset          (TPX3_1_Reset_Ext1    ),
+	    //.Reset          (TPX3_1_Reset_Ext     ),
         .ENPowerPulsing (TPX3_1_ENPowerPulsing),
         .Data_MUX_select(Data_MUX_select      ),
 
