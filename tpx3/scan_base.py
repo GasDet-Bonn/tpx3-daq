@@ -609,14 +609,24 @@ class ScanBase(object):
         # Reset the fpga timestamp pulser
         self.chip['PULSE_GEN'].reset()
 
-        # Only activate the timestamp pulse if TOA is of interest
+        # Only activate the timestamp pulse and TLU for runs
         if self.scan_id in {"data_take"}:
+            self.chip['TLU'].TRIGGER_MODE = 3
+            self.chip['TLU'].USE_EXT_TIMESTAMP = 0
+            self.chip['TLU'].TRIGGER_HANDSHAKE_ACCEPT_WAIT_CYCLES = 5
+            self.chip['TLU'].TRIGGER_SELECT = 0
+            self.chip['TLU'].DATA_FORMAT = 2
+            self.chip['TLU'].TRIGGER_LOW_TIMEOUT = 0
+            self.chip['TLU'].TRIGGER_DATA_DELAY = 6
+            time.sleep(0.1)
+            self.chip['TLU'].TRIGGER_ENABLE = True
             self.chip['PULSE_GEN'].set_delay(40)
             self.chip['PULSE_GEN'].set_width(4056)
             self.chip['PULSE_GEN'].set_repeat(0)
             self.chip['PULSE_GEN'].set_en(True)
         else:
             self.chip['PULSE_GEN'].set_en(False)
+            self.chip['TLU'].TRIGGER_ENABLE = False
 
         # Reset DACs and set them to the values defined in dacs.yaml
         self.chip.reset_dac_attributes(to_default = False)
