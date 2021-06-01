@@ -104,8 +104,17 @@ module tpx3_sfp (
         output wire       ETH_STATUS_OK,
         output wire       RX_READY,
 
-        output wire Data_MUX_select
-    
+        output wire Data_MUX_select,
+		  
+		  //TLU
+		  input wire TLU_RJ45_TRIGGER_P,
+		  input wire TLU_RJ45_TRIGGER_N,
+		  input wire TLU_RJ45_RESET_P,
+		  input wire TLU_RJ45_RESET_N,
+		  output wire TLU_RJ45_BUSY_P,
+		  output wire TLU_RJ45_BUSY_N,
+		  output wire TLU_RJ45_CLK_P,
+		  output wire TLU_RJ45_CLK_N
     );
 
 
@@ -439,6 +448,16 @@ module tpx3_sfp (
             IBUFDS #(.IOSTANDARD("DEFAULT")) IBUFDS_inst_rx ( .O(RX_DATA[k]), .I(TPX3_1_DataOut_P[k]), .IB(TPX3_1_DataOut_N[k]) );
         end
     endgenerate
+	 
+	 wire TLU_RJ45_RESET;
+	 wire TLU_RJ45_CLK;
+	 wire TLU_RJ45_TRIGGER;
+	 wire TLU_RJ45_BUSY;
+	 
+	 IBUFDS #(.IOSTANDARD("DEFAULT")) IBUFDS_tlu_trigger (.O(TLU_RJ45_TRIGGER), .I(TLU_RJ45_TRIGGER_P), .IB(TLU_RJ45_TRIGGER_N));
+	 OBUFDS #(.IOSTANDARD("DEFAULT")) OBUFDS_tlu_busy (.O(TLU_RJ45_BUSY_P), .OB(TLU_RJ45_BUSY_N), .I(TLU_RJ45_BUSY));
+	 IBUFDS #(.IOSTANDARD("DEFAULT")) IBUFDS_tlu_reset(.O(TLU_RJ45_RESET), .I(TLU_RJ45_RESET_P), .IB(TLU_RJ45_RESET_N));
+	 OBUFDS #(.IOSTANDARD("DEFAULT")) OBUFDS_tlu_clk(.O(TLU_RJ45_CLK_P), .OB(TLU_RJ45_CLK_N), .I(TLU_RJ45_CLK));
 
     IDELAYCTRL IDELAYCTRL_inst (
         .RDY   (             ), // 1-bit Ready output
@@ -478,8 +497,15 @@ module tpx3_sfp (
         .Data_MUX_select(Data_MUX_select      ),
 
         .LED            (                     ),
-        .RX_READY       (RX_READY             )
-
+        .RX_READY       (RX_READY             ),
+		  
+		  //TLU
+		  .TLU_RJ45_TRIGGER (TLU_RJ45_TRIGGER   ),
+		  .TLU_RJ45_RESET   (TLU_RJ45_RESET     ),
+		  .TLU_RJ45_BUSY    (TLU_RJ45_BUSY      ),
+		  .TLU_RJ45_CLK     (TLU_RJ45_CLK       ),
+		  
+		  .FIFO_FULL        (1'b0               )
     );
 
     wire CLK40_OUT;

@@ -10,6 +10,12 @@
 `include "utils/cdc_pulse_sync.v"
 `include "utils/CG_MOD_pos.v"
 
+`include "utils/3_stage_synchronizer.v"
+
+`include "tlu/tlu_controller_core.v"
+`include "tlu/tlu_controller_fsm.v"
+`include "tlu/tlu_controller.v"
+
 `include "utils/cdc_syncfifo.v"
 `include "utils/generic_fifo.v"
 `include "utils/cdc_reset_sync.v"
@@ -32,7 +38,7 @@
 `include "../lib/tpx3_rx/decode_8b10b.v"
 `include "utils/flag_domain_crossing.v"
 
-`define FW_VERSION 5
+`define FW_VERSION 6
 
 module tpx3_core (
         input  wire        BUS_CLK,
@@ -65,9 +71,15 @@ module tpx3_core (
         input  wire [7:0]  RX_DATA,
 
         output wire [7:0]  LED,
-        output wire        RX_READY
-
-
+        output wire        RX_READY,
+		  
+		  //TLU
+		  input wire TLU_RJ45_TRIGGER,
+		  input wire TLU_RJ45_RESET,
+		  output wire TLU_RJ45_BUSY,
+		  output wire TLU_RJ45_CLK,
+		  
+		  input wire FIFO_FULL
     );
 
     /////////////////////////
@@ -110,6 +122,9 @@ module tpx3_core (
 
     localparam RX_BASEADDR = 32'h6000;
     localparam RX_HIGHADDR = 32'h7000-1;
+	 
+	 localparam TLU_BASEADDR = 32'h7000;
+	 localparam TLU_HIGHADDR = 32'h8000-1;
 
     localparam FIFO_BASEADDR = 32'h8000;
     localparam FIFO_HIGHADDR = 32'h9000-1;
@@ -280,7 +295,67 @@ module tpx3_core (
         .FIFO_EMPTY(TS_FIFO_EMPTY),
         .FIFO_DATA(TS_FIFO_DATA)
     );
+	 
+	 wire TLU_BUSY, TLU_CLOCK;
+	 wire TRIGGER_ACKNOWLEDGE_FLAG, TRIGGER_ACCEPTED_FLAG;
+	 wire TLU_FIFO_READ;
+    wire TLU_FIFO_EMPTY;
+    wire [31:0] TLU_FIFO_DATA;
 
+    tlu_controller #(
+        .BASEADDR(TLU_BASEADDR),
+        .HIGHADDR(TLU_HIGHADDR),
+        .ABUSWIDTH(ABUSWIDTH),
+        .DIVISOR(8),
+        .TLU_TRIGGER_MAX_CLOCK_CYCLES(16)
+    ) i_tlu_controller (
+        .BUS_CLK(BUS_CLK),
+        .BUS_RST(BUS_RST),
+        .BUS_ADD(BUS_ADD),
+        .BUS_DATA(BUS_DATA[7:0]),
+        .BUS_RD(BUS_RD),
+        .BUS_WR(BUS_WR),
+
+        .TRIGGER_CLK(CLK40),
+
+        .FIFO_READ(TLU_FIFO_READ),
+        .FIFO_EMPTY(TLU_FIFO_EMPTY),
+        .FIFO_DATA(TLU_FIFO_DATA),
+		  
+		  .FIFO_PREEMPT_REQ(),
+    
+        .TRIGGER({8'b0}),
+        .TRIGGER_VETO({8'b0}),
+		  .TIMESTAMP_RESET(T0_Sync),
+		  
+		  .TRIGGER_ACKNOWLEDGE(TRIGGER_ACKNOWLEDGE_FLAG),
+        .TRIGGER_ACCEPTED_FLAG(TRIGGER_ACCEPTED_FLAG),
+
+        .TLU_TRIGGER(TLU_RJ45_TRIGGER),
+        .TLU_RESET(TLU_RJ45_RESET),
+        .TLU_BUSY(TLU_BUSY),
+        .TLU_CLOCK(TLU_CLOCK),
+
+        .TIMESTAMP()
+    );
+	 
+	 reg TRIGGER_ACKNOWLEDGED;
+	 reg [7:0] CNT_ACTIVE;
+	 assign TRIGGER_ACKNOWLEDGE_FLAG = TRIGGER_ACKNOWLEDGED;
+	 always@(posedge CLK40)
+	     if (TLU_RJ45_BUSY & ~TLU_RJ45_TRIGGER & CNT_ACTIVE <= 135)
+		      CNT_ACTIVE <= CNT_ACTIVE + 1;
+	     else if (TLU_RJ45_BUSY & ~TLU_RJ45_TRIGGER & CNT_ACTIVE > 135 & CNT_ACTIVE < 185) begin
+	         TRIGGER_ACKNOWLEDGED <= 1'b1;
+	 		   CNT_ACTIVE <= CNT_ACTIVE + 1;
+	 	   end
+	 	  else if (~TLU_RJ45_BUSY) begin
+	 			CNT_ACTIVE <= 0;
+				TRIGGER_ACKNOWLEDGED <= 1'b0;
+	 		end
+	 
+	 assign TLU_RJ45_BUSY = TLU_BUSY;
+    assign TLU_RJ45_CLK = TLU_CLOCK;
 
     wire CNT_FIFO_READ;
     reg [31:0] CNT_FIFO_DATA;
@@ -292,17 +367,17 @@ module tpx3_core (
 
     wire ARB_READY_OUT, ARB_WRITE_OUT;
     wire [31:0] ARB_DATA_OUT;
-    wire [9:0] READ_GRANT;
+    wire [10:0] READ_GRANT;
 
     rrp_arbiter #(
-        .WIDTH(10)
+        .WIDTH(11)
     ) rrp_arbiter (
         .RST       (BUS_RST                         ),
         .CLK       (BUS_CLK                         ),
 
-        .WRITE_REQ ({~TPX_FIFO_EMPTY, ~TS_FIFO_EMPTY, CNT_FIFO_EN}),
-        .HOLD_REQ  ({10'b0}                          ),
-        .DATA_IN   ({TPX_FIFO_DATA[7], TPX_FIFO_DATA[6], TPX_FIFO_DATA[5], TPX_FIFO_DATA[4], TPX_FIFO_DATA[3], TPX_FIFO_DATA[2], TPX_FIFO_DATA[1], TPX_FIFO_DATA[0], TS_FIFO_DATA, CNT_FIFO_DATA}),
+        .WRITE_REQ ({~TPX_FIFO_EMPTY, ~TLU_FIFO_EMPTY, ~TS_FIFO_EMPTY, CNT_FIFO_EN}),
+        .HOLD_REQ  ({11'b0}                          ),
+        .DATA_IN   ({TPX_FIFO_DATA[7], TPX_FIFO_DATA[6], TPX_FIFO_DATA[5], TPX_FIFO_DATA[4], TPX_FIFO_DATA[3], TPX_FIFO_DATA[2], TPX_FIFO_DATA[1], TPX_FIFO_DATA[0], TLU_FIFO_DATA, TS_FIFO_DATA, CNT_FIFO_DATA}),
         .READ_GRANT(READ_GRANT                      ),
 
         .READY_OUT (ARB_READY_OUT                   ),
@@ -312,7 +387,8 @@ module tpx3_core (
 
     assign CNT_FIFO_READ = READ_GRANT[0];
     assign TS_FIFO_READ = READ_GRANT[1];
-    assign TPX_FIFO_READ = READ_GRANT[9:2];
+	 assign TLU_FIFO_READ = READ_GRANT[2];
+    assign TPX_FIFO_READ = READ_GRANT[10:3];
 
     bram_fifo
     #(

@@ -71,7 +71,17 @@ module tpx3_fec6 (
         output wire SELF_RSTN,
         output wire GBTSW,
         output wire SFP0_SDA,
-        output wire SFP0_SCL
+        output wire SFP0_SCL,
+		  
+		  //TLU
+		  input wire TLU_RJ45_TRIGGER_P,
+		  input wire TLU_RJ45_TRIGGER_N,
+		  input wire TLU_RJ45_RESET_P,
+		  input wire TLU_RJ45_RESET_N,
+		  output wire TLU_RJ45_BUSY_P,
+		  output wire TLU_RJ45_BUSY_N,
+		  output wire TLU_RJ45_CLK_P,
+		  output wire TLU_RJ45_CLK_N
 
     );
 
@@ -133,7 +143,17 @@ module tpx3_fec6 (
         .TPX3_1_DataOut_P       (TPX3_1_DataOut_P       ),
         
         .ETH_STATUS_OK(ETH_STATUS_OK),
-        .RX_READY(RX_READY)
+        .RX_READY(RX_READY),
+		  
+		  //TLU
+		  .TLU_RJ45_TRIGGER_P (TLU_RJ45_TRIGGER_P ),
+		  .TLU_RJ45_TRIGGER_N (TLU_RJ45_TRIGGER_N ),
+		  .TLU_RJ45_RESET_P   (TLU_RJ45_RESET_P   ),
+		  .TLU_RJ45_RESET_N   (TLU_RJ45_RESET_N   ),
+		  .TLU_RJ45_BUSY_P    (TLU_RJ45_BUSY_P    ),
+		  .TLU_RJ45_BUSY_N    (TLU_RJ45_BUSY_N    ),
+		  .TLU_RJ45_CLK_P     (TLU_RJ45_CLK_P     ),
+		  .TLU_RJ45_CLK_N     (TLU_RJ45_CLK_N     )
         
         );
 

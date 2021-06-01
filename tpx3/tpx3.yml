@@ -30,7 +30,12 @@ hw_drivers:
     type      : pulse_gen
     interface : intf
     base_addr : 0x4000
-    
+
+  - name      : TLU
+    type      : tlu
+    interface : intf
+    base_addr : 0x7000
+
   - name      : FIFO
     type      : bram_fifo
     interface : intf
