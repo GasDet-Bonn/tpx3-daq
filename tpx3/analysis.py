@@ -11,6 +11,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+import time
 import numpy as np
 from basil.utils.BitLogic import BitLogic
 import logging
@@ -260,6 +261,78 @@ def save_and_correct(raw_data, indices):
     return raw_data, indices, num
 
 """
+    Builds a trigger table based on an array which lists the TLU data words and the timestamp extensions
+    in the right order. The resulting table consists of two columns: trigger id and timestamp
+"""
+def make_trigger_table(data, last_timestamp, next_to_last_timestamp,):
+    """f = open("daten_roh_tlu.txt", "a")
+    for i in range(len(data)):
+        if (int(data[i]) & 0xF000000000000) >> 48 == 0b0101:
+            f.write("FPGA "+bin(data[i]).zfill(52)+"\n")
+        elif (int(data[i]) & 0x80000000) >> 31 == 0b1:
+            f.write("TLU "+bin(data[i]).zfill(32)+"\n")
+        else:
+            f.write("data "+bin(data[i]).zfill(32)+"\n")
+    f.close()
+    exit()"""
+    time_index_bool = (data & 0xF000000000000) >> 48 == 0b0101
+    time_index = np.where(time_index_bool)[0]
+    # split array into parts that always begin with a timestamp and contain maximum one timestamp
+    insert_last = False
+    if time_index[0] != 0:
+        #time_index = np.insert(time_index,0,0,axis = 0)
+        insert_last = True
+    data_split = np.split(data, time_index)
+    #print(data_split)
+    if insert_last == True: 
+        data_split[0] = np.insert(data_split[0],0,last_timestamp,axis = 0)
+    else:
+        pass # Do nothing for now
+  
+    # shift backwards if necessary
+    for i in range(len(data_split)-1, -1, -1):
+        if len(data_split[i]) > 1:
+            iteration_data = data_split[i][1:]
+            fits_not = ((iteration_data & 0x70000000) >> 28 !=  (int(data_split[i][0]) & 0x7000) >> 12)
+            if sum(fits_not) == 0:
+                continue
+            old_data = iteration_data[fits_not]
+            old_data_indices = np.where(fits_not)[0]
+            data_split[i-1] = np.append(data_split[i-1], old_data)
+            data_split[i] = np.delete(data_split[i], old_data_indices+1)
+
+    output = list(filter(lambda x: len(x) > 1 , data_split))
+
+    if len(output) == 0:
+        return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.uint64), 0, 0, []
+
+    timestamps = np.concatenate([np.full((len(el)-1),el[0],dtype=np.uint64) for el in output])
+    tlu_words = np.concatenate([el[1:] for el in output])
+
+    tlu_words = tlu_words[timestamps != 0]
+    timestamps = timestamps[timestamps != 0]
+
+    data_type = {'names': ['trigger_id', 'timestamp'],
+               'formats': ['uint32',       'uint64']}
+
+    trigger_table = np.recarray(len(tlu_words),dtype = data_type)
+    trigger_table["trigger_id"] = tlu_words & 0xFFFF
+    trigger_table["timestamp"] = (timestamps & 0xFFFFFFFF8000) + ((tlu_words & 0x7FFF0000) >> 16)
+    #trigger_table["timestamp"] = (timestamps & 0xFFFFFFFFFFFF) 
+
+    # cope for overflows in trigger_id
+    # get points where there is an overflow
+    overflow_points = np.argwhere(np.diff(trigger_table["trigger_id"] < 0))
+    for ind in overflow_points:
+        trigger_table["trigger_id"][ind+1:] = trigger_table["trigger_id"][ind+1:]+2**16
+
+    return trigger_table
+
+    
+
+
+
+"""
 Corrects for missing packages in the raw_data of the FPGA Timestamps
 """
 def save_and_correct_timer(raw_data, indices):
@@ -320,6 +393,18 @@ def raw_data_to_dut_old(raw_data, indices):
     return data_words, indices, package0, package1, leftoverpackage
 
 def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0, leftoverpackage=[]):
+    
+    """if chunk_nr in range(0,1):
+        f = open("daten_roh.txt", "a")
+        for i in range(len(raw_data)):
+            if (int(raw_data[i]) & 0xF0000000) >> 28 == 0b0101:
+                f.write("FPGA "+bin(raw_data[i]).zfill(32)+"\n")
+            elif (int(raw_data[i]) & 0x80000000) >> 31 == 0b1:
+                f.write("TLU "+bin(raw_data[i]).zfill(32)+"\n")
+            else:
+                f.write("data "+bin(raw_data[i]).zfill(32)+"\n")
+        f.close()"""
+
     # reintegrate leftover package if present
     if len(leftoverpackage):
         logger.info("Integrate package(s) in chunk nr. "+str(chunk_nr))
@@ -337,6 +422,17 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
     timestamp_filter = (raw_data & 0xF0000000) >> 28 == 0b0101
 
     if np.sum(timestamp_filter):
+
+        """f = open("daten_roh.txt", "a")
+        for i in range(len(raw_data)):
+            if (int(raw_data[i]) & 0xF0000000) >> 28 == 0b0101:
+                f.write("FPGA "+bin(raw_data[i]).zfill(32)+"\n")
+            elif (int(raw_data[i]) & 0x80000000) >> 31 == 0b1:
+                f.write("TLU "+bin(raw_data[i]).zfill(32)+"\n")
+            else:
+                f.write("data "+bin(raw_data[i]).zfill(32)+"\n")
+        f.close()"""
+
         timestamps_raw = raw_data[timestamp_filter]
         timestamps_indices = np.where(timestamp_filter)[0]
 
@@ -368,9 +464,42 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             timestamps_combined = timestamps_combined | 0b0101 << 48
             timestamps_combined_indices = timestamps_indices[0::2]
 
+        difference_timestamps = np.diff(timestamps_combined)
+        irreg_pos = np.argwhere(difference_timestamps > 4096)
+        if len(irreg_pos) > 0:
+            logger.info("%d positions detected where there are irregularities in the FPGA timestamp (ToA-Extension)."%(len(irreg_pos)))
+        for index in range(len(irreg_pos)):
+            timestamps_combined[i] = timestamps_combined[i-1]+4096
+
+
         # Put the FPGA timestamps in a new array on their initial positions
         np.put(data_combined, timestamps_combined_indices, timestamps_combined)
         np.put(index_combined, timestamps_combined_indices, timestamps_combined_indices)
+
+        if chunk_nr < 50:
+            f = open("daten_roh.txt", "a")
+            for i in range(len(timestamps_combined)):
+                f.write(bin(timestamps_combined[i])+"\n")
+            f.close()
+
+        # Treat TLU data
+        TLU_filter = (raw_data & 0x80000000) >> 31 == 0b1
+        TLU_index = np.where(TLU_filter)
+        if np.sum(TLU_filter) != 0:
+            tlu_input_data = np.zeros(raw_data.shape[0], dtype=np.uint64)
+            np.put(tlu_input_data, timestamps_combined_indices, timestamps_combined)
+            np.put(tlu_input_data, TLU_index, raw_data[TLU_index])
+
+            tlu_input_data = np.delete(tlu_input_data, tlu_input_data==0)
+            tlu_data = make_trigger_table(tlu_input_data, last_timestamp, next_to_last_timestamp)
+        else:
+            data_type = {'names': ['trigger_id', 'timestamp'],
+               'formats': ['uint32',       'uint64']}
+
+            tlu_data = np.recarray(0,dtype = data_type)
+
+        # Remove TLU data from datastream:
+
 
         links = 8
         chunk_len = 0
@@ -401,10 +530,16 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             np.put(data0, link_combined_indices, package0)
             np.put(data1, link_combined_indices, package1)
 
+        #remove TLU data from datastream
+        data_combined = np.delete(data_combined, TLU_index)
+        data0 = np.delete(data0, TLU_index)
+        data1 = np.delete(data1, TLU_index)
+
         # Delete array elements with no data - as all data is combined half of the array should be 0
         data0 = np.delete(data0, data_combined == 0)
         data1 = np.delete(data1, data_combined == 0)
         data_combined = np.delete(data_combined, data_combined == 0)
+
 
         # Split the array into smaller arrays starting with a fpga timestamp
         timestamp_combined_filter = (data_combined & 0xF000000000000) >> 48 == 0b0101
@@ -467,16 +602,15 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         # Iterate over the smaller arrays and put chip data with wrong fpga overlap in the previous array
         #for i in range(len(timestamp_splits)-1,0,-1):
         for i in range(1,len(timestamp_splits)):
-            if len(timestamp_splits[i]) < 2:
-                continue
-            iteration_toas = timestamp_splits[i][1:]
-            old_toa_filter = (((int(timestamp_splits[i][0]) & 0x3000) >> 12) != ((_gray_14_lut[(iteration_toas >> 14) & 0x3fff] & 0x3000) >> 12))
-            if sum(old_toa_filter) == 0:
-                continue
-            old_toas = iteration_toas[old_toa_filter]
-            old_toas_indices = np.where(old_toa_filter)[0]
-            timestamp_splits[i-1] = np.append(timestamp_splits[i-1], old_toas)
-            timestamp_splits[i] = np.delete(timestamp_splits[i], old_toas_indices+1)
+            if len(timestamp_splits[i]) > 1:
+                iteration_toas = timestamp_splits[i][1:]
+                old_toa_filter = (((int(timestamp_splits[i][0]) & 0x3000) >> 12) != ((_gray_14_lut[(iteration_toas >> 14) & 0x3fff] & 0x3000) >> 12))
+                if sum(old_toa_filter) == 0:
+                    continue
+                old_toas = iteration_toas[old_toa_filter]
+                old_toas_indices = np.where(old_toa_filter)[0]
+                timestamp_splits[i-1] = np.append(timestamp_splits[i-1], old_toas)
+                timestamp_splits[i] = np.delete(timestamp_splits[i], old_toas_indices+1)
             
         try:
             last = timestamp_splits[-1][0]
@@ -491,7 +625,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         output = list(filter(lambda x: len(x) > 1 , timestamp_splits))
 
         if len(output) == 0:
-            return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.uint64), 0, 0, []
+            return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.uint64), 0, 0, [], tlu_data
 
         timestamps = np.concatenate([np.full((len(el)-1),el[0],dtype=np.uint64) for el in output])
         data_words = np.concatenate([el[1:] for el in output])
@@ -541,13 +675,19 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         nlast = 0
         leftoverpackage = []
 
-    return data_words, timestamps, last, nlast, leftoverpackage
+        data_type = {'names': ['trigger_id', 'timestamp'],
+               'formats': ['uint32',       'uint64']}
+
+        tlu_data = np.recarray(0,dtype = data_type)
+
+    return data_words, timestamps, last, nlast, leftoverpackage, tlu_data
 
 def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=None, split_fine=False, last_timestamp = 0, next_to_last_timestamp = 0, intern =False, chunk_nr = 0, leftoverpackage = [], progress = None):
     '''
     Chunk the data based on scan_param and interpret
     '''
     ret = []
+    tlu_table = []
 
     if len(meta_data):
         # standard case: only split into bunches which have the same param_id
@@ -575,7 +715,7 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 # print param[i], stops[i], len(split[i]), split[i]
                 # sends split[i] (i.e. part of data that is currently treated) recursively
                 # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
-                int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(split[i], op_mode, vco, last_timestamp = last_timestamp, intern = True)
+                int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage, tlu_table = interpret_raw_data(split[i], op_mode, vco, last_timestamp = last_timestamp, intern = True)
                 # reattach param_id TODO: good idea to also give timestamp here!
                 int_pix_data['scan_param_id'][:] = param[i]
                 # append data we got back to return array or create new if this is the fist bunch of data treated
@@ -583,6 +723,10 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                     ret = np.hstack((ret, int_pix_data))
                 else:
                     ret = int_pix_data
+                if len(tlu_table):
+                    tlu_table = np.hstack((tlu_table, int_tlu_table))
+                else:
+                    tlu_table = int_tlu_table
                 if progress == None:
                     pbar.update(1)
                 else:
@@ -601,7 +745,7 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 index_start = meta_data['index_start'][l]
                 index_stop = meta_data['index_stop'][l]
                 if index_start<index_stop:
-                    int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(raw_data[index_start:index_stop], op_mode, vco, last_timestamp = last_timestamp, next_to_last_timestamp = next_to_last_timestamp, intern = True, chunk_nr = l, leftoverpackage = leftoverpackage)
+                    int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage, int_tlu_table = interpret_raw_data(raw_data[index_start:index_stop], op_mode, vco, last_timestamp = last_timestamp, next_to_last_timestamp = next_to_last_timestamp, intern = True, chunk_nr = l, leftoverpackage = leftoverpackage)
                     # reattach timestamp
                     int_pix_data['chunk_start_time'][:] = meta_data['timestamp_start'][l]
                     # append data we got back to return array or create new if this is the fist bunch of data treated
@@ -609,6 +753,10 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                         ret = np.hstack((ret, int_pix_data))
                     else:
                         ret = int_pix_data
+                    if len(tlu_table):
+                        tlu_table = np.hstack((tlu_table, int_tlu_table))
+                    else:
+                        tlu_table = int_tlu_table
                     if progress == None:
                         pbar.update(1)
                     else:
@@ -619,13 +767,13 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 pbar.close()
     else:
         #it can be chunked and multithreaded here
-        data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage  = raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
+        data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage, tlu_table  = raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
         ret = _interpret_raw_data(data_words, op_mode, vco, timestamp)
 
     if intern == True:
-        return ret, last_timestamp, next_to_last_timestamp, leftoverpackage
+        return ret, last_timestamp, next_to_last_timestamp, leftoverpackage, tlu_table
     else:
-        return ret
+        return ret, tlu_table
 
 def init_lfsr_4_lut():
         """

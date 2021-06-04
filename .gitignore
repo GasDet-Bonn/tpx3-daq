@@ -131,3 +131,6 @@ dvt_build.log
 
 # Datafiles
 .h5
+
+# Image Files
+*.png

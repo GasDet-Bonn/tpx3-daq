@@ -225,7 +225,7 @@ class DataAnalysis(ScanBase):
         self.h5_filename_out = output_filename
         file_extension = file_name.split('/')[-1]
         #with tb.open_file(self.h5_filename, 'r+') as h5_file_in:
-        with tb.open_file(self.h5_filename, 'r+') as h5_file_in:
+        with tb.open_file(self.h5_filename, 'r') as h5_file_in:
             meta_data = h5_file_in.root.meta_data[:]
             run_config = h5_file_in.root.configuration.run_config[:]
             general_config = h5_file_in.root.configuration.generalConfig[:]
@@ -252,9 +252,17 @@ class DataAnalysis(ScanBase):
 
                 h5_file.create_group(h5_file.root, 'reconstruction', 'Reconstructed Data')
 
+                try:
+                    h5_file.remove_node(h5_file.root.trigger, recursive=True)
+                    print("Node trigger allready there")
+                except:
+                    print("Create node trigger")
+
+                h5_file.create_group(h5_file.root, 'trigger', 'Reconstructed Data')
+
                 # for large data_sets we might want to split it into smaller parts to speed up analysis and save RAM
 
-                data_length = 50000000
+                data_length = 5000000
                 meta_stop = meta_data["index_stop"]
 
                 iteration_array = [0]
@@ -294,7 +302,7 @@ class DataAnalysis(ScanBase):
                     meta_data_tmp['index_start'] = meta_data_tmp['index_start']-start
                     meta_data_tmp['index_stop'] = meta_data_tmp['index_stop']-start
                     # analyze data
-                    hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, meta_data_tmp, split_fine=True)
+                    hit_data_tmp, tlu_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, meta_data_tmp, split_fine=True)
                     
                     if hit_data_tmp.shape[0] != 0:
                         hit_data_tmp = hit_data_tmp[hit_data_tmp['data_header'] == 1]
@@ -312,6 +320,10 @@ class DataAnalysis(ScanBase):
 
                         # save hit_data
                         h5_file.create_table(h5_file.root.interpreted, 'hit_data_'+str(num), hit_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
+
+                        # save trigger_data
+                        if tlu_data_tmp.shape[0] != 0:
+                            h5_file.create_table(h5_file.root.trigger, 'trigger_data_'+str(num), tlu_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
 
                         # create group for cluster data
                         group = h5_file.create_group(h5_file.root.reconstruction, 'run_'+str(num), 'Cluster Data of Chunk '+str(num))
@@ -529,6 +541,8 @@ class DataAnalysis(ScanBase):
                             ind += 1
                 p.plot_distribution(hist_spread, plot_range = np.arange(-10.125, 10.125, 0.25), x_axis_title='Deviation from mean ToA of cluster', y_axis_title='# of pixels', title='Deviation from mean ToA of cluster', suffix='Deviation from mean ToA of cluster', fit=True)
                 
+                p.plot_datapoints(np.arange(len(toa_comb)), toa_comb, x_plot_range=np.arange(len(toa_comb)), y_plot_range=toa_comb)
+
                 p.plot_analysis_info_page(len(hist_sum), len(tot), np.amin(toa_comb), np.amax(toa_comb))
                 time_interval = (np.amax(toa_comb)-np.amin(toa_comb))*25*10**(-9)
                 hits_tot = len(toa_comb)
@@ -542,7 +556,7 @@ class DataAnalysis(ScanBase):
         output_file_name = input_file.replace("data_take", "analysis")
 
         with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file_out:
-            with tb.open_file(input_file, mode='r+') as h5_file:
+            with tb.open_file(input_file, mode='r') as h5_file:
                 h5_file_out.create_group(h5_file_out.root, 'configuration', 'Configuration')
                 h5_file.copy_children(h5_file.root.configuration, h5_file_out.root.configuration)
         
@@ -567,5 +581,5 @@ if __name__ == "__main__":
 
     # analyze and plot
     plotter = DataAnalysis(no_chip = True)
-    #plotter.analyze(file_name, args = args_dict)
+    plotter.analyze(file_name, args = args_dict)
     plotter.plot(file_name, args = args_dict)

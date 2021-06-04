@@ -50,7 +50,7 @@ class Preparation():
         - trigger offset: offset in ToA between trigger timestamp and toa to correct for
             imperfect synchronization
     """
-    def convert_to_silab_format(self,file_name, trigger_data, output_file_name, trigger_width = 5, trigger_offset = 0):
+    def convert_to_silab_format(self,file_name, trigger_data, output_file_name, trigger_width = 10, trigger_offset = 0):
         print('Start Conversion to SiLab format...')
         hit_data = None
         with tb.open_file(file_name, 'r+') as h5_file:
@@ -279,7 +279,7 @@ class Preparation():
         - min_size: minimal size of a cluster to use it as a trigger seed
         - min_charge: minimal charge in a cluster to use it as a trigger seed
     """
-    def generate_trigger_from_DUT1(self,filename, output_file_name, min_size = 2, min_charge = 0, trigger_width = 5):
+    def generate_trigger_from_DUT1(self,filename, output_file_name, min_size = 0, min_charge = 0, trigger_width = 5):
         hist_size = []
         first = True
         with tb.open_file(filename, 'r+') as h5_file:
@@ -323,7 +323,7 @@ class Preparation():
                 histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
 
         # calculate mean ToA_Combined
-        hist_toa_m = [np.mean(toa) for toa in histtoa] 
+        hist_toa_m = [np.mean(toa) for toa in histtoa]
 
         # make table for triggers
         select = (hist_size >= min_size) & (histch >= min_charge)
@@ -426,17 +426,19 @@ class Preparation():
         - name/location of the hdf5 file with the data
         - toa_width: width of the ToA-interval that is assigned the same event number
     """
-    def assign_event_number_by_toa(self, filename, output_file_name, toa_width = 200000):
+    def assign_event_number_by_toa(self, filename, output_file_name, toa_width = 2000):
 
         print('Start Conversion to SiLab format with fixed event length...')
         hit_data = None
+        first = True
         with tb.open_file(filename, 'r+') as h5_file:
 
             for group in h5_file.root.interpreted:
-                if hit_data:
+                if first == False:
                     hit_data = np.hstack((hit_data, group[:]))
                 else:
                     hit_data = group[:]
+                    first = False
 
         hit_data.sort(order="hit_index")
 
@@ -484,6 +486,188 @@ class Preparation():
         with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
             h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
 
+    def check_offset(self,file_name, trigger_data, output_file_name, trigger_width = 500, trigger_offset = 0):
+        print('Start offset scan...')
+        hit_data = None
+        with tb.open_file(file_name, 'r+') as h5_file:
+            data_type = {'names': ['event_number', 'frame', 'column', 'row', 'charge'],
+               'formats': ['int64', 'uint64', 'uint16',  'uint16', 'float32']}
+
+            first = True
+            for group in h5_file.root.interpreted:
+                if first == False:
+                    hit_data = np.hstack((hit_data, group[:]))
+                else:
+                    hit_data = group[:]
+                    first = False
+
+        hit_data.sort(order="TOA_Combined") # sort according to ToA_Combined in order to make trigger assignment easier and possible
+        
+
+        hits_add = np.recarray((hit_data.shape[0]), dtype=data_type)
+        
+        assigned_list = []
+        additional_list = []
+        for trigger_offset in range(-20000,-10000,trigger_width):
+            print("Trigger offset = "+str(trigger_offset))
+            # assign triggers
+            hits_index = 0
+            assigned = np.full(hit_data.shape[0], False)
+            first_hit_data_index = 0
+            curr_add = 0
+            pbar = tqdm(total = trigger_data.shape[0])
+            for i in range(trigger_data.shape[0]):
+                curr_hit_data = first_hit_data_index
+                while curr_hit_data < len(hit_data) and ((hit_data["TOA_Combined"][curr_hit_data]+trigger_offset) < (trigger_data["trigger_timestamp"][i]+trigger_width)):
+                    if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') + trigger_offset - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+                        if assigned[curr_hit_data] == False:
+                            assigned[curr_hit_data] = True
+                        else: #TODO: Evtl. doppelt zugeordnete Hits ganz rausschmeissen mit TLU?
+                            # duplicate hit if necessary
+                            curr_add += 1
+                    else:
+                        first_hit_data_index = curr_hit_data
+                    curr_hit_data += 1
+                pbar.update(1)
+            pbar.close()
+
+            n = len(assigned)-np.sum(assigned)
+            assigned_list.append(n)
+            additional_list.append(curr_add-1)
+
+            print("%d/%d"%(n,curr_add))
+
+        print(assigned_list)
+        print(additional_list)
+
+        plt.plot(range(-10000,10000,trigger_width),assigned_list, label="assigned")
+        plt.savefig("assigned_shift.png")
+        plt.close()
+
+        plt.plot(range(-10000,10000,trigger_width),additional_list, label="additional")
+        plt.savefig("additional_shift.png")
+        plt.close()
+
+
+    # read trigger data from h5 file and store in array
+    def read_trigger(self,file_name):
+        print('Start Conversion to SiLab format...')
+        trigger_data = None
+        with tb.open_file(file_name, 'r+') as h5_file:
+            first = True
+            for group in h5_file.root.trigger:
+                if first == False:
+                    trigger_data = np.hstack((trigger_data, group[:]))
+                else:
+                    trigger_data = group[:]
+                    first = False
+        
+        return trigger_data
+
+    
+    def compare_trigger_timeshift(self):
+        file_name_ref = "/home/richarz/Timepix3/data/hdf/analysis_W18-D8_2021-06-02_20-52-18.h5"
+        #file_name_trial = "/home/richarz/Timepix3/data/hdf/analysis_W18-J6_2021-06-02_20-52-10.h5"
+        file_name_trial = "/home/richarz/Timepix3/data/hdf/analysis_W18-L9_2021-06-02_20-52-06.h5"
+        trigger_data = None
+        with tb.open_file(file_name_ref, 'r+') as h5_file_ref: 
+            first = True               
+            for group in h5_file_ref.root.trigger:
+                if first == False:
+                    trigger_data_ref = np.hstack((trigger_data, group[:]))
+                else:
+                    trigger_data_ref = group[:]
+                    first = False
+
+        with tb.open_file(file_name_trial, 'r+') as h5_file_trial:
+            first = True 
+            for group in h5_file_trial.root.trigger:
+                if first == False:
+                    trigger_data_trial = np.hstack((trigger_data, group[:]))
+                else:
+                    trigger_data_trial = group[:]
+                    first = False
+
+        #trigger_data_ref.sort(order = "trigger_id")
+        #trigger_data_trial.sort(order = "trigger_id")
+
+        id_trial = trigger_data_trial["trigger_id"][:]
+        id_ref = trigger_data_ref["trigger_id"][:]
+        print(id_ref)
+        print(id_trial)
+
+        trigger_id = np.zeros(len(id_ref), dtype = np.int64)
+        time_diff = np.zeros(len(id_ref), dtype = np.int64)
+
+        ids, counts = np.unique(id_trial, return_counts=True)
+        print(np.unique(counts, return_counts=True))
+
+        for i in range(len(id_ref)):
+            #for i in range(20300,21000):
+            if id_ref[i] in id_trial:
+                j = np.argwhere(id_trial == id_ref[i])[0][0]
+                #print(i,j)
+                #print(trigger_data_ref["timestamp"][i])
+                #print(trigger_data_trial["timestamp"][j])
+                diff = np.int64(trigger_data_ref["timestamp"][i])-np.int64(trigger_data_trial["timestamp"][j])
+                time_diff[i] = diff
+                trigger_id[i] = id_ref[i]
+
+        print(time_diff)
+
+        time_diff = time_diff[trigger_id != 0]
+        trigger_id = trigger_id[trigger_id != 0]
+
+        print(np.amax(time_diff))
+
+        plt.plot(trigger_id, time_diff,'ro', markersize=0.1)
+        plt.xlabel("trigger_id")
+        plt.ylabel("Difference in clock cycles")
+        plt.ylim((0,50000))
+        plt.savefig("time_shift.png")
+        plt.clf()
+
+        plt.plot(id_ref, trigger_data_ref["timestamp"],'bo', markersize=0.1, label="Detektor A")
+        plt.plot(id_trial, trigger_data_trial["timestamp"],'ro', markersize=0.1, label="Detektor B")
+        plt.xlabel("trigger_id")
+        plt.ylabel("timestamp")
+        plt.legend()
+        plt.savefig("time_det.png")
+        plt.clf()
+
+        plt.plot(id_ref, trigger_data_ref["timestamp"],'bo', markersize=0.1, label="Detektor A")
+        plt.xlabel("trigger_id")
+        plt.ylabel("timestamp")
+        plt.legend()
+        #plt.ylim((0,5000))
+        plt.savefig("time_det_A.png")
+        plt.clf()
+
+        plt.plot(id_trial, trigger_data_trial["timestamp"],'ro', markersize=0.1, label="Detektor B")
+        plt.xlabel("trigger_id")
+        plt.ylabel("timestamp")
+        plt.legend()
+        #plt.ylim((0,5000))
+        plt.savefig("time_det_B.png")
+        plt.clf()
+
+        plt.plot(id_ref[:-1], np.diff(trigger_data_ref["timestamp"]),'bo', markersize=0.1, label="Detektor A")
+        plt.xlabel("trigger_id")
+        plt.ylabel("timestamp")
+        plt.legend()
+        plt.ylim((0,40000))
+        plt.savefig("time_diff_A.png")
+        plt.clf()
+
+        plt.plot(id_trial[:-1], np.diff(trigger_data_trial["timestamp"]),'ro', markersize=0.1, label="Detektor B")
+        plt.xlabel("trigger_id")
+        plt.ylabel("timestamp")
+        plt.legend()
+        plt.ylim((0,40000))
+        plt.savefig("time_diff_B.png")
+        plt.clf()
+
+
 
 if __name__ == "__main__":
     # get command line arguments
@@ -497,21 +681,32 @@ if __name__ == "__main__":
     parser.add_argument('--toa', 
                         action='store_true',
                         help='Use this to generate events as equally long toa frames')
+    parser.add_argument('--tlu', 
+                        action='store_true',
+                        help='Generate events from TLU trigger data')
     args_dict = vars(parser.parse_args())
 
     file_names = args_dict['filenames_string'].split(";")
     datafiles = [args_dict['inputfolder']+filename for filename in file_names]
     toa_split = args_dict["toa"]
+    tlu = args_dict["tlu"]
+
+    prep = Preparation()
+    #prep.compare_trigger_timeshift()
 
     # analyze and plot
-    prep = Preparation()
-    if toa_split==False:
-        trigger_list = prep.generate_trigger_from_DUT1(datafiles[0], output_file_name=datafiles[0][:-3]+"_DUT0.h5")
-        for i in range(1, len(datafiles)):
-            #prep.convert_to_silab_format(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5")
-            prep.convert_to_silab_format_cluster_based(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5")
-        print("# triggers found: %d"%(trigger_list.shape[0]))
-        print("last trigger timestamp = %d"%(trigger_list["trigger_timestamp"][-1]))
+    if tlu == False:
+        if toa_split==False:
+            trigger_list = prep.generate_trigger_from_DUT1(datafiles[0], output_file_name=datafiles[0][:-3]+"_DUT0.h5")
+            for i in range(1, len(datafiles)):
+                prep.convert_to_silab_format(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5")
+            print("# triggers found: %d"%(trigger_list.shape[0]))
+            print("last trigger timestamp = %d"%(trigger_list["trigger_timestamp"][-1]))
+        else:
+            for i in range(len(datafiles)):
+                prep.assign_event_number_by_toa(datafiles[i],datafiles[i][:-3]+"_toa_DUT"+str(i)+".h5")
     else:
-        for i in range(len(datafiles)):
-            prep.assign_event_number_by_toa(datafiles[i],datafiles[i][:-3]+"_toa_DUT"+str(i)+".h5")
+        for i in range(0, len(datafiles)):
+            trigger_list = prep.read_trigger(datafiles[i])
+            prep.convert_to_silab_format(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5")
+    
