@@ -282,8 +282,6 @@ class DataAnalysis(ScanBase):
                 if not (last_meta_read == len(meta_data)-1):
                     iteration_array = np.append(iteration_array,len(meta_data)-1)
 
-                print(iteration_array)
-
                 cluster_sum = 0
                 cluster_sum_g1 = 0
                 hit_sum = 0

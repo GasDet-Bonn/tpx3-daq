@@ -496,7 +496,8 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             data_type = {'names': ['trigger_id', 'timestamp'],
                'formats': ['uint32',       'uint64']}
 
-            tlu_data = np.recarray(0,dtype = data_type)
+            #tlu_data = np.recarray(0,dtype = data_type)
+            tlu_data = []
 
         # Remove TLU data from datastream:
 
@@ -678,7 +679,8 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         data_type = {'names': ['trigger_id', 'timestamp'],
                'formats': ['uint32',       'uint64']}
 
-        tlu_data = np.recarray(0,dtype = data_type)
+        #tlu_data = np.recarray(0,dtype = data_type)
+        tlu_data = []
 
     return data_words, timestamps, last, nlast, leftoverpackage, tlu_data
 
@@ -687,6 +689,9 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
     Chunk the data based on scan_param and interpret
     '''
     ret = []
+    data_type = {'names': ['trigger_id', 'timestamp'],
+               'formats': ['uint32',       'uint64']}
+    #tlu_table = np.recarray(0,dtype = data_type)
     tlu_table = []
 
     if len(meta_data):
@@ -753,8 +758,13 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                         ret = np.hstack((ret, int_pix_data))
                     else:
                         ret = int_pix_data
-                    if len(tlu_table):
-                        tlu_table = np.hstack((tlu_table, int_tlu_table))
+                    if len(tlu_table) and len(int_tlu_table):
+                        try:
+                            tlu_table = np.hstack((tlu_table, int_tlu_table))
+                        except:
+                            print(tlu_table)
+                            print(int_tlu_table)
+                            exit()
                     else:
                         tlu_table = int_tlu_table
                     if progress == None:
