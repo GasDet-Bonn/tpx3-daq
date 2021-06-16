@@ -304,7 +304,7 @@ def make_trigger_table(data, last_timestamp, next_to_last_timestamp,):
     output = list(filter(lambda x: len(x) > 1 , data_split))
 
     if len(output) == 0:
-        return np.empty(0, dtype=np.uint64), np.empty(0, dtype=np.uint64), 0, 0, []
+        return []
 
     timestamps = np.concatenate([np.full((len(el)-1),el[0],dtype=np.uint64) for el in output])
     tlu_words = np.concatenate([el[1:] for el in output])
@@ -322,15 +322,32 @@ def make_trigger_table(data, last_timestamp, next_to_last_timestamp,):
 
     # cope for overflows in trigger_id
     # get points where there is an overflow
-    overflow_points = np.argwhere(np.diff(trigger_table["trigger_id"] < 0))
+    """overflow_points = np.argwhere(np.diff(np.array(trigger_table["trigger_id"], dtype=np.int64)) < 0)
+    if len(overflow_points)>0:
+        print(np.diff(np.array(trigger_table["trigger_id"], dtype=np.int64)))
+        print(np.array(trigger_table["trigger_id"], dtype=np.int64))
+        print(overflow_points)
+        print(np.amax(trigger_table["trigger_id"]))
+        exit()
+    if np.amax(trigger_table["trigger_id"]) == 65535:
+        print("Overlooked overflow.")
+        print(np.diff(trigger_table["trigger_id"]))
+        exit()
     for ind in overflow_points:
-        trigger_table["trigger_id"][ind+1:] = trigger_table["trigger_id"][ind+1:]+2**16
+        trigger_table["trigger_id"][ind+1:] = trigger_table["trigger_id"][ind+1:]+2**16"""
 
     return trigger_table
 
-    
-
-
+def correct_tlu_overflow(tlu_data):
+    overflow_points = np.argwhere(np.diff(np.array(tlu_data["trigger_id"], dtype=np.int64)) < 0)
+    for ind in overflow_points:
+        if (tlu_data["trigger_id"][ind+1]%65536) == 0:
+            print(ind[0])
+            tlu_data["trigger_id"][ind[0]+1:] = tlu_data["trigger_id"][ind[0]+1:]+2**16
+            logger.info("Trigger overflow detected and corrected.")
+        else:
+            logger.info("Irregularity in Trigger data at trigger number "+str(tlu_data["trigger_id"][ind+1]))
+    return tlu_data
 
 """
 Corrects for missing packages in the raw_data of the FPGA Timestamps
@@ -493,9 +510,6 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             tlu_input_data = np.delete(tlu_input_data, tlu_input_data==0)
             tlu_data = make_trigger_table(tlu_input_data, last_timestamp, next_to_last_timestamp)
         else:
-            data_type = {'names': ['trigger_id', 'timestamp'],
-               'formats': ['uint32',       'uint64']}
-
             #tlu_data = np.recarray(0,dtype = data_type)
             tlu_data = []
 
@@ -675,11 +689,6 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         last = 0
         nlast = 0
         leftoverpackage = []
-
-        data_type = {'names': ['trigger_id', 'timestamp'],
-               'formats': ['uint32',       'uint64']}
-
-        #tlu_data = np.recarray(0,dtype = data_type)
         tlu_data = []
 
     return data_words, timestamps, last, nlast, leftoverpackage, tlu_data
@@ -689,8 +698,6 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
     Chunk the data based on scan_param and interpret
     '''
     ret = []
-    data_type = {'names': ['trigger_id', 'timestamp'],
-               'formats': ['uint32',       'uint64']}
     #tlu_table = np.recarray(0,dtype = data_type)
     tlu_table = []
 
@@ -725,11 +732,13 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 int_pix_data['scan_param_id'][:] = param[i]
                 # append data we got back to return array or create new if this is the fist bunch of data treated
                 if len(ret):
-                    ret = np.hstack((ret, int_pix_data))
+                    if len(int_pix_data):
+                        ret = np.hstack((ret, int_pix_data))
                 else:
                     ret = int_pix_data
                 if len(tlu_table):
-                    tlu_table = np.hstack((tlu_table, int_tlu_table))
+                    if len(int_tlu_table):
+                        tlu_table = np.hstack((tlu_table, int_tlu_table))
                 else:
                     tlu_table = int_tlu_table
                 if progress == None:
@@ -755,16 +764,13 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                     int_pix_data['chunk_start_time'][:] = meta_data['timestamp_start'][l]
                     # append data we got back to return array or create new if this is the fist bunch of data treated
                     if len(ret):
-                        ret = np.hstack((ret, int_pix_data))
+                        if len(int_pix_data):
+                            ret = np.hstack((ret, int_pix_data))
                     else:
                         ret = int_pix_data
-                    if len(tlu_table) and len(int_tlu_table):
-                        try:
+                    if len(tlu_table):
+                        if len(int_tlu_table):
                             tlu_table = np.hstack((tlu_table, int_tlu_table))
-                        except:
-                            print(tlu_table)
-                            print(int_tlu_table)
-                            exit()
                     else:
                         tlu_table = int_tlu_table
                     if progress == None:
@@ -783,6 +789,7 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
     if intern == True:
         return ret, last_timestamp, next_to_last_timestamp, leftoverpackage, tlu_table
     else:
+        tlu_table = correct_tlu_overflow(tlu_table)
         return ret, tlu_table
 
 def init_lfsr_4_lut():
@@ -1173,7 +1180,11 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
     totcurve_std = np.nanstd(totcurves, axis=0)
 
     # Get the start value for t with data close to the start of the curve
-    t_est = np.average(np.where((totcurve_mean > 0) & (totcurve_mean <= 5)))
+    if len(np.where((totcurve_mean > 0) & (totcurve_mean <= 5))):
+        t_est = np.average(np.where((totcurve_mean > 0) & (totcurve_mean <= 5)))
+    else:
+        m = min(i for i in totcurve_mean if i > 0)
+        t_est = totcurve_mean.index(m)
 
     # Use only pulse height with at least 60% aktive pixels
     active_pixels = np.count_nonzero(totcurves > 0, axis=0)

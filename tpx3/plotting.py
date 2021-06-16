@@ -942,6 +942,42 @@ class Plotting(object):
         if coeff is not None:
             return coeff, errors
 
+    def plot_two_distributions(self, data1, data2, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None, plot_queue=None):
+
+        if plot_range is None:
+            diff = np.amax(data1) - np.amin(data1)
+            if (np.amax(data1)) > np.median(data1) * 5:
+                plot_range = np.arange(
+                    np.amin(data1), np.median(data1) * 5, diff / 100.)
+            else:
+                plot_range = np.arange(np.amin(data1), np.amax(
+                    data1) + diff / 100., diff / 100.)
+
+        tick_size = np.diff(plot_range)[0]
+
+        hist1, bins1 = np.histogram(np.ravel(data1), bins=plot_range)
+        hist2, bins2 = np.histogram(np.ravel(data2), bins=plot_range)
+
+        bin_centres = (bins1[:-1] + bins1[1:]) / 2.0
+
+        fig = Figure()
+        FigureCanvas(fig)
+        ax = fig.add_subplot(111)
+        self._add_text(fig)
+
+        ax.bar(bins1[:-1], hist1, width=tick_size, align='edge', alpha = 0.5)
+        ax.bar(bins2[:-1], hist2, width=tick_size, align='edge', alpha = 0.5)
+
+        ax.set_xlim((min(plot_range), max(plot_range)))
+        ax.set_title(title, color=TITLE_COLOR)
+        if x_axis_title is not None:
+            ax.set_xlabel(x_axis_title)
+        if y_axis_title is not None:
+            ax.set_ylabel(y_axis_title)
+        ax.grid(True)
+
+        self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
+
     def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
         m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
         b = y[0] - m * x[0]

@@ -18,6 +18,8 @@ import time
 import tables as tb
 import math
 
+import argparse
+
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
@@ -137,13 +139,14 @@ class ToTCalib(ScanBase):
 
         self.logger.info('Scan finished')
 
-    def analyze(self, progress = None, status = None, **kwargs):
+    def analyze(self, progress = None, status = None, file_name = None, **kwargs):
         '''
             Analyze the data of the scan
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
             If there is a status queue information about the status of the scan are put into it
         '''
-        h5_filename = self.output_filename + '.h5'
+        #h5_filename = self.output_filename + '.h5'
+        h5_filename = file_name
 
         self.logger.info('Starting data analysis...')
         if status != None:
@@ -184,7 +187,7 @@ class ToTCalib(ScanBase):
                 stop_index = meta_data[meta_data['scan_param_id'] == param_id]
                 # Interpret the raw data (2x 32 bit to 1x 48 bit)
                 raw_data_tmp = h5_file.root.raw_data[start_index['index_start'][0]:stop_index['index_stop'][-1]]
-                hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, progress = progress)
+                hit_data_tmp , tlu_data = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, progress = progress)
                 raw_data_tmp = None
 
                 # Select only data which is hit data
@@ -246,13 +249,14 @@ class ToTCalib(ScanBase):
             h5_file.create_table(h5_file.root.interpreted, 'fit_params', parameter_table)
 
 
-    def plot(self, status = None, plot_queue = None, **kwargs):
+    def plot(self, status = None, plot_queue = None, file_name = None, **kwargs):
         '''
             Plot data and histograms of the scan
             If there is a status queue information about the status of the scan are put into it
         '''
 
-        h5_filename = self.output_filename + '.h5'
+        #h5_filename = self.output_filename + '.h5'
+        h5_filename = file_name
 
         self.logger.info('Starting plotting...')
         if status != None:
@@ -300,7 +304,16 @@ class ToTCalib(ScanBase):
 
 
 if __name__ == "__main__":
-    scan = ToTCalib()
-    scan.start(**local_configuration)
-    scan.analyze()
-    scan.plot()
+    parser = argparse.ArgumentParser(description='Script to analyse Timepix3 data')
+    parser.add_argument('filename', 
+                        metavar='datafile', 
+                        help='Name of the file to be analysed')
+    parser.add_argument('--big',
+                        action='store_true',
+                        help="Use this if your data is to big to analyse efficiently in one chunk")
+    args_dict = vars(parser.parse_args())
+    datafile = args_dict['filename']
+    scan = ToTCalib(no_chip = True)
+    #scan.start(**local_configuration)
+    scan.analyze(file_name = datafile)
+    scan.plot(file_name = datafile)

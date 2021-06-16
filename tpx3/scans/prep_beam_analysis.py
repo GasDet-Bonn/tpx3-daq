@@ -45,12 +45,12 @@ class Preparation():
         Convert existing hdf5 file which is allready analysed into the format necessary for reading it
         in the beam telescope analysis (@SiLab). It requires:
         - name/location of the hdf5 file with the data
-        - trigger data: reqarray with two columns: trigger_number and trigger_timestamp
+        - trigger data: reqarray with two columns: trigger_id and timestamp
         - trigger width: # of max ToA difference for a hit to be assigned to the trigger
         - trigger offset: offset in ToA between trigger timestamp and toa to correct for
             imperfect synchronization
     """
-    def convert_to_silab_format(self,file_name, trigger_data, output_file_name, trigger_width = 10, trigger_offset = 0):
+    def convert_to_silab_format(self,file_name, trigger_data, output_file_name, trigger_width = 20, trigger_offset = -12355, no_save = False):
         print('Start Conversion to SiLab format...')
         hit_data = None
         with tb.open_file(file_name, 'r+') as h5_file:
@@ -65,6 +65,9 @@ class Preparation():
                     hit_data = group[:]
                     first = False
 
+            run_config = h5_file.root.configuration.run_config[:]
+            chip_id = 'W'+str([row[1] for row in run_config if row[0]==b'chip_wafer'][0]).split("'")[1]+'-'+str([row[1] for row in run_config if row[0]==b'chip_x'][0]).split("'")[1]+str([row[1] for row in run_config if row[0]==b'chip_y'][0]).split("'")[1]
+
         hit_data.sort(order="TOA_Combined") # sort according to ToA_Combined in order to make trigger assignment easier and possible
         hits = np.recarray((hit_data.shape[0]), dtype=data_type)
 
@@ -72,27 +75,34 @@ class Preparation():
         hits["row"] = [y+1 for y in hit_data['y']]
         hits["frame"] = hit_data["TOA_Combined"]
 
-        # K7
-        #a = 10.17
-        #b = -4307.6
-        #c = -52649.2
-        #t = 268.85
-        # I7 THR=800
-        #a = 8.8
-        #b = -3910.2
-        #c = -66090.6
-        #t = 258.61
-        # I7 THR=1000
-        a = 8.0
-        b = -2964.3
-        c = -46339.0
-        t = 206.31
-        # I7 THR=1100
-        #a = 7.4
-        #b = -2288.9
-        #c = -7204.0
-        #t = 236.44
-        hits["charge"] = [3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4 for value in hit_data["TOT"]]
+        conversion = True
+
+        if(chip_id == "W18-D8"):
+            print("We have data from W18-D8.")
+            a = 0.34
+            b = -2964.3
+            c = -46339.0
+            t = 206.31
+        elif(chip_id == "W18-J6"):
+            print("We have data from W18-J6.")
+            a = 8.0
+            b = -2964.3
+            c = -46339.0
+            t = 206.31
+        elif(chip_id == "W18-L9"):
+            print("We have data from W18-L9.")
+            a = 8.0
+            b = -2964.3
+            c = -46339.0
+            t = 206.31
+        else:
+            print("We have data from an unknown chip. No conversion ToT -> charge")
+            conversion = False
+
+        if conversion == True:
+            hits["charge"] = [3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4 for value in hit_data["TOT"]]
+        else:
+            hits["charge"] = hit_data["ToT"]
         hits["frame"] = hit_data["TOA_Combined"]
 
         print("last data timestamp = %d"%(hit_data["TOA_Combined"][-1]))
@@ -109,17 +119,18 @@ class Preparation():
         hits_index = 0
         first_hit_data_index = 0
         curr_add = 0
-        pbar = tqdm(total = trigger_data.shape[0])
+        if no_save == False:
+            pbar = tqdm(total = trigger_data.shape[0])
         for i in range(trigger_data.shape[0]):
             curr_hit_data = first_hit_data_index
-            while curr_hit_data < len(hit_data) and (hit_data["TOA_Combined"][curr_hit_data] < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+            while curr_hit_data < len(hit_data) and ((hit_data["TOA_Combined"][curr_hit_data]+trigger_offset) < (trigger_data["timestamp"][i]+trigger_width)):
+                if np.abs((hit_data["TOA_Combined"][curr_hit_data].astype('int64')+trigger_offset) - trigger_data["timestamp"][i].astype('float64')) < trigger_width:
                     if assigned[curr_hit_data] == False:
-                        hits["event_number"][curr_hit_data] = trigger_data["trigger_number"][i]
+                        hits["event_number"][curr_hit_data] = trigger_data["trigger_id"][i]
                         assigned[curr_hit_data] = True
                     else: #TODO: Evtl. doppelt zugeordnete Hits ganz rausschmeissen mit TLU?
                         # duplicate hit if necessary
-                        hits_add["event_number"][curr_add] = trigger_data["trigger_number"][i]
+                        hits_add["event_number"][curr_add] = trigger_data["trigger_id"][i]
                         hits_add["frame"][curr_add] = hits["frame"][curr_hit_data]
                         hits_add["row"][curr_add] = hits["row"][curr_hit_data]
                         hits_add["column"][curr_add] = hits["column"][curr_hit_data]
@@ -131,20 +142,28 @@ class Preparation():
                 else:
                     first_hit_data_index = curr_hit_data
                 curr_hit_data += 1
-            pbar.update(1)
-        pbar.close()
+            if no_save == False:
+                pbar.update(1)
+        if no_save == False:
+            pbar.close()
 
         n = len(assigned)-np.sum(assigned)
+        print("%d Hits were assigned to a trigger."%np.sum(assigned))
         print("%d Hits could not be assigned to a trigger. Throw them away."%(n))
         print("There were %d additional assignments."%(curr_add))
         hits = hits[assigned]
-        
-        hits = np.hstack((hits, hits_add[:curr_add]))
-        hits.sort(order="frame")
 
+        trigger_id = hits["event_number"][:]
+        plt.hist(trigger_id, bins=int(np.amax(trigger_id)/50))
+        plt.savefig("trigger_id.png")
         
-        with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
-            h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
+        if no_save == False:
+            hits = np.hstack((hits, hits_add[:curr_add]))
+            hits.sort(order="event_number")
+            with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
+                h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
+
+        return np.sum(assigned)
 
 
     """
@@ -152,7 +171,7 @@ class Preparation():
         in the beam telescope analysis (@SiLab). The assignment is based on the mean ToA in each cluster.
         It requires:
         - name/location of the hdf5 file with the data
-        - trigger data: reqarray with two columns: trigger_number and trigger_timestamp
+        - trigger data: reqarray with two columns: trigger_id and timestamp
         - trigger width: # of max ToA difference for a hit to be assigned to the trigger
         - trigger offset: offset in ToA between trigger timestamp and toa to correct for
             imperfect synchronization
@@ -185,7 +204,7 @@ class Preparation():
         histtoa_mean = [np.mean(toa) for toa in histtoa] 
 
         hit_data.sort(order="TOA_Combined") # sort according to ToA_Combined in order to make trigger assignment easier and possible
-        trigger_data.sort(order="trigger_timestamp")
+        trigger_data.sort(order="timestamp")
         hits = np.recarray((hit_data.shape[0]), dtype=data_type)
 
         hits["column"] = [x+1 for x in hit_data['x']]
@@ -239,12 +258,12 @@ class Preparation():
         pbar = tqdm(total = trigger_data.shape[0])
         for i in range(trigger_data.shape[0]):
             curr_cluster = first_cluster_index
-            while curr_cluster < len(histtoa_mean) and (histtoa_mean[curr_cluster] < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                if np.abs(histtoa_mean[curr_cluster] - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+            while curr_cluster < len(histtoa_mean) and (histtoa_mean[curr_cluster] < (trigger_data["timestamp"][i]+trigger_width)):
+                if np.abs(histtoa_mean[curr_cluster] - trigger_data["timestamp"][i].astype('float64')) < trigger_width:
                     if assigned[curr_cluster] == False:
                         assigned[curr_cluster] = True
                     hits_add = hits[hitindex[curr_cluster]]
-                    hits_add["event_number"] = np.full(hits_add.shape[0], trigger_data["trigger_number"][i])
+                    hits_add["event_number"] = np.full(hits_add.shape[0], trigger_data["trigger_id"][i])
                     len_add = hits_add.shape[0]
                     if not (len_add+curr_first_ind)<hits_trigger.shape[0]:
                         hits_trigger = np.hstack((hits_trigger, np.recarray((hit_data.shape[0]), dtype=data_type)))
@@ -275,7 +294,7 @@ class Preparation():
         The mean ToA of each cluster is taken as trigger timestamp and the number is assigned consecutively
         It requires:
         - name/location of the hdf5 file with the data
-        - trigger data: reqarray with two columns: trigger_number and trigger_timestamp
+        - trigger data: reqarray with two columns: trigger_id and timestamp
         - min_size: minimal size of a cluster to use it as a trigger seed
         - min_charge: minimal charge in a cluster to use it as a trigger seed
     """
@@ -328,12 +347,12 @@ class Preparation():
         # make table for triggers
         select = (hist_size >= min_size) & (histch >= min_charge)
 
-        data_type = {'names': ['trigger_number', 'trigger_timestamp'],
+        data_type = {'names': ['trigger_id', 'timestamp'],
             'formats': ['int64', 'float64']}
         trigger = np.recarray((np.sum(select)), dtype=data_type)
-        trigger['trigger_timestamp'] = np.array(hist_toa_m,dtype=np.float64)[select]
-        trigger.sort(order="trigger_timestamp")
-        trigger['trigger_number'] = range(np.sum(select))
+        trigger['timestamp'] = np.array(hist_toa_m,dtype=np.float64)[select]
+        trigger.sort(order="timestamp")
+        trigger['trigger_id'] = range(np.sum(select))
 
         histtoa = None
         histcha = None
@@ -341,7 +360,7 @@ class Preparation():
 
         dif = np.empty(trigger.shape[0]-1)
         for i in range(trigger.shape[0]-1):
-            dif[i] = trigger['trigger_timestamp'][i+1]-trigger['trigger_timestamp'][i]
+            dif[i] = trigger['timestamp'][i+1]-trigger['timestamp'][i]
 
         plt.hist(dif, range=(np.amin(dif)-0.25, 30+0.25), bins = 50)
         plt.savefig("spread_clusters.png")
@@ -518,8 +537,8 @@ class Preparation():
             pbar = tqdm(total = trigger_data.shape[0])
             for i in range(trigger_data.shape[0]):
                 curr_hit_data = first_hit_data_index
-                while curr_hit_data < len(hit_data) and ((hit_data["TOA_Combined"][curr_hit_data]+trigger_offset) < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                    if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') + trigger_offset - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+                while curr_hit_data < len(hit_data) and ((hit_data["TOA_Combined"][curr_hit_data]+trigger_offset) < (trigger_data["timestamp"][i]+trigger_width)):
+                    if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') + trigger_offset - trigger_data["timestamp"][i].astype('float64')) < trigger_width:
                         if assigned[curr_hit_data] == False:
                             assigned[curr_hit_data] = True
                         else: #TODO: Evtl. doppelt zugeordnete Hits ganz rausschmeissen mit TLU?
@@ -667,6 +686,60 @@ class Preparation():
         plt.savefig("time_diff_B.png")
         plt.clf()
 
+    def get_offset(self, file_name, trigger_list, output_file_name, offset_min, offset_max):
+        print("Calculate rough estimate for the offset between trigger and data.")
+        with tb.open_file(file_name, 'r+') as h5_file:
+            run_config = h5_file.root.configuration.run_config[:]
+            chip_id = 'W'+str([row[1] for row in run_config if row[0]==b'chip_wafer'][0]).split("'")[1]+'-'+str([row[1] for row in run_config if row[0]==b'chip_x'][0]).split("'")[1]+str([row[1] for row in run_config if row[0]==b'chip_y'][0]).split("'")[1]
+        assigned_list = []
+        stepsize = 5000
+        iteration_array = np.arange(offset_min, offset_max+2500, 5000)
+        pbar = tqdm(total = len(iteration_array))
+        for i in iteration_array:
+            sys.stdout = open(os.devnull, 'w')
+            assigned_list.append(prep.convert_to_silab_format(file_name, trigger_list, output_file_name,trigger_offset = i, trigger_width = stepsize*2, no_save = True))
+            sys.stdout = sys.__stdout__
+            pbar.update()
+        pbar.close()
+        assigned_max = np.amax(assigned_list)
+        index_high = np.where(assigned_list>assigned_max*0.9)[0]
+        offset_coarse = (iteration_array[index_high[0]]+iteration_array[index_high[-1]])/2
+        
+        print("Result: "+str(offset_coarse))
+        plt.axvline(x=offset_coarse)
+        plt.plot(iteration_array,assigned_list)
+        plt.savefig("offset-"+chip_id+".png")
+        plt.close()
+
+        #offset_coarse = -17500
+
+        assigned_list = []
+        iteration_array = np.arange(int(offset_coarse-2500), int(offset_coarse+2500), 100)
+        print("Calculate final estimate for the offset between trigger and data.")
+        pbar = tqdm(total=len(iteration_array))
+        for i in iteration_array:
+            sys.stdout = open(os.devnull, 'w')
+            assigned_list.append(prep.convert_to_silab_format(file_name, trigger_list, output_file_name,trigger_offset = i, trigger_width = 100, no_save = True))
+            sys.stdout = sys.__stdout__
+            pbar.update()
+        pbar.close()
+        max_value = np.amax(assigned_list)
+        index_high = np.where(assigned_list>max_value*0.9)[0]
+        offset_fine = (iteration_array[index_high[0]]+iteration_array[index_high[-1]])/2
+        plt.axvline(x=offset_fine)
+        plt.plot(iteration_array,assigned_list)
+        plt.savefig("offset-fine-"+chip_id+".png")
+        print("Result: "+str(offset_fine))
+
+        """assigned_list = np.array(assigned_list)[iteration_array>offset_fine]
+        iteration_array = np.array(iteration_array)[iteration_array>offset_fine]
+        index_high = np.where(assigned_list>=max_value*0.9)[0]
+        index_low = np.where(assigned_list<=max_value*0.1)[0]
+        width = iteration_array[index_low[0]]-iteration_array[index_high[-1]]
+        print("Trigger width: "+str(width))
+        offset_fine = offset_coarse"""
+        width = 100
+        return offset_fine, width
 
 
 if __name__ == "__main__":
@@ -701,12 +774,23 @@ if __name__ == "__main__":
             for i in range(1, len(datafiles)):
                 prep.convert_to_silab_format(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5")
             print("# triggers found: %d"%(trigger_list.shape[0]))
-            print("last trigger timestamp = %d"%(trigger_list["trigger_timestamp"][-1]))
+            print("last trigger timestamp = %d"%(trigger_list["timestamp"][-1]))
         else:
             for i in range(len(datafiles)):
                 prep.assign_event_number_by_toa(datafiles[i],datafiles[i][:-3]+"_toa_DUT"+str(i)+".h5")
     else:
         for i in range(0, len(datafiles)):
             trigger_list = prep.read_trigger(datafiles[i])
-            prep.convert_to_silab_format(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5")
-    
+            #offset, width = prep.get_offset(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5", offset_min = -40000, offset_max = 10000)
+            #offset = 0
+            offset = -16550
+            width = 100
+            prep.convert_to_silab_format(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5", trigger_offset=offset, trigger_width = width)
+            """print(str(trigger_list.shape[0])+" triggers were found")
+            res_array = []
+            for offset in range(-13000,-11000,10):
+                print("offset: "+str(offset))
+                res_array.append(prep.convert_to_silab_format(datafiles[i], trigger_list, output_file_name=datafiles[i][:-3]+"_DUT"+str(i)+".h5", trigger_offset=offset))
+            print(res_array)
+            plt.plot(range(-13000,-11000,10), res_array)
+            plt.savefig("offset.png")"""

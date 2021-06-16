@@ -288,8 +288,12 @@ class DataAnalysis(ScanBase):
                 hit_sum_b = 0
 
                 hit_index = 0
+
+                tlu_offset = 0
+
                 # iterate over all sets of chunks
-                for num in range(len(iteration_array)-1):
+                #for num in range(len(iteration_array)-1):
+                for num in range(2):
                     # Split meta_data
                     self.logger.info("Start analysis of part %d/%d" % (num+1,len(iteration_array)))
                     meta_data_tmp = meta_data[iteration_array[num]:iteration_array[num+1]]
@@ -320,7 +324,10 @@ class DataAnalysis(ScanBase):
                         h5_file.create_table(h5_file.root.interpreted, 'hit_data_'+str(num), hit_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
 
                         # save trigger_data
-                        if tlu_data_tmp.shape[0] != 0:
+                        #if tlu_data_tmp.shape[0] != 0:
+                        if len(tlu_data_tmp) != 0:
+                            tlu_data_tmp["trigger_id"][:] = tlu_data_tmp["trigger_id"][:]+tlu_offset*2**16
+                            tlu_offset = math.floor(tlu_data_tmp["trigger_id"][-1]/(2**16))
                             h5_file.create_table(h5_file.root.trigger, 'trigger_data_'+str(num), tlu_data_tmp, filters=tb.Filters(complib='zlib', complevel=5))
 
                         # create group for cluster data
@@ -415,6 +422,20 @@ class DataAnalysis(ScanBase):
                     toa = np.concatenate((toa, hit_data['TOA']), axis = None)
                     toa_comb = np.concatenate((toa_comb, hit_data['TOA_Combined']), axis = None)
 
+                try:
+                    first = True
+                    trigger = []
+                    for group in h5_file.root.trigger:
+                        trigger_tmp = group[:]
+                        if first == True:
+                            trigger = trigger_tmp
+                            first = False
+                        else:
+                            trigger = np.hstack((trigger, trigger_tmp))
+                except:
+                    print("Could not find any trigger in data.")
+                    trigger = []
+
                 # Plot general hit properties
 
                 # Plot the occupancy matrix
@@ -440,6 +461,9 @@ class DataAnalysis(ScanBase):
                 p.plot_distribution(toa_comb, plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//500), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
                 #p.plot_distribution(toa_comb, plot_range = np.arange(0.5375*10**9-0.5, 0.539*10**9+0.5, 5000), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
     
+                if len(trigger):
+                    p.plot_two_distributions(toa_comb, trigger["timestamp"], plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//500), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+                    p.plot_two_distributions(toa_comb, trigger["timestamp"], plot_range = np.arange(1.25*10**9, 1.5*10**9, (np.amax(toa_comb)-np.amin(toa_comb))//1000), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
 
                 hist_size = np.empty(0, dtype=np.uint32)
                 hist_sum = np.empty(0, dtype=np.uint32)
