@@ -292,8 +292,8 @@ class DataAnalysis(ScanBase):
                 tlu_offset = 0
 
                 # iterate over all sets of chunks
-                #for num in range(len(iteration_array)-1):
-                for num in range(2):
+                for num in range(len(iteration_array)-1):
+                    #for num in range(2):
                     # Split meta_data
                     self.logger.info("Start analysis of part %d/%d" % (num+1,len(iteration_array)))
                     meta_data_tmp = meta_data[iteration_array[num]:iteration_array[num+1]]
@@ -399,12 +399,19 @@ class DataAnalysis(ScanBase):
 
         self.logger.info('Starting plotting...')
 
+        try:
+            with tb.open_file(file_name, 'r+') as h5_file:
+                run_config = h5_file.root.configuration.run_config[:]
+                chip_id = 'W'+str([row[1] for row in run_config if row[0]==b'chip_wafer'][0]).split("'")[1]+'-'+str([row[1] for row in run_config if row[0]==b'chip_x'][0]).split("'")[1]+str([row[1] for row in run_config if row[0]==b'chip_y'][0]).split("'")[1]
+        except:
+            chip_id = file_name[10:16]
+
         new_file = args_dict["new_file"]
         if new_file:
             file_name = file_name.replace("data_take", "analysis")
 
         with tb.open_file(file_name, 'r+') as h5_file:
-            with plotting.Plotting(file_name, pdf_file=file_name[:-2]+"pdf") as p:
+            with plotting.Plotting(file_name, pdf_file=file_name[:-3]+"_info.pdf") as p:
                 p.plot_parameter_page()
 
                 hit_data_x = np.empty(0, dtype = np.uint32)
@@ -451,19 +458,19 @@ class DataAnalysis(ScanBase):
                             print("Suggesting to masc pixel x="+str(i)+" y="+str(j))"""
 
 
-                # Plot the ToT-Curve histogram
-                p.plot_distribution(tot, plot_range = np.arange(np.amin(tot)-0.5, np.median(tot) * 7, 5), x_axis_title='ToT', title='ToT distribution', suffix='ToT_distribution', fit=False)
+            # Plot the ToT-Curve histogram
+            p.plot_distribution(tot, plot_range = np.arange(np.amin(tot)-0.5, np.median(tot) * 7, 5), x_axis_title='ToT', title='ToT distribution', suffix='ToT_distribution', fit=False)
 
-                # Plot the ToA-Curve histogram
-                p.plot_distribution(toa, plot_range = np.arange(np.amin(toa)-0.5, np.amax(toa), 100), x_axis_title='ToA', title='ToA distribution', suffix='ToA_distribution', fit=False)
+            # Plot the ToA-Curve histogram
+            p.plot_distribution(toa, plot_range = np.arange(np.amin(toa)-0.5, np.amax(toa), 100), x_axis_title='ToA', title='ToA distribution', suffix='ToA_distribution', fit=False)
 
-                # Plot the ToA_Combined-Curve histogram
-                p.plot_distribution(toa_comb, plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//500), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
-                #p.plot_distribution(toa_comb, plot_range = np.arange(0.5375*10**9-0.5, 0.539*10**9+0.5, 5000), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
-    
-                if len(trigger):
-                    p.plot_two_distributions(toa_comb, trigger["timestamp"], plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//500), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
-                    p.plot_two_distributions(toa_comb, trigger["timestamp"], plot_range = np.arange(1.25*10**9, 1.5*10**9, (np.amax(toa_comb)-np.amin(toa_comb))//1000), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+            # Plot the ToA_Combined-Curve histogram
+            p.plot_distribution(toa_comb, plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//500), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+            #p.plot_distribution(toa_comb, plot_range = np.arange(0.5375*10**9-0.5, 0.539*10**9+0.5, 5000), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+
+            if len(trigger):
+                p.plot_two_distributions(toa_comb, trigger["timestamp"], plot_range = np.arange(np.amin(toa_comb), np.amax(toa_comb), (np.amax(toa_comb)-np.amin(toa_comb))//500), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
+                p.plot_two_distributions(toa_comb, trigger["timestamp"], plot_range = np.arange(1.25*10**9, 1.5*10**9, (np.amax(toa_comb)-np.amin(toa_comb))//1000), x_axis_title='ToA_Combined', title='ToA_Combined distribution', suffix='ToA_Combined_distribution', fit=False)
 
                 hist_size = np.empty(0, dtype=np.uint32)
                 hist_sum = np.empty(0, dtype=np.uint32)
@@ -483,7 +490,7 @@ class DataAnalysis(ScanBase):
                         histindex = np.array(group.hit_index[:],dtype=object)
                         first = False
 
-
+                
                 # Plot cluster properties
                 num_cluster = len(hist_size)
 
@@ -501,56 +508,60 @@ class DataAnalysis(ScanBase):
                 histe1 = hist_sum[hist_size==1]
                 p.plot_distribution(histe1, plot_range = np.arange(np.amin(hist_sum)-0.5, np.median(hist_sum) *7, 5), x_axis_title='Cluster ToT for clusters with one pixel', y_axis_title='# of clusters', title='Cluster ToT distribution for clusters with one pixel', suffix='Cluster_toT_distribution for clusters with one pixel', fit=False)
 
-                # K7
-                #a = 10.17
-                #b = -4307.6
-                #c = -52649.2
-                #t = 268.85
-                # I7 THR=800
-                #a = 8.8
-                #b = -3910.2
-                #c = -66090.6
-                #t = 258.61
-                # I7 THR=1000
-                a = 8.0
-                b = -2964.3
-                c = -46339.0
-                t = 206.31
-                # I7 THR=1100
-                #a = 7.4
-                #b = -2288.9
-                #c = -7204.0
-                #t = 236.44
-                histch = np.zeros(len(histcha))
-                for i,el in enumerate(histcha):
-                    for value in  el:
-                        histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
+                conversion = True # only if the required ToT Calib data is available do a conversion ToT -> charge
 
-                #p.plot_distribution(histch, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster', y_axis_title='# of clusters', title='Number of electrons per cluster', suffix='Number of electrons per cluster', fit=False)
+                if(chip_id == "W18-D8"):
+                    print("We have data from W18-D8.")
+                    a = 0.34
+                    b = 6.65
+                    c = 8812.12
+                    t = -83.82
+                elif(chip_id == "W18-J6"):
+                    print("We have data from W18-J6.")
+                    a = 0.3
+                    b = 122.19
+                    c = 85672.8
+                    t = -431.79
+                elif(chip_id == "W18-L9"):
+                    print("We have data from W18-L9.")
+                    a = 0.25
+                    b = 112.81
+                    c = 82640.67
+                    t = -448.07
+                else:
+                    print("We have data from an unknown chip. No conversion ToT -> charge")
+                    conversion = False
 
-                p.plot_distribution(histch, plot_range = np.arange(0, 48000, 500), x_axis_title='Number of electrons per cluster', y_axis_title='# of clusters', title='Number of electrons per cluster', suffix='Number of electrons per cluster', fit=False)
+                if conversion == True:
+
+                    histch = np.zeros(len(histcha))
+                    for i,el in enumerate(histcha):
+                        for value in  el:
+                            histch[i] += 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
 
 
-                histchm1 = histch[hist_size!=1]
-                p.plot_distribution(histchm1, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with more than one pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with more than one pixel', suffix='Number of electrons per cluster for clusters with more than one pixel', fit=False)
+                    p.plot_distribution(histch, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster', y_axis_title='# of clusters', title='Number of electrons per cluster', suffix='Number of electrons per cluster', fit=False)
 
-                histche1 = histch[hist_size==1]
-                p.plot_distribution(histche1, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with only one pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with only one pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
+                    histchm1 = histch[hist_size!=1]
+                    p.plot_distribution(histchm1, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with more than one pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with more than one pixel', suffix='Number of electrons per cluster for clusters with more than one pixel', fit=False)
 
-                histche2 = histch[hist_size==2]
-                p.plot_distribution(histche2, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with two pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with two pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
+                    histche1 = histch[hist_size==1]
+                    p.plot_distribution(histche1, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with only one pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with only one pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
 
-                histche3 = histch[hist_size==3]
-                p.plot_distribution(histche3, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with three pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with three pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
+                    histche2 = histch[hist_size==2]
+                    p.plot_distribution(histche2, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with two pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with two pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
 
-                histche4 = histch[hist_size==4]
-                p.plot_distribution(histche4, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with four pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with four pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
+                    histche3 = histch[hist_size==3]
+                    p.plot_distribution(histche3, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with three pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with three pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
 
-                # Plot the charge for all pixels
-                hist = np.empty(len(tot))
-                for i,value in enumerate(tot):
-                    hist[i] = 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
-                p.plot_distribution(hist, plot_range = np.arange(0-0.5, np.median(hist) *7, 500), x_axis_title='Number of electrons per pixel', y_axis_title='# of pixels', title='Number of electrons per pixel', suffix='Number of electrons per pixel', fit=False)
+                    histche4 = histch[hist_size==4]
+                    p.plot_distribution(histche4, plot_range = np.arange(np.amin(histch)-0.5, np.median(histch) *7, 500), x_axis_title='Number of electrons per cluster for clusters with four pixel', y_axis_title='# of clusters', title='Number of electrons per cluster for clusters with four pixel', suffix='Number of electrons per cluster for clusters with only one pixel', fit=False)
+
+                    # Plot the charge for all pixels
+                    hist = np.empty(len(tot))
+                    for i,value in enumerate(tot):
+                        hist[i] = 3*np.abs(100*0.005-(-(b-value*25-t*a)/(2*a)+np.sqrt(((b-value*25-t*a)/(2*a))**2-(value*25*t-b*t-c)/a))*2/2.5*0.0025)/1.602*10**4
+                    p.plot_distribution(hist, plot_range = np.arange(0-0.5, np.median(hist) *7, 500), x_axis_title='Number of electrons per pixel', y_axis_title='# of pixels', title='Number of electrons per pixel', suffix='Number of electrons per pixel', fit=False)
 
                 # plot the ToA spread in the clusters
                 hist_spread = np.empty(len(tot))
@@ -563,7 +574,8 @@ class DataAnalysis(ScanBase):
                             ind += 1
                 p.plot_distribution(hist_spread, plot_range = np.arange(-10.125, 10.125, 0.25), x_axis_title='Deviation from mean ToA of cluster', y_axis_title='# of pixels', title='Deviation from mean ToA of cluster', suffix='Deviation from mean ToA of cluster', fit=True)
                 
-                p.plot_datapoints(np.arange(len(toa_comb)), toa_comb, x_plot_range=np.arange(len(toa_comb)), y_plot_range=toa_comb)
+                #p.plot_datapoints(np.arange(len(toa_comb)), toa_comb, x_plot_range=np.arange(len(toa_comb)), y_plot_range=toa_comb)
+                
 
                 p.plot_analysis_info_page(len(hist_sum), len(tot), np.amin(toa_comb), np.amax(toa_comb))
                 time_interval = (np.amax(toa_comb)-np.amin(toa_comb))*25*10**(-9)
@@ -603,5 +615,5 @@ if __name__ == "__main__":
 
     # analyze and plot
     plotter = DataAnalysis(no_chip = True)
-    plotter.analyze(file_name, args = args_dict)
+    #plotter.analyze(file_name, args = args_dict)
     plotter.plot(file_name, args = args_dict)

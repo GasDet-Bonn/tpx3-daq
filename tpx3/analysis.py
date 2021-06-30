@@ -263,38 +263,29 @@ def save_and_correct(raw_data, indices):
 """
     Builds a trigger table based on an array which lists the TLU data words and the timestamp extensions
     in the right order. The resulting table consists of two columns: trigger id and timestamp
+    The TOA extensions need to be allready combined as 48bit packages.
 """
 def make_trigger_table(data, last_timestamp, next_to_last_timestamp,):
-    """f = open("daten_roh_tlu.txt", "a")
-    for i in range(len(data)):
-        if (int(data[i]) & 0xF000000000000) >> 48 == 0b0101:
-            f.write("FPGA "+bin(data[i]).zfill(52)+"\n")
-        elif (int(data[i]) & 0x80000000) >> 31 == 0b1:
-            f.write("TLU "+bin(data[i]).zfill(32)+"\n")
-        else:
-            f.write("data "+bin(data[i]).zfill(32)+"\n")
-    f.close()
-    exit()"""
+    # find indicees of FPGA packages
     time_index_bool = (data & 0xF000000000000) >> 48 == 0b0101
     time_index = np.where(time_index_bool)[0]
     # split array into parts that always begin with a timestamp and contain maximum one timestamp
     insert_last = False
+    # in case the data does not start with at time package insert last timestamp
     if time_index[0] != 0:
-        #time_index = np.insert(time_index,0,0,axis = 0)
         insert_last = True
     data_split = np.split(data, time_index)
-    #print(data_split)
     if insert_last == True: 
         data_split[0] = np.insert(data_split[0],0,last_timestamp,axis = 0)
     else:
         pass # Do nothing for now
   
-    # shift backwards if necessary
+    # shift backwards if necessary, until overlapping bits in tlu timestamp and TOA extension match
     for i in range(len(data_split)-1, -1, -1):
         if len(data_split[i]) > 1:
             iteration_data = data_split[i][1:]
             fits_not = ((iteration_data & 0x70000000) >> 28 !=  (int(data_split[i][0]) & 0x7000) >> 12)
-            if sum(fits_not) == 0:
+            if sum(fits_not) == 0: # no data to shift
                 continue
             old_data = iteration_data[fits_not]
             old_data_indices = np.where(fits_not)[0]
@@ -303,46 +294,41 @@ def make_trigger_table(data, last_timestamp, next_to_last_timestamp,):
 
     output = list(filter(lambda x: len(x) > 1 , data_split))
 
+    # no tlu data found
     if len(output) == 0:
         return []
 
+    # build arrays for tlu trigger numbers and timestamps
     timestamps = np.concatenate([np.full((len(el)-1),el[0],dtype=np.uint64) for el in output])
     tlu_words = np.concatenate([el[1:] for el in output])
 
+    # delete all empty entries
     tlu_words = tlu_words[timestamps != 0]
     timestamps = timestamps[timestamps != 0]
 
     data_type = {'names': ['trigger_id', 'timestamp'],
                'formats': ['uint32',       'uint64']}
 
+    # build trigger table
     trigger_table = np.recarray(len(tlu_words),dtype = data_type)
     trigger_table["trigger_id"] = tlu_words & 0xFFFF
     trigger_table["timestamp"] = (timestamps & 0xFFFFFFFF8000) + ((tlu_words & 0x7FFF0000) >> 16)
-    #trigger_table["timestamp"] = (timestamps & 0xFFFFFFFFFFFF) 
-
-    # cope for overflows in trigger_id
-    # get points where there is an overflow
-    """overflow_points = np.argwhere(np.diff(np.array(trigger_table["trigger_id"], dtype=np.int64)) < 0)
-    if len(overflow_points)>0:
-        print(np.diff(np.array(trigger_table["trigger_id"], dtype=np.int64)))
-        print(np.array(trigger_table["trigger_id"], dtype=np.int64))
-        print(overflow_points)
-        print(np.amax(trigger_table["trigger_id"]))
-        exit()
-    if np.amax(trigger_table["trigger_id"]) == 65535:
-        print("Overlooked overflow.")
-        print(np.diff(trigger_table["trigger_id"]))
-        exit()
-    for ind in overflow_points:
-        trigger_table["trigger_id"][ind+1:] = trigger_table["trigger_id"][ind+1:]+2**16"""
 
     return trigger_table
 
+"""
+Corrects overflows of the 16bit TLU timestamp. The timestamps are just corrected inside one chunk, offsets
+from previous chunks have to be corrected in analysis_data.py
+"""
 def correct_tlu_overflow(tlu_data):
+    # find potential overflows
     overflow_points = np.argwhere(np.diff(np.array(tlu_data["trigger_id"], dtype=np.int64)) < 0)
+
     for ind in overflow_points:
-        if (tlu_data["trigger_id"][ind+1]%65536) == 0:
-            print(ind[0])
+        # make sure that it is a true overflow and not just some swap in the order of the tlu-data
+        # add some safety margin in case tlu packages went missing
+        if (tlu_data["trigger_id"][ind+1]%65536) < 5:
+            # add 2**16 to all following data
             tlu_data["trigger_id"][ind[0]+1:] = tlu_data["trigger_id"][ind[0]+1:]+2**16
             logger.info("Trigger overflow detected and corrected.")
         else:
@@ -789,7 +775,8 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
     if intern == True:
         return ret, last_timestamp, next_to_last_timestamp, leftoverpackage, tlu_table
     else:
-        tlu_table = correct_tlu_overflow(tlu_table)
+        if len(tlu_table):
+            tlu_table = correct_tlu_overflow(tlu_table)
         return ret, tlu_table
 
 def init_lfsr_4_lut():
@@ -1128,7 +1115,9 @@ def fit_ToT(tot_data, scan_param_range, t_est):
     except RuntimeError:  # fit failed
         return (0., 0., 0., 0., 0.)
 
-    p0 = [a, b, 500, t_est]
+    print(a,b)
+
+    p0 = [a, b, 9000, t_est]
 
     try:
         popt = curve_fit(f=totcurve, xdata=x, ydata=y, p0=p0)[0]
@@ -1147,7 +1136,7 @@ def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
 
     logger.info("Start ToT-curve fit on %d CPU core(s)", mp.cpu_count())
 
-    t_est = np.average(np.where((totcurves > 0) & (totcurves <= 5))[1])
+    t_est = np.average(np.where((totcurves > 0) & (totcurves <= 15))[1])
     partialfit_totcurves = partial(fit_ToT, scan_param_range=scan_param_range, t_est = t_est)
 
     result_list = imap_bar(partialfit_totcurves, totcurves.tolist(), progress = progress)
@@ -1180,11 +1169,13 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
     totcurve_std = np.nanstd(totcurves, axis=0)
 
     # Get the start value for t with data close to the start of the curve
-    if len(np.where((totcurve_mean > 0) & (totcurve_mean <= 5))):
-        t_est = np.average(np.where((totcurve_mean > 0) & (totcurve_mean <= 5)))
+    if len(np.where((totcurve_mean > 0) & (totcurve_mean <= 10))):
+        t_est = np.average(np.where((totcurve_mean > 0) & (totcurve_mean <= 15)))
     else:
         m = min(i for i in totcurve_mean if i > 0)
         t_est = totcurve_mean.index(m)
+
+    t_est = -130
 
     # Use only pulse height with at least 60% aktive pixels
     active_pixels = np.count_nonzero(totcurves > 0, axis=0)
@@ -1204,7 +1195,7 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
     bc = np.sqrt(pcov[1][1])
 
     # fit whole function with the complete totcurve-function
-    p0 = [a, b, 200, t_est]
+    p0 = [a, b, 10000, t_est]
     try:
         popt, pcov = curve_fit(f=totcurve, xdata=x, ydata=y, sigma = y_err, p0=p0, maxfev= 10000)
     except RuntimeError:  # fit failed
