@@ -327,7 +327,7 @@ def correct_tlu_overflow(tlu_data):
     for ind in overflow_points:
         # make sure that it is a true overflow and not just some swap in the order of the tlu-data
         # add some safety margin in case tlu packages went missing
-        if (tlu_data["trigger_id"][ind+1]%65536) < 5:
+        if ((tlu_data["trigger_id"][ind+1]%65536) < 5) and ((tlu_data["trigger_id"][ind+2]-tlu_data["trigger_id"][ind+1]) < 5):
             # add 2**16 to all following data
             tlu_data["trigger_id"][ind[0]+1:] = tlu_data["trigger_id"][ind[0]+1:]+2**16
             logger.info("Trigger overflow detected and corrected.")
