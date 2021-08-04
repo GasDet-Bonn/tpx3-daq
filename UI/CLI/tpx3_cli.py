@@ -795,7 +795,7 @@ class TPX3_CLI_function_call(object):
 
     def Set_Readout_Intervall(object, Readout_Intervall = None):
         if Readout_Intervall == None:
-            print('> Please enter the readout intervall in milli seconds:')
+            print('> Please enter the readout intervall in seconds:')
             while(1):
                 Readout_Intervall = input('>> ')
                 try:
