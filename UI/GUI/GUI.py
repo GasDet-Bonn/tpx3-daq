@@ -2524,7 +2524,7 @@ class GUI_Main(Gtk.Window):
     def __init__(self):
         self.open = False
         current_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        png_path = os.path.join(current_path, 'UI' + os.sep + 'GUI' + os.sep + 'GasDet3.png')
+        png_path = os.path.join(current_path, 'UI' + os.sep + 'GUI' + os.sep + 'icon.png')
         Gtk.Window.__init__(self, title = 'TPX3 control')
 
         self.set_icon_from_file(png_path)
