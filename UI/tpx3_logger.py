@@ -53,7 +53,9 @@ class mask_logger(object):
                 infile.remove_node(infile.root.mask_matrix)
 
         #manipulate mask matrix
-        if mask_element[0] == 'row':
+        if mask_element[0] == 'all':
+            mask_matrix = np.ones((256, 256), dtype=np.bool)
+        elif mask_element[0] == 'row':
             mask_matrix[ : , int(mask_element[1])] = 1
         elif mask_element[0] == 'column':
             mask_matrix[int(mask_element[1]), :] = 1
@@ -89,7 +91,9 @@ class mask_logger(object):
                 infile.remove_node(infile.root.mask_matrix)
 
         #manipulate mask matrix
-            if mask_element[0] == 'row':
+            if mask_element[0] == 'all':
+                mask_matrix = np.zeros((256, 256), dtype=np.bool)
+            elif mask_element[0] == 'row':
                 mask_matrix[ : , int(mask_element[1])] = 0
             elif mask_element[0] == 'column':
                 mask_matrix[int(mask_element[1]), :] = 0

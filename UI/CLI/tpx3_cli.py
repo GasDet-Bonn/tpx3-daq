@@ -617,7 +617,7 @@ class TPX3_CLI_function_call(object):
 
     def Set_Mask(object, mask_input_list = None):
         if mask_input_list == None:
-            print('> Please enter what you like to mask: (commands are "row rownumber", "column columnnumber" or "pixel x y". Multiple entrys can be made by a "+" between them)')
+            print('> Please enter what you like to mask: (commands are "all", "row rownumber", "column columnnumber" or "pixel x y". Multiple entries can be made by a "+" between them)')
             mask_input = input('>> ')
             mask_input_list = mask_input.split()
 
@@ -632,7 +632,10 @@ class TPX3_CLI_function_call(object):
         mask_list.append(mask_element)
         mask_list.pop(0)
         for mask in mask_list:
-            if mask[0] in {'row', 'Row', 'r'}:
+            if mask[0] in {'all', 'All', 'a'}:
+                print('Mask all')
+                mask_logger.write_mask(mask_element = ['all'])
+            elif mask[0] in {'row', 'Row', 'r'}:
                 if len(mask) >= 2:
                     if int(mask[1]) >= 0 and int(mask[1]) < 256:
                         print('Mask row', int(mask[1]))
@@ -665,7 +668,7 @@ class TPX3_CLI_function_call(object):
     def Unset_Mask(object, mask_input_list = None):
         if not TPX3_datalogger.read_value(name = 'Mask_path') == None: 
             if mask_input_list == None:
-                print('> Please enter what you like to unmask: (commands are "row rownumber", "column columnnumber", "pixel x y" or "all". Multiple entrys can be made by a "+" between them)')
+                print('> Please enter what you like to unmask: (commands are "all", "row rownumber", "column columnnumber", "pixel x y" or "all". Multiple entries can be made by a "+" between them)')
                 mask_input = input('>> ')
                 mask_input_list = mask_input.split()
 
@@ -680,7 +683,10 @@ class TPX3_CLI_function_call(object):
             mask_list.append(mask_element)
             mask_list.pop(0)
             for mask in mask_list:
-                if mask[0] in {'row', 'Row', 'r'}:
+                if mask[0] in {'all', 'All', 'a'}:
+                    print('Unmask all')
+                    mask_logger.delete_mask(mask_element = ['all'])
+                elif mask[0] in {'row', 'Row', 'r'}:
                     if len(mask) >= 2:
                         if int(mask[1]) >= 0 and int(mask[1]) < 256:
                             print('Unmask row', int(mask[1]))
