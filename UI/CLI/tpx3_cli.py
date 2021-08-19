@@ -632,7 +632,7 @@ class TPX3_CLI_function_call(object):
         mask_list.append(mask_element)
         mask_list.pop(0)
         for mask in mask_list:
-            if mask[0] in {'row', 'Row'}:
+            if mask[0] in {'row', 'Row', 'r'}:
                 if len(mask) >= 2:
                     if int(mask[1]) >= 0 and int(mask[1]) < 256:
                         print('Mask row', int(mask[1]))
@@ -641,7 +641,7 @@ class TPX3_CLI_function_call(object):
                         print('Row number out of range: There is only row 0 to 255')
                 else: 
                     print('Error: No row number given!')
-            elif mask[0] in {'column', 'Column'}:
+            elif mask[0] in {'column', 'Column', 'c'}:
                 if len(mask) >= 2:
                     if int(mask[1]) >= 0 and int(mask[1]) < 256:
                         print('Mask column', int(mask[1]))
@@ -650,7 +650,7 @@ class TPX3_CLI_function_call(object):
                         print('Column number out of range: There is only column 0 to 255')
                 else: 
                     print('Error: No column number given!')
-            elif mask[0] in {'pixel', 'Pixel'}:
+            elif mask[0] in {'pixel', 'Pixel', 'p'}:
                 if len(mask) >= 3:
                     if int(mask[1]) >= 0 and int(mask[1]) < 256 and int(mask[2]) >= 0 and int(mask[2]) < 256:
                         print('Mask pixel', int(mask[1]), int(mask[2]))
@@ -680,7 +680,7 @@ class TPX3_CLI_function_call(object):
             mask_list.append(mask_element)
             mask_list.pop(0)
             for mask in mask_list:
-                if mask[0] in {'row', 'Row'}:
+                if mask[0] in {'row', 'Row', 'r'}:
                     if len(mask) >= 2:
                         if int(mask[1]) >= 0 and int(mask[1]) < 256:
                             print('Unmask row', int(mask[1]))
@@ -689,7 +689,7 @@ class TPX3_CLI_function_call(object):
                             print('Row number out of range: There is only row 0 to 255')
                     else: 
                         print('Error: No row number given!')
-                elif mask[0] in {'column', 'Column'}:
+                elif mask[0] in {'column', 'Column', 'c'}:
                     if len(mask) >= 2:
                         if int(mask[1]) >= 0 and int(mask[1]) < 256:
                             print('Unmask column', int(mask[1]))
@@ -698,7 +698,7 @@ class TPX3_CLI_function_call(object):
                             print('Column number out of range: There is only column 0 to 255')
                     else: 
                         print('Error: No column number given!')
-                elif mask[0] in {'pixel', 'Pixel'}:
+                elif mask[0] in {'pixel', 'Pixel', 'p'}:
                     if len(mask) >= 3:
                         if int(mask[1]) >= 0 and int(mask[1]) < 256 and int(mask[2]) >= 0 and int(mask[2]) < 256:
                             print('Unmask pixel', int(mask[1]), int(mask[2]))
