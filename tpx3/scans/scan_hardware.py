@@ -10,6 +10,7 @@ from tqdm import tqdm
 import time
 import os
 import yaml
+import numpy as np
 
 class ScanHardware(object):
     def __init__(self):
@@ -48,88 +49,51 @@ class ScanHardware(object):
         if status != None:
             status.put("iteration_symbol")
 
-        # Iterate over all fpga links
-        for fpga_link_number, fpga_link in enumerate(rx_list_names):
-            if status != None:
-                status.put("Scan for {} (Iteration {} of {})".format(fpga_link, fpga_link_number + 1, len(rx_list_names)))
-            
-            # Reset the chip
-            self.chip['CONTROL']['RESET'] = 1
-            self.chip['CONTROL'].write()
-            self.chip['CONTROL']['RESET'] = 0
-            self.chip['CONTROL'].write()
+        # Reset the chip
+        self.chip['CONTROL']['RESET'] = 1
+        self.chip['CONTROL'].write()
+        self.chip['CONTROL']['RESET'] = 0
+        self.chip['CONTROL'].write()
 
-            # Write the PLL 
-            data = self.chip.write_pll_config()
+        # Write the PLL 
+        data = self.chip.write_pll_config()
 
-            # Iterate over all chip links
-            for chip_link in range(8):
-                link_found = False
+        rx_map = np.zeros((8,8), np.int8)
+        error_map = np.zeros((8, 32), np.int16)
 
-                # Create the chip output channel mask and write the output block
-                self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
-                data = self.chip.write_outputBlock_config()
+        # Check for which combinations of FPGA and chip links the connection is ready
+        for chip_link in range(8):
+            # Create the chip output channel mask and write the output block
+            self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
+            data = self.chip.write_outputBlock_config()
 
-                # Iterate over all possible data delays
-                for delay in range(32):
+            for fpga_link_number, fpga_link in enumerate(rx_list_names):
+                self.chip[fpga_link].ENABLE = 0
+                self.chip[fpga_link].reset()
+                self.chip[fpga_link].ENABLE = 1
+                rx_map[chip_link][fpga_link_number] = self.chip[fpga_link].is_ready
 
-                    # Deactivate all fpga links
-                    for i in range(len(rx_list_names)):
-                        self.chip[rx_list_names[i]].ENABLE = 0
-                        self.chip[rx_list_names[i]].reset()
+        # Check for each link individually for which delay settings there are no errors
+        for chip_link in range(8):
+            # Create the chip output channel mask and write the output block
+            self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
+            data = self.chip.write_outputBlock_config()
 
-                    # Aktivate the current fpga link and set all its settings
-                    self.chip[fpga_link].ENABLE = 1
-                    self.chip[fpga_link].DATA_DELAY = delay
-                    self.chip[fpga_link].INVERT = 0
-                    self.chip[fpga_link].SAMPLING_EDGE = 0
+            for delay in range(32):
+                for fpga_link_number, fpga_link in enumerate(rx_list_names):
+                    self.chip[fpga_link].ENABLE = 0
+                    self.chip[fpga_link].reset()
+                    # Enable only the receiver which is connected to the current chip link
+                    if rx_map[chip_link][fpga_link_number]:
+                        self.chip[fpga_link].ENABLE = 1
+                        self.chip[fpga_link].DATA_DELAY = delay
+                        self.chip[fpga_link].INVERT = 0
+                        self.chip[fpga_link].SAMPLING_EDGE = 0
 
-                    # Reset and clean the FIFO
-                    self.chip['FIFO'].reset()
-                    time.sleep(0.01)
-                    self.chip['FIFO'].get_data()
-
-                    # Send the EFuse_Read command multiple times for statistics
-                    for _ in range(50):
-                        data = self.chip.read_periphery_template("EFuse_Read")
-                        data += [0x00]*4
-                        self.chip.write(data)
-
-                    # Only proceed for settings which lead to no decoder errors and a ready signal of the receiver
-                    if self.chip[fpga_link].get_decoder_error_counter() == 0 and self.chip[fpga_link].is_ready:
-                        # Get the data from the chip
-                        fdata = self.chip['FIFO'].get_data()
-                        dout = self.chip.decode_fpga(fdata, True)
-
-                        # Only proceed if we got the expected number of data packages
-                        if len(dout) == 100:
-                            link_found = True
-
-                            # Store the settings
-                            for register in yaml_data['registers']:
-                                if register['name'] == fpga_link:
-                                    register['fpga-link'] = fpga_link_number
-                                    register['chip-link'] = chip_link
-                                    register['chip-id'] = dout[1][19:0].tovalue()
-                                    register['data-delay'] = delay
-                                    register['data-invert'] = 0
-                                    register['data-edge'] = 0
-
-                            # Stop after the first working set of settings
-                            break
-
-                # Stop after the first working set of settings
-                if link_found == True:
-                    break
-                if chip_link == 7 and link_found == False:
-                    for register in yaml_data['registers']:
-                        if register['name'] == fpga_link:
-                            register['fpga-link'] = fpga_link_number
-                            register['chip-link'] = 0
-                            register['chip-id'] = 0
-                            register['data-delay'] = 0
-                            register['data-invert'] = 0
-                            register['data-edge'] = 0
+                # Check the number of errors for the current setting
+                for fpga_link_number, fpga_link in enumerate(rx_list_names):
+                    if rx_map[chip_link][fpga_link_number]:
+                        error_map[fpga_link_number][delay] = self.chip[fpga_link].get_decoder_error_counter()
 
             if progress == None:
                 # Update the progress bar
@@ -140,19 +104,70 @@ class ScanHardware(object):
                 fraction = step_counter / len(rx_list_names)
                 progress.put(fraction)
 
-            # Write the ideal settings to the yaml file
-            with open(yaml_file, 'w') as file:
-                yaml.dump(yaml_data, file)
+        # Find for each receiver the delay with the most distance to a delay with errors
+        delays = np.zeros(8, dtype=np.int8)
+        for receiver in range(8):
+            zero_error_map = np.where(error_map[receiver] == 0)[0]
+            zero_delays = np.split(zero_error_map, np.where(zero_error_map[:-1] != zero_error_map[1:] - 1)[0])
+            list_index = np.argmax(np.array([zero_delays[i].size for i in range(len(zero_delays))]))
+            delays[receiver] = zero_delays[list_index][int(np.median(zero_delays[list_index]))]
 
-        if progress == None:
-            # Close the progress bar
-            pbar.close()
+        # Check for each receiver the ChipID of the connected chip
+        Chip_IDs = np.zeros(8, dtype=np.int32)
+        for fpga_link_number, fpga_link in enumerate(rx_list_names):
+            # Deactiveate all receivers
+            for fpga_link_2 in rx_list_names:
+                self.chip[fpga_link_2].ENABLE = 0
+                self.chip[fpga_link_2].reset()
+            # Activate the current receivers
+            self.chip[fpga_link].ENABLE = 1
+            self.chip[fpga_link].DATA_DELAY = int(delays[fpga_link_number])
+            self.chip[fpga_link].INVERT = 0
+            self.chip[fpga_link].SAMPLING_EDGE = 0
 
-        if status != None:
-            status.put("iteration_finish_symbol")
+            # Enable the corrresponding chip link
+            for chip_link in range(8):
+                if rx_map[chip_link][fpga_link_number]:
+                    # Create the chip output channel mask and write the output block
+                    self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
+            data = self.chip.write_outputBlock_config()
 
-        if status != None:
-            status.put("Create chip list")
+            # Reset and clean the FIFO
+            self.chip['FIFO'].reset()
+            time.sleep(0.001)
+            self.chip['FIFO'].get_data()
+
+            # Send the EFuse_Read to receive the ChipID
+            data = self.chip.read_periphery_template("EFuse_Read")
+            data += [0x00]*4
+            self.chip.write(data)
+
+            # Get the ChipID from the received data packages
+            fdata = self.chip['FIFO'].get_data()
+            dout = self.chip.decode_fpga(fdata, True)
+            Chip_IDs[fpga_link_number] = dout[1][19:0].tovalue()
+
+        # Open the link yaml file
+        proj_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        yaml_file =  os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
+
+        if not yaml_file == None:
+            with open(yaml_file) as file:
+                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+
+        # Write the registers based on the scan results
+        for i, register in enumerate(yaml_data['registers']):
+            register['name'] = rx_list_names[i]
+            register['fpga-link'] = i
+            register['chip-link'] = int(np.where(rx_map[:][i] == 1)[0][0])
+            register['chip-id'] = int(Chip_IDs[i])
+            register['data-delay'] = int(delays[i])
+            register['data-invert'] = 0
+            register['data-edge'] = 0
+
+        # Write the ideal settings to the yaml file
+        with open(yaml_file, 'w') as file:
+            yaml.dump(yaml_data, file)
 
         # Create a list if unique Chip-ID strings and corresponding Chip-ID bits
         ID_List = []
@@ -187,9 +202,11 @@ class ScanHardware(object):
                     break
 
         if results == None:
+            print(Chip_List)
             return Chip_List
         else:
             results.put([self.chip.fw_version] + Chip_List)
+
 
     def analyze(self, **kwargs):
         raise NotImplementedError('scan_hardware.analyze() not implemented')
