@@ -1,4 +1,3 @@
-
 import gi
 gi.require_version('Gtk', '3.0')
 import os
@@ -193,6 +192,8 @@ class GUI_Plot_settings(Gtk.Window):
         self.color_depth_value = self.color_depth.get_value_as_int()
 
     def on_OKbutton_clicked(self, widget):
+        self.plot_depth_value = self.plot_depth.get_value_as_int()
+        self.color_depth_value = self.color_depth.get_value_as_int()
         if self.plotwidget.get_plottype() == 'normal':
             self.plotwidget.change_colormap(colormap = self.plotwidget.fading_colormap(self.plot_depth_value))
             self.destroy()
@@ -1363,9 +1364,32 @@ class GUI_SetDAC(Gtk.Window):
         self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
 
     def on_Savebutton_clicked(self, widget):
+        #check if process is running
         if GUI.get_process_alive():
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
             return
+
+        #write values
+        self.Ibias_Preamp_ON_value = self.Ibias_Preamp_ON.get_value_as_int()
+        self.Ibias_Preamp_OFF_value = self.Ibias_Preamp_OFF.get_value_as_int()
+        self.VPreamp_NCAS_value = self.VPreamp_NCAS.get_value_as_int()
+        self.Ibias_Ikrum_value = self.Ibias_Ikrum.get_value_as_int()
+        self.Vfbk_value = self.Vfbk.get_value_as_int()
+        self.Vthreshold_fine_value = self.Vthreshold_fine.get_value_as_int()
+        self.Vthreshold_coarse_value = self.Vthreshold_coarse.get_value_as_int()
+        self.Ibias_DiscS1_ON_value = self.Ibias_DiscS1_ON.get_value_as_int()
+        self.Ibias_DiscS1_OFF_value = self.Ibias_DiscS1_OFF.get_value_as_int()
+        self.Ibias_DiscS2_ON_value = self.Ibias_DiscS2_ON.get_value_as_int()
+        self.Ibias_DiscS2_OFF_value = self.Ibias_DiscS2_OFF.get_value_as_int()
+        self.Ibias_PixelDAC_value = self.Ibias_PixelDAC.get_value_as_int()
+        self.Ibias_TPbufferIn_value = self.Ibias_TPbufferIn.get_value_as_int()
+        self.Ibias_TPbufferOut_value = self.Ibias_TPbufferOut.get_value_as_int()
+        self.VTP_coarse_value = self.VTP_coarse.get_value_as_int()
+        self.VTP_fine_value = self.VTP_fine.get_value_as_int()
+        self.Ibias_CP_PLL_value = self.Ibias_CP_PLL.get_value_as_int()
+        self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
+        
+        #write values to datalogger
         TPX3_datalogger.write_value(name = 'Ibias_Preamp_ON', value = self.Ibias_Preamp_ON_value)
         TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_ON')
         #TPX3_datalogger.write_value(name = 'Ibias_Preamp_OFF', value = self.Ibias_Preamp_OFF_value)
@@ -1703,9 +1727,20 @@ class GUI_Additional_Settings(Gtk.Window):
         self.sense_DAC_value = self.sense_DAC_dict[self.dropdown.get_active_text()]
 
     def on_Savebutton_clicked(self, widget):
+        # check if some process is runing
         if GUI.get_process_alive():
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
             return
+
+        # get values
+        self.TP_Period_value = self.TP_Period.get_value_as_int()
+        try: 
+            self.Readout_Speed_value = float(self.Readout_Speed_entry.get_text())
+        except:
+            self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
+            return
+            
+        # write values
         TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
         TPX3_datalogger.write_to_yaml(name = 'Polarity')
         TPX3_datalogger.write_value(name = 'Fast_Io_en', value = self.Fast_IO_en_value)
