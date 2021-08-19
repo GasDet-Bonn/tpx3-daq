@@ -1928,6 +1928,98 @@ class GUI_Set_Mask_Coord_Window(Gtk.Window):
     def window_destroy(self, widget, event = True):
         self.destroy()
 
+class GUI_Mask_Entry_Window(Gtk.Window):
+    def __init__(self, np_mask_list, np_column_list, np_row_list):
+        Gtk.Window.__init__(self, title = 'Mask Coordinats Entry')
+        self.connect("delete-event", self.window_destroy)
+
+        global mask_window
+        self.np_mask_list = np_mask_list
+        self.np_column_list = np_column_list
+        self.np_row_list = np_row_list
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        self.add(grid)
+
+        self.Mask_entry = Gtk.Entry()
+        self.Mask_entry.set_text('')
+        self.Mask_entry.connect('activate', self.mask_entered)
+        Mask_entry_label = Gtk.Label()
+        Mask_entry_label.set_text('Enter coordinats')
+
+        grid.attach(Mask_entry_label, 0, 0, 2, 1)
+        grid.attach(self.Mask_entry, 2, 0, 3, 1)
+
+        self.show_all()
+
+    def mask_entered(self, widget): 
+        mask_input = self.Mask_entry.get_text()
+        if mask_input == '':
+            return
+        else:
+            mask_input_list = mask_input.split()
+            mask_list = [[]]
+            mask_element = []
+            for element in mask_input_list:
+                if not element == '+':
+                    mask_element.append(element)
+                elif element == '+':
+                    mask_list.append(mask_element)
+                    mask_element = []
+        mask_list.append(mask_element)
+        mask_list.pop(0)
+        for mask in mask_list:
+            if mask[0] in {'all', 'All', 'a'}:
+                self.np_mask_list = np.ones((256 * 256, ), dtype=bool)
+                self.np_row_list = np.ones((256, ), dtype=bool)
+                self.np_column_list = np.ones((256, ), dtype=bool)
+            elif mask[0] in {'unall', 'Unall', 'ua'}:
+                self.np_mask_list = np.zeros((256 * 256, ), dtype=bool)
+                self.np_row_list = np.zeros((256, ), dtype=bool)
+                self.np_column_list = np.zeros((256, ), dtype=bool)
+            elif mask[0] in {'row', 'Row', 'r'}:
+                if len(mask) >= 2:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256:
+                        self.np_row_list[int(mask[1])] = True
+                        for x in range(256):
+                            self.np_mask_list[(x * 256 + int(mask[1]))] = True
+            elif mask[0] in {'unrow', 'Unrow', 'ur'}:
+                if len(mask) >= 2:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256:
+                        self.np_row_list[int(mask[1])] = False
+                        for x in range(256):
+                            self.np_mask_list[(x * 256 + int(mask[1]))] = False
+            elif mask[0] in {'column', 'Column', 'c'}:
+                if len(mask) >= 2:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256:
+                        self.np_column_list[int(mask[1])] = True
+                        for y in range(256):
+                            self.np_mask_list[(int(mask[1]) * 256 + y)] = True
+            elif mask[0] in {'uncolumn', 'Uncolumn', 'uc'}:
+                if len(mask) >= 2:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256:
+                        self.np_column_list[int(mask[1])] = False
+                        for y in range(256):
+                            self.np_mask_list[(int(mask[1]) * 256 + y)] = False
+            elif mask[0] in {'pixel', 'Pixel', 'p'}:
+                if len(mask) >= 3:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256 and int(mask[2]) >= 0 and int(mask[2]) < 256:
+                        x_y_entry = int(mask[1]) * 256 + int(mask[2])
+                        self.np_mask_list[x_y_entry] = True
+            elif mask[0] in {'unpixel', 'Unpixel', 'up'}:
+                if len(mask) >= 3:
+                    if int(mask[1]) >= 0 and int(mask[1]) < 256 and int(mask[2]) >= 0 and int(mask[2]) < 256:
+                        x_y_entry = int(mask[1]) * 256 + int(mask[2])
+                        self.np_mask_list[x_y_entry] = False
+        self.Mask_entry.set_text('')
+        mask_window.set_new_values(self.np_mask_list, self.np_column_list, self.np_row_list)
+
+    def window_destroy(self, widget, event = True):
+        self.destroy()
+
 class GUI_Set_Mask(Gtk.Window):
     def __init__(self):
         user_path = os.path.expanduser('~')
@@ -1935,6 +2027,7 @@ class GUI_Set_Mask(Gtk.Window):
         user_path = os.path.join(user_path, 'appdata')
         Gtk.Window.__init__(self, title = 'Set Mask')
         self.connect('delete-event', self.window_destroy)
+        self.connect("key-press-event", self.on_key_pressed)
         self.coord_window = None
         
         if  isinstance(mask_logger.get_mask(), bool):
@@ -2170,6 +2263,16 @@ class GUI_Set_Mask(Gtk.Window):
     def on_drawing_area_button_release(self, widget, event):
         if event.button == 3:
             self.coord_window.window_destroy(widget = widget)
+
+    def on_key_pressed(self, widget, event):
+        if event.keyval == 65293:   # 65293 is the keyvalue for "Enter"
+            entry_window = GUI_Mask_Entry_Window(self.np_mask_list, self.np_column_list, self.np_row_list)
+    
+    def set_new_values(self, mask_list, column_list, row_list):
+        self.np_mask_list = mask_list
+        self.np_column_list = column_list
+        self.np_row_list = row_list
+        self.draw_clicked()
 
     def on_Savebutton_clicked(self, widget):
         mask_array = self.np_mask_list.reshape((256,256))
@@ -2856,7 +2959,8 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Additional_Settings()
 
     def on_SetMaskbutton_clicked(self, widget):
-        subw = GUI_Set_Mask()
+        global mask_window
+        mask_window = GUI_Set_Mask()
 
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
         self.progressbar.hide()
