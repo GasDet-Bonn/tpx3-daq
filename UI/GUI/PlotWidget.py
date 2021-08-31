@@ -108,13 +108,12 @@ class plotwidget(object):
                 self.intensity = np.delete(self.intensity, number)
                 self.i = self.i-1
 
-        #Add to plot and change intensity
-        self.scatter.set_offsets(np.c_[self.x_vals, self.y_vals])
-        self.intensity = np.concatenate((np.array(self.intensity) - (1 / self.colorsteps), new_tvals))
+        if np.c_[self.x_vals, self.y_vals].size != 0:
+            self.scatter.set_offsets(np.c_[self.x_vals, self.y_vals])
+            self.intensity = np.concatenate((np.array(self.intensity) - (1 / self.colorsteps), new_tvals))
+            self.scatter.set_array(self.intensity)
 
-        self.scatter.set_array(self.intensity)
-
-        self.canvas.draw()
+            self.canvas.draw()
 
         return True
 
@@ -184,10 +183,11 @@ class plotwidget(object):
 
                 self.j = self.j - 1
 
-        self.scatter.set_offsets(self.occupancy_array[ : , :2])
-        self.occupancy = self.occupancy_array[ : , 2: ]
-        self.scatter.set_array(np.squeeze(self.occupancy))
-        self.canvas.draw()
+        if self.occupancy_array.size > 3:
+            self.scatter.set_offsets(self.occupancy_array[ : , :2])
+            self.occupancy = self.occupancy_array[ : , 2: ]
+            self.scatter.set_array(np.squeeze(self.occupancy))
+            self.canvas.draw()
 
         return True
 
