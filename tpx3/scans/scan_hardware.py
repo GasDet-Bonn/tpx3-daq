@@ -60,6 +60,7 @@ class ScanHardware(object):
 
         rx_map = np.zeros((8,8), np.int8)
         error_map = np.zeros((8, 32), np.int16)
+        status_map = np.zeros(8, np.int8)
 
         # Check for which combinations of FPGA and chip links the connection is ready
         for chip_link in range(8):
@@ -68,32 +69,26 @@ class ScanHardware(object):
             data = self.chip.write_outputBlock_config()
 
             for fpga_link_number, fpga_link in enumerate(rx_list_names):
-                self.chip[fpga_link].ENABLE = 0
-                self.chip[fpga_link].reset()
-                self.chip[fpga_link].ENABLE = 1
                 rx_map[chip_link][fpga_link_number] = self.chip[fpga_link].is_ready
 
+        status_map = np.sum(rx_map, axis = 0)
+
         # Check for each link individually for which delay settings there are no errors
-        for chip_link in range(8):
-            # Create the chip output channel mask and write the output block
-            self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
+        for fpga_link_number, fpga_link in enumerate(rx_list_names):
+            self.chip._outputBlocks["chan_mask"] = 0b1 << int(np.where(rx_map == 1)[0][fpga_link_number])
             data = self.chip.write_outputBlock_config()
 
             for delay in range(32):
-                for fpga_link_number, fpga_link in enumerate(rx_list_names):
-                    self.chip[fpga_link].ENABLE = 0
-                    self.chip[fpga_link].reset()
-                    # Enable only the receiver which is connected to the current chip link
-                    if rx_map[chip_link][fpga_link_number]:
-                        self.chip[fpga_link].ENABLE = 1
-                        self.chip[fpga_link].DATA_DELAY = delay
-                        self.chip[fpga_link].INVERT = 0
-                        self.chip[fpga_link].SAMPLING_EDGE = 0
+                self.chip[fpga_link].ENABLE = 0
+                self.chip[fpga_link].reset()
+                self.chip[fpga_link].ENABLE = 1
+                self.chip[fpga_link].DATA_DELAY = delay
+                self.chip[fpga_link].INVERT = 0
+                self.chip[fpga_link].SAMPLING_EDGE = 0
 
                 # Check the number of errors for the current setting
-                for fpga_link_number, fpga_link in enumerate(rx_list_names):
-                    if rx_map[chip_link][fpga_link_number]:
-                        error_map[fpga_link_number][delay] = self.chip[fpga_link].get_decoder_error_counter()
+                error_map[fpga_link_number][delay] = self.chip[fpga_link].get_decoder_error_counter()
+                self.chip[fpga_link].ENABLE = 0
 
             if progress == None:
                 # Update the progress bar
@@ -115,10 +110,10 @@ class ScanHardware(object):
         # Check for each receiver the ChipID of the connected chip
         Chip_IDs = np.zeros(8, dtype=np.int32)
         for fpga_link_number, fpga_link in enumerate(rx_list_names):
-            # Deactiveate all receivers
-            for fpga_link_2 in rx_list_names:
-                self.chip[fpga_link_2].ENABLE = 0
-                self.chip[fpga_link_2].reset()
+            if status_map[fpga_link_number] != 1:
+                Chip_IDs[fpga_link_number] = 0
+                continue
+
             # Activate the current receivers
             self.chip[fpga_link].ENABLE = 1
             self.chip[fpga_link].DATA_DELAY = int(delays[fpga_link_number])
@@ -146,6 +141,7 @@ class ScanHardware(object):
             fdata = self.chip['FIFO'].get_data()
             dout = self.chip.decode_fpga(fdata, True)
             Chip_IDs[fpga_link_number] = dout[1][19:0].tovalue()
+            self.chip[fpga_link].ENABLE = 0
 
         # Open the link yaml file
         proj_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
