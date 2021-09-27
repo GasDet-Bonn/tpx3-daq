@@ -67,6 +67,7 @@ class Links(tb.IsDescription):
     data_delay = tb.UInt8Col()
     data_invert = tb.UInt8Col()
     data_edge = tb.UInt8Col()
+    link_status = tb.UInt8Col()
 
 
 def send_data(socket, data, scan_par_id, name='ReadoutData'):
@@ -538,6 +539,7 @@ class ScanBase(object):
             row['data_delay'] = register['data-delay']
             row['data_invert'] = register['data-invert']
             row['data_edge'] = register['data-edge']
+            row['link_status'] = register['link-status']
             row.append()
         link_config_table.flush()
 
