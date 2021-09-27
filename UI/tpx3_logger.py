@@ -350,7 +350,7 @@ class TPX3_data_logger(object):
     def default_config(self):
         return {'software_version' : 'x.x',
                 'firmware_version' : 'x.x',
-                'Chip0_name' : [None],#[W?_??, [FPGA n, link n , delay, data-invert, data-edge], [FPGA m, link m , delay, data-invert, data-edge], ... ]
+                'Chip0_name' : [None],#[W?_??, [FPGA n, link n , delay, data-invert, data-edge, link n-status], [FPGA m, link m , delay, data-invert, data-edge, link m-status], ... ]
                 'Chip1_name' : [None],
                 'Chip2_name' : [None],
                 'Chip3_name' : [None],
@@ -501,6 +501,7 @@ class TPX3_data_logger(object):
                             data_delay = element_list[2]
                             data_invert = element_list[3]
                             data_edge = element_list[4]
+                            link_status = element_list[5]
 
                             for register in yaml_data['registers']:
                                 if register['name'] == element:
@@ -510,6 +511,7 @@ class TPX3_data_logger(object):
                                     register['data-delay'] = data_delay
                                     register['data-invert'] = data_invert
                                     register['data-edge'] = data_edge
+                                    register['link-status'] = link_status
 
             with open(yaml_file, 'w') as file:
                 yaml.dump(yaml_data, file)
@@ -577,6 +579,11 @@ class TPX3_data_logger(object):
                         data_delay = element_list[2]
                         data_invert = element_list[3]
                         data_edge = element_list[4]
+                        # try except for compatibility with backups without link_status
+                        try:
+                            link_status = element_list[5]
+                        except:
+                            link_status = 0
 
                         for register in yaml_data['registers']:
                             if register['name'] == element:
@@ -586,6 +593,7 @@ class TPX3_data_logger(object):
                                 register['data-delay'] = data_delay
                                 register['data-invert'] = data_invert
                                 register['data-edge'] = data_edge
+                                register['link-status'] = link_status
 
                 with open(yaml_file, 'w') as file:
                     yaml.dump(yaml_data, file)
