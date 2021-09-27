@@ -202,30 +202,31 @@ class ScanBase(object):
                 self.chip[register2['name']].ENABLE = 0
                 self.chip[register2['name']].reset()
 
-            # Activate the current fpga link and set all its settings
-            self.chip[register['name']].ENABLE = 1
-            self.chip[register['name']].DATA_DELAY = register['data-delay']
-            self.chip[register['name']].INVERT = register['data-invert']
-            self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+            if register['link-status'] in [1, 3, 5]:
+                # Activate the current fpga link and set all its settings
+                self.chip[register['name']].ENABLE = 1
+                self.chip[register['name']].DATA_DELAY = register['data-delay']
+                self.chip[register['name']].INVERT = register['data-invert']
+                self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
 
-            # Reset and clean the FIFO
-            self.chip['FIFO'].reset()
-            time.sleep(0.01)
-            self.chip['FIFO'].get_data()
+                # Reset and clean the FIFO
+                self.chip['FIFO'].reset()
+                time.sleep(0.01)
+                self.chip['FIFO'].get_data()
 
-            # Send the EFuse_Read command to get the Chip ID and test the communication
-            data = self.chip.read_periphery_template("EFuse_Read")
-            data += [0x00]*4
-            self.chip.write(data)
+                # Send the EFuse_Read command to get the Chip ID and test the communication
+                data = self.chip.read_periphery_template("EFuse_Read")
+                data += [0x00]*4
+                self.chip.write(data)
 
-            # Get the data from the chip
-            fdata = self.chip['FIFO'].get_data()
-            dout = self.chip.decode_fpga(fdata, True)
+                # Get the data from the chip
+                fdata = self.chip['FIFO'].get_data()
+                dout = self.chip.decode_fpga(fdata, True)
 
-            # Check if the received Chip ID is identical with the expected
-            if dout[1][19:0].tovalue() != register['chip-id']:
-                valid = False
-                break
+                # Check if the received Chip ID is identical with the expected
+                if dout[1][19:0].tovalue() != register['chip-id']:
+                    valid = False
+                    break
 
         return valid
 
@@ -252,7 +253,7 @@ class ScanBase(object):
 
         # Iterate over all links
         for register in yaml_data['registers']:
-            if register['chip-id'] != 0:
+            if register['link-status'] in [1, 3, 5]:
                 # Create the chip output channel mask and write the output block
                 self.chip._outputBlocks["chan_mask"] = self.chip._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
 
