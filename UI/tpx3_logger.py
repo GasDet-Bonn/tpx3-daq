@@ -462,6 +462,32 @@ class TPX3_data_logger(object):
                 print('Name of Chipname not in list')
                 return False
 
+    def change_link_status(self, link, status): 
+        for i in range (0,7):
+            name = 'Chip' + str(i) +'_name'
+            value_list = self.data[name]
+            if not value_list == [None]:
+                self.final_list = [value_list[0]]
+                for n in range(1, len(value_list)):
+                    element_list = value_list[n]
+                    chip_link = element_list[1]
+                    link_status = element_list[5]
+                    if chip_link == link:
+                        if status == 0: #disable
+                            if int(link_status) in [1,3,5]:
+                                link_status = int(link_status) + 1
+                        elif status == 1: #enable
+                            if int(link_status) in [2,4,6]:
+                                link_status = int(link_status) - 1
+                        else:
+                            print('Error: Unknown link status')
+                            return False
+                    self.final_list.append([element_list[0], element_list[1], element_list[2], element_list[3], element_list[4], link_status])
+                self.data[name] = self.final_list
+                self.write_to_yaml(name = 'init')
+
+        return True
+
     def write_to_yaml(self, name):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if name == 'init':

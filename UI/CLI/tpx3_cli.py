@@ -60,7 +60,8 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
                     'Set_Acknowledgement', 'set_acknowledgement', 'Acknowledgement', 'acknowledgement',
                     'Set_TP_ext_in', 'set_tp_ext_in', 'TP_ext_in', 'tp_ext_in',
                     'Set_ClkOut_frequency', 'set_clkout_frequency', 'ClkOut_frequency', 'clkout_frequency',
-                    'Set_Sense_DAC', 'set_sense_DAC', 'Sense_DAC', 'sense_DAC']
+                    'Set_Sense_DAC', 'set_sense_DAC', 'Sense_DAC', 'sense_DAC',
+                    'Enable_Link', 'enable_link', 'Disable_Link', 'disable_link']
 
 # In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
@@ -68,7 +69,7 @@ help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 
                     'TP_Period', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Save_Mask', 'Load_Mask', 'Set_Mask',
                     'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names', 'About', 'Help', 'Quit']
 
-help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency', 'Set_Sense_DAC']
+help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency', 'Set_Sense_DAC', 'Enable_Link']
 
 expert_help_functions = help_functions + help_expert
 
@@ -757,6 +758,42 @@ class TPX3_CLI_function_call(object):
                 copy(current_mask, full_path)
         except:
             print('Could not write file')
+    
+    def Enable_Link(object, link = None, flag = None):
+        if link == None:
+            print('> Please enter the link you like to disable/enable[0-7]:')
+            while(1):
+                link = input('>> ')
+                try:
+                    link = int(link)
+                    if link in (0,1,2,3,4,5,6,7):
+                        break
+                    else:
+                        print('Link needs to be between "0" and "7"')
+                except:
+                    if link in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            print('> To disable or enable link ' + str(link) + ' enter "0" or "1":')
+            while(1):
+                flag = input('>> ')
+                try:
+                    flag = int(flag)
+                    if flag in (0,1):
+                        break
+                    else:
+                        print('Input needs to be "0" or "1"')
+                except:
+                    if flag in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        else:
+            link = link
+            flag = flag
+
+        TPX3_datalogger.change_link_status(link = link, status = flag)
 
     def Run_Datataking(object, scan_timeout = None):
         if scan_timeout == None:
@@ -1842,6 +1879,30 @@ class TPX3_CLI_TOP(object):
                                     print('Unknown argument')
                             elif len(inputlist) > 2:
                                 print('To many parameters! The given function takes only one parameters:\n DAC number.')
+
+                    #Enable Link
+                    elif inputlist[0] in {'Enable_Link', 'enable_link', 'Disable_Link', 'disable_link'}:
+                        if len(inputlist) == 1:
+                            print('Enable Link')
+                            try:
+                                function_call.Enable_Link()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        else:
+                            if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('This is the set Enable Link function. You can disable or enable links by assigning "0" disable or "1" enable to the link number "0-7".')
+                            elif len(inputlist) == 2 and not inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                                print('Not enough parameters! The given function takes two parameters:\n Link number and "0" or "1".')
+                            elif len(inputlist) == 3:
+                                if inputlist[1] in {'0', '1', '2', '3', '4', '5', '6', '7'} and inputlist[2] in {'0', '1'}:
+                                    try:
+                                        function_call.Enable_Link(link = inputlist[1], flag = inputlist[2])
+                                    except KeyboardInterrupt:
+                                        print('User quit')
+                                else:
+                                    print('Unknown argument')
+                            elif len(inputlist) > 3:
+                                print('To many parameters! The given function takes two parameters:\n Link number and "0" or "1".')
 
                     #Unknown command
                     else:
