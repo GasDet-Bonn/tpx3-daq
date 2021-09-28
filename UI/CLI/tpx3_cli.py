@@ -172,7 +172,8 @@ class TPX3_CLI_function_call(object):
                                                            VTP_fine_stop = VTP_fine_stop,
                                                            mask_step = mask_step,
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
-                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
 
     def Threshold_Scan(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
@@ -229,7 +230,8 @@ class TPX3_CLI_function_call(object):
                                                            n_injections = n_injections,
                                                            mask_step = mask_step,
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
-                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
 
     def Threshold_Calib(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None, n_pulse_heights = None):
@@ -299,7 +301,8 @@ class TPX3_CLI_function_call(object):
                                                            mask_step = mask_step,
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            n_pulse_heights = n_pulse_heights,
-                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
 
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
@@ -356,7 +359,8 @@ class TPX3_CLI_function_call(object):
                                                            n_injections = n_injections,
                                                            mask_step = mask_step,
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
-                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
 
     def Pixel_DAC_Optimisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, offset = None):
@@ -414,7 +418,8 @@ class TPX3_CLI_function_call(object):
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            n_injections = n_injections,
                                                            offset = offset,
-                                                           result = pixeldac_result)
+                                                           result = pixeldac_result,
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
         TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = pixeldac_result.get())
         TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
@@ -474,7 +479,8 @@ class TPX3_CLI_function_call(object):
                                                            n_injections = n_injections,
                                                            mask_step = mask_step,
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
-                                                           result_path = result_path)
+                                                           result_path = result_path,
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
         TPX3_datalogger.write_value(name = 'Equalisation_path', value = result_path.get())
 

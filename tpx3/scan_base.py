@@ -311,6 +311,11 @@ class ScanBase(object):
             # Initailize counter for progress
             step_counter = 0
 
+        temp_mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        if self.maskfile:
+            with tb.open_file(self.maskfile, 'r') as infile:
+                temp_mask_matrix = infile.root.mask_matrix[:]
+
         # Create the masks for all steps
         for i in range(offset, number + offset):
             mask_step_cmd = []
@@ -326,6 +331,10 @@ class ScanBase(object):
             step = mask_step//int(math.sqrt(mask_step))
             self.chip.test_matrix[column_start::step, row_start::step] = self.chip.TP_ON
             self.chip.mask_matrix[column_start::step, row_start::step] = self.chip.MASK_ON
+
+            if self.maskfile:
+                self.chip.test_matrix[temp_mask_matrix == True] = self.chip.TP_OFF
+                self.chip.mask_matrix[temp_mask_matrix == True] = self.chip.MASK_OFF
 
             # If a pixel threshold is defined set it to all pixels
             if pixel_threhsold != None:
