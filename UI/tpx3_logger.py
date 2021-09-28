@@ -420,8 +420,49 @@ class TPX3_data_logger(object):
 
     def write_value(self, name, value):
         if self.name_valid(name) == True:
-            self.data[name] = value
-            return True
+            if name in ['Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']:
+                value_list = self.data[name]
+                if value == value_list:
+                    return True
+                elif value_list == [None]:
+                    self.data[name] = value
+                    return True
+                elif value_list[0] != value[0]:
+                    self.data[name] = value
+                    return True
+                else:
+                    self.final_list = [value[0]]
+                    for n in range(1, len(value)):
+                        new_element_list = value[n]
+                        new_chip_link = new_element_list[1]
+                        new_link_status = new_element_list[5]
+                        for i in range(1, len(value_list)):
+                            element_list = value_list[n]
+                            chip_link = element_list[1]
+                            link_status = element_list[5]
+                            if new_chip_link == chip_link:
+                                if new_link_status == 0: #not connected
+                                    new_link_status = 0
+                                elif new_link_status == link_status:
+                                    new_link_status = int(new_link_status)
+                                elif new_link_status == 1 and link_status == 2: # user switched link off
+                                    new_link_status = int(link_status)
+                                elif new_link_status == 4 and link_status == 3: # user switched link on
+                                    new_link_status = int(link_status)
+                                elif new_link_status == 6 and link_status == 5: # user switched link on
+                                    new_link_status = int(link_status)
+                                else:
+                                    new_link_status = int(new_link_status)
+                            else:
+                                print('Error: Unknown link status')
+                                return False
+                        self.final_list.append([new_element_list[0], new_element_list[1], new_element_list[2], new_element_list[3], new_element_list[4], new_link_status])
+                        self.data[name] = self.final_list
+                        self.write_to_yaml(name = 'init')
+                    return True
+            else:
+                self.data[name] = value
+                return True
         print('Error: Unknown data name')
         return False
 
