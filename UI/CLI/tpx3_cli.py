@@ -167,7 +167,12 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
             
         print('ToT calibration with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, mask_step = mask_step, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib',
+                                                           VTP_fine_start = VTP_fine_start,
+                                                           VTP_fine_stop = VTP_fine_stop,
+                                                           mask_step = mask_step,
+                                                           tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
         new_process.join()
 
     def Threshold_Scan(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None):
@@ -218,7 +223,13 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
             
         print('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan',
+                                                           Vthreshold_start = Vthreshold_start,
+                                                           Vthreshold_stop = Vthreshold_stop,
+                                                           n_injections = n_injections,
+                                                           mask_step = mask_step,
+                                                           tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
         new_process.join()
 
     def Threshold_Calib(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, mask_step = None, n_pulse_heights = None):
@@ -280,7 +291,15 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
             
         print('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step, 'Number of pulse heights = ', n_pulse_heights)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), n_pulse_heights = n_pulse_heights, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib',
+                                                           iteration = 0,
+                                                           Vthreshold_start = Vthreshold_start,
+                                                           Vthreshold_stop = Vthreshold_stop,
+                                                           n_injections = n_injections,
+                                                           mask_step = mask_step,
+                                                           tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           n_pulse_heights = n_pulse_heights,
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
         new_process.join()
 
     def Testpulse_Scan(object, VTP_fine_start = None, VTP_fine_stop = None, n_injections = None, mask_step = None):
@@ -331,7 +350,13 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
             
         print('Testpulse scan with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
-        new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', VTP_fine_start = VTP_fine_start, VTP_fine_stop = VTP_fine_stop, n_injections = n_injections, mask_step = mask_step, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
+        new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan',
+                                                           VTP_fine_start = VTP_fine_start,
+                                                           VTP_fine_stop = VTP_fine_stop,
+                                                           n_injections = n_injections,
+                                                           mask_step = mask_step,
+                                                           tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'))
         new_process.join()
 
     def Pixel_DAC_Optimisation(object, Vthreshold_start = None, Vthreshold_stop = None, n_injections = None, offset = None):
@@ -382,7 +407,14 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
         print('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'offset =', offset)
         pixeldac_result = Queue()
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', iteration = 0, Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), n_injections = n_injections, offset = offset, result = pixeldac_result)
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt',
+                                                           iteration = 0,
+                                                           Vthreshold_start = Vthreshold_start,
+                                                           Vthreshold_stop = Vthreshold_stop,
+                                                           tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           n_injections = n_injections,
+                                                           offset = offset,
+                                                           result = pixeldac_result)
         new_process.join()
         TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = pixeldac_result.get())
         TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
@@ -436,7 +468,13 @@ class TPX3_CLI_function_call(object):
             
         print('Equalisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         result_path = Queue()
-        new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', Vthreshold_start = Vthreshold_start, Vthreshold_stop = Vthreshold_stop, n_injections = n_injections, mask_step = mask_step, tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), result_path = result_path)
+        new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge',
+                                                           Vthreshold_start = Vthreshold_start,
+                                                           Vthreshold_stop = Vthreshold_stop,
+                                                           n_injections = n_injections,
+                                                           mask_step = mask_step,
+                                                           tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           result_path = result_path)
         new_process.join()
         TPX3_datalogger.write_value(name = 'Equalisation_path', value = result_path.get())
 
@@ -813,8 +851,12 @@ class TPX3_CLI_function_call(object):
             print('Infinite data taking run started! You can close the run with "ctrl. c"')
         else:
             print('{} s long data taking run started!'.format(scan_timeout))
-            
-        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', scan_timeout = scan_timeout, thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), readout_interval = TPX3_datalogger.read_value(name = 'Readout_Speed'))
+
+        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake',
+                                                           scan_timeout = scan_timeout,
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                           readout_interval = TPX3_datalogger.read_value(name = 'Readout_Speed'))
         new_process.join()
 
     def Set_Acknowledgement(object, Acknowledgement_en = None):
@@ -955,7 +997,8 @@ class TPX3_CLI_function_call(object):
         
     def Initialise_Hardware(object):
         hardware_scan_results = Queue()
-        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', results = hardware_scan_results)
+        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware',
+                                                           results = hardware_scan_results)
         new_process.join()
         return hardware_scan_results.get()
 
