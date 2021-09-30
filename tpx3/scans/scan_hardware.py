@@ -132,7 +132,7 @@ class ScanHardware(object):
                     continue
                 zero_delays = np.split(zero_error_map, np.where(zero_error_map[:-1] != zero_error_map[1:] - 1)[0])
                 list_index = np.argmax(np.array([zero_delays[i].size for i in range(len(zero_delays))]))
-                delays[receiver] = zero_delays[list_index][int(np.median(zero_delays[list_index]))]
+                delays[receiver] = int(np.median(zero_delays[list_index]))
 
         # Check for each receiver the ChipID of the connected chip
         Chip_IDs = np.zeros(8, dtype=np.int32)
