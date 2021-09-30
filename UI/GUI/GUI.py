@@ -3234,7 +3234,7 @@ class GUI_Main(Gtk.Window):
     def update_status(self):
         if not self.hardware_scan_results.empty():
             Chip_List = self.hardware_scan_results.get()
-            for n in range(0,9):
+            for n in range(0,2):
                 if n == 0 and Chip_List:
                     self.firmware_version = Chip_List.pop(0)
                     TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)

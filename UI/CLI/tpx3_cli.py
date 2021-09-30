@@ -1611,7 +1611,7 @@ class TPX3_CLI_TOP(object):
                         print('Initialise Hardware')
                         try:
                             Chip_List = function_call.Initialise_Hardware()
-                            for n in range(0,9):
+                            for n in range(0, 2):
                                 if n == 0 and Chip_List:
                                     self.firmware_version = Chip_List.pop(0)
                                     TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)

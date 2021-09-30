@@ -12,6 +12,9 @@ import os
 import yaml
 import numpy as np
 
+class ChipIDError(Exception):
+    pass
+
 class ScanHardware(object):
     def __init__(self):
         pass
@@ -161,10 +164,19 @@ class ScanHardware(object):
             data += [0x00]*4
             self.chip.write(data)
 
-            # Get the ChipID from the received data packages
-            fdata = self.chip['FIFO'].get_data()
-            dout = self.chip.decode_fpga(fdata, True)
-            Chip_IDs[fpga_link_number] = dout[1][19:0].tovalue()
+            try:
+                # Get the ChipID from the received data packages
+                fdata = self.chip['FIFO'].get_data()
+                if len(fdata) < 4:
+                    raise ChipIDError("ChipIDError: Unexpected amount of response packages")
+                elif (fdata[2] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 1) or (fdata[3] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 0):
+                    raise ChipIDError("ChipIDError: Unexpected headers in response packages")
+                dout = self.chip.decode_fpga(fdata, True)
+                Chip_IDs[fpga_link_number] = dout[1][19:0].tovalue()
+            except Exception as a:
+                # If there is no valid ChipID set the ID to 0 and set the corresponding status (8)
+                Chip_IDs[fpga_link_number] = 0
+                status_map[fpga_link_number] = 8
             self.chip[fpga_link].ENABLE = 0
 
         # Open the link yaml file
@@ -202,7 +214,7 @@ class ScanHardware(object):
             ID = 'W' + str(wafer_number) + '-' + x_position + str(y_position)
 
             # Write new Chip-ID to the list
-            if ID not in ID_List:
+            if register['chip-id'] not in ID_List:
                 ID_List.append([register['chip-id'], ID])
 
         # Create a list of Chips with all link settings for the specific chip
@@ -213,13 +225,19 @@ class ScanHardware(object):
                 if ID[0] == register['chip-id']:
                     # If the list is empty or the current chip is not in the list add it with its settings
                     if len(Chip_List) == 0 or ID[1] not in Chip_List[:][0]:
-                        Chip_List.append([ID[1], [register['fpga-link'], register['chip-link'], register['data-delay'], register['data-invert'], register['data-edge'], register['link-status']]])
+                        if register['link-status'] != 0:
+                            Chip_List.append([ID[1], [register['fpga-link'], register['chip-link'], register['data-delay'], register['data-invert'], register['data-edge'], register['link-status']]])
+                        else:
+                            Chip_List.append([ID[1], [register['fpga-link'], 0, 0, 0, 0, register['link-status']]])
 
                     # If the Chip is already in the list just add the link settings to it
                     else:
                         for chip in Chip_List:
                             if ID[1] == chip[0]:
-                                chip.append([register['fpga-link'], register['chip-link'], register['data-delay'], register['data-invert'], register['data-edge'], register['link-status']])
+                                if register['link-status'] != 0:
+                                    chip.append([register['fpga-link'], register['chip-link'], register['data-delay'], register['data-invert'], register['data-edge'], register['link-status']])
+                                else:
+                                    chip.append([register['fpga-link'], 0, 0, 0, 0, register['link-status']])
                     break
 
         if results == None:

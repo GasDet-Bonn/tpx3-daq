@@ -420,7 +420,7 @@ class TPX3_data_logger(object):
 
     def write_value(self, name, value):
         if self.name_valid(name) == True:
-            if name in ['Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']:
+            if name in ['Chip0_name']:#, 'Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']:
                 value_list = self.data[name]
                 if value == value_list:
                     return True
@@ -437,7 +437,7 @@ class TPX3_data_logger(object):
                         new_chip_link = new_element_list[1]
                         new_link_status = new_element_list[5]
                         for i in range(1, len(value_list)):
-                            element_list = value_list[n]
+                            element_list = value_list[i]
                             chip_link = element_list[1]
                             link_status = element_list[5]
                             if new_chip_link == chip_link:
@@ -451,15 +451,18 @@ class TPX3_data_logger(object):
                                     new_link_status = int(link_status)
                                 elif new_link_status == 6 and link_status == 5: # user switched link on
                                     new_link_status = int(link_status)
+                                elif new_link_status == 8 and link_status == 7: # user switched link on
+                                    new_link_status = int(link_status)
                                 else:
                                     new_link_status = int(new_link_status)
                             else:
-                                print('Error: Unknown link status')
-                                return False
+                                continue
                         self.final_list.append([new_element_list[0], new_element_list[1], new_element_list[2], new_element_list[3], new_element_list[4], new_link_status])
                         self.data[name] = self.final_list
                         self.write_to_yaml(name = 'init')
                     return True
+            elif name in ['Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']:
+                pass
             else:
                 self.data[name] = value
                 return True
@@ -515,10 +518,10 @@ class TPX3_data_logger(object):
                     link_status = element_list[5]
                     if chip_link == link:
                         if status == 0: #disable
-                            if int(link_status) in [1,3,5]:
+                            if int(link_status) in [1, 3, 5, 7]:
                                 link_status = int(link_status) + 1
                         elif status == 1: #enable
-                            if int(link_status) in [2,4,6]:
+                            if int(link_status) in [2, 4, 6, 8]:
                                 link_status = int(link_status) - 1
                         else:
                             print('Error: Unknown link status')
