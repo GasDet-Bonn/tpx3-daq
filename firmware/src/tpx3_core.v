@@ -1,12 +1,12 @@
 
 
-`include "utils/bus_to_ip.v"
+`include "gpio/gpio_core.v"
+`include "gpio/gpio_sbus.v"
 
-`include "gpio/gpio.v"
-
-`include "spi/spi.v"
 `include "spi/spi_core.v"
+`include "../lib/extra/spi_sbus.v"
 `include "spi/blk_mem_gen_8_to_1_2k.v"
+
 `include "utils/cdc_pulse_sync.v"
 `include "utils/CG_MOD_pos.v"
 
@@ -14,18 +14,21 @@
 `include "utils/generic_fifo.v"
 `include "utils/cdc_reset_sync.v"
 
-`include "pulse_gen/pulse_gen.v"
 `include "pulse_gen/pulse_gen_core.v"
+`include "../lib/extra/pulse_gen_sbus.v"
 
-`include "../lib/tpx3_timestamp/timestamp.v"
 `include "../lib/tpx3_timestamp/timestamp_core.v"
+`include "../lib/tpx3_timestamp/timestamp_sbus.v"
 
 `include "bram_fifo/bram_fifo_core.v"
-`include "bram_fifo/bram_fifo.v"
+`include "../lib/extra/bram_fifo_sbus.v"
 
 `include "rrp_arbiter/rrp_arbiter.v"
 
-`include "../lib/tpx3_rx/tpx3_rx.v"
+`include "utils/sbus_to_ip.v"
+`include "utils/3_stage_synchronizer.v"
+
+`include "../lib/tpx3_rx/tpx3_rx_sbus.v"
 `include "../lib/tpx3_rx/tpx3_rx_core.v"
 `include "../lib/tpx3_rx/receiver_logic.v"
 `include "../lib/tpx3_rx/rec_sync.v"
@@ -38,7 +41,8 @@ module tpx3_core (
         input  wire        BUS_CLK,
         input  wire        BUS_RST,
         input  wire [31:0] BUS_ADD,
-        inout  wire [31:0] BUS_DATA,
+        input  wire [31:0] BUS_DATA_IN,
+        output wire [31:0] BUS_DATA_OUT,
         input  wire        BUS_RD,
         input  wire        BUS_WR,
         output wire        BUS_BYTE_ACCESS,
@@ -66,6 +70,7 @@ module tpx3_core (
     // VERSION/BOARD READBACK
     ////////////////////////
     reg [7:0] BUS_DATA_OUT_REG;
+    wire [7:0] VER_DATA_OUT;
     always @ (posedge BUS_CLK) begin
         if(BUS_RD) begin
             if(BUS_ADD == 0)
@@ -81,10 +86,9 @@ module tpx3_core (
             READ_VER <= 1;
         else
             READ_VER <= 0;
+
+    assign VER_DATA_OUT = READ_VER ? BUS_DATA_OUT_REG : 8'h00;
     
-    assign BUS_DATA[7:0] = READ_VER ? BUS_DATA_OUT_REG : 8'hzz;
-
-
     //////////////////////
     // MODULE ADREESSES //
     //////////////////////
@@ -98,26 +102,37 @@ module tpx3_core (
     localparam TIMESTAMP_HIGHADDR = 32'h4000-1; 
 
     localparam TS_PULSE_BASEADDR = 32'h4000;
-    localparam TS_PULSE_HIGHADDR = 32'h5000-1;;
+    localparam TS_PULSE_HIGHADDR = 32'h5000-1;
 
     localparam RX_BASEADDR = 32'h6000;
     localparam RX_HIGHADDR = 32'h7000-1;
 
+    parameter RX_CH_NO = 8;
+
     localparam FIFO_BASEADDR = 32'h8000;
     localparam FIFO_HIGHADDR = 32'h9000-1;
 
-    localparam FIFO_BASEADDR_DATA = 32'h8000_0000;
-    localparam FIFO_HIGHADDR_DATA = 32'h9000_0000;
+    parameter FIFO_BRAM_SIZE = 32*1024;
 
-    localparam ABUSWIDTH = 32;
-    assign BUS_BYTE_ACCESS = BUS_ADD < 32'h8000_0000 ? 1'b1 : 1'b0;
+    parameter FIFO_BASEADDR_DATA = 32'h0000_a000;
+    localparam FIFO_HIGHADDR_DATA = FIFO_BASEADDR_DATA + FIFO_BRAM_SIZE - 1;
 
+    parameter ABUSWIDTH = 32;
+    assign BUS_BYTE_ACCESS = BUS_ADD < FIFO_BASEADDR_DATA ? 1'b1 : 1'b0;
+
+    wire [7:0] GPIO_DATA_OUT, SPI_DATA_OUT, PG_DATA_OUT, TS_DATA_OUT;
+    wire [7:0] TPX3_DATA_OUT [7:0];
+
+    wire [31:0] FIFO_DATA_OUT;
+    wire [7:0]  TPX3_DATA_OUT_OR;
+    assign TPX3_DATA_OUT_OR = TPX3_DATA_OUT[7] | TPX3_DATA_OUT[6] | TPX3_DATA_OUT[5] | TPX3_DATA_OUT[4] | TPX3_DATA_OUT[3] | TPX3_DATA_OUT[2] | TPX3_DATA_OUT[1] | TPX3_DATA_OUT[0] ;
+    assign BUS_DATA_OUT = {24'd0, VER_DATA_OUT | GPIO_DATA_OUT | SPI_DATA_OUT | TPX3_DATA_OUT_OR | PG_DATA_OUT | TS_DATA_OUT} | FIFO_DATA_OUT ;
 
     /////////////
     // MODULES //
     /////////////
     wire [15:0] GPIO;
-    gpio
+    gpio_sbus
     #(
         .BASEADDR    (GPIO_BASEADDR),
         .HIGHADDR    (GPIO_HIGHADDR),
@@ -126,13 +141,14 @@ module tpx3_core (
         .IO_DIRECTION(16'hffff     )
     ) gpio
     (
-        .BUS_CLK (BUS_CLK      ),
-        .BUS_RST (BUS_RST      ),
+        .BUS_CLK (BUS_CLK       ),
+        .BUS_RST (BUS_RST       ),
         .BUS_ADD (BUS_ADD      ),
-        .BUS_DATA(BUS_DATA[7:0]),
+        .BUS_DATA_IN  (BUS_DATA_IN[7:0]  ),
+        .BUS_DATA_OUT (GPIO_DATA_OUT[7:0]),
         .BUS_RD  (BUS_RD       ),
         .BUS_WR  (BUS_WR       ),
-        .IO      (GPIO         )
+        .IO      (GPIO          )
     );
 
     assign Reset = GPIO[0];
@@ -147,7 +163,6 @@ module tpx3_core (
     assign CNT_FIFO_EN = GPIO[7];
 
     wire SCLK, SDI, SDO, SEN, SLD;
-
     spi
     #(
         .BASEADDR (SPI_BASEADDR),
@@ -159,7 +174,8 @@ module tpx3_core (
         .BUS_CLK  (BUS_CLK      ),
         .BUS_RST  (BUS_RST      ),
         .BUS_ADD  (BUS_ADD      ),
-        .BUS_DATA (BUS_DATA[7:0]),
+        .BUS_DATA_IN  (BUS_DATA_IN[7:0]),
+        .BUS_DATA_OUT (SPI_DATA_OUT[7:0]),
         .BUS_RD   (BUS_RD       ),
         .BUS_WR   (BUS_WR       ),
 
@@ -181,47 +197,53 @@ module tpx3_core (
     wire [31:0] TPX_FIFO_DATA [7:0];
     wire [7:0] RX_READY_RX;
     
+    
+    
     genvar ch;
     generate
         for (ch = 0; ch < 8; ch = ch + 1) begin: tpx3rx_gen
+            if (ch < RX_CH_NO) begin
+                tpx3_rx_sbus #(
+                    .BASEADDR       (RX_BASEADDR + ch*32'h100),
+                    .HIGHADDR       (RX_BASEADDR + 32'h100 + ch*32'h100 - 1),
+                    .DATA_IDENTIFIER(         ch),
+                    .ABUSWIDTH      (ABUSWIDTH  )
+                ) tpx3_rx (
 
-        tpx3_rx #(
-            .BASEADDR       (RX_BASEADDR + ch*32'h100),
-            .HIGHADDR       (RX_BASEADDR + 32'h100 + ch*32'h100 - 1),
-            .DATA_IDENTIFIER(         ch),
-            .ABUSWIDTH      (ABUSWIDTH  )
-        ) tpx3_rx (
+                    .RX_CLKX2            ( CLK320          ),
+                    .RX_CLKW             ( CLK32           ),
+                    .RX_DATA             ( RX_DATA[ch]     ),
 
-            .RX_CLKX2            ( CLK320          ),
-            .RX_CLKW             ( CLK32           ),
-            .RX_DATA             ( RX_DATA[ch]     ),
+                    .RX_READY            ( RX_READY_RX[ch]  ),
+                    .RX_8B10B_DECODER_ERR(                 ),
+                    .RX_FIFO_OVERFLOW_ERR(                 ),
 
-            .RX_READY            ( RX_READY_RX[ch]  ),
-            .RX_8B10B_DECODER_ERR(                 ),
-            .RX_FIFO_OVERFLOW_ERR(                 ),
+                    .FIFO_READ           ( TPX_FIFO_READ[ch] ),
+                    .FIFO_EMPTY          ( TPX_FIFO_EMPTY[ch] ),
+                    .FIFO_DATA           ( TPX_FIFO_DATA[ch] ),
 
-            .FIFO_READ           ( TPX_FIFO_READ[ch] ),
-            .FIFO_EMPTY          ( TPX_FIFO_EMPTY[ch] ),
-            .FIFO_DATA           ( TPX_FIFO_DATA[ch] ),
+                    .RX_FIFO_FULL        (                 ),
+                    .RX_ENABLED          (                 ),
 
-            .RX_FIFO_FULL        (                 ),
-            .RX_ENABLED          (                 ),
-
-            .BUS_CLK             ( BUS_CLK         ),
-            .BUS_RST             ( BUS_RST         ),
-            .BUS_ADD             ( BUS_ADD         ),
-            .BUS_DATA            ( BUS_DATA[7:0]   ),
-            .BUS_RD              ( BUS_RD          ),
-            .BUS_WR              ( BUS_WR          )
-        );
+                    .BUS_CLK             ( BUS_CLK         ),
+                    .BUS_RST             ( BUS_RST         ),
+                    .BUS_ADD             ( BUS_ADD         ),
+                    .BUS_DATA_IN         ( BUS_DATA_IN[7:0]),
+                    .BUS_DATA_OUT        ( TPX3_DATA_OUT[ch] ),
+                    .BUS_RD              ( BUS_RD          ),
+                    .BUS_WR              ( BUS_WR          )
+                );
+            end else begin
+                assign TPX_FIFO_EMPTY[ch] = 1;
+            end
 
     end
     endgenerate
 
     assign RX_READY = RX_READY_RX[0];
-
+    
     wire PULSE;
-    pulse_gen
+    pulse_gen_sbus
     #(
         .BASEADDR(TS_PULSE_BASEADDR),
         .HIGHADDR(TS_PULSE_HIGHADDR),
@@ -231,7 +253,8 @@ module tpx3_core (
         .BUS_CLK(BUS_CLK),
         .BUS_RST(BUS_RST),
         .BUS_ADD(BUS_ADD),
-        .BUS_DATA(BUS_DATA[7:0]),
+        .BUS_DATA_IN(BUS_DATA_IN[7:0]),
+        .BUS_DATA_OUT(PG_DATA_OUT),
         .BUS_RD(BUS_RD),
         .BUS_WR(BUS_WR),
 
@@ -243,7 +266,7 @@ module tpx3_core (
     wire TS_FIFO_READ, TS_FIFO_EMPTY;
     wire [31:0] TS_FIFO_DATA;
 
-    timestamp
+    timestamp_sbus
     #(
         .BASEADDR(TIMESTAMP_BASEADDR),
         .HIGHADDR(TIMESTAMP_HIGHADDR),
@@ -254,7 +277,8 @@ module tpx3_core (
         .BUS_CLK(BUS_CLK),
         .BUS_RST(T0_Sync),
         .BUS_ADD(BUS_ADD),
-        .BUS_DATA(BUS_DATA[7:0]),
+        .BUS_DATA_IN(BUS_DATA_IN[7:0]),
+        .BUS_DATA_OUT(TS_DATA_OUT),
         .BUS_RD(BUS_RD),
         .BUS_WR(BUS_WR),
 
@@ -262,13 +286,12 @@ module tpx3_core (
         .DI(PULSE),
         //.EXT_TIMESTAMP(TIMESTAMP),
         //.TIMESTAMP_OUT(TIMESTAMP_OUT),
-		  .EXT_ENABLE(!T0_Sync),
+        .EXT_ENABLE(!T0_Sync),
 
         .FIFO_READ(TS_FIFO_READ),
         .FIFO_EMPTY(TS_FIFO_EMPTY),
         .FIFO_DATA(TS_FIFO_DATA)
     );
-
 
     wire CNT_FIFO_READ;
     reg [31:0] CNT_FIFO_DATA;
@@ -302,19 +325,20 @@ module tpx3_core (
     assign TS_FIFO_READ = READ_GRANT[1];
     assign TPX_FIFO_READ = READ_GRANT[9:2];
 
-    bram_fifo
+    bram_fifo_sbus
     #(
         .BASEADDR     (FIFO_BASEADDR     ),
         .HIGHADDR     (FIFO_HIGHADDR     ),
         .BASEADDR_DATA(FIFO_BASEADDR_DATA),
         .HIGHADDR_DATA(FIFO_HIGHADDR_DATA),
         .ABUSWIDTH    (ABUSWIDTH         ),
-        .DEPTH        (1024*32           )
+        .DEPTH        (FIFO_BRAM_SIZE    )
     ) out_fifo (
         .BUS_CLK           ( BUS_CLK       ),
         .BUS_RST           ( BUS_RST       ),
         .BUS_ADD           ( BUS_ADD       ),
-        .BUS_DATA          ( BUS_DATA      ),
+        .BUS_DATA_IN       ( BUS_DATA_IN   ),
+        .BUS_DATA_OUT      ( FIFO_DATA_OUT ),
         .BUS_RD            ( BUS_RD        ),
         .BUS_WR            ( BUS_WR        ),
 
@@ -327,7 +351,5 @@ module tpx3_core (
         .FIFO_NEAR_FULL    (               ),
         .FIFO_READ_ERROR   (               )
     );
-
-
 
 endmodule

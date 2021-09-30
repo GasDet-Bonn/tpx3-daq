@@ -35,7 +35,7 @@ hw_drivers:
     type      : bram_fifo
     interface : intf
     base_addr : 0x8000
-    base_data_addr : 0x80000000
+    base_data_addr : 0xa000
 
   - name      : RX0
     type      : tpx3.tpx3_rx

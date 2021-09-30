@@ -342,7 +342,7 @@ module tpx3_sfp (
             basex_or_sgmii <= !basex_or_sgmii;
 
 
-    wire [31:0] BUS_ADD, BUS_DATA;
+    wire [31:0] BUS_ADD, BUS_DATA_OUT, BUS_DATA_IN;
     wire BUS_RD, BUS_WR, BUS_CLK, BUS_RST, BUS_BYTE_ACCESS;
 
     si_udp si_udp_inst (
@@ -365,7 +365,8 @@ module tpx3_sfp (
         .BUS_CLK        (BUS_CLK           ),
         .BUS_RST        (BUS_RST           ),
         .BUS_ADD        (BUS_ADD           ),
-        .BUS_DATA       (BUS_DATA          ),
+        .BUS_DATA_IN    (BUS_DATA_IN       ),
+        .BUS_DATA_OUT   (BUS_DATA_OUT      ),
         .BUS_RD         (BUS_RD            ),
         .BUS_WR         (BUS_WR            ),
         .BUS_BYTE_ACCESS(BUS_BYTE_ACCESS   )
@@ -428,7 +429,8 @@ module tpx3_sfp (
         .BUS_CLK        (BUS_CLK              ),
         .BUS_RST        (BUS_RST              ),
         .BUS_ADD        (BUS_ADD              ),
-        .BUS_DATA       (BUS_DATA             ),
+        .BUS_DATA_IN    (BUS_DATA_IN          ),
+        .BUS_DATA_OUT   (BUS_DATA_OUT         ),
         .BUS_RD         (BUS_RD               ),
         .BUS_WR         (BUS_WR               ),
         .BUS_BYTE_ACCESS(BUS_BYTE_ACCESS      ),
