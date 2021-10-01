@@ -191,7 +191,12 @@ class ScanHardware(object):
         for i, register in enumerate(yaml_data['registers']):
             register['name'] = rx_list_names[i]
             register['fpga-link'] = i
-            register['chip-link'] = int(np.where(rx_map[:][i] == 1)[0][0])
+            try:
+                register['chip-link'] = int(np.where(rx_map[:][i] == 1)[0][0])
+            except:
+                if int(status_map[i]) != 6:
+                    status_map[i] = 6
+                register['chip-link'] = 0
             register['chip-id'] = int(Chip_IDs[i])
             register['data-delay'] = int(delays[i])
             register['data-invert'] = 0
