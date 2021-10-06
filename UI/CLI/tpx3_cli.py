@@ -51,6 +51,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Stop_Plot', 'stop_plot',
                 'Expert', 'expert',
                 'Chip_names', 'chip_names', 'Who', 'who',
+                'Mask_name', 'mask_name',
+                'Equalisation_name', 'equalisation_name', 'Equal_name', 'equal_name',
                 'Help', 'help', 'h', '-h',
                 'About', 'about',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
@@ -66,8 +68,7 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
 # In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation',
-                    'TP_Period', 'Set_Polarity', 'Set_operation_mode', 'Set_Fast_Io', 'Save_Backup', 'Load_Backup', 'Save_Mask', 'Load_Mask', 'Set_Mask',
-                    'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names', 'About', 'Help', 'Quit']
+                    'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names', 'Mask_name', 'Equalisation_name', 'About', 'Help', 'Quit']
 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency', 'Set_Sense_DAC', 'Enable_Link']
 
@@ -1766,7 +1767,23 @@ class TPX3_CLI_TOP(object):
                         else:
                             print(Chipname + ' on ' + str(number_of_links) + ' links')
 
-                # About
+                #Get Mask name
+                elif inputlist[0] in {'Mask_name', 'mask_name'}:
+                    mask_path = TPX3_datalogger.read_value(name = 'Mask_path')
+                    if mask_path == None:
+                            print('No mask is loaded')
+                    else:
+                        print('The mask file "' + mask_path + '" is loaded')
+
+                #Get Equalisation name
+                elif inputlist[0] in {'Equalisation_name', 'equalisation_name', 'Equal_name', 'equal_name'}:
+                    mask_path = TPX3_datalogger.read_value(name = 'Equalisation_path')
+                    if mask_path == None:
+                            print('No equalisation is loaded')
+                    else:
+                        print('The equalisation file "' + mask_path + '" is loaded')
+
+                #About
                 elif inputlist[0] in {'About', 'about'}:
                     print('TPX3 CLI')
                     print('Software version: ' + str(self.software_version))
