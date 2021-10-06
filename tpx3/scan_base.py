@@ -841,7 +841,7 @@ class ScanBase(object):
         '''
         self.logger.info('Writing equalisation matrix to file...')
         if not self.thrfile:
-            self.thrfile = os.path.join(get_equal_path(), 'equal_W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_' + self.timestamp + '.h5')
+            self.thrfile = os.path.join(get_equal_path(), 'W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_equal_' + self.timestamp + '.h5')
 
         with tb.open_file(self.thrfile, 'a') as out_file:
             try:
