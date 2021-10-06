@@ -2289,6 +2289,69 @@ class GUI_Set_Mask(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Additional_Information(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Info')
+        self.connect('delete-event', self.window_destroy)
+        
+        try:
+            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.equalisation_file = 'None'
+            else:
+                self.equalisation_file = 'Corrupt Data'
+                
+        try:
+            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.mask_file = 'None'
+            else:
+                self.mask_file = 'Corrupt Data'
+        
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(20)
+        self.add(grid)
+
+        Space = Gtk.Label()
+        Space.set_text("")
+        
+        self.Backup_File_label = Gtk.Label()
+        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
+        
+        self.refresh_button = Gtk.Button(label = "Refresh")
+        self.refresh_button.connect("clicked", self.on_refresh_button_clicked)
+
+        grid.attach(self.Backup_File_label, 0, 0, 2, 3)
+        grid.attach(Space, 0, 3, 2, 1)
+        grid.attach(self.refresh_button, 2, 4, 1, 1)
+        
+        self.show_all()
+        
+    def on_refresh_button_clicked(self, clicked):
+        try:
+            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.equalisation_file = 'None'
+            else:
+                self.equalisation_file = 'Corrupt Data'
+                
+        try:
+            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.mask_file = 'None'
+            else:
+                self.mask_file = 'Corrupt Data'
+        self.Backup_File_label.set_text('\nCurrent equalisation file:\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
+        
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_Main_Settings(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = 'Settings')
@@ -2779,6 +2842,9 @@ class GUI_Main(Gtk.Window):
 
         self.SetMaskbutton = Gtk.Button(label = 'Set Mask')
         self.SetMaskbutton.connect('clicked', self.on_SetMaskbutton_clicked)
+        
+        self.Infobutton = Gtk.Button(label = 'Info')
+        self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
 
         self.QuitCurrentFunctionbutton = Gtk.Button(label = 'Quit')
         self.QuitCurrentFunctionbutton.connect('clicked', self.on_QuitCurrentFunctionbutton_clicked)
@@ -2840,7 +2906,8 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.about_label, 14, 0, 3, 3)
         page1.grid.attach(self.SetDACbutton, 14, 3, 3, 1)
         page1.grid.attach(self.AddSetbutton, 14, 4, 3, 1)
-        page1.grid.attach(self.SetMaskbutton, 14, 6, 3, 1)
+        page1.grid.attach(self.Infobutton, 14, 5, 3, 1)
+        page1.grid.attach(self.SetMaskbutton, 14, 7, 3, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
 
@@ -2968,6 +3035,9 @@ class GUI_Main(Gtk.Window):
     def on_SetMaskbutton_clicked(self, widget):
         global mask_window
         mask_window = GUI_Set_Mask()
+        
+    def on_Infobutton_clicked(self, widget):
+        Info_subw = GUI_Additional_Information()
 
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
         self.progressbar.hide()
