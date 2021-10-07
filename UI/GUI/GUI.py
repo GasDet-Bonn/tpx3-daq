@@ -3326,7 +3326,6 @@ class GUI_Main(Gtk.Window):
             self.terminate_converter()
             Gtk.main_quit()
         elif not self.running_process.is_alive():
-            self.terminate_converter()
             if not self.update_progress_idle == None:
                 GLib.source_remove(self.update_progress_idle)
                 self.update_progress_idle = None
@@ -3353,8 +3352,6 @@ class GUI_Main(Gtk.Window):
 
         else:
             self.running_process.terminate()
-            if self.plot1_window_open:
-                self.terminate_converter()
             if not self.update_progress_idle == None:
                 GLib.source_remove(self.update_progress_idle)
                 self.update_progress_idle = None
