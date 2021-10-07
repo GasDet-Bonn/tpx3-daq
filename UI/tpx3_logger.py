@@ -500,7 +500,10 @@ class TPX3_data_logger(object):
             name = 'Chip' + str(i) +'_name'
             value_list = self.data[name]
             if value_list[0] == chipname:
-                number_of_links = len(value_list) - 1
+                number_of_links = 0
+                for i in range(1, len(value_list)):
+                    if value_list[i][5] in [1, 3, 5, 7]:
+                        number_of_links += 1
                 return number_of_links
             else:
                 print('Name of Chipname not in list')

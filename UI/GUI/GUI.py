@@ -3594,9 +3594,9 @@ class GUI_Main(Gtk.Window):
             for n, Chipname in enumerate(TPX3_datalogger.get_chipnames()):
                 number_of_links = TPX3_datalogger.get_links(chipname = Chipname)
                 if number_of_links == 1:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' link)'
+                    statusstring += Chipname + ' (' + str(number_of_links) + ' active link)'
                 else:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' links)'
+                    statusstring += Chipname + ' (' + str(number_of_links) + ' active links)'
                 if n == 0:
                     self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)

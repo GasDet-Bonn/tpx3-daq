@@ -1763,9 +1763,9 @@ class TPX3_CLI_TOP(object):
                     for Chipname in TPX3_datalogger.get_chipnames():
                         number_of_links = TPX3_datalogger.get_links(chipname=Chipname)
                         if number_of_links == 1:
-                            print(Chipname + ' on ' + str(number_of_links) + ' link')
+                            print(Chipname + ' on ' + str(number_of_links) + ' active link')
                         else:
-                            print(Chipname + ' on ' + str(number_of_links) + ' links')
+                            print(Chipname + ' on ' + str(number_of_links) + ' active links')
 
                 #Get Mask name
                 elif inputlist[0] in {'Mask_name', 'mask_name'}:
