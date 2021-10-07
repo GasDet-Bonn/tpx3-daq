@@ -2615,7 +2615,7 @@ class GUI_Additional_Information(Gtk.Window):
                 self.mask_file = 'None'
             else:
                 self.mask_file = 'Corrupt Data'
-        self.Backup_File_label.set_text('\nCurrent equalisation file:\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
+        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
         
     def window_destroy(self, widget, event):
         self.destroy()
