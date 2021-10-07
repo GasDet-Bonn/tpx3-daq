@@ -111,7 +111,7 @@ class GUI_Plot1(Gtk.Window):
 
     def stop_idle_job(self):
         GLib.source_remove(self.Tag)
-    
+
     def window_destroy(self, event, widget):
         if self.started_from == 'GUI':
             TPX3_datalogger.write_value(name = 'plottype', value = self.plotwidget.get_plottype())
@@ -613,14 +613,12 @@ class GUI_Threshold_Calib(Gtk.Window):
 
     def n_injections_set(self, event):
         self.n_injections_value = self.n_injections.get_value_as_int()
-        
 
     def on_Iterationbutton_toggled(self, button, name):
         self.Number_of_Iterations = int(name)
 
     def n_pulse_heights_set(self, event):
         self.n_pulse_heights_value = self.n_pulse_heights.get_value_as_int()
-        
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
@@ -1393,7 +1391,7 @@ class GUI_SetDAC(Gtk.Window):
         self.VTP_fine_value = self.VTP_fine.get_value_as_int()
         self.Ibias_CP_PLL_value = self.Ibias_CP_PLL.get_value_as_int()
         self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
-        
+
         #write values to datalogger
         TPX3_datalogger.write_value(name = 'Ibias_Preamp_ON', value = self.Ibias_Preamp_ON_value)
         TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_ON')
@@ -1645,7 +1643,7 @@ class GUI_Additional_Settings(Gtk.Window):
         else:
             self.Link_1_enable_button.set_active(False)
             self.Link_1_enable_button.set_label(' OFF  ')
-        self.Link_1_enable_button.connect('toggled', self.Link_1_enable_button_toggled)            
+        self.Link_1_enable_button.connect('toggled', self.Link_1_enable_button_toggled)
         if TPX3_datalogger.get_link_status(2) in [1, 3, 5, 7]:
             self.Link_2_enable = 1
         else:
@@ -1723,7 +1721,7 @@ class GUI_Additional_Settings(Gtk.Window):
         #Save Button
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
-        
+
         grid.attach(set_polarity_button_label, 0, 0, 2, 1)
         grid.attach(self.set_polarity_button, 2, 0, 2, 1)
         grid.attach(self.expert_checkbox, 5, 0, 1, 1)
@@ -1766,7 +1764,7 @@ class GUI_Additional_Settings(Gtk.Window):
         grid.attach(self.Link_7_enable_button, 7, 15, 1, 1)
         grid.attach(self.Space3, 0, 16, 3, 1)
         grid.attach(self.Savebutton, 8, 17, 1, 1)
-        
+
         self.show_all()
         self.TP_Ext_Int_button_label.hide()
         self.TP_Ext_Int_button.hide()
@@ -2004,7 +2002,7 @@ class GUI_Additional_Settings(Gtk.Window):
         except:
             self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
             return
-            
+
         # write values
         TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
         TPX3_datalogger.write_to_yaml(name = 'Polarity')
@@ -2304,7 +2302,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.connect('delete-event', self.window_destroy)
         self.connect("key-press-event", self.on_key_pressed)
         self.coord_window = None
-        
+
         if  isinstance(mask_logger.get_mask(), bool):
             self.np_mask_list = np.zeros((256 * 256, ), dtype = bool)
         else:
@@ -2318,10 +2316,10 @@ class GUI_Set_Mask(Gtk.Window):
         grid.set_column_homogeneous(False)
         grid.set_row_homogeneous(False)
         self.add(grid)
-        
+
         self.np_row_list = np.zeros((256, ), dtype = bool)
         self.np_column_list = np.zeros((256, ), dtype = bool)
-        
+
         self.surface = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 2610)
         self.cr = cairo.Context(self.surface)
         self.cr.rectangle(0, 0, 2610, 2610)
@@ -2329,7 +2327,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.cr.fill()
         self.cr.select_font_face('Open Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self.cr.set_font_size(9)
-        
+
         self.row_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 21, 2610)
         self.row_num = cairo.Context(self.row_numbers)
         self.row_num.rectangle(0, 0, 21, 2610)
@@ -2337,7 +2335,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.row_num.fill()
         self.row_num.select_font_face('Open Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self.row_num.set_font_size(9)
-        
+
         self.column_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 21)
         self.column_num = cairo.Context(self.column_numbers)
         self.column_num.rectangle(0, 0, 2610, 21)
@@ -2345,7 +2343,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.column_num.fill()
         self.column_num.select_font_face('Open Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self.column_num.set_font_size(9)
-        
+
         for x in range(4, 260):
             self.cr.set_line_width(1)
             self.cr.set_source_rgb(0.4, 0.4, 0.4)
@@ -2355,7 +2353,7 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.show_text(str(x-4))
             self.cr.rotate(1.5708)
             self.cr.stroke()
-            
+
             self.column_num.set_line_width(1)
             self.column_num.set_source_rgb(0.4, 0.4, 0.4)
             self.column_num.rectangle(x * 10, 0, 10, 20)
@@ -2364,21 +2362,21 @@ class GUI_Set_Mask(Gtk.Window):
             self.column_num.show_text(str(x-4))
             self.column_num.rotate(1.5708)
             self.column_num.stroke()
-            
+
         for y in range(4, 260):
             self.cr.rectangle(10, y * 10, 20, 10)
             self.cr.move_to(11, ((y + 1) * 10) - 1)
             self.cr.show_text(str(255 - (y-4)))
             self.cr.stroke()  
-            
+
             self.row_num.set_line_width(1)
             self.row_num.set_source_rgb(0.4, 0.4, 0.4)
             self.row_num.rectangle(0, y * 10, 20, 10)
             self.row_num.move_to(1, ((y + 1) * 10) - 1)
             self.row_num.show_text(str(255 - (y-4)))
             self.row_num.stroke()
-            
-        for x in range(4, 260):            
+
+        for x in range(4, 260):
             for y in range(4, 260):
                 self.cr.rectangle(x * 10, y * 10, 10, 10)
                 self.cr.stroke()
@@ -2390,11 +2388,11 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.set_source_rgb(1, 0, 0)
             self.cr.rectangle(x_coord * 10, y_coord * 10, 10, 10)
             self.cr.fill()
-                
+
         self.row_numbers.write_to_png(user_path + os.sep + 'row_number.png')
         self.column_numbers.write_to_png(user_path + os.sep + 'column_number.png')
         self.surface.write_to_png(user_path + os.sep + 'chip_mask.png')
-        
+
         self.map_area = Gtk.EventBox()
         self.mapview = Gtk.ScrolledWindow()
         self.mapview.set_property('width-request', 700)
@@ -2405,7 +2403,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.map = Gtk.Image()
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'chip_mask.png')
         self.map.set_from_pixbuf(self.pixbuf)
-        
+
         self.columnview = Gtk.ScrolledWindow()
         self.columnview.set_property('width-request', 700)
         self.columnview.set_property('height-request', 21)
@@ -2415,7 +2413,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.column_pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'column_number.png')
         self.column.set_from_pixbuf(self.column_pixbuf)
         self.columnview.add(self.column)
-        
+
         self.rowview = Gtk.ScrolledWindow()
         self.rowview.set_property('width-request', 21)
         self.rowview.set_property('height-request', 700)
@@ -2428,29 +2426,29 @@ class GUI_Set_Mask(Gtk.Window):
         self.row_pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'row_number.png')
         self.row.set_from_pixbuf(self.row_pixbuf)
         self.rowview.add(self.row)
-        
+
         self.map_area.add(self.map)
         self.map_area.connect ('button-press-event', self.on_drawing_area_button_press)
         self.map_area.connect ('button-release-event', self.on_drawing_area_button_release)
         self.mapview.add(self.map_area)
-        
+
         Space = Gtk.Label()
         Space.set_text('') 
-        
+
         #Savebutton
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
-        
+
         grid.attach(self.mapview, 0, 0, 20, 20)
         grid.attach(self.columnview, 0, 20, 20, 2)
         grid.attach(self.rowview, 20, 0, 2, 20)
         grid.attach(self.Savebutton, 23, 21, 2, 1)
-        
+
         self.rowview.set_vadjustment(self.mapview.get_vadjustment())
         self.columnview.set_hadjustment(self.mapview.get_hadjustment())
 
         self.show_all()
-        
+
     def draw_clicked(self):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
@@ -2471,8 +2469,8 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.rectangle(10, y * 10, 20, 10)
             self.cr.move_to(11, ((y + 1) * 10) - 1)
             self.cr.show_text(str(255 - (y-4)))
-            self.cr.stroke()    
-        for x in range(4, 260):            
+            self.cr.stroke()
+        for x in range(4, 260):
             for y in range(4, 260):
                 self.cr.rectangle(x * 10, y * 10, 10, 10)
                 self.cr.stroke()
@@ -2496,7 +2494,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.surface.write_to_png(user_path + os.sep + 'chip_mask.png')
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'chip_mask.png')
         self.map.set_from_pixbuf(self.pixbuf)
-                
+
     def on_drawing_area_button_press(self, widget, event):
         if event.button == 1:
             x_coord = (int(event.x / 10) - 4)
@@ -2542,7 +2540,7 @@ class GUI_Set_Mask(Gtk.Window):
     def on_key_pressed(self, widget, event):
         if event.keyval == 65293:   # 65293 is the keyvalue for "Enter"
             entry_window = GUI_Mask_Entry_Window(self.np_mask_list, self.np_column_list, self.np_row_list)
-    
+
     def set_new_values(self, mask_list, column_list, row_list):
         self.np_mask_list = mask_list
         self.np_column_list = column_list
@@ -2552,7 +2550,7 @@ class GUI_Set_Mask(Gtk.Window):
     def on_Savebutton_clicked(self, widget):
         mask_array = self.np_mask_list.reshape((256,256))
         mask_logger.write_full_mask(full_mask = mask_array)
-        
+
         self.destroy()
     def window_destroy(self, widget, event):
         self.destroy()
@@ -2561,7 +2559,7 @@ class GUI_Additional_Information(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = 'Info')
         self.connect('delete-event', self.window_destroy)
-        
+
         try:
             self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
         except:
@@ -2569,7 +2567,7 @@ class GUI_Additional_Information(Gtk.Window):
                 self.equalisation_file = 'None'
             else:
                 self.equalisation_file = 'Corrupt Data'
-                
+
         try:
             self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
         except:
@@ -2577,7 +2575,7 @@ class GUI_Additional_Information(Gtk.Window):
                 self.mask_file = 'None'
             else:
                 self.mask_file = 'Corrupt Data'
-        
+
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         grid.set_column_spacing(10)
@@ -2586,19 +2584,19 @@ class GUI_Additional_Information(Gtk.Window):
 
         Space = Gtk.Label()
         Space.set_text("")
-        
+
         self.Backup_File_label = Gtk.Label()
         self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
-        
+
         self.refresh_button = Gtk.Button(label = "Refresh")
         self.refresh_button.connect("clicked", self.on_refresh_button_clicked)
 
         grid.attach(self.Backup_File_label, 0, 0, 2, 3)
         grid.attach(Space, 0, 3, 2, 1)
         grid.attach(self.refresh_button, 2, 4, 1, 1)
-        
+
         self.show_all()
-        
+
     def on_refresh_button_clicked(self, clicked):
         try:
             self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
@@ -2607,7 +2605,7 @@ class GUI_Additional_Information(Gtk.Window):
                 self.equalisation_file = 'None'
             else:
                 self.equalisation_file = 'Corrupt Data'
-                
+
         try:
             self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
         except:
@@ -2616,7 +2614,7 @@ class GUI_Additional_Information(Gtk.Window):
             else:
                 self.mask_file = 'Corrupt Data'
         self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
-        
+
     def window_destroy(self, widget, event):
         self.destroy()
 
@@ -2642,13 +2640,13 @@ class GUI_Main_Settings(Gtk.Window):
 
         self.load_default_Equalisation_button = Gtk.Button(label = 'Load Default Equalisation')
         self.load_default_Equalisation_button.connect('clicked', self.on_load_default_Equalisation_button_clicked)
-        
+
         self.load_default_Mask_button = Gtk.Button(label = 'Load Default Mask')
         self.load_default_Mask_button.connect('clicked', self.on_load_default_Mask_button_clicked)
-        
+
         self.save_Backup_button = Gtk.Button(label = 'Save Backup')
         self.save_Backup_button.connect('clicked', self.on_save_Backup_button_clicked)
-        
+
         self.save_Equalisation_button = Gtk.Button(label = 'Save Equalisation')
         self.save_Equalisation_button.connect('clicked', self.on_save_Equalisation_button_clicked)
 
@@ -2686,7 +2684,7 @@ class GUI_Main_Settings(Gtk.Window):
         backup_dialog.add_filter(filter_backup)
 
         backup_dialog.connect('current_folder_changed', change_folder)
-        
+
         response = backup_dialog.run()
 
         if response == Gtk.ResponseType.OK:
@@ -2746,9 +2744,9 @@ class GUI_Main_Settings(Gtk.Window):
         mask_dialog.add_filter(filter_mask)
 
         mask_dialog.connect('current_folder_changed', change_folder)
-        
+
         response = mask_dialog.run()
-        
+
         if response == Gtk.ResponseType.OK:
             TPX3_datalogger.write_value(name = 'Mask_path', value = mask_dialog.get_filename())
             GUI.statuslabel.set_text('Set mask from file.')
@@ -2994,7 +2992,7 @@ class GUI_Plot_Box(Gtk.Window):
             subw = GUI_Plot_Box_close_all()
 
     def window_destroy(self, widget, event = True):
-        self.destroy()        
+        self.destroy()
 
 class GUI_Main(Gtk.Window):
     def __init__(self):
@@ -3053,7 +3051,7 @@ class GUI_Main(Gtk.Window):
         TPX3_datalogger.write_backup_to_yaml()
         TPX3_datalogger.write_value(name = 'software_version', value = self.software_version)
         conv_utils.setup_logging('INFO')
-        
+
 
     #########################################################################################################
         ### Page 1
@@ -3110,7 +3108,7 @@ class GUI_Main(Gtk.Window):
 
         self.SetMaskbutton = Gtk.Button(label = 'Set Mask')
         self.SetMaskbutton.connect('clicked', self.on_SetMaskbutton_clicked)
-        
+
         self.Infobutton = Gtk.Button(label = 'Info')
         self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
 
@@ -3179,7 +3177,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
 
-    #######################################################################################################     
+    #######################################################################################################
         ### Page 2 
         ChipName = 'Chip1'
         self.page2 = Gtk.Box()
@@ -3235,8 +3233,8 @@ class GUI_Main(Gtk.Window):
                 self.terminate_converter()
 
 
-    ####################################################################################################        
-    ### Functions Page 1    
+    ####################################################################################################
+    ### Functions Page 1
 
     def on_PixelDACbutton_clicked(self, widget):
         subw = GUI_PixelDAC_opt()
@@ -3303,7 +3301,7 @@ class GUI_Main(Gtk.Window):
     def on_SetMaskbutton_clicked(self, widget):
         global mask_window
         mask_window = GUI_Set_Mask()
-        
+
     def on_Infobutton_clicked(self, widget):
         Info_subw = GUI_Additional_Information()
 
