@@ -1456,6 +1456,8 @@ class GUI_Additional_Settings(Gtk.Window):
         Space.set_text("")
         self.Space2 = Gtk.Label()
         self.Space2.set_text("")
+        self.Space3 = Gtk.Label()
+        self.Space3.set_text("")
 
         #Button for polarity select
         self.polarity_value = TPX3_datalogger.read_value('Polarity')
@@ -1564,7 +1566,7 @@ class GUI_Additional_Settings(Gtk.Window):
         self.ClkOut_frequency_combo_label = Gtk.Label()
         self.ClkOut_frequency_combo_label.set_text('ClkOut_frequency_src')
 
-        #rop down for sense DAC
+        #Drop down for sense DAC
         self.sense_DAC_value = TPX3_datalogger.read_value('Sense_DAC')
         self.dropdown = Gtk.ComboBoxText()
         self.dropdown.append_text('Off')
@@ -1601,34 +1603,169 @@ class GUI_Additional_Settings(Gtk.Window):
         self.dropdown_label = Gtk.Label()
         self.dropdown_label.set_text('Sense DAC')
 
+        #Link_Toggle
+        self.Link_label = Gtk.Label()
+        self.Link_label.set_text('Chip links')
+        self.Link_0_label = Gtk.Label()
+        self.Link_0_label.set_text('0')
+        self.Link_1_label = Gtk.Label()
+        self.Link_1_label.set_text('1')
+        self.Link_2_label = Gtk.Label()
+        self.Link_2_label.set_text('2')
+        self.Link_3_label = Gtk.Label()
+        self.Link_3_label.set_text('3')
+        self.Link_4_label = Gtk.Label()
+        self.Link_4_label.set_text('4')
+        self.Link_5_label = Gtk.Label()
+        self.Link_5_label.set_text('5')
+        self.Link_6_label = Gtk.Label()
+        self.Link_6_label.set_text('6')
+        self.Link_7_label = Gtk.Label()
+        self.Link_7_label.set_text('7')
+        if TPX3_datalogger.get_link_status(0) in [1, 3, 5, 7]:
+            self.Link_0_enable = 1
+        else:
+            self.Link_0_enable = 0
+        self.Link_0_enable_button = Gtk.ToggleButton()
+        if self.Link_0_enable == 1:
+            self.Link_0_enable_button.set_active(True)
+            self.Link_0_enable_button.set_label(' ON  ')
+        else:
+            self.Link_0_enable_button.set_active(False)
+            self.Link_0_enable_button.set_label(' OFF  ')
+        self.Link_0_enable_button.connect('toggled', self.Link_0_enable_button_toggled)
+        if TPX3_datalogger.get_link_status(1) in [1, 3, 5, 7]:
+            self.Link_1_enable = 1
+        else:
+            self.Link_1_enable = 0
+        self.Link_1_enable_button = Gtk.ToggleButton()
+        if self.Link_1_enable == 1:
+            self.Link_1_enable_button.set_active(True)
+            self.Link_1_enable_button.set_label(' ON  ')
+        else:
+            self.Link_1_enable_button.set_active(False)
+            self.Link_1_enable_button.set_label(' OFF  ')
+        self.Link_1_enable_button.connect('toggled', self.Link_1_enable_button_toggled)            
+        if TPX3_datalogger.get_link_status(2) in [1, 3, 5, 7]:
+            self.Link_2_enable = 1
+        else:
+            self.Link_2_enable = 0
+        self.Link_2_enable_button = Gtk.ToggleButton()
+        if self.Link_2_enable == 1:
+            self.Link_2_enable_button.set_active(True)
+            self.Link_2_enable_button.set_label(' ON  ')
+        else:
+            self.Link_2_enable_button.set_active(False)
+            self.Link_2_enable_button.set_label(' OFF  ')
+        self.Link_2_enable_button.connect('toggled', self.Link_2_enable_button_toggled)
+        if TPX3_datalogger.get_link_status(3) in [1, 3, 5, 7]:
+            self.Link_3_enable = 1
+        else:
+            self.Link_3_enable = 0
+        self.Link_3_enable_button = Gtk.ToggleButton()
+        if self.Link_3_enable == 1:
+            self.Link_3_enable_button.set_active(True)
+            self.Link_3_enable_button.set_label(' ON  ')
+        else:
+            self.Link_3_enable_button.set_active(False)
+            self.Link_3_enable_button.set_label(' OFF  ')
+        self.Link_3_enable_button.connect('toggled', self.Link_3_enable_button_toggled)
+        if TPX3_datalogger.get_link_status(4) in [1, 3, 5, 7]:
+            self.Link_4_enable = 1
+        else:
+            self.Link_4_enable = 0
+        self.Link_4_enable_button = Gtk.ToggleButton()
+        if self.Link_4_enable == 1:
+            self.Link_4_enable_button.set_active(True)
+            self.Link_4_enable_button.set_label(' ON  ')
+        else:
+            self.Link_4_enable_button.set_active(False)
+            self.Link_4_enable_button.set_label(' OFF  ')
+        self.Link_4_enable_button.connect('toggled', self.Link_4_enable_button_toggled)
+        if TPX3_datalogger.get_link_status(5) in [1, 3, 5, 7]:
+            self.Link_5_enable = 1
+        else:
+            self.Link_5_enable = 0
+        self.Link_5_enable_button = Gtk.ToggleButton()
+        if self.Link_5_enable == 1:
+            self.Link_5_enable_button.set_active(True)
+            self.Link_5_enable_button.set_label(' ON  ')
+        else:
+            self.Link_5_enable_button.set_active(False)
+            self.Link_5_enable_button.set_label(' OFF  ')
+        self.Link_5_enable_button.connect('toggled', self.Link_5_enable_button_toggled)
+        if TPX3_datalogger.get_link_status(6) in [1, 3, 5, 7]:
+            self.Link_6_enable = 1
+        else:
+            self.Link_6_enable = 0
+        self.Link_6_enable_button = Gtk.ToggleButton()
+        if self.Link_6_enable == 1:
+            self.Link_6_enable_button.set_active(True)
+            self.Link_6_enable_button.set_label(' ON  ')
+        else:
+            self.Link_6_enable_button.set_active(False)
+            self.Link_6_enable_button.set_label(' OFF  ')
+        self.Link_6_enable_button.connect('toggled', self.Link_6_enable_button_toggled)
+        if TPX3_datalogger.get_link_status(7) in [1, 3, 5, 7]:
+            self.Link_7_enable = 1
+        else:
+            self.Link_7_enable = 0
+        self.Link_7_enable_button = Gtk.ToggleButton()
+        if self.Link_7_enable == 1:
+            self.Link_7_enable_button.set_active(True)
+            self.Link_7_enable_button.set_label(' ON  ')
+        else:
+            self.Link_7_enable_button.set_active(False)
+            self.Link_7_enable_button.set_label(' OFF  ')
+        self.Link_7_enable_button.connect('toggled', self.Link_7_enable_button_toggled)
+
+
         #Save Button
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
         
         grid.attach(set_polarity_button_label, 0, 0, 2, 1)
-        grid.attach(self.set_polarity_button, 2, 0, 1, 1)
+        grid.attach(self.set_polarity_button, 2, 0, 2, 1)
         grid.attach(self.expert_checkbox, 5, 0, 1, 1)
         grid.attach(Fast_IO_button_label, 0, 1, 2, 1)
-        grid.attach(self.Fast_IO_button, 2, 1, 1, 1)
+        grid.attach(self.Fast_IO_button, 2, 1, 2, 1)
         grid.attach(Op_mode_label, 0, 2, 2, 1)
-        grid.attach(Op_mode_button1, 2, 2, 3, 1)
-        grid.attach(Op_mode_button2, 2, 3, 3, 1)
-        grid.attach(Op_mode_button3, 2, 4, 3, 1)
+        grid.attach(Op_mode_button1, 2, 2, 4, 1)
+        grid.attach(Op_mode_button2, 2, 3, 4, 1)
+        grid.attach(Op_mode_button3, 2, 4, 4, 1)
         grid.attach(TP_Period_label, 0, 5, 2, 1)
-        grid.attach(self.TP_Period, 2, 5, 1, 1)
+        grid.attach(self.TP_Period, 2, 5, 2, 1)
         grid.attach(Readout_Speed_entry_label, 0, 6, 2, 1)
         grid.attach(self.Readout_Speed_entry, 2, 6, 3, 1)
         grid.attach(Space, 0, 7, 3, 1)
         grid.attach(self.TP_Ext_Int_button_label, 0, 8, 2, 1)
-        grid.attach(self.TP_Ext_Int_button, 2, 8, 1, 1)
+        grid.attach(self.TP_Ext_Int_button, 2, 8, 2, 1)
         grid.attach(self.AckCommand_en_button_label, 0, 9, 2, 1)
-        grid.attach(self.AckCommand_en_button, 2, 9, 1, 1)
+        grid.attach(self.AckCommand_en_button, 2, 9, 2, 1)
         grid.attach(self.ClkOut_frequency_combo_label, 0, 10, 2, 1)
         grid.attach(self.ClkOut_frequency_combo, 2, 10, 3, 1)
         grid.attach(self.dropdown_label, 0, 11, 2, 1)
         grid.attach(self.dropdown, 2, 11, 3, 1)
         grid.attach(self.Space2, 0, 12, 3, 1)
-        grid.attach(self.Savebutton, 5, 13, 1, 1)
+        grid.attach(self.Link_label, 0, 13, 7, 1)
+        grid.attach(self.Link_0_label, 0, 14, 1, 1)
+        grid.attach(self.Link_1_label, 1, 14, 1, 1)
+        grid.attach(self.Link_2_label, 2, 14, 1, 1)
+        grid.attach(self.Link_3_label, 3, 14, 1, 1)
+        grid.attach(self.Link_4_label, 4, 14, 1, 1)
+        grid.attach(self.Link_5_label, 5, 14, 1, 1)
+        grid.attach(self.Link_6_label, 6, 14, 1, 1)
+        grid.attach(self.Link_7_label, 7, 14, 1, 1)
+        grid.attach(self.Link_0_enable_button, 0, 15, 1, 1)
+        grid.attach(self.Link_1_enable_button, 1, 15, 1, 1)
+        grid.attach(self.Link_2_enable_button, 2, 15, 1, 1)
+        grid.attach(self.Link_3_enable_button, 3, 15, 1, 1)
+        grid.attach(self.Link_4_enable_button, 4, 15, 1, 1)
+        grid.attach(self.Link_5_enable_button, 5, 15, 1, 1)
+        grid.attach(self.Link_6_enable_button, 6, 15, 1, 1)
+        grid.attach(self.Link_7_enable_button, 7, 15, 1, 1)
+        grid.attach(self.Space3, 0, 16, 3, 1)
+        grid.attach(self.Savebutton, 8, 17, 1, 1)
         
         self.show_all()
         self.TP_Ext_Int_button_label.hide()
@@ -1640,6 +1777,23 @@ class GUI_Additional_Settings(Gtk.Window):
         self.dropdown_label.hide()
         self.dropdown.hide()
         self.Space2.hide()
+        self.Link_label.hide()
+        self.Link_0_label.hide()
+        self.Link_1_label.hide()
+        self.Link_2_label.hide()
+        self.Link_3_label.hide()
+        self.Link_4_label.hide()
+        self.Link_5_label.hide()
+        self.Link_6_label.hide()
+        self.Link_7_label.hide()
+        self.Link_0_enable_button.hide()
+        self.Link_1_enable_button.hide()
+        self.Link_2_enable_button.hide()
+        self.Link_3_enable_button.hide()
+        self.Link_4_enable_button.hide()
+        self.Link_5_enable_button.hide()
+        self.Link_6_enable_button.hide()
+        self.Link_7_enable_button.hide()
         self.resize(1,1)
 
     def TP_Period_set(self, event):
@@ -1657,6 +1811,23 @@ class GUI_Additional_Settings(Gtk.Window):
             self.dropdown_label.show()
             self.dropdown.show()
             self.Space2.show()
+            self.Link_label.show()
+            self.Link_0_label.show()
+            self.Link_1_label.show()
+            self.Link_2_label.show()
+            self.Link_3_label.show()
+            self.Link_4_label.show()
+            self.Link_5_label.show()
+            self.Link_6_label.show()
+            self.Link_7_label.show()
+            self.Link_0_enable_button.show()
+            self.Link_1_enable_button.show()
+            self.Link_2_enable_button.show()
+            self.Link_3_enable_button.show()
+            self.Link_4_enable_button.show()
+            self.Link_5_enable_button.show()
+            self.Link_6_enable_button.show()
+            self.Link_7_enable_button.show()
             self.resize(1,1)
         else:
             self.TP_Ext_Int_button_label.hide()
@@ -1668,6 +1839,23 @@ class GUI_Additional_Settings(Gtk.Window):
             self.dropdown_label.hide()
             self.dropdown.hide()
             self.Space2.hide()
+            self.Link_label.hide()
+            self.Link_0_label.hide()
+            self.Link_1_label.hide()
+            self.Link_2_label.hide()
+            self.Link_3_label.hide()
+            self.Link_4_label.hide()
+            self.Link_5_label.hide()
+            self.Link_6_label.hide()
+            self.Link_7_label.hide()
+            self.Link_0_enable_button.hide()
+            self.Link_1_enable_button.hide()
+            self.Link_2_enable_button.hide()
+            self.Link_3_enable_button.hide()
+            self.Link_4_enable_button.hide()
+            self.Link_5_enable_button.hide()
+            self.Link_6_enable_button.hide()
+            self.Link_7_enable_button.hide()
             self.resize(1,1)
 
     def readout_speed_entered(self, widget):
@@ -1728,6 +1916,78 @@ class GUI_Additional_Settings(Gtk.Window):
         elif text == 'external':
             self.ClkOut_frequency_src_value = 5
 
+    def Link_0_enable_button_toggled(self, button):
+        if self.Link_0_enable_button.get_active():
+            state = 1
+            self.Link_0_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_0_enable_button.set_label(' OFF ')
+        self.Link_0_enable = state
+
+    def Link_1_enable_button_toggled(self, button):
+        if self.Link_1_enable_button.get_active():
+            state = 1
+            self.Link_1_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_1_enable_button.set_label(' OFF ')
+        self.Link_1_enable = state
+
+    def Link_2_enable_button_toggled(self, button):
+        if self.Link_2_enable_button.get_active():
+            state = 1
+            self.Link_2_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_2_enable_button.set_label(' OFF ')
+        self.Link_2_enable = state
+
+    def Link_3_enable_button_toggled(self, button):
+        if self.Link_3_enable_button.get_active():
+            state = 1
+            self.Link_3_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_3_enable_button.set_label(' OFF ')
+        self.Link_3_enable = state
+
+    def Link_4_enable_button_toggled(self, button):
+        if self.Link_4_enable_button.get_active():
+            state = 1
+            self.Link_4_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_4_enable_button.set_label(' OFF ')
+        self.Link_4_enable = state
+
+    def Link_5_enable_button_toggled(self, button):
+        if self.Link_5_enable_button.get_active():
+            state = 1
+            self.Link_5_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_5_enable_button.set_label(' OFF ')
+        self.Link_5_enable = state
+
+    def Link_6_enable_button_toggled(self, button):
+        if self.Link_6_enable_button.get_active():
+            state = 1
+            self.Link_6_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_6_enable_button.set_label(' OFF ')
+        self.Link_6_enable = state
+
+    def Link_7_enable_button_toggled(self, button):
+        if self.Link_7_enable_button.get_active():
+            state = 1
+            self.Link_7_enable_button.set_label(' ON  ')
+        else:
+            state = 0
+            self.Link_7_enable_button.set_label(' OFF ')
+        self.Link_7_enable = state
+
     def dropdown_changed(self, widget):
         self.sense_DAC_value = self.sense_DAC_dict[self.dropdown.get_active_text()]
 
@@ -1762,6 +2022,14 @@ class GUI_Additional_Settings(Gtk.Window):
         TPX3_datalogger.write_to_yaml(name = 'Sense_DAC')
         TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value)
         TPX3_datalogger.write_value(name = 'TP_Period', value = self.TP_Period_value)
+        TPX3_datalogger.change_link_status(0, self.Link_0_enable)
+        TPX3_datalogger.change_link_status(1, self.Link_1_enable)
+        TPX3_datalogger.change_link_status(2, self.Link_2_enable)
+        TPX3_datalogger.change_link_status(3, self.Link_3_enable)
+        TPX3_datalogger.change_link_status(4, self.Link_4_enable)
+        TPX3_datalogger.change_link_status(5, self.Link_5_enable)
+        TPX3_datalogger.change_link_status(6, self.Link_6_enable)
+        TPX3_datalogger.change_link_status(7, self.Link_7_enable)
 
     def window_destroy(self, widget, event):
         self.destroy()

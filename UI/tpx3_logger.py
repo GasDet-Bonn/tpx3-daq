@@ -532,6 +532,24 @@ class TPX3_data_logger(object):
 
         return True
 
+    def get_link_status(self, link):
+        for i in range (0,7):
+            name = 'Chip' + str(i) +'_name'
+            value_list = self.data[name]
+            if not value_list == [None]:
+                for n in range(1, len(value_list)):
+                    element_list = value_list[n]
+                    chip_link = element_list[1]
+                    link_veto = element_list[5]
+                    if chip_link == link:
+                        return int(link_veto)
+            else:
+                print('Error: Unknown link status')
+                return False
+        else:
+            print('No link data, run Init')
+            return False
+
     def write_to_yaml(self, name):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if name == 'init':
