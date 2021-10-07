@@ -98,7 +98,7 @@ def expert_completer(text, state):
 # With this you can end a wrong started function with "Ctrl. c" without ending the whole CLI.
 class TPX3_multiprocess_start(object):
     def process_call(function, **kwargs):
-        
+
         def startup_func(function, **kwargs):
             system_exit = False
             try:  
@@ -166,7 +166,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            
+
         print('ToT calibration with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'mask_step =', mask_step)
         new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib',
                                                            VTP_fine_start = VTP_fine_start,
@@ -223,7 +223,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            
+
         print('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan',
                                                            Vthreshold_start = Vthreshold_start,
@@ -292,7 +292,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            
+
         print('Threshold scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step = ', mask_step, 'Number of pulse heights = ', n_pulse_heights)
         new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib',
                                                            iteration = 0,
@@ -352,7 +352,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            
+
         print('Testpulse scan with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =',VTP_fine_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan',
                                                            VTP_fine_start = VTP_fine_start,
@@ -471,7 +471,7 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
-            
+
         print('Equalisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         result_path = Queue()
         new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge',
@@ -589,7 +589,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
-        
+
         if file_name == None:
             print('> Please enter the path you like to save the backup under:')
             file_name = input('>> ')
@@ -622,7 +622,7 @@ class TPX3_CLI_function_call(object):
             TPX3_datalogger.write_to_yaml(name = 'Polarity')
         else:
             print('Unknown polarity')
-    
+
     def Set_operation_mode(object, Op_mode = None):
         if Op_mode == None:
             print('> Please enter the operation mode (0 for ToT and TOA, 1 for only TOA, 2 for Event Count & Integral ToT):')
@@ -772,7 +772,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.expanduser(user_path)
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'masks')
-        
+
         if mask_path == None:
             print('> Please enter the name of the mask file you like to load:')
             mask_path = input('>> ')
@@ -789,7 +789,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.expanduser(user_path)
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'masks')
-        
+
         if file_name == None:
             print('> Please enter the the name you like to save the mask under:')
             file_name = input('>> ')
@@ -803,7 +803,7 @@ class TPX3_CLI_function_call(object):
                 copy(current_mask, full_path)
         except:
             print('Could not write file')
-    
+
     def Enable_Link(object, link = None, flag = None):
         if link == None:
             print('> Please enter the link you like to disable/enable[0-7]:')
@@ -1001,7 +1001,7 @@ class TPX3_CLI_function_call(object):
             TPX3_datalogger.write_to_yaml(name = 'Sense_DAC')
         else:
             print('Unknown value')
-        
+
     def Initialise_Hardware(object):
         hardware_scan_results = Queue()
         new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware',
@@ -1045,7 +1045,7 @@ class TPX3_CLI_TOP(object):
                     cmd_list.append(cmd_list_element)
                     cmd_list_element = []
             cmd_list.append(cmd_list_element)
-            
+
             # Exit loop at the end
             cmd_list.append(['Quit'])
 
@@ -1071,7 +1071,7 @@ class TPX3_CLI_TOP(object):
                 print(inputlist)
                 cmd_list.pop(0)
                 print(cmd_list)
-            
+
             if inputlist:
                 #Help
                 if inputlist[0] in {'Help', 'help', 'h', '-h'}:
@@ -1133,7 +1133,7 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 5:
                             print('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
-               
+
                 #Threshold_Calib
                 elif inputlist[0] in {'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',}:
                     if len(inputlist) == 1:
@@ -1244,7 +1244,7 @@ class TPX3_CLI_TOP(object):
                             print('User quit')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the Set DAC function. As arguments you can give the DAC-name/DAC-number  and the new value.\n The following DACs are aviable:\n     1.) Ibias_Preamp_ON (0-255)\n     2.) VPreamp_NCAS (0-255)\n     3.) Ibias_Ikrum (0-255)\n     4.) Vfbk (0-255)\n     5.) Vthreshold_fine (0-511)\n     6.) Vthreshold_coarse (0-15)\n     7.) Ibias_DiscS1_ON (0-255)\n     8.) Ibias_DiscS2_ON (0-255)\n     9.) Ibias_PixelDAC (0-255)\n    10.) Ibias_TPbufferIn (0-255)\n    11.) Ibias_TPbufferOut (0-255)\n    12.) VTP_coarse (0-255)\n    13.) VTP_fine (0-511)\n    14.) Ibias_CP_PLL (0-255)\n    15.) PLL_Vcntrl (0-255)')                
+                            print('This is the Set DAC function. As arguments you can give the DAC-name/DAC-number and the new value.\n The following DACs are aviable:\n     1.) Ibias_Preamp_ON (0-255)\n     2.) VPreamp_NCAS (0-255)\n     3.) Ibias_Ikrum (0-255)\n     4.) Vfbk (0-255)\n     5.) Vthreshold_fine (0-511)\n     6.) Vthreshold_coarse (0-15)\n     7.) Ibias_DiscS1_ON (0-255)\n     8.) Ibias_DiscS2_ON (0-255)\n     9.) Ibias_PixelDAC (0-255)\n    10.) Ibias_TPbufferIn (0-255)\n    11.) Ibias_TPbufferOut (0-255)\n    12.) VTP_coarse (0-255)\n    13.) VTP_fine (0-511)\n    14.) Ibias_CP_PLL (0-255)\n    15.) PLL_Vcntrl (0-255)')
                         elif len(inputlist) < 3:
                             print('Incomplete set of parameters:')
                             try:
@@ -1537,7 +1537,7 @@ class TPX3_CLI_TOP(object):
                 #Save mask
                 elif inputlist[0] in {'Save_Mask', 'save_mask'}:
                     if len(inputlist) == 1:
-                        print('Save_ask')
+                        print('Save mask')
                         try:
                             function_call.Save_Mask()
                         except KeyboardInterrupt:
@@ -1795,7 +1795,7 @@ class TPX3_CLI_TOP(object):
                     except:
                         pass
                     print('GasDet Bonn 2019-2021')
-                
+
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
                     if self.Gui_activated == True and self.plot_window_process != None:
@@ -1822,10 +1822,10 @@ class TPX3_CLI_TOP(object):
                     print('Goodbye and have a nice day.')
                     break
 
-                # Expert mode functions
+                #Expert mode functions
                 elif expertmode == True:
 
-                    # Set CLK fast mode
+                    #Set CLK fast mode
                     if inputlist[0] in {'Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', 'clk_fast_mode'}:
                         if len(inputlist) == 1:
                             print('Set CLK_fast_mode')

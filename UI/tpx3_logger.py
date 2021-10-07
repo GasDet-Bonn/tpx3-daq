@@ -474,7 +474,7 @@ class TPX3_data_logger(object):
             value = self.data[name]
             return value
         print('Error: Unknown data name')
-        return False    
+        return False
 
     def get_data(self):
         return self.data
