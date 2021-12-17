@@ -4,35 +4,35 @@
 
 `include "tpx3_core.v"
 
-`include "../lib/si_udp/si_udp.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g_fifo.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/axis_gmii_rx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/axis_gmii_tx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/lfsr.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/eth_axis_rx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/eth_axis_tx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/udp_complete.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/udp_checksum_gen.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/udp.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/udp_ip_rx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/udp_ip_tx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/ip_complete.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/ip.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/ip_eth_rx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/ip_eth_tx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/ip_arb_mux_2.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/ip_mux_2.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/arp.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/arp_cache.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/arp_eth_rx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/arp_eth_tx.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/eth_arb_mux_2.v"
-`include "../lib/si_udp/verilog-ethernet/rtl/eth_mux_2.v"
-`include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/arbiter.v"
-`include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/priority_encoder.v"
-`include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/axis_fifo.v"
-`include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/axis_async_frame_fifo.v"
+// `include "../lib/si_udp/si_udp.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g_fifo.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/axis_gmii_rx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/axis_gmii_tx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/lfsr.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/eth_axis_rx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/eth_axis_tx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/udp_complete.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/udp_checksum_gen.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/udp.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/udp_ip_rx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/udp_ip_tx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/ip_complete.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/ip.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/ip_eth_rx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/ip_eth_tx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/ip_arb_mux_2.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/ip_mux_2.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/arp.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/arp_cache.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/arp_eth_rx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/arp_eth_tx.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/eth_arb_mux_2.v"
+// `include "../lib/si_udp/verilog-ethernet/rtl/eth_mux_2.v"
+// `include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/arbiter.v"
+// `include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/priority_encoder.v"
+// `include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/axis_fifo.v"
+// `include "../lib/si_udp/verilog-ethernet/lib/axis/rtl/axis_async_frame_fifo.v"
 
 `include "sync_reset.v"
 
@@ -51,6 +51,14 @@
 `include "coregen/gig_eth_pcs_pma_v11_5/example_design/gig_eth_pcs_pma_v11_5_reset_sync.v"
 `include "coregen/gig_eth_pcs_pma_v11_5/example_design/gig_eth_pcs_pma_v11_5_sync_block.v"
 //`include "coregen/gig_eth_pcs_pma_v11_5.v"
+
+`include "../lib/SiTCP_Netlist_for_Virtex6/TIMER.v"
+`include "../lib/SiTCP_Netlist_for_Virtex6/SiTCP_XC6V_32K_BBT_V110.V"
+`include "../lib/SiTCP_Netlist_for_Virtex6/WRAP_SiTCP_GMII_XC6V_32K.V"
+
+`include "../lib/extra/rbcp_to_sbus.v"
+
+`include "utils/fifo_32_to_8.v"
 
 module tpx3_sfp (
 
@@ -106,7 +114,7 @@ module tpx3_sfp (
 
     // Internal 125 MHz clock
     wire CLK125;
-    wire rst_125mhz_int;
+    wire rst_125mhz;
 
     wire mmcm_rst = 1'b0;                                                                                                                                                                              //RST;//reset;
     wire mmcm_locked;
@@ -121,6 +129,7 @@ module tpx3_sfp (
     wire CLK40_MMCM;
     wire CLK320_MMCM;
     wire CLK32_MMCM;
+    wire CLKBUS_MMCM;
 
     // MMCM instance
     // 200 MHz in, 125 MHz out
@@ -139,7 +148,7 @@ module tpx3_sfp (
         .CLKOUT2_DIVIDE    (30         ),
         .CLKOUT2_DUTY_CYCLE(0.5        ),
         .CLKOUT2_PHASE     (0          ),
-        .CLKOUT3_DIVIDE    (1          ),
+        .CLKOUT3_DIVIDE    (7          ),
         .CLKOUT3_DUTY_CYCLE(0.5        ),
         .CLKOUT3_PHASE     (0          ),
         .CLKOUT4_DIVIDE    (1          ),
@@ -170,7 +179,7 @@ module tpx3_sfp (
         .CLKOUT1B (            ),
         .CLKOUT2  ( CLK32_MMCM ),
         .CLKOUT2B (            ),
-        .CLKOUT3  (            ),
+        .CLKOUT3  ( CLKBUS_MMCM),
         .CLKOUT3B (            ),
         .CLKOUT4  (            ),
         .CLKOUT5  (            ),
@@ -196,21 +205,27 @@ module tpx3_sfp (
         .O(CLK32     )
     );
 
+    wire BUS_CLK;
+    BUFG clk_bus_bufg_inst (
+        .I(CLKBUS_MMCM),
+        .O(BUS_CLK)
+    );
+
     sync_reset #(.N(4)) sync_reset_125mhz_inst (
         .clk           (CLK125        ),
         .rst           (~mmcm_locked  ),
-        .sync_reset_out(rst_125mhz_int)
+        .sync_reset_out(rst_125mhz)
     );
 
     // SGMII interface to PHY
-    wire phy_gmii_rst_int;
-    wire phy_gmii_clk_en_int;
-    wire [7:0] phy_gmii_txd_int;
-    wire phy_gmii_tx_en_int;
-    wire phy_gmii_tx_er_int;
-    wire [7:0] phy_gmii_rxd_int;
-    wire phy_gmii_rx_dv_int;
-    wire phy_gmii_rx_er_int;
+    wire gmii_rst;
+    wire gmii_clk_en;
+    wire [7:0] gmii_txd;
+    wire gmii_tx_en;
+    wire gmii_tx_er;
+    wire [7:0] gmii_rxd;
+    wire gmii_rx_dv;
+    wire gmii_rx_er;
 
     wire CLK125_MGT;
     wire CLK125_PHY;
@@ -230,8 +245,8 @@ module tpx3_sfp (
 
     sync_reset #(.N(4)) sync_reset_pcspma_inst (
         .clk           (CLK125          ),
-        .rst           (rst_125mhz_int  ),
-        .sync_reset_out(phy_gmii_rst_int)
+        .rst           (rst_125mhz  ),
+        .sync_reset_out(gmii_rst)
     );
 
     wire [15:0] pcspma_status_vector;
@@ -287,17 +302,17 @@ module tpx3_sfp (
         .rxn                  ( SFP_RX_N                ),
         .txoutclk             ( CLK125_PHY              ),
         .userclk2             ( CLK125                  ),
-        .pma_reset            ( rst_125mhz_int| phy_rst ),
+        .pma_reset            ( rst_125mhz| phy_rst ),
         // GMII Interface
         //.sgmii_clk_r           (),
         //.sgmii_clk_f           (),
-        //.sgmii_clk_en          (phy_gmii_clk_en_int),
-        .gmii_txd             ( phy_gmii_txd_int        ),
-        .gmii_tx_en           ( phy_gmii_tx_en_int      ),
-        .gmii_tx_er           ( phy_gmii_tx_er_int      ),
-        .gmii_rxd             ( phy_gmii_rxd_int        ),
-        .gmii_rx_dv           ( phy_gmii_rx_dv_int      ),
-        .gmii_rx_er           ( phy_gmii_rx_er_int      ),
+        //.sgmii_clk_en          (gmii_clk_en),
+        .gmii_txd             ( gmii_txd        ),
+        .gmii_tx_en           ( gmii_tx_en      ),
+        .gmii_tx_er           ( gmii_tx_er      ),
+        .gmii_rxd             ( gmii_rxd        ),
+        .gmii_rx_dv           ( gmii_rx_dv      ),
+        .gmii_rx_er           ( gmii_rx_er      ),
         .gmii_isolate         (                         ),
         // Management: Alternative to MDIO Interface
         .configuration_vector ( pcspma_config_vector    ),
@@ -316,7 +331,7 @@ module tpx3_sfp (
         .speed_is_100         ( 1'b0                    ), //(pcspma_status_speed == 2'b01),
         // General IO's
         .status_vector        ( pcspma_status_vector    ),
-        .reset                ( rst_125mhz_int | phy_rst),
+        .reset                ( rst_125mhz | phy_rst),
         .signal_detect        ( 1'b1                    )
     );
 
@@ -343,34 +358,113 @@ module tpx3_sfp (
 
 
     wire [31:0] BUS_ADD, BUS_DATA_OUT, BUS_DATA_IN;
-    wire BUS_RD, BUS_WR, BUS_CLK, BUS_RST, BUS_BYTE_ACCESS;
+    wire BUS_RD, BUS_WR, BUS_RST, BUS_BYTE_ACCESS;
 
-    si_udp si_udp_inst (
+    wire SiTCP_RST;
+    wire TCP_CLOSE_REQ;
 
-        .clk_125mhz     (CLK125            ),
-        .rst_125mhz     (rst_125mhz_int    ),
+    wire RBCP_ACT, RBCP_WE, RBCP_RE;
+    wire [7:0] RBCP_WD, RBCP_RD;
+    wire [31:0] RBCP_ADDR;
+    wire RBCP_ACK;
 
-        .phy_gmii_clk   (CLK125            ),
-        .phy_gmii_rst   (phy_gmii_rst_int  ),
-        .phy_gmii_clk_en(1'b1              ),
+    wire TCP_TX_WR;
+    wire TCP_TX_FULL;
+    wire [7:0] TCP_TX_DATA;
 
-        .phy_gmii_rxd   (phy_gmii_rxd_int  ),
-        .phy_gmii_rx_dv (phy_gmii_rx_dv_int),
-        .phy_gmii_rx_er (phy_gmii_rx_er_int),
-        .phy_gmii_txd   (phy_gmii_txd_int  ),
-        .phy_gmii_tx_en (phy_gmii_tx_en_int),
-        .phy_gmii_tx_er (phy_gmii_tx_er_int),
-        .phy_reset_n    (PHY_RESET_N       ),
+    assign BUS_RST = SiTCP_RST;
+    wire RST;
+    assign RST = ~mmcm_locked ;
 
-        .BUS_CLK        (BUS_CLK           ),
-        .BUS_RST        (BUS_RST           ),
-        .BUS_ADD        (BUS_ADD           ),
-        .BUS_DATA_IN    (BUS_DATA_IN       ),
-        .BUS_DATA_OUT   (BUS_DATA_OUT      ),
-        .BUS_RD         (BUS_RD            ),
-        .BUS_WR         (BUS_WR            ),
-        .BUS_BYTE_ACCESS(BUS_BYTE_ACCESS   )
+    WRAP_SiTCP_GMII_XC6V_32K sitcp(
+        .CLK(BUS_CLK)                ,    // in     : System Clock >129MHz
+        .RST(RST)                    ,    // in     : System reset
+        // Configuration parameters
+        .FORCE_DEFAULTn(1'b0)        ,    // in     : Load default parameters
+        .EXT_IP_ADDR({8'd192, 8'd168, 8'd10, 8'd23}),   //IP address[31:0] default: 192.168.10.23. If jumpers are set: 192.168.[11..25].23
+        .EXT_TCP_PORT(16'd24)        ,    // in     : TCP port #[15:0]
+        .EXT_RBCP_PORT(16'd4660)     ,    // in     : RBCP port #[15:0]
+        .PHY_ADDR(5'd3)              ,    // in     : PHY-device MIF address[4:0]
+        // EEPROM
+        .EEPROM_CS()    ,    // out    : Chip select
+        .EEPROM_SK()    ,    // out    : Serial data clock
+        .EEPROM_DI()    ,    // out    : Serial write data
+        .EEPROM_DO(1'd0)    ,    // in     : Serial read data
+        // User data, initial values are stored in the EEPROM, 0xFFFF_FC3C-3F
+        .USR_REG_X3C()               ,    // out    : Stored at 0xFFFF_FF3C
+        .USR_REG_X3D()               ,    // out    : Stored at 0xFFFF_FF3D
+        .USR_REG_X3E()               ,    // out    : Stored at 0xFFFF_FF3E
+        .USR_REG_X3F()               ,    // out    : Stored at 0xFFFF_FF3F
+        // MII interface
+        .GMII_RSTn(PHY_RESET_N)        ,    // out    : PHY reset !!!!!!!!!!!!!!!!!!!!!!!!!
+        .GMII_1000M(1'b1)            ,    // in     : GMII mode (0:MII, 1:GMII)
+        // TX 
+        .GMII_TX_CLK(CLK125)       ,    // in     : Tx clock
+        .GMII_TX_EN(gmii_tx_en)      ,    // out    : Tx enable
+        .GMII_TXD(gmii_txd)          ,    // out    : Tx data[7:0]
+        .GMII_TX_ER(gmii_tx_er)      ,    // out    : TX error
+        // RX
+        .GMII_RX_CLK(CLK125)       ,    // in     : Rx clock
+        .GMII_RX_DV(gmii_rx_dv)      ,    // in     : Rx data valid
+        .GMII_RXD(gmii_rxd)          ,    // in     : Rx data[7:0]
+        .GMII_RX_ER(gmii_rx_er)      ,    // in     : Rx error
+        .GMII_CRS(1'b0)          ,    // in     : Carrier sense
+        .GMII_COL(1'b0)          ,    // in     : Collision detected
+        // Management IF
+        .GMII_MDC()      ,    // out    : Clock for MDIO
+        .GMII_MDIO_IN(1'b0)    ,    // in     : Data
+        .GMII_MDIO_OUT()   ,    // out    : Data
+        .GMII_MDIO_OE()    ,    // out    : MDIO output enable
+        // User I/F
+        .SiTCP_RST(SiTCP_RST)        ,    // out    : Reset for SiTCP and related circuits
+        // TCP connection control
+        .TCP_OPEN_REQ(1'b0)          ,    // in     : Reserved input, shoud be 0
+        .TCP_OPEN_ACK()  ,    // out    : Acknowledge for open (=Socket busy)
+        .TCP_ERROR()        ,    // out    : TCP error, its active period is equal to MSL
+        .TCP_CLOSE_REQ(TCP_CLOSE_REQ),    // out    : Connection close request
+        .TCP_CLOSE_ACK(TCP_CLOSE_REQ),    // in     : Acknowledge for closing
+        // FIFO I/F
+        .TCP_RX_WC(1'b1)             ,    // in     : Rx FIFO write count[15:0] (Unused bits should be set 1)
+        .TCP_RX_WR()        ,    // out    : Write enable
+        .TCP_RX_DATA()    ,    // out    : Write data[7:0]
+        .TCP_TX_FULL(TCP_TX_FULL)    ,    // out    : Almost full flag
+        .TCP_TX_WR(TCP_TX_WR)        ,    // in     : Write enable
+        .TCP_TX_DATA(TCP_TX_DATA)    ,    // in     : Write data[7:0]
+        // RBCP
+        .RBCP_ACT(RBCP_ACT)          ,    // out    : RBCP active
+        .RBCP_ADDR(RBCP_ADDR)        ,    // out    : Address[31:0]
+        .RBCP_WD(RBCP_WD)            ,    // out    : Data[7:0]
+        .RBCP_WE(RBCP_WE)            ,    // out    : Write enable
+        .RBCP_RE(RBCP_RE)            ,    // out    : Read enable
+        .RBCP_ACK(RBCP_ACK)          ,    // in     : Access acknowledge
+        .RBCP_RD(RBCP_RD)                 // in     : Read data[7:0]
     );
+
+    // IOBUF iobuf_mdio(
+    //     .O(mdio_gem_i),
+    //     .IO(mdio_phy_mdio),
+    //     .I(mdio_gem_o),
+    //     .T(mdio_gem_t)
+    // );
+
+    rbcp_to_bus rbcp_to_bus(
+        .BUS_RST(BUS_RST),
+        .BUS_CLK(BUS_CLK),
+
+        .RBCP_ACT(RBCP_ACT),
+        .RBCP_ADDR(RBCP_ADDR),
+        .RBCP_WD(RBCP_WD),
+        .RBCP_WE(RBCP_WE),
+        .RBCP_RE(RBCP_RE),
+        .RBCP_ACK(RBCP_ACK),
+        .RBCP_RD(RBCP_RD),
+
+        .BUS_WR(BUS_WR),
+        .BUS_RD(BUS_RD),
+        .BUS_ADD(BUS_ADD),
+        .BUS_DATA_IN    (BUS_DATA_IN),
+        .BUS_DATA_OUT   (BUS_DATA_OUT)
+    ); 
 
     wire TPX3_1_ClkInRefPLL_reg, TPX3_1_ClkIn40_reg;
 	 
@@ -425,7 +519,7 @@ module tpx3_sfp (
         .RST   ( ~mmcm_locked)  // 1-bit Reset input
     );
 
-    tpx3_core tpx3_core_inst(
+    tpx3_core tpx3_core_inst (
         .BUS_CLK        (BUS_CLK              ),
         .BUS_RST        (BUS_RST              ),
         .BUS_ADD        (BUS_ADD              ),
@@ -433,7 +527,10 @@ module tpx3_sfp (
         .BUS_DATA_OUT   (BUS_DATA_OUT         ),
         .BUS_RD         (BUS_RD               ),
         .BUS_WR         (BUS_WR               ),
-        .BUS_BYTE_ACCESS(BUS_BYTE_ACCESS      ),
+
+        .ARB_READY_OUT(ARB_READY_OUT),
+        .ARB_WRITE_OUT(ARB_WRITE_OUT),
+        .ARB_DATA_OUT(ARB_DATA_OUT),
 
         .CLK40          (CLK40                ),
         .CLK320         (CLK320               ),
@@ -454,23 +551,29 @@ module tpx3_sfp (
 
     );
 
+
+    wire ARB_READY_OUT,ARB_WRITE_OUT;
+    wire [31:0] ARB_DATA_OUT;
+
+    wire fifo_empty, fifo_full;
+    fifo_32_to_8 #(
+        .DEPTH(2*1024)
+    ) data_fifo (
+        .RST(BUS_RST),
+        .CLK(BUS_CLK),
+
+        .WRITE(ARB_WRITE_OUT),
+        .READ(TCP_TX_WR),
+        .DATA_IN(ARB_DATA_OUT),
+        .FULL(fifo_full),
+        .EMPTY(fifo_empty),
+        .DATA_OUT(TCP_TX_DATA)
+    );
+
+    assign TCP_TX_WR = !TCP_TX_FULL && !fifo_empty;
+    assign ARB_READY_OUT = !fifo_full;
+
     wire CLK40_OUT;
     ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_CLK40_OUT ( .Q(CLK40_OUT), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
-
-    //assign LED = {pcspma_status_vector[0],basex_or_sgmii};
-	 /*
-    wire [35:0] control_bus;
-    chipscope_icon ichipscope_icon
-    (
-        .CONTROL0(control_bus)
-    );
-    chipscope_ila ichipscope_ila
-    (
-        .CONTROL(control_bus                                ),
-        .CLK    (CLK125                                     ),
-        //.TRIG0({pcspma_status_vector, phy_gmii_rxd_int, phy_gmii_rx_dv_int, phy_gmii_rx_er_int, phy_gmii_clk_en_int, phy_gmii_rst_int,mmcm_locked})
-        .TRIG0  ({cnt[15:0], basex_or_sgmii, phy_rst, ETH_STATUS_OK})
-    );
-	 */
 
 endmodule

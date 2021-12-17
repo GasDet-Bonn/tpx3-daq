@@ -67,17 +67,18 @@ def main(args_dict):
         for i in range(32):
             chip['RX0'].reset()            
             chip['RX0'].INVERT = 0
-            chip['RX0'].SAMPLING_EDGE = 0                   
+            chip['RX0'].SAMPLING_EDGE = 0                  
             chip['RX0'].DATA_DELAY = i  # i
             chip['RX0'].ENABLE = 1
-            chip['FIFO'].reset()
-            time.sleep(0.01)
+            chip["FIFO"].RESET
+            time.sleep(0.02)
             chip['FIFO'].get_data()
 
             for _ in range(100):
                 data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)]
                 chip.write(data)
 
+            time.sleep(0.01)
             fdata = chip['FIFO'].get_data()
             print('i =', i, '\tlen =', len(fdata), '\terror =', chip['RX0'].get_decoder_error_counter(), "\tready =", chip['RX0'].is_ready)
 
@@ -92,7 +93,7 @@ def main(args_dict):
             pretty_print(i)
 
     chip['RX0'].reset()
-    chip['RX0'].DATA_DELAY = 20
+    chip['RX0'].DATA_DELAY = 7
     chip['RX0'].ENABLE = 1
     time.sleep(0.01)
         
@@ -104,7 +105,7 @@ def main(args_dict):
     data = chip.read_periphery_template("EFuse_Read")
     data += [0x00]*4
     print(data)
-    chip["FIFO"].reset()
+    chip["FIFO"].RESET
     time.sleep(0.1)
     chip.write(data)
     time.sleep(0.1)
@@ -120,13 +121,13 @@ def main(args_dict):
 
     print("Test set DAC")
     data = chip.set_dac("Vfbk", 0b10101011, write=False)
-    chip['FIFO'].reset()
+    chip["FIFO"].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.read_dac("Vfbk", write=False)
-
-    chip['FIFO'].reset()
+            
+    chip["FIFO"].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
@@ -148,13 +149,13 @@ def main(args_dict):
 
     print("Test set general config")
     data = chip.write_general_config(write=False)
-    chip['FIFO'].reset()
+    chip["FIFO"].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.read_general_config(write=False)
 
-    chip['FIFO'].reset()
+    chip["FIFO"].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
@@ -178,18 +179,18 @@ def main(args_dict):
 
     print("Test test pulse registers")
     data = chip.write_tp_period(100, 0, write=False)
-    chip['FIFO'].reset()
+    chip["FIFO"].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.write_tp_pulsenumber(1000, write=False)
-    chip['FIFO'].reset()
+    chip["FIFO"].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.read_tp_config(write=False)
 
-    chip['FIFO'].reset()
+    chip["FIFO"].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
@@ -214,7 +215,7 @@ def main(args_dict):
     if timestamp_request is True:
         print("Test Timestamp extension")
         chip['gpio'].reset()
-        chip['FIFO'].reset()
+        chip["FIFO"].RESET
         time.sleep(0.01)
         chip['FIFO'].get_data()
 
@@ -289,13 +290,13 @@ def main(args_dict):
 
             data = chip.read_periphery_template("EFuse_Read")
             data += [0x00]*4
-            chip["FIFO"].reset()
+            chip["FIFO"].RESET
             time.sleep(0.1)
             chip.write(data)
             time.sleep(0.1)
 
             chip['gpio'].reset()
-            chip['FIFO'].reset()
+            chip["FIFO"].RESET 
             time.sleep(0.01)
             chip['FIFO'].get_data()
 
@@ -314,12 +315,12 @@ def main(args_dict):
             time.sleep(0.01)
 
             data = chip.write_tp_period(2, 0, write=False)
-            chip['FIFO'].reset()
+            chip["FIFO"].RESET
             time.sleep(0.01)
             chip.write(data)
             time.sleep(0.01)
             data = chip.write_tp_pulsenumber(20, write=False)
-            chip['FIFO'].reset()
+            chip["FIFO"].RESET
             time.sleep(0.01)
             chip.write(data)
             time.sleep(0.01)

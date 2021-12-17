@@ -213,7 +213,7 @@ class ScanBase(object):
             self.chip[channel.name].ENABLE = 1
 
             # Reset and clean the FIFO
-            self.chip['FIFO'].reset()
+            self.chip['FIFO'].RESET
             time.sleep(0.01)
             self.chip['FIFO'].get_data()
 
@@ -222,12 +222,13 @@ class ScanBase(object):
             data += [0x00]*4
             self.chip.write(data)
 
+            time.sleep(0.05)
             # Get the data from the chip
             fdata = self.chip['FIFO'].get_data()
             dout = self.chip.decode_fpga(fdata, True)
 
             # Check if the received Chip ID is identical with the expected
-            if dout[1][19:0].tovalue() != register['chip-id']:
+            if register['chip-id']!=0 and dout[1][19:0].tovalue() != register['chip-id']:
                 valid = False
                 break
 
@@ -262,28 +263,28 @@ class ScanBase(object):
                 if register["name"] == channel.name:
                     break
 
-            if register['chip-id'] != 0:
-                # Create the chip output channel mask and write the output block
-                self.chip._outputBlocks["chan_mask"] = self.chip._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
-                self.chip.write_outputBlock_config()
 
-                # Activate the current fpga link and set all its settings
-                self.chip[register['name']].DATA_DELAY = register['data-delay']
-                self.chip[register['name']].INVERT = register['data-invert']
-                self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
-                self.chip[register['name']].ENABLE = 1
-                
-                bit_id = BitLogic.from_value(register['chip-id'])
+            # Create the chip output channel mask and write the output block
+            self.chip._outputBlocks["chan_mask"] = self.chip._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
+            self.chip.write_outputBlock_config()
 
-                # Decode the Chip-ID
-                self.wafer_number = bit_id[19:8].tovalue()
-                self.x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
-                self.y_position =bit_id[7:4].tovalue()
-                ID = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
+            # Activate the current fpga link and set all its settings
+            self.chip[register['name']].DATA_DELAY = register['data-delay']
+            self.chip[register['name']].INVERT = register['data-invert']
+            self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+            self.chip[register['name']].ENABLE = 1
+            
+            bit_id = BitLogic.from_value(register['chip-id'])
 
-                # Write new Chip-ID to the list
-                if ID not in ID_List:
-                    ID_List.append(ID)
+            # Decode the Chip-ID
+            self.wafer_number = bit_id[19:8].tovalue()
+            self.x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+            self.y_position =bit_id[7:4].tovalue()
+            ID = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
+
+            # Write new Chip-ID to the list
+            if ID not in ID_List:
+                ID_List.append(ID)
 
         self.number_of_chips = len(ID_List)
         if self.number_of_chips > 1:
@@ -586,7 +587,7 @@ class ScanBase(object):
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
-    def start(self, readout_interval = 0.01, moving_average_time_period = 10, iteration = None, status = None, **kwargs):
+    def start(self, readout_interval = 0.005, moving_average_time_period = 10, iteration = None, status = None, **kwargs):
         '''
             Prepares the scan and starts the actual test routine
         '''
@@ -607,7 +608,7 @@ class ScanBase(object):
         self.chip.toggle_pin("RESET")
 
         self.init_links()
-        
+
         # Set the output settings of the chip
         data = self.chip.write_outputBlock_config()
         self.fifo_readout.print_readout_status()
@@ -748,6 +749,7 @@ class ScanBase(object):
         errback = kwargs.pop('errback', self.handle_err)
         no_data_timeout = kwargs.pop('no_data_timeout', None)
         self.scan_param_id = scan_param_id
+        time.sleep(0.02)  # sleep here for a while
         self.fifo_readout.start(reset_sram_fifo=reset_sram_fifo, fill_buffer=fill_buffer, clear_buffer=clear_buffer,
                                 callback=callback, errback=errback, no_data_timeout=no_data_timeout)
 

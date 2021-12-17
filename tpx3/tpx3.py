@@ -382,7 +382,7 @@ class TPX3(Dut):
             for key in elements:
                 tmp_dict[key] = register[key]
             outdict[register['name']]  = tmp_dict
-            valsize_map[register['name']] = int(tmp_dict['size'])
+            valsize_map[register['name']] = int(tmp_dict['size'])        
         # now create the correct custom dict
         c_dict = CustomDict(valsize_map, dict_type)
 
@@ -668,7 +668,7 @@ class TPX3(Dut):
             return
 
         if clear_fifo:
-            self['FIFO'].reset()
+            self['FIFO'].RESET
             time.sleep(TPX3_SLEEP)
 
         # total size in bits

@@ -20,9 +20,6 @@
 `include "../lib/tpx3_timestamp/timestamp_core.v"
 `include "../lib/tpx3_timestamp/timestamp_sbus.v"
 
-`include "bram_fifo/bram_fifo_core.v"
-`include "../lib/extra/bram_fifo_sbus.v"
-
 `include "rrp_arbiter/rrp_arbiter.v"
 
 `include "utils/sbus_to_ip.v"
@@ -41,11 +38,14 @@ module tpx3_core (
         input  wire        BUS_CLK,
         input  wire        BUS_RST,
         input  wire [31:0] BUS_ADD,
-        input  wire [31:0] BUS_DATA_IN,
-        output wire [31:0] BUS_DATA_OUT,
+        input  wire [7:0] BUS_DATA_IN,
+        output wire [7:0] BUS_DATA_OUT,
         input  wire        BUS_RD,
         input  wire        BUS_WR,
-        output wire        BUS_BYTE_ACCESS,
+
+        input wire ARB_READY_OUT,
+        output wire ARB_WRITE_OUT,
+        output wire [31:0] ARB_DATA_OUT,
 
         input wire CLK40, CLK32, CLK320,
 
@@ -92,33 +92,23 @@ module tpx3_core (
     //////////////////////
     // MODULE ADREESSES //
     //////////////////////
-    localparam GPIO_BASEADDR = 32'h1000;
-    localparam GPIO_HIGHADDR = 32'h2000-1;
+    localparam GPIO_BASEADDR = 16'h1000;
+    localparam GPIO_HIGHADDR = 16'h2000-1;
 
-    localparam SPI_BASEADDR = 32'h2000;   //0x1000
-    localparam SPI_HIGHADDR = 32'h3000-1; //0x300f
+    localparam SPI_BASEADDR = 16'h2000;   //0x1000
+    localparam SPI_HIGHADDR = 16'h3000-1; //0x300f
 
-    localparam TIMESTAMP_BASEADDR = 32'h3000; 
-    localparam TIMESTAMP_HIGHADDR = 32'h4000-1; 
+    localparam TIMESTAMP_BASEADDR = 16'h3000; 
+    localparam TIMESTAMP_HIGHADDR = 16'h4000-1; 
 
-    localparam TS_PULSE_BASEADDR = 32'h4000;
-    localparam TS_PULSE_HIGHADDR = 32'h5000-1;
+    localparam TS_PULSE_BASEADDR = 16'h4000;
+    localparam TS_PULSE_HIGHADDR = 16'h5000-1;
 
-    localparam RX_BASEADDR = 32'h6000;
-    localparam RX_HIGHADDR = 32'h7000-1;
+    localparam RX_BASEADDR = 16'h6000;
+    localparam RX_HIGHADDR = 16'h7000-1;
 
     parameter RX_CH_NO = 8;
-
-    localparam FIFO_BASEADDR = 32'h8000;
-    localparam FIFO_HIGHADDR = 32'h9000-1;
-
-    parameter FIFO_BRAM_SIZE = 32*1024;
-
-    parameter FIFO_BASEADDR_DATA = 32'h0000_a000;
-    localparam FIFO_HIGHADDR_DATA = FIFO_BASEADDR_DATA + FIFO_BRAM_SIZE - 1;
-
-    parameter ABUSWIDTH = 32;
-    assign BUS_BYTE_ACCESS = BUS_ADD < FIFO_BASEADDR_DATA ? 1'b1 : 1'b0;
+    parameter ABUSWIDTH = 16;
 
     wire [7:0] GPIO_DATA_OUT, SPI_DATA_OUT, PG_DATA_OUT, TS_DATA_OUT;
     wire [7:0] TPX3_DATA_OUT [7:0];
@@ -126,7 +116,7 @@ module tpx3_core (
     wire [31:0] FIFO_DATA_OUT;
     wire [7:0]  TPX3_DATA_OUT_OR;
     assign TPX3_DATA_OUT_OR = TPX3_DATA_OUT[7] | TPX3_DATA_OUT[6] | TPX3_DATA_OUT[5] | TPX3_DATA_OUT[4] | TPX3_DATA_OUT[3] | TPX3_DATA_OUT[2] | TPX3_DATA_OUT[1] | TPX3_DATA_OUT[0] ;
-    assign BUS_DATA_OUT = {24'd0, VER_DATA_OUT | GPIO_DATA_OUT | SPI_DATA_OUT | TPX3_DATA_OUT_OR | PG_DATA_OUT | TS_DATA_OUT} | FIFO_DATA_OUT ;
+    assign BUS_DATA_OUT = {VER_DATA_OUT | GPIO_DATA_OUT | SPI_DATA_OUT | TPX3_DATA_OUT_OR | PG_DATA_OUT | TS_DATA_OUT} ;
 
     /////////////
     // MODULES //
@@ -196,8 +186,6 @@ module tpx3_core (
     wire [7:0] TPX_FIFO_EMPTY;
     wire [31:0] TPX_FIFO_DATA [7:0];
     wire [7:0] RX_READY_RX;
-    
-    
     
     genvar ch;
     generate
@@ -301,8 +289,7 @@ module tpx3_core (
         else if(CNT_FIFO_READ)
             CNT_FIFO_DATA <= CNT_FIFO_DATA + 1;
 
-    wire ARB_READY_OUT, ARB_WRITE_OUT;
-    wire [31:0] ARB_DATA_OUT;
+
     wire [9:0] READ_GRANT;
 
     rrp_arbiter #(
@@ -325,31 +312,5 @@ module tpx3_core (
     assign TS_FIFO_READ = READ_GRANT[1];
     assign TPX_FIFO_READ = READ_GRANT[9:2];
 
-    bram_fifo_sbus
-    #(
-        .BASEADDR     (FIFO_BASEADDR     ),
-        .HIGHADDR     (FIFO_HIGHADDR     ),
-        .BASEADDR_DATA(FIFO_BASEADDR_DATA),
-        .HIGHADDR_DATA(FIFO_HIGHADDR_DATA),
-        .ABUSWIDTH    (ABUSWIDTH         ),
-        .DEPTH        (FIFO_BRAM_SIZE    )
-    ) out_fifo (
-        .BUS_CLK           ( BUS_CLK       ),
-        .BUS_RST           ( BUS_RST       ),
-        .BUS_ADD           ( BUS_ADD       ),
-        .BUS_DATA_IN       ( BUS_DATA_IN   ),
-        .BUS_DATA_OUT      ( FIFO_DATA_OUT ),
-        .BUS_RD            ( BUS_RD        ),
-        .BUS_WR            ( BUS_WR        ),
-
-        .FIFO_READ_NEXT_OUT( ARB_READY_OUT ),
-        .FIFO_EMPTY_IN     ( ~ARB_WRITE_OUT),
-        .FIFO_DATA         ( ARB_DATA_OUT  ),
-
-        .FIFO_NOT_EMPTY    (               ),
-        .FIFO_FULL         (               ),
-        .FIFO_NEAR_FULL    (               ),
-        .FIFO_READ_ERROR   (               )
-    );
 
 endmodule

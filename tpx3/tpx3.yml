@@ -3,11 +3,13 @@ name    : timepix3-daq
 version : 0.9.0
 
 transfer_layer:
-    - name  : intf
-      type  : tpx3.SiUdp
-      init:
-        host: '192.168.1.128'
-        port: 1234
+  - name  : intf
+    type  : SiTcp
+    init:
+        ip : "192.168.10.16"
+        udp_port : 4660
+        tcp_port : 24
+        tcp_connection : True
 
 hw_drivers:
   - name      : gpio
@@ -32,10 +34,10 @@ hw_drivers:
     base_addr : 0x4000
     
   - name      : FIFO
-    type      : bram_fifo
+    type      : sitcp_fifo
     interface : intf
-    base_addr : 0x8000
-    base_data_addr : 0xa000
+    base_addr : 0x200000000
+    base_data_addr : 0x100000000
 
   - name      : RX0
     type      : tpx3.tpx3_rx
