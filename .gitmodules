@@ -1,3 +1,6 @@
 [submodule "firmware/lib/si_udp/verilog-ethernet"]
 	path = firmware/lib/si_udp/verilog-ethernet
 	url = https://github.com/alexforencich/verilog-ethernet.git
+[submodule "firmware/lib/SiTCP_Netlist_for_Virtex6"]
+	path = firmware/lib/SiTCP_Netlist_for_Virtex6
+	url = https://github.com/BeeBeansTechnologies/SiTCP_Netlist_for_Virtex6.git
