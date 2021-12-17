@@ -154,9 +154,7 @@ end
 
 wire [63:0] cdc_data_out;
 wire cdc_fifo_read;
-cdc_syncfifo
-#(.DSIZE(64), .ASIZE(8))
- cdc_syncfifo_i
+cdc_syncfifo #(.DSIZE(64), .ASIZE(4))  cdc_syncfifo_i
 (
     .rdata(cdc_data_out),
     .wfull(wfull),
@@ -188,18 +186,34 @@ always@(posedge BUS_CLK)
 wire [31:0] fifo_write_data_byte [2:0];
 assign fifo_write_data_byte[0] = {IDENTIFIER,4'b0001,data_buf[23:0]};
 assign fifo_write_data_byte[1] = {IDENTIFIER,4'b0010,data_buf[47:24]};
+// assign fifo_write_data_byte[2] = {IDENTIFIER,4'b0011,8'b0,cdc_data_out[63:48]}; Not used
+
 wire [31:0] fifo_data_in;
 assign fifo_data_in = fifo_write_data_byte[byte2_cnt];
 
-gerneric_fifo #(.DATA_SIZE(32), .DEPTH(1024))  fifo_i
-( .clk(BUS_CLK), .reset(RST_LONG | BUS_RST),
+wire gfifo_empty, out_fifo_full;
+wire [31:0] gdata;
+
+gerneric_fifo #(.DATA_SIZE(32), .DEPTH(1024))  fifo_i (
+    .clk(BUS_CLK), 
+    .reset(RST_LONG | BUS_RST),
     .write(fifo_write),
-    .read(FIFO_READ),
+    .read(!out_fifo_full),
     .data_in(fifo_data_in),
     .full(fifo_full),
-    .empty(FIFO_EMPTY),
-    .data_out(FIFO_DATA[31:0]),
+    .empty(gfifo_empty),
+    .data_out(gdata),
     .size()
+);
+
+cdc_syncfifo #(.DSIZE(32), .ASIZE(4))  cdc_syncfifo_out
+(
+    .rdata(FIFO_DATA),
+    .wfull(out_fifo_full),
+    .rempty(FIFO_EMPTY),
+    .wdata(gdata),
+    .winc(!gfifo_empty), .wclk(BUS_CLK), .wrst(RST_LONG | BUS_RST),
+    .rinc(FIFO_READ), .rclk(BUS_CLK), .rrst(RST_LONG | BUS_RST)
 );
 
 endmodule
