@@ -4,3 +4,6 @@
 [submodule "firmware/lib/SiTCP_Netlist_for_Virtex6"]
 	path = firmware/lib/SiTCP_Netlist_for_Virtex6
 	url = https://github.com/BeeBeansTechnologies/SiTCP_Netlist_for_Virtex6.git
+[submodule "firmware/lib/SiTCP_Netlist_for_Artix7"]
+	path = firmware/lib/SiTCP_Netlist_for_Artix7
+	url = https://github.com/BeeBeansTechnologies/SiTCP_Netlist_for_Artix7
