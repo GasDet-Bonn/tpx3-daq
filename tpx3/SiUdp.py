@@ -28,7 +28,7 @@ class SiUdp(SiTransferLayer):
     CMD_WR = 0x02
     CMD_RD = 0x01
 
-    MAX_RD_SIZE = 1 * 1472 #32 * 1476 was making some problesm maybe 31? TODO: change packege on FPGA to 1472?
+    MAX_RD_SIZE = 1 * 1024 #32 * 1476 was making some problesm maybe 31? TODO: change packege on FPGA to 1472?
     MAX_WR_SIZE = 1024
 
     UDP_TIMEOUT = 1.0

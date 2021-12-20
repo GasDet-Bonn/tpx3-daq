@@ -30,7 +30,8 @@ module si_udp
 #(
     parameter                   MAC = 48'h02_00_00_00_00_00,
     parameter                   IP =  {8'd192, 8'd168, 8'd1,   8'd128},
-    parameter                   PORT =  16'd1234
+    parameter                   PORT =  16'd1234,
+    parameter                   PACKET_SIZE = 1024
 )
 (
     /*
@@ -60,7 +61,8 @@ module si_udp
     output wire          BUS_CLK,
     output wire          BUS_RST,
     output reg   [31:0]  BUS_ADD,
-    inout wire   [31:0]  BUS_DATA,
+    output wire  [31:0]  BUS_DATA_IN,
+    input wire   [31:0]  BUS_DATA_OUT,
     output wire          BUS_RD,
     output wire          BUS_WR,
     input wire           BUS_BYTE_ACCESS
@@ -231,6 +233,8 @@ assign tx_udp_checksum = 0;
 //TODO: check VERSION, ip, mac, mask on 0xffffffff?  
 //TODO: timeouts
 //
+localparam SIUDP_RD_CMD = 8'h01;
+localparam SIUDP_WR_CMD = 8'h02;
 
 reg [31:0] req_cnt;
 reg [7:0] siudp_cmd;
@@ -288,7 +292,7 @@ always@(*) begin
     endcase 
 end
 
-assign siudp_pck_last = (siudp_data_rd_cnt != 0 & siudp_data_rd_cnt % 1476 == 0);
+assign siudp_pck_last = (siudp_data_rd_cnt != 0 & siudp_data_rd_cnt % PACKET_SIZE == 0);
 assign siudp_last = (siudp_data_rd_cnt == siudp_size );
 assign siudp_confirm_last = (state == WR_CONFIRM_STATE) & (siudp_confirm_cnt== 3);
 
@@ -300,7 +304,7 @@ assign BUS_CLK = clk_125mhz;
 assign BUS_RST = rst_125mhz;
 assign BUS_RD = BUS_BYTE_ACCESS ? read_data : read_data & BUS_ADD[1:0] == 0;
 assign BUS_WR = (state == DATA_WR_STATE) & rx_udp_payload_tvalid;
-assign BUS_DATA = BUS_WR ? rx_udp_payload_tdata : 32'bz;
+assign BUS_DATA_IN = rx_udp_payload_tdata ;
 
 always@(posedge clk_125mhz)
     if(state == NOP_STATE & siudp_req & match_cond)
@@ -332,9 +336,6 @@ always@(posedge clk_125mhz)
     else if(BUS_WR)
         siudp_data_wr_cnt <= siudp_data_wr_cnt + 1;
         
-
-localparam SIUDP_RD_CMD = 8'h01;
-localparam SIUDP_WR_CMD = 8'h02;
 
 always @(posedge clk_125mhz) begin
     if (rst_125mhz | (rx_udp_payload_tvalid & rx_udp_payload_tlast))
@@ -388,7 +389,7 @@ always@(posedge clk_125mhz)
 reg [7:0] data_bus_reg [7:0];
 always@(posedge clk_125mhz)
     if(bus_read_reg)
-        {data_bus_reg[3],data_bus_reg[2],data_bus_reg[1], data_bus_reg[0]} <= BUS_DATA;
+        {data_bus_reg[3],data_bus_reg[2],data_bus_reg[1], data_bus_reg[0]} <= BUS_DATA_OUT;
        
 reg [31:0] addr_bus_reg;
 always@(posedge clk_125mhz)
@@ -399,18 +400,18 @@ reg [7:0] data_to_read;
 always@(*) begin
     if(BUS_BYTE_ACCESS==0) begin
         if(addr_bus_reg[1:0] == 0)
-            data_to_read = BUS_DATA[7:0];
+            data_to_read = BUS_DATA_OUT[7:0];
         else
             data_to_read = data_bus_reg[addr_bus_reg[1:0]];
     end
     else
-        data_to_read = BUS_DATA[7:0];
+        data_to_read = BUS_DATA_OUT[7:0];
 end
        
 assign tx_udp_payload_tlast = tx_udp_payload_tready & (siudp_pck_last | siudp_last | siudp_confirm_last);
 assign tx_udp_payload_tvalid = tx_udp_payload_tready & (siudp_data_rd_cnt > 0 | (state == WR_CONFIRM_STATE) ); 
 assign tx_udp_payload_tuser = 0;
-assign tx_udp_length = (siudp_cmd == SIUDP_RD_CMD) ? (siudp_left_size > 1476 ? 1476 : siudp_left_size) : 16'd4;
+assign tx_udp_length = (siudp_cmd == SIUDP_RD_CMD) ? (siudp_left_size > PACKET_SIZE ? PACKET_SIZE : siudp_left_size) : 16'd4;
 assign tx_udp_payload_tdata = (state == WR_CONFIRM_STATE) ? siudp_confirm_data_out : data_to_read ; //siudp_size;//siudp_addr;
 
 assign rx_udp_payload_tready = rx_udp_payload_tvalid;

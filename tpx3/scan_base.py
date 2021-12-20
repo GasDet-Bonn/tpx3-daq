@@ -114,10 +114,10 @@ class ScanBase(object):
             
             # Test if the link configuration is valid
             if self.test_links() == True:
-                self.logger.info("Validity check of link configuration successful")
+               self.logger.info("Validity check of link configuration successful")
             else:
-                self.logger.info("Validity check of link configuration failed")
-                raise ConfigError("Link configuration is not valid for current setup")
+               self.logger.info("Validity check of link configuration failed")
+               raise ConfigError("Link configuration is not valid for current setup")
 
     def set_directory(self,sub_dir=None):
         # Get the user directory
@@ -185,7 +185,12 @@ class ScanBase(object):
         valid = True
 
         # Iterate over all links
-        for register in yaml_data['registers']:
+        for channel in self.chip.get_modules('tpx3_rx'):
+            
+            for register in yaml_data['registers']:
+                if register["name"] == channel.name:
+                    break
+            
             # Reset the chip
             self.chip.toggle_pin("RESET")
 
@@ -197,18 +202,18 @@ class ScanBase(object):
             data = self.chip.write_outputBlock_config()
 
             # Deactivate all fpga links
-            for register2 in yaml_data['registers']:
-                self.chip[register2['name']].ENABLE = 0
-                self.chip[register2['name']].reset()
-
+            for channel_dissable in self.chip.get_modules('tpx3_rx'):
+                channel_dissable.ENABLE = 0
+                channel_dissable.reset()
+    
             # Activate the current fpga link and set all its settings
-            self.chip[register['name']].ENABLE = 1
-            self.chip[register['name']].DATA_DELAY = register['data-delay']
-            self.chip[register['name']].INVERT = register['data-invert']
-            self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+            self.chip[channel.name].DATA_DELAY = register['data-delay']
+            self.chip[channel.name].INVERT = register['data-invert']
+            self.chip[channel.name].SAMPLING_EDGE = register['data-edge']
+            self.chip[channel.name].ENABLE = 1
 
             # Reset and clean the FIFO
-            self.chip['FIFO'].reset()
+            self.chip['FIFO'].RESET
             time.sleep(0.01)
             self.chip['FIFO'].get_data()
 
@@ -217,12 +222,13 @@ class ScanBase(object):
             data += [0x00]*4
             self.chip.write(data)
 
+            time.sleep(0.05)
             # Get the data from the chip
             fdata = self.chip['FIFO'].get_data()
             dout = self.chip.decode_fpga(fdata, True)
 
             # Check if the received Chip ID is identical with the expected
-            if dout[1][19:0].tovalue() != register['chip-id']:
+            if register['chip-id']!=0 and dout[1][19:0].tovalue() != register['chip-id']:
                 valid = False
                 break
 
@@ -241,38 +247,45 @@ class ScanBase(object):
                 yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
         # Deactivate all fpga links
-        for register in yaml_data['registers']:
-            self.chip[register['name']].ENABLE = 0
-            self.chip[register['name']].reset()
+        for channel_dissable in self.chip.get_modules('tpx3_rx'):
+            channel_dissable.ENABLE = 0
+            channel_dissable.reset()
+
+
 
         self.chip._outputBlocks["chan_mask"] = 0
 
         ID_List = []
 
         # Iterate over all links
-        for register in yaml_data['registers']:
-            if register['chip-id'] != 0:
-                # Create the chip output channel mask and write the output block
-                self.chip._outputBlocks["chan_mask"] = self.chip._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
+        for channel in self.chip.get_modules('tpx3_rx'):
+            for register in yaml_data['registers']:
+                if register["name"] == channel.name:
+                    break
 
-                # Activate the current fpga link and set all its settings
-                self.chip[register['name']].ENABLE = 1
-                self.chip[register['name']].DATA_DELAY = register['data-delay']
-                self.chip[register['name']].INVERT = register['data-invert']
-                self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
 
-                bit_id = BitLogic.from_value(register['chip-id'])
+            # Create the chip output channel mask and write the output block
+            self.chip._outputBlocks["chan_mask"] = self.chip._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
+            self.chip.write_outputBlock_config()
 
-                # Decode the Chip-ID
-                self.wafer_number = bit_id[19:8].tovalue()
-                self.x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
-                self.y_position =bit_id[7:4].tovalue()
-                ID = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
+            # Activate the current fpga link and set all its settings
+            self.chip[register['name']].DATA_DELAY = register['data-delay']
+            self.chip[register['name']].INVERT = register['data-invert']
+            self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+            self.chip[register['name']].ENABLE = 1
+            
+            bit_id = BitLogic.from_value(register['chip-id'])
 
-                # Write new Chip-ID to the list
-                if ID not in ID_List:
-                    ID_List.append(ID)
-        
+            # Decode the Chip-ID
+            self.wafer_number = bit_id[19:8].tovalue()
+            self.x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+            self.y_position =bit_id[7:4].tovalue()
+            ID = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
+
+            # Write new Chip-ID to the list
+            if ID not in ID_List:
+                ID_List.append(ID)
+
         self.number_of_chips = len(ID_List)
         if self.number_of_chips > 1:
             raise NotImplementedError('Handling of multiple chips is not implemented yet')
@@ -574,7 +587,7 @@ class ScanBase(object):
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
-    def start(self, readout_interval = 0.1, moving_average_time_period = 10, iteration = None, status = None, **kwargs):
+    def start(self, readout_interval = 0.005, moving_average_time_period = 10, iteration = None, status = None, **kwargs):
         '''
             Prepares the scan and starts the actual test routine
         '''
@@ -736,6 +749,7 @@ class ScanBase(object):
         errback = kwargs.pop('errback', self.handle_err)
         no_data_timeout = kwargs.pop('no_data_timeout', None)
         self.scan_param_id = scan_param_id
+        time.sleep(0.02)  # sleep here for a while
         self.fifo_readout.start(reset_sram_fifo=reset_sram_fifo, fill_buffer=fill_buffer, clear_buffer=clear_buffer,
                                 callback=callback, errback=errback, no_data_timeout=no_data_timeout)
 
