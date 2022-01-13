@@ -61,10 +61,13 @@ def raw_data_to_dut(raw_data):
         k_i = k[h == i] # gives a list of all data for the specific link number
         # initialize list with the needed length for temporal storage
         data_words_i = np.empty((k_i.shape[0] // 2), dtype=np.uint64)
+        data_words_i2 = np.empty((k_i.shape[0] // 2), dtype=np.uint64)
         data_words_i[:] = k_i[1::2].view('>u4')
-        if data_words_i.shape[0] != k_i[0::2].shape[0]:
-            continue
-        data_words_i = (data_words_i << 16) + (k_i[0::2].view('>u4') >> 8)
+        try:
+            data_words_i2[:] = k_i[0::2].view('>u4')
+        except:
+            data_words_i2[:] = k_i[0::2].view('>u4')[0:-1]
+        data_words_i = (data_words_i << 16) + (data_words_i2 >> 8)
         # append all data from this link to the list of all data
         data_words = np.append(data_words,data_words_i)
 
