@@ -129,6 +129,9 @@ dvt_build.log
 # Textfiles
 .txt
 
+# Hardware check results
+timestamp_test.txt
+
 # Datafiles
 .h5
 
