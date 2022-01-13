@@ -152,13 +152,13 @@ always@(posedge WCLK) begin
         end
 end
 
-wire cdc_fifo_full, cdc_fifo_empty;
+wire fifo_empty, fifo_full;
 
 always@(posedge WCLK) begin
     if(RESET_WCLK || err_reset)
         lost_err_cnt <= 0;
     else
-        if(cdc_fifo_full && (|write_dec_in) && lost_err_cnt != 8'hff)
+        if(fifo_full && (|write_dec_in) && lost_err_cnt != 8'hff)
             lost_err_cnt <= lost_err_cnt + 1;
         else
             lost_err_cnt <= lost_err_cnt;
@@ -177,63 +177,45 @@ always@(posedge BUS_CLK) begin
         rst_cnt <= rst_cnt +1;
 end
 wire rst_long = rst_cnt[5];
-reg cdc_sync_ff;
-always @(posedge WCLK) begin
-    cdc_sync_ff <= rst_long;
-end
 
 //assign FIFO_CLK = BUS_CLK;
 
-cdc_syncfifo #(
-    .DSIZE(25),
-    .ASIZE(4)
-) cdc_syncfifo_i (
-    .rdata(cdc_data_out),
-    .wfull(cdc_fifo_full),
-    .rempty(cdc_fifo_empty),
-    .wdata(wdata),
-    .winc(|write_dec_in & !cdc_fifo_full),
-    .wclk(WCLK),
-    .wrst(cdc_sync_ff),
-    .rinc(!full),
-    .rclk(FIFO_CLK),
-    .rrst(rst_long)
-);
-
 wire [10:0] fifo_size_int;
+wire [24:0] fifo_data;
 
 gerneric_fifo #(
     .DATA_SIZE(25),
     .DEPTH(1024*8*4)
-) fifo_i (
-    .clk(FIFO_CLK),
-    .reset(rst_long),
-    .write(!cdc_fifo_empty),
-    .read(read),
-    .data_in(cdc_data_out),
-    .full(full),
-    .empty(empty),
-    .data_out(data), 
+) fifo (
+    .clk(WCLK),
+    .reset(RESET_WCLK),
+    .write(|write_dec_in),
+    .read(!full),
+    .data_in(wdata),
+    .full(fifo_full),
+    .empty(fifo_empty),
+    .data_out(fifo_data), 
     .size(fifo_size_int)
+);
+
+cdc_syncfifo #(
+    .DSIZE(25),
+    .ASIZE(4)
+) cdc_syncfifo (
+    .rdata(data),
+    .wfull(full),
+    .rempty(empty),
+    .wdata(fifo_data),
+    .winc(!fifo_empty),
+    .wclk(WCLK),
+    .wrst(RESET_WCLK),
+    .rinc(read),
+    .rclk(FIFO_CLK),
+    .rrst(rst_long)
 );
 
 always @(posedge FIFO_CLK) begin
     fifo_size <= {5'b0, fifo_size_int};
 end
-
-`ifdef SYNTHESIS_NOT
-wire [35:0] control_bus;
-chipscope_icon ichipscope_icon
-(
-    .CONTROL0(control_bus)
-);
-
-chipscope_ila ichipscope_ila
-(
-    .CONTROL(control_bus),
-    .CLK(WCLK),
-    .TRIG0({code_err, disp_err, dec_k,dec_data, data_8b10b})
-);
-`endif
 
 endmodule

@@ -17,28 +17,17 @@
   <files>
     <file xil_pn:name="../src/tpx3_fec6.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="18"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
     </file>
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5.xco" xil_pn:type="FILE_COREGEN">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="16"/>
     </file>
     <file xil_pn:name="../src/fec6.ucf" xil_pn:type="FILE_UCF">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="ipcore_dir/chipscope_icon.xco" xil_pn:type="FILE_COREGEN">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="125"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="ipcore_dir/chipscope_ila.xco" xil_pn:type="FILE_COREGEN">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="131"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="ipcore_dir/chipscope_icon.xise" xil_pn:type="FILE_COREGENISE">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="ipcore_dir/chipscope_ila.xise" xil_pn:type="FILE_COREGENISE">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
+    <file xil_pn:name="../lib/SiTCP_Netlist_for_Virtex6/SiTCP_XC6V_32K_BBT_V110.ngc" xil_pn:type="FILE_NGC">
+      <association xil_pn:name="Implementation" xil_pn:seqID="73"/>
     </file>
   </files>
 
@@ -340,7 +329,7 @@
     <property xil_pn:name="UserID Code (8 Digit Hexadecimal)" xil_pn:value="0xFFFFFFFF" xil_pn:valueState="default"/>
     <property xil_pn:name="VHDL Source Analysis Standard" xil_pn:value="VHDL-93" xil_pn:valueState="default"/>
     <property xil_pn:name="Value Range Check" xil_pn:value="false" xil_pn:valueState="default"/>
-    <property xil_pn:name="Verilog Include Directories" xil_pn:value="../../../basil/firmware/modules/utils|../../../basil/firmware/modules" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Verilog Include Directories" xil_pn:value="../../../basil/basil/firmware/modules|../../../basil/basil/firmware/modules/includes" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Verilog Macros" xil_pn:value="" xil_pn:valueState="default"/>
     <property xil_pn:name="Wait for DCI Match (Output Events) virtex5" xil_pn:value="Auto" xil_pn:valueState="default"/>
     <property xil_pn:name="Wait for PLL Lock (Output Events) virtex6" xil_pn:value="No Wait" xil_pn:valueState="default"/>
@@ -379,59 +368,30 @@
     <!-- include files.                                                       -->
     <file xil_pn:name="../src/tpx3_sfp.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../src/tpx3_core.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/utils/bus_to_ip.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/gpio/gpio.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/spi/spi.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/spi/spi_core.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/spi/blk_mem_gen_8_to_1_2k.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/utils/cdc_pulse_sync.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/utils/CG_MOD_pos.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/utils/cdc_syncfifo.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/utils/generic_fifo.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/includes/log2func.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/utils/cdc_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/pulse_gen/pulse_gen.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/pulse_gen/pulse_gen_core.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/tpx3_timestamp/timestamp.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/gpio/gpio_core.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/gpio/gpio_sbus.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/spi/spi_core.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/extra/spi_sbus.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/spi/blk_mem_gen_8_to_1_2k.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/cdc_pulse_sync.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/CG_MOD_pos.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/cdc_syncfifo.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/generic_fifo.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/includes/log2func.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/cdc_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/pulse_gen/pulse_gen_core.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/extra/pulse_gen_sbus.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/tpx3_timestamp/timestamp_core.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/bram_fifo/bram_fifo_core.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/bram_fifo/bram_fifo.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/rrp_arbiter/rrp_arbiter.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/tpx3_rx/tpx3_rx.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_timestamp/timestamp_sbus.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/rrp_arbiter/rrp_arbiter.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/sbus_to_ip.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/3_stage_synchronizer.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/tpx3_rx/tpx3_rx_sbus.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/tpx3_rx/tpx3_rx_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/tpx3_rx/receiver_logic.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/tpx3_rx/rec_sync.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../lib/tpx3_rx/decode_8b10b.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/firmware/modules/utils/flag_domain_crossing.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/si_udp.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g_fifo.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_mac_1g.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/axis_gmii_rx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/axis_gmii_tx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/lfsr.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_axis_rx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_axis_tx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/udp_complete.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/udp_checksum_gen.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/udp.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/udp_ip_rx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/udp_ip_tx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/ip_complete.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/ip.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/ip_eth_rx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/ip_eth_tx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/ip_arb_mux_2.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/ip_mux_2.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/arp.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/arp_cache.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/arp_eth_rx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/arp_eth_tx.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_arb_mux_2.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/rtl/eth_mux_2.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/lib/axis/rtl/arbiter.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/lib/axis/rtl/priority_encoder.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/lib/axis/rtl/axis_fifo.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../lib/si_udp/verilog-ethernet/lib/axis/rtl/axis_async_frame_fifo.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/flag_domain_crossing.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../src/sync_reset.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5/example_design/sgmii_adapt/gig_eth_pcs_pma_v11_5_clk_gen.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5/example_design/sgmii_adapt/gig_eth_pcs_pma_v11_5_johnson_cntr.v" xil_pn:type="FILE_VERILOG"/>
@@ -446,6 +406,11 @@
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5/example_design/gig_eth_pcs_pma_v11_5_block.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5/example_design/gig_eth_pcs_pma_v11_5_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../src/coregen/gig_eth_pcs_pma_v11_5/example_design/gig_eth_pcs_pma_v11_5_sync_block.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/SiTCP_Netlist_for_Virtex6/TIMER.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/SiTCP_Netlist_for_Virtex6/SiTCP_XC6V_32K_BBT_V110.V" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/SiTCP_Netlist_for_Virtex6/WRAP_SiTCP_GMII_XC6V_32K.V" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../lib/extra/rbcp_to_sbus.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/fifo_32_to_8.v" xil_pn:type="FILE_VERILOG"/>
   </autoManagedFiles>
 
 </project>

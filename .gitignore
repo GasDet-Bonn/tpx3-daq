@@ -131,3 +131,6 @@ dvt_build.log
 
 # Datafiles
 .h5
+
+firmware/work/
+tests/sim_build/

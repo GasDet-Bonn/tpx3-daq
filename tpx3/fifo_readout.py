@@ -171,6 +171,9 @@ class FifoReadout(object):
         en_status = self.get_rx_en_status()
         discard_count = self.get_rx_fifo_discard_count()
         decode_error_count = self.get_rx_decode_error_count()
+        invert = [channel.INVERT for channel in self.chip.get_modules('tpx3_rx')]
+        sampling_edge = [channel.SAMPLING_EDGE for channel in self.chip.get_modules('tpx3_rx')]
+        data_delay = [channel.DATA_DELAY for channel in self.chip.get_modules('tpx3_rx')]
 
         if not any(self.get_rx_sync_status()) or any(discard_count)  or any(decode_error_count) :
             self.logger.warning('RX errors detected')
@@ -181,6 +184,9 @@ class FifoReadout(object):
         self.logger.info('Channel:                     %s', " | ".join([channel.name.rjust(3) for channel in self.chip.get_modules('tpx3_rx')]))
         self.logger.info('RX sync:                     %s', " | ".join(["YES".rjust(3) if status is True else "NO".rjust(3) for status in sync_status]))
         self.logger.info('RX enable:                   %s', " | ".join(["YES".rjust(3) if status is True else "NO".rjust(3) for status in en_status]))
+        self.logger.info('RX INVERT:                   %s', " | ".join(["YES".rjust(3) if status is True else "NO".rjust(3) for status in invert]))
+        self.logger.info('RX SAMPLING_EDGE:            %s', " | ".join([repr(edge).rjust(3) for edge in sampling_edge]))
+        self.logger.info('RX DATA_DELAY:               %s', " | ".join([repr(delay).rjust(3) for delay in data_delay]))
         self.logger.info('RX FIFO discard counter:     %s', " | ".join([repr(count).rjust(3) for count in discard_count]))
         self.logger.info('RX decode errors:            %s', " | ".join([repr(count).rjust(3) for count in decode_error_count]))
 

@@ -115,10 +115,10 @@ class ScanBase(object):
             
             # Test if the link configuration is valid
             if self.test_links() == True:
-                self.logger.info("Validity check of link configuration successful")
+               self.logger.info("Validity check of link configuration successful")
             else:
-                self.logger.info("Validity check of link configuration failed")
-                raise ConfigError("Link configuration is not valid for current setup")
+               self.logger.info("Validity check of link configuration failed")
+               raise ConfigError("Link configuration is not valid for current setup")
 
     def set_directory(self,sub_dir=None):
         # Get the user directory
@@ -186,7 +186,12 @@ class ScanBase(object):
         valid = True
 
         # Iterate over all links
-        for register in yaml_data['registers']:
+        for channel in self.chip.get_modules('tpx3_rx'):
+            
+            for register in yaml_data['registers']:
+                if register["name"] == channel.name:
+                    break
+            
             # Reset the chip
             self.chip.toggle_pin("RESET")
 
@@ -210,7 +215,7 @@ class ScanBase(object):
                 self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
 
                 # Reset and clean the FIFO
-                self.chip['FIFO'].reset()
+                self.chip['FIFO'].RESET
                 time.sleep(0.01)
                 self.chip['FIFO'].get_data()
 
@@ -243,9 +248,11 @@ class ScanBase(object):
                 yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
         # Deactivate all fpga links
-        for register in yaml_data['registers']:
-            self.chip[register['name']].ENABLE = 0
-            self.chip[register['name']].reset()
+        for channel_dissable in self.chip.get_modules('tpx3_rx'):
+            channel_dissable.ENABLE = 0
+            channel_dissable.reset()
+
+
 
         self.chip._outputBlocks["chan_mask"] = 0
 
@@ -586,7 +593,7 @@ class ScanBase(object):
         self.load_mask_matrix(**kwargs)
         self.load_thr_matrix(**kwargs)
 
-    def start(self, readout_interval = 0.1, moving_average_time_period = 10, iteration = None, status = None, **kwargs):
+    def start(self, readout_interval = 0.005, moving_average_time_period = 10, iteration = None, status = None, **kwargs):
         '''
             Prepares the scan and starts the actual test routine
         '''
@@ -748,6 +755,7 @@ class ScanBase(object):
         errback = kwargs.pop('errback', self.handle_err)
         no_data_timeout = kwargs.pop('no_data_timeout', None)
         self.scan_param_id = scan_param_id
+        time.sleep(0.02)  # sleep here for a while
         self.fifo_readout.start(reset_sram_fifo=reset_sram_fifo, fill_buffer=fill_buffer, clear_buffer=clear_buffer,
                                 callback=callback, errback=errback, no_data_timeout=no_data_timeout)
 

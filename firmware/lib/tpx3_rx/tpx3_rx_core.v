@@ -171,9 +171,13 @@ always @ (posedge BUS_CLK)
     );
 `endif
    
-  
+
 wire Q1, Q2;
-IDDR IDDR_RX (
+IDDR 
+`ifndef COCOTB_SIM
+    #(.DDR_CLK_EDGE("SAME_EDGE")) 
+`endif
+IDDR_RX (
     .Q1(Q1),
     .Q2(Q2),
     .C(RX_CLKX2),
