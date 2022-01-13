@@ -154,15 +154,16 @@ class ScanHardware(object):
                     self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
             data = self.chip.write_outputBlock_config()
 
-            # Reset and clean the FIFO
-            self.chip['FIFO'].reset()
-            time.sleep(0.001)
-            self.chip['FIFO'].get_data()
-
-            # Send the EFuse_Read to receive the ChipID
+            # Create the EFuse_Read to receive the ChipID
             data = self.chip.read_periphery_template("EFuse_Read")
             data += [0x00]*4
+
+            # Reset and clean the FIFO and then sent the request
+            self.chip['FIFO'].RESET
+            time.sleep(0.1)
+            self.chip['FIFO'].get_data()
             self.chip.write(data)
+            time.sleep(0.1)
 
             try:
                 # Get the ChipID from the received data packages
