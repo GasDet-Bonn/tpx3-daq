@@ -55,8 +55,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Chip_names', 'chip_names', 'Who', 'who',
                 'Mask_name', 'mask_name',
                 'Equalisation_name', 'equalisation_name', 'Equal_name', 'equal_name',
-                'Help', 'help', 'h', '-h',
                 'About', 'about',
+                'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
 
 # In this part all callable expert function names should be in the list expert_functions
@@ -69,9 +69,10 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
 
 # In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
-                    'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation',
-                    'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names',
-                    'Set_Run_Name', 'Get_Run_Name', 'Mask_name', 'Equalisation_name', 'About', 'Help', 'Quit']
+                    'Testpulse_Scan', 'Initialise_Hardware', 'Run_Datataking', 'Set_DAC', 'Load_Equalisation', 'Save_Equalisation',
+                    'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask', 
+                    'Save_Mask', 'TP_Period', 'Set_operation_mode', 'Set_Fast_Io', 'Set_Readout_Intervall', 'Set_Run_Name', 'Get_Run_Name',
+                    'Plot', 'Stop_Plot', 'Chip_names', 'Mask_name', 'Equalisation_name', 'About', 'Help', 'Quit']
 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency', 'Set_Sense_DAC', 'Enable_Link']
 
@@ -1799,42 +1800,66 @@ class TPX3_CLI_TOP(object):
                 
                 #Get Chip names
                 elif inputlist[0] in {'Chip_names', 'chip_names', 'Who', 'who'}:
-                    print('Connected chips are:')
-                    for Chipname in TPX3_datalogger.get_chipnames():
-                        number_of_links = TPX3_datalogger.get_links(chipname=Chipname)
-                        if number_of_links == 1:
-                            print(Chipname + ' on ' + str(number_of_links) + ' active link')
-                        else:
-                            print(Chipname + ' on ' + str(number_of_links) + ' active links')
+                    if len(inputlist) == 1:
+                        print('Connected chips are:')
+                        for Chipname in TPX3_datalogger.get_chipnames():
+                            number_of_links = TPX3_datalogger.get_links(chipname=Chipname)
+                            if number_of_links == 1:
+                                print(Chipname + ' on ' + str(number_of_links) + ' active link')
+                            else:
+                                print(Chipname + ' on ' + str(number_of_links) + ' active links')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the get chip names function. It showes the connected chips with their number of connected links.')
+                        else :
+                            print('Get chip names does not take parameters!')
 
                 #Get Mask name
                 elif inputlist[0] in {'Mask_name', 'mask_name'}:
-                    mask_path = TPX3_datalogger.read_value(name = 'Mask_path')
-                    if mask_path == None:
-                            print('No mask is loaded')
+                    if len(inputlist) == 1:
+                        mask_path = TPX3_datalogger.read_value(name = 'Mask_path')
+                        if mask_path == None:
+                                print('No mask is loaded')
+                        else:
+                            print('The mask file "' + mask_path + '" is loaded')
                     else:
-                        print('The mask file "' + mask_path + '" is loaded')
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the get mask names function. It showes the path of the current mask.')
+                        else :
+                            print('Get mask name does not take parameters!')
 
                 #Get Equalisation name
                 elif inputlist[0] in {'Equalisation_name', 'equalisation_name', 'Equal_name', 'equal_name'}:
-                    mask_path = TPX3_datalogger.read_value(name = 'Equalisation_path')
-                    if mask_path == None:
-                            print('No equalisation is loaded')
+                    if len(inputlist) == 1:
+                        equalisation_path = TPX3_datalogger.read_value(name = 'Equalisation_path')
+                        if equalisation_path == None:
+                                print('No equalisation is loaded')
+                        else:
+                            print('The equalisation file "' + equalisation_path + '" is loaded')
                     else:
-                        print('The equalisation file "' + mask_path + '" is loaded')
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the get equalisation names function. It showes the path of the current equalisation.')
+                        else :
+                            print('Get equalisation name does not take parameters!')
 
                 #About
                 elif inputlist[0] in {'About', 'about'}:
-                    print('TPX3 CLI')
-                    print('Software version: ' + str(self.software_version))
-                    print('Firmware version: ' + str(self.firmware_version))
-                    try:
-                        print('Git branch: ' + str(get_git_branch()))
-                        print('Git commit: ' + str(get_git_commit()))
-                        print('Git date: ' + str(get_git_date(short = False)))
-                    except:
-                        pass
-                    print('GasDet Bonn 2019-2021')
+                    if len(inputlist) == 1:
+                        print('TPX3 CLI')
+                        print('Software version: ' + str(self.software_version))
+                        print('Firmware version: ' + str(self.firmware_version))
+                        try:
+                            print('Git branch: ' + str(get_git_branch()))
+                            print('Git commit: ' + str(get_git_commit()))
+                            print('Git date: ' + str(get_git_date(short = False)))
+                        except:
+                            pass
+                        print('GasDet Bonn 2019-2022')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the about function. It showes software and firmware information.')
+                        else :
+                            print('About does not take parameters!')
 
                 #Quit
                 elif inputlist[0] in {'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit'}:
