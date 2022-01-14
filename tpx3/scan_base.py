@@ -186,11 +186,7 @@ class ScanBase(object):
         valid = True
 
         # Iterate over all links
-        for channel in self.chip.get_modules('tpx3_rx'):
-            
-            for register in yaml_data['registers']:
-                if register["name"] == channel.name:
-                    break
+        for register in yaml_data['registers']:
             
             # Reset the chip
             self.chip.toggle_pin("RESET")
@@ -223,6 +219,9 @@ class ScanBase(object):
                 data = self.chip.read_periphery_template("EFuse_Read")
                 data += [0x00]*4
                 self.chip.write(data)
+
+                # Wait some time to collect the response of the chip
+                time.sleep(0.01)
 
                 # Get the data from the chip
                 fdata = self.chip['FIFO'].get_data()
