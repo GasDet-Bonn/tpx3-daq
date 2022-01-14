@@ -47,6 +47,8 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode',
                 'Set_Fast_Io', 'Fast_Io', 'set_fast_io', 'fast_io', 'Fast_Io_en', 'fast_io_en',
                 'Set_Readout_Intervall', 'set_readout_intervall', 'Readout_Intervall', 'readout_intervall',
+                'Set_Run_Name', 'Run_Name', 'set_run_name', 'run_name',
+                'Get_Run_Name', 'get_run_name',
                 'Plot', 'plot',
                 'Stop_Plot', 'stop_plot',
                 'Expert', 'expert',
@@ -68,7 +70,8 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
 # In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
                     'Testpulse_Scan', 'Run_Datataking', 'Initialise_Hardware', 'Set_DAC','Load_Equalisation', 'Save_Equalisation',
-                    'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names', 'Mask_name', 'Equalisation_name', 'About', 'Help', 'Quit']
+                    'Unset_Mask', 'Set_Default', 'Set_Readout_Intervall', 'Plot', 'Stop_Plot', 'GUI', 'Chip_names',
+                    'Set_Run_Name', 'Get_Run_Name', 'Mask_name', 'Equalisation_name', 'About', 'Help', 'Quit']
 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency', 'Set_Sense_DAC', 'Enable_Link']
 
@@ -660,6 +663,12 @@ class TPX3_CLI_function_call(object):
             TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en')
         else:
             print('Unknown value')
+
+    def Set_Run_Name(object, run_name = None):
+        if run_name == None:
+            print('> Please enter the file name addition for the run data file:')
+            run_name = input('>> ')
+        TPX3_datalogger.write_value(name = 'Run_name', value = run_name) 
 
     def Set_Mask(object, mask_input_list = None):
         if mask_input_list == None:
@@ -1757,7 +1766,38 @@ class TPX3_CLI_TOP(object):
                         #readline.parse_and_bind("tab: complete")
                         print('Goodbye my dear friend. I hope you enjoyed the world of experts. Enjoy your further stay in the normal mode.')
 
-                # Get Chip names
+                #Set Run name
+                elif inputlist[0] in {'Set_Run_Name', 'Run_Name', 'set_run_name', 'run_name'}:
+                    if len(inputlist) == 1:
+                        try:
+                            function_call.Set_Run_Name()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the set run name function. As argument you can give the name addition of the run data file')
+                        elif len(inputlist) == 2:
+                            try:
+                                function_call.Set_Run_Name(run_name = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print('To many parameters! The given function takes only one parameter:\n name addition of the run data file.')
+                   
+                #Get Run name
+                elif inputlist[0] in {'Get_Run_Name', 'get_run_name'}:
+                    if len(inputlist) == 1:
+                        if TPX3_datalogger.read_value('Run_name') in [None, 'False', 'false', '', 'None', 'none']:
+                            print('No run name is set. So the default file name will be taken [scan_type + YYYY-MM-DD_hh-mm-ss]')
+                        else:
+                            print('The run name is set to ' + str(TPX3_datalogger.read_value('Run_name')) + '. So the file name will be [scan_type + ' + str(TPX3_datalogger.read_value('Run_name')) + ']')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the get run name function. It shows the current run file name.')
+                        else:
+                            print('The get run name function takes no parameters.')
+                
+                #Get Chip names
                 elif inputlist[0] in {'Chip_names', 'chip_names', 'Who', 'who'}:
                     print('Connected chips are:')
                     for Chipname in TPX3_datalogger.get_chipnames():
