@@ -38,11 +38,11 @@ class ScanHardware(object):
         self.chip = TPX3()
         self.chip.init()
 
-        rx_list_names = ['RX0','RX1','RX2','RX3','RX4','RX5','RX6','RX7']
+        rx_list_objects = self.chip.get_modules('tpx3_rx')
 
         if progress == None:
             # Initialize the progress bar
-            pbar = tqdm(total = len(rx_list_names))
+            pbar = tqdm(total = len(rx_list_objects))
         else:
             # Initailize counter for progress
             step_counter = 0
@@ -71,46 +71,46 @@ class ScanHardware(object):
             self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
             data = self.chip.write_outputBlock_config()
 
-            for fpga_link_number, fpga_link in enumerate(rx_list_names):
-                rx_map[chip_link][fpga_link_number] = self.chip[fpga_link].is_ready
+            for fpga_link_number, fpga_link in enumerate(rx_list_objects):
+                rx_map[chip_link][fpga_link_number] = fpga_link.is_ready
 
         status_map = np.sum(rx_map, axis = 0)
         status_map = np.clip(status_map, 0, 1)
 
-        for fpga_link_number, fpga_link in enumerate(rx_list_names):
+        for fpga_link_number, fpga_link in enumerate(rx_list_objects):
             self.chip._outputBlocks["chan_mask"] = 0b00000000
             data = self.chip.write_outputBlock_config()
-            self.chip[fpga_link].ENABLE = 0
+            fpga_link.ENABLE = 0
 
         # Test if links see data when everything is switched off
         noisy_map = np.zeros(8, np.int8)
         for i in range(500):
-            for fpga_link_number, fpga_link in enumerate(rx_list_names):
-                noisy_map[fpga_link_number] += self.chip[fpga_link].is_ready
+            for fpga_link_number, fpga_link in enumerate(rx_list_objects):
+                noisy_map[fpga_link_number] += fpga_link.is_ready
 
         # Mark links that show data when everything is off as borken zero patter (status 6)
-        for fpga_link_number, fpga_link in enumerate(rx_list_names):
+        for fpga_link_number, fpga_link in enumerate(rx_list_objects):
             if noisy_map[fpga_link_number] > 0:
                 status_map[fpga_link_number] = 6
 
         # Check for each link individually for which delay settings there are no errors
-        for fpga_link_number, fpga_link in enumerate(rx_list_names):
+        for fpga_link_number, fpga_link in enumerate(rx_list_objects):
             # Do this check only on links which are connected and show no errors sofar
             if status_map[fpga_link_number] == 1:
                 self.chip._outputBlocks["chan_mask"] = 0b1 << int(np.where(rx_map == 1)[0][fpga_link_number])
                 data = self.chip.write_outputBlock_config()
 
                 for delay in range(32):
-                    self.chip[fpga_link].ENABLE = 0
-                    self.chip[fpga_link].reset()
-                    self.chip[fpga_link].ENABLE = 1
-                    self.chip[fpga_link].DATA_DELAY = delay
-                    self.chip[fpga_link].INVERT = 0
-                    self.chip[fpga_link].SAMPLING_EDGE = 0
+                    fpga_link.ENABLE = 0
+                    fpga_link.reset()
+                    fpga_link.ENABLE = 1
+                    fpga_link.DATA_DELAY = delay
+                    fpga_link.INVERT = 0
+                    fpga_link.SAMPLING_EDGE = 0
 
                     # Check the number of errors for the current setting
-                    error_map[fpga_link_number][delay] = self.chip[fpga_link].get_decoder_error_counter()
-                    self.chip[fpga_link].ENABLE = 0
+                    error_map[fpga_link_number][delay] = fpga_link.get_decoder_error_counter()
+                    fpga_link.ENABLE = 0
 
             if progress == None:
                 # Update the progress bar
@@ -118,7 +118,7 @@ class ScanHardware(object):
             else:
                 # Update the progress fraction and put it in the queue
                 step_counter += 1
-                fraction = step_counter / len(rx_list_names)
+                fraction = step_counter / len(rx_list_objects)
                 progress.put(fraction)
 
         # Find for each receiver the delay with the most distance to a delay with errors
@@ -136,16 +136,16 @@ class ScanHardware(object):
 
         # Check for each receiver the ChipID of the connected chip
         Chip_IDs = np.zeros(8, dtype=np.int32)
-        for fpga_link_number, fpga_link in enumerate(rx_list_names):
+        for fpga_link_number, fpga_link in enumerate(rx_list_objects):
             if status_map[fpga_link_number] == 0:
                 Chip_IDs[fpga_link_number] = 0
                 continue
 
             # Activate the current receivers
-            self.chip[fpga_link].ENABLE = 1
-            self.chip[fpga_link].DATA_DELAY = int(delays[fpga_link_number])
-            self.chip[fpga_link].INVERT = 0
-            self.chip[fpga_link].SAMPLING_EDGE = 0
+            fpga_link.ENABLE = 1
+            fpga_link.DATA_DELAY = int(delays[fpga_link_number])
+            fpga_link.INVERT = 0
+            fpga_link.SAMPLING_EDGE = 0
 
             # Enable the corrresponding chip link
             for chip_link in range(8):
@@ -178,7 +178,7 @@ class ScanHardware(object):
                 # If there is no valid ChipID set the ID to 0 and set the corresponding status (8)
                 Chip_IDs[fpga_link_number] = 0
                 status_map[fpga_link_number] = 8
-            self.chip[fpga_link].ENABLE = 0
+            fpga_link.ENABLE = 0
 
         # Open the link yaml file
         proj_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -190,7 +190,7 @@ class ScanHardware(object):
 
         # Write the registers based on the scan results
         for i, register in enumerate(yaml_data['registers']):
-            register['name'] = rx_list_names[i]
+            register['name'] = rx_list_objects[i].name
             register['fpga-link'] = i
             try:
                 register['chip-link'] = int(np.where(rx_map[:][i] == 1)[0][0])
