@@ -342,7 +342,7 @@ class TPX3_data_logger(object):
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
                             'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 
                             'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
-                            'Equalisation_path', 'Mask_path', 'Polarity', 'Op_mode', 'Fast_Io_en',
+                            'Equalisation_path', 'Mask_path', 'Run_name', 'Polarity', 'Op_mode', 'Fast_Io_en',
                             'clk_fast_out', 'ClkOut_frequency_src', 'AckCommand_en', 'SelectTP_Ext_Int',
                             'clkphasediv', 'clkphasenum', 'PLLOutConfig', 'Readout_Speed', 'TP_Period', 'Sense_DAC']
         self.data = self.default_config()
@@ -379,6 +379,7 @@ class TPX3_data_logger(object):
                 'PLL_Vcntrl' : 128, 
                 'Equalisation_path' : None,
                 'Mask_path' : None,
+                'Run_name' : None,
                 'Polarity' : 1,
                 'Op_mode' : 0,
                 'Fast_Io_en' : 0,
@@ -475,7 +476,20 @@ class TPX3_data_logger(object):
             return value
         print('Error: Unknown data name')
         return False
-
+        
+    def get_run_name(self, scan_type = None):
+        if scan_type == None:
+            scan_type = 'Test'
+        if self.data['Run_name'] == None:
+            run_name = scan_type + '_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+        elif self.data['Run_name'] in ['False', 'false', '', 'None', 'none']:
+            run_name = scan_type + '_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+            self.data['Run_name'] = None
+        else:
+            run_name = scan_type + '_' + self.data['Run_name']
+            self.data['Run_name'] = None
+        return run_name
+        
     def get_data(self):
         return self.data
 
