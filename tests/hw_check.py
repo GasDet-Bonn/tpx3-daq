@@ -267,10 +267,10 @@ def main(args_dict):
 
             chip.toggle_pin('RESET')
 
-            for rx in {'RX0', 'RX1', 'RX2', 'RX3', 'RX4', 'RX5', 'RX6', 'RX7'}:
-                chip[rx].reset()
-                chip[rx].DATA_DELAY = 0
-                chip[rx].ENABLE = 1
+            for channel in chip.get_modules('tpx3_rx'):
+                channel.reset()
+                channel.DATA_DELAY = 0
+                channel.ENABLE = 1
 
             data = chip.reset_sequential(False)
             chip.write(data, True)
