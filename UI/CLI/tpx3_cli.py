@@ -1349,7 +1349,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n scan timeout (in seconds).')
+                            print('To many parameters! The given function takes only one parameter:\n scan timeout (in seconds).')
 
                 #Load equalisation
                 elif inputlist[0] in {'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq'}:
@@ -1368,7 +1368,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n equalisation path.')
+                            print('To many parameters! The given function takes only one parameter:\n equalisation path.')
 
                 #Save equalisation
                 elif inputlist[0] in {'Save_Equalisation', 'Save_Equal', 'SEQ','save_equalisation', 'save_equal', 'seq'}:
@@ -1387,7 +1387,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n equalisation file name.')
+                            print('To many parameters! The given function takes only one parameter:\n equalisation file name.')
 
                 #Save backup
                 elif inputlist[0] in {'Save_Backup', 'Backup','save_backup', 'backup'}:
@@ -1406,7 +1406,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n backup file name.')
+                            print('To many parameters! The given function takes only one parameter:\n backup file name.')
 
                 #Load backup
                 elif inputlist[0] in {'Load_Backup', 'load_backup'}:
@@ -1431,7 +1431,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n backup file name.')
+                            print('To many parameters! The given function takes only one parameter:\n backup file name.')
 
                 #Set TP_Period
                 elif inputlist[0] in {'TP_Period', 'tp_period'}:
@@ -1477,7 +1477,7 @@ class TPX3_CLI_TOP(object):
                             else:
                                 print('Unknown polarity use {negative, neg, -, 1} or {positive, pos, +, 0}')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n polarity.')
+                            print('To many parameters! The given function takes only one parameter:\n polarity.')
 
                 #Set mask
                 elif inputlist[0] in {'Set_Mask', 'Mask', 'set_mask', 'mask'}:
@@ -1515,7 +1515,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
 
-                #Load Mask
+                #Load mask
                 elif inputlist[0] in {'Load_Mask', 'load_mask'}:
                     if len(inputlist) == 1:
                         print('Load_Mask')
@@ -1532,7 +1532,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n mask file name.')
+                            print('To many parameters! The given function takes only one parameter:\n mask file name.')
 
                 #Save mask
                 elif inputlist[0] in {'Save_Mask', 'save_mask'}:
@@ -1551,7 +1551,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n mask file name.')
+                            print('To many parameters! The given function takes only one parameter:\n mask file name.')
 
                 #Set operation mode
                 elif inputlist[0] in {'Set_operation_mode', 'Set_Op_mode', 'Op_mode', 'set_operation_mode', 'set_Op_mode', 'op_mode'}:
@@ -1570,7 +1570,7 @@ class TPX3_CLI_TOP(object):
                                 except KeyboardInterrupt:
                                     print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n operation mode.')
+                            print('To many parameters! The given function takes only one parameter:\n operation mode.')
 
                 #Set Fast Io mode
                 elif inputlist[0] in {'Set_Fast_Io', 'Fast_Io', 'Fast_Io_en', 'set_fast_io', 'fast_io', 'fast_io_en'}:
@@ -1589,7 +1589,7 @@ class TPX3_CLI_TOP(object):
                                 except KeyboardInterrupt:
                                     print('User quit')
                         elif len(inputlist) > 2:
-                            print('To many parameters! The given function takes only one parameters:\n Fast Io enable.')
+                            print('To many parameters! The given function takes only one parameter:\n Fast Io enable.')
 
                 #Set Default
                 elif inputlist[0] in {'Set_Default', 'Default', 'set_default', 'default'}:
@@ -1706,7 +1706,7 @@ class TPX3_CLI_TOP(object):
 
                         else:
                             if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                                print('This will start the a online ploting window for the data taken')
+                                print('This will start an online ploting window for the data taken')
                             elif len(inputlist) > 1:
                                 print('Plot takes no parameters')
                     else:
@@ -1738,9 +1738,9 @@ class TPX3_CLI_TOP(object):
 
                         else:
                             if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                                print('This will start the a online ploting window for the data taken')
+                                print('This will stop the online ploting window for the data taken')
                             elif len(inputlist) > 1:
-                                print('Plot takes no parameters')
+                                print('Stop Plot takes no parameters')
                     else:
                         print('This is only aviable with a graphic backend')
 
@@ -1842,7 +1842,7 @@ class TPX3_CLI_TOP(object):
                                     except KeyboardInterrupt:
                                         print('User quit')
                             elif len(inputlist) > 2:
-                                print('To many parameters! The given function takes only one parameters:\n CLK_fast_mode enable.')
+                                print('To many parameters! The given function takes only one parameter:\n CLK_fast_mode enable.')
 
                     #Set Acknowledgement
                     elif inputlist[0] in {'Set_Acknowledgement', 'set_acknowledgement', 'Acknowledgement', 'acknowledgement'}:
@@ -1922,7 +1922,7 @@ class TPX3_CLI_TOP(object):
                                 else:
                                     print('Unknown argument')
                             elif len(inputlist) > 2:
-                                print('To many parameters! The given function takes only one parameters:\n ClkOut_frequency.')
+                                print('To many parameters! The given function takes only one parameter:\n ClkOut_frequency.')
 
                     #Set Sense DAC
                     elif inputlist[0] in {'Set_Sense_DAC', 'set_sense_DAC', 'Sense_DAC', 'sense_DAC'}:
@@ -1944,7 +1944,7 @@ class TPX3_CLI_TOP(object):
                                 else:
                                     print('Unknown argument')
                             elif len(inputlist) > 2:
-                                print('To many parameters! The given function takes only one parameters:\n DAC number.')
+                                print('To many parameters! The given function takes only one parameter:\n DAC number.')
 
                     #Enable Link
                     elif inputlist[0] in {'Enable_Link', 'enable_link', 'Disable_Link', 'disable_link'}:
