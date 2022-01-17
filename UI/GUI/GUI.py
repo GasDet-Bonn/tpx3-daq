@@ -2606,7 +2606,9 @@ class GUI_Additional_Information(Gtk.Window):
                 self.mask_file = 'None'
             else:
                 self.mask_file = 'Corrupt Data'
-
+        
+        self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
+        
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         grid.set_column_spacing(10)
@@ -2617,14 +2619,14 @@ class GUI_Additional_Information(Gtk.Window):
         Space.set_text("")
 
         self.Backup_File_label = Gtk.Label()
-        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
+        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
 
         self.refresh_button = Gtk.Button(label = "Refresh")
         self.refresh_button.connect("clicked", self.on_refresh_button_clicked)
 
         grid.attach(self.Backup_File_label, 0, 0, 2, 3)
-        grid.attach(Space, 0, 3, 2, 1)
-        grid.attach(self.refresh_button, 2, 4, 1, 1)
+        grid.attach(Space, 0, 4, 2, 1)
+        grid.attach(self.refresh_button, 2, 5, 1, 1)
 
         self.show_all()
 
@@ -2644,7 +2646,10 @@ class GUI_Additional_Information(Gtk.Window):
                 self.mask_file = 'None'
             else:
                 self.mask_file = 'Corrupt Data'
-        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file))
+        
+        self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
+        
+        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
 
     def window_destroy(self, widget, event):
         self.destroy()
