@@ -2822,9 +2822,9 @@ class GUI_Main_Settings(Gtk.Window):
 class GUI_Main_Save_Backup_Input(Gtk.Window):
     def __init__(self):
 
-        user_path = os.path.expanduser('~')
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'backups')
+        self.user_path = os.path.expanduser('~')
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'backups')
 
         Gtk.Window.__init__(self, title = 'Save Backup')
         self.connect('delete-event', self.window_destroy)
@@ -2849,7 +2849,7 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
 
     def entered_text(self, widget):
         filename = self.entry.get_text()
-        full_path = user_path + os.sep + filename + '.TPX3'
+        full_path = self.user_path + os.sep + filename + '.TPX3'
         if os.path.isfile(full_path) == True:
             self.entry.set_text('')
             self.existing_label.set_text('File already exists')
@@ -2863,9 +2863,9 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
 
 class GUI_Main_Save_Equalisation_Input(Gtk.Window):
     def __init__(self):
-        user_path = os.path.expanduser('~')
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'equalisations')
+        self.user_path = os.path.expanduser('~')
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'equalisations')
 
         Gtk.Window.__init__(self, title = 'Save Equalisation')
         self.connect('delete-event', self.window_destroy)
@@ -2890,7 +2890,7 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
 
     def entered_text(self, widget):
         equal_path = self.entry.get_text()
-        full_path = user_path + os.sep + equal_path + '.h5'
+        full_path = self.user_path + os.sep + equal_path + '.h5'
         if os.path.isfile(full_path) == True:
             self.entry.set_text('')
             self.existing_label.set_text('File already exists')
@@ -2905,10 +2905,10 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
 class GUI_Main_Save_Mask_Input(Gtk.Window):
     def __init__(self):
 
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'masks')
+        self.user_path = '~'
+        self.user_path = os.path.expanduser(self.user_path)
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'masks')
 
         Gtk.Window.__init__(self, title = 'Save Mask')
         self.connect('delete-event', self.window_destroy)
@@ -2933,7 +2933,7 @@ class GUI_Main_Save_Mask_Input(Gtk.Window):
 
     def entered_text(self, widget):
         mask_path = self.entry.get_text()
-        full_path = user_path + os.sep + mask_path + '.h5'
+        full_path = self.user_path + os.sep + mask_path + '.h5'
         if os.path.isfile(full_path) == True:
             self.entry.set_text('')
             self.existing_label.set_text('File already exists.')
