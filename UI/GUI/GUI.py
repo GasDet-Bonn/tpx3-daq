@@ -3177,23 +3177,27 @@ class GUI_Main(Gtk.Window):
         self.statuslabel4 = Gtk.Label()
         self.statuslabel5 = Gtk.Label()
         self.statuslabel6 = Gtk.Label()
+        self.statuslabel7 = Gtk.Label()
         self.statuslabel.set_text('')
         self.statuslabel2.set_text('')
         self.statuslabel3.set_text('')
         self.statuslabel4.set_text('')
         self.statuslabel5.set_text('')
         self.statuslabel6.set_text('')
+        self.statuslabel7.set_text('')
         self.statuslabel2.set_justify(Gtk.Justification.LEFT)
         self.statuslabel3.set_justify(Gtk.Justification.LEFT)
         self.statuslabel4.set_justify(Gtk.Justification.LEFT)
         self.statuslabel5.set_justify(Gtk.Justification.LEFT)
         self.statuslabel6.set_justify(Gtk.Justification.LEFT)
+        self.statuslabel7.set_justify(Gtk.Justification.LEFT)
         self.Statusbox.add(self.statuslabel)
         self.Statusbox.add(self.statuslabel2)
         self.Statusbox.add(self.statuslabel3)
         self.Statusbox.add(self.statuslabel4)
         self.Statusbox.add(self.statuslabel5)
         self.Statusbox.add(self.statuslabel6)
+        self.Statusbox.add(self.statuslabel7)
         self.Statusbox.pack_end(self.progressbar, True, True, 5)
 
         page1.grid.attach(self.Startupbutton, 0, 0, 2, 1)
@@ -3205,7 +3209,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
         page1.grid.attach(self.NoiseScanbutton, 0, 7, 2, 1)
         page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
-        page1.grid.attach(Status, 2, 8, 12, 5)
+        page1.grid.attach(Status, 2, 8, 12, 6)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
         page1.grid.attach(self.about_label, 14, 0, 3, 3)
@@ -3322,6 +3326,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel4.set_text('')
             self.statuslabel5.set_text('')
             self.statuslabel6.set_text('')
+            self.statuslabel7.set_text('')
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -3356,6 +3361,7 @@ class GUI_Main(Gtk.Window):
         self.statuslabel4.set_text('')
         self.statuslabel5.set_text('')
         self.statuslabel6.set_text('')
+        self.statuslabel7.set_text('')
         self.statusstring4 = ''
         self.statusstring3 = ''
         self.statusstring2 = ''
@@ -3425,7 +3431,8 @@ class GUI_Main(Gtk.Window):
             self.progressbar.show()
             self.progressbar.set_fraction(progress)
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'PixelDAC_opt'))
+            self.statuslabel7.set_text(statusstring)
             self.show_progress_text = True
             self.statusstring4 = ''
             self.statusstring3 = ''
@@ -3435,7 +3442,11 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>' + subtype + '-based Equalisation</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step')
-            self.statuslabel6.set_text(statusstring)
+            if subtype == 'Noise':
+                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'Equalisation'))
+            elif subtype == 'Testpulse':
+                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'Equalisation_charge'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
             self.statusstring4 = ''
@@ -3446,7 +3457,8 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>ToT Calibration</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ToT_calib'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
             self.statusstring4 = ''
@@ -3457,7 +3469,8 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>Threshold Scan</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'threshold_scan'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
             self.statusstring4 = ''
@@ -3468,7 +3481,8 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>Threshold Calibration</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('Scanning ' + str(n_pulse_heights) + ' puls heights from THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'threshold_calib'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
             self.statusstring4 = ''
@@ -3479,7 +3493,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>Hardware Initialization</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('Scanning over all FPGA and chip links.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
             self.statusstring4 = ''
@@ -3490,7 +3504,8 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>Testpuls Scan</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'testpulse_scan'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
             self.statusstring4 = ''
@@ -3502,7 +3517,8 @@ class GUI_Main(Gtk.Window):
             if upperTHL != 'Datataking ends on user quit.':
                 self.progressbar.show()
             self.statuslabel2.set_text('Run datataking for ' + str(lowerTHL) + '\u200As. ' + upperTHL + '.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'data_take'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = False
             self.statusstring4 = ''
@@ -3533,10 +3549,10 @@ class GUI_Main(Gtk.Window):
                 runtime = datetime.now() - self.step_starttime
                 self.progressbar.set_show_text(self.show_progress_text)
                 self.progressbar.set_text(str(int(0)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + 'xx:xx')
-            self.statuslabel3.set_text(self.statusstring4)
-            self.statuslabel4.set_text(self.statusstring3)
-            self.statuslabel5.set_text(self.statusstring2)
-            self.statuslabel6.set_text(self.statusstring1)
+            self.statuslabel4.set_text(self.statusstring4)
+            self.statuslabel5.set_text(self.statusstring3)
+            self.statuslabel6.set_text(self.statusstring2)
+            self.statuslabel7.set_text(self.statusstring1)
         elif function == 'progress':
             self.progressbar.set_fraction(progress)
         elif function == 'default':
@@ -3757,6 +3773,15 @@ class GUI_Main(Gtk.Window):
         sim = ProducerSimManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', path = path, loglevel = 'INFO', delay = 0.1, kind = 'tpx3_sim', name = 'TPX3')
         self.simulator_process = Process(target = sim.start)
         self.simulator_process.start()
+    
+    def make_run_name(self, scan_type):
+        if TPX3_datalogger.read_value(name = 'Run_name') == None:
+            run_name = str(scan_type) + '_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+        elif TPX3_datalogger.read_value(name = 'Run_name') in ['False', 'false', '', 'None', 'none']:
+            run_name = (scan_type) + '_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+        else:
+            run_name = (scan_type) + '_' + TPX3_datalogger.read_value(name = 'Run_name')
+        return run_name
 
 def quit_procedure(gui):
     GUI.on_QuitCurrentFunctionbutton_clicked(widget = None)
