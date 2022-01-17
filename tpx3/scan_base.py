@@ -99,7 +99,7 @@ class ScanBase(object):
         Base class for scan- / tune- / analyze-class.
     '''
 
-    def __init__(self, dut_conf=None, no_chip=False):
+    def __init__(self, dut_conf=None, no_chip=False, run_name = None):
         # Initialize the chip
         if no_chip == False:
             self.chip = TPX3(dut_conf)
@@ -108,7 +108,7 @@ class ScanBase(object):
         # Initialize the files
         check_user_folders()
         self.set_directory()
-        self.make_files()
+        self.make_files(run_name)
 
         if no_chip == False:
             self.number_of_chips = 1
@@ -144,10 +144,13 @@ class ScanBase(object):
         else:
             self.working_dir = scan_path
 
-    def make_files(self):
+    def make_files(self, run_name = None):
         # Create the filename for the HDF5 file and the logger by combining timestamp and run_name
         self.timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-        self.run_name = self.scan_id + '_' + self.timestamp
+        if run_name == None:
+            self.run_name = self.scan_id + '_' + self.timestamp
+        else:
+            self.run_name = run_name
         output_path = os.path.join(self.working_dir, 'hdf')
         self.output_filename = os.path.join(output_path, self.run_name)
 
