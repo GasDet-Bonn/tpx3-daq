@@ -784,7 +784,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
                                 iterations = self.Number_of_Iterations, 
                                 n_injections = self.n_injections_value)
         new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', 
-            	                                            VTP_fine_start = self.Testpulse_range_start_value, 
+                                                            VTP_fine_start = self.Testpulse_range_start_value, 
                                                             VTP_fine_stop = self.Testpulse_range_stop_value, 
                                                             n_injections = self.n_injections_value, 
                                                             mask_step = self.Number_of_Iterations, 
@@ -2555,6 +2555,37 @@ class GUI_Set_Mask(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Set_Run_Name(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Set Run Name')
+        self.connect('delete-event', self.window_destroy)
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        self.add(grid)
+
+        label = Gtk.Label()
+        label.set_text('Enter run name')
+
+        self.entry = Gtk.Entry()
+        self.entry.connect('activate', self.entered_text)
+
+        self.space = Gtk.Label()
+        self.space.set_text('')
+
+        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(self.entry, 0, 1, 1, 1)
+        grid.attach(self.space, 0, 2, 1, 1)
+
+        self.show_all()
+
+    def entered_text(self, widget):
+        run_name = self.entry.get_text()
+        TPX3_datalogger.write_value(name = 'Run_name', value = run_name)
+        self.destroy()
+
+    def window_destroy(self, widget, event = True):
+        self.destroy()
+
 class GUI_Additional_Information(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = 'Info')
@@ -3111,6 +3142,9 @@ class GUI_Main(Gtk.Window):
 
         self.Infobutton = Gtk.Button(label = 'Info')
         self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
+        
+        self.Run_Name_button = Gtk.Button(label = 'Run Name')
+        self.Run_Name_button.connect('clicked', self.on_Run_Name_button_clicked)
 
         self.QuitCurrentFunctionbutton = Gtk.Button(label = 'Quit')
         self.QuitCurrentFunctionbutton.connect('clicked', self.on_QuitCurrentFunctionbutton_clicked)
@@ -3173,6 +3207,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.SetDACbutton, 14, 3, 3, 1)
         page1.grid.attach(self.AddSetbutton, 14, 4, 3, 1)
         page1.grid.attach(self.Infobutton, 14, 5, 3, 1)
+        page1.grid.attach(self.Run_Name_button, 14, 6, 3, 1)
         page1.grid.attach(self.SetMaskbutton, 14, 7, 3, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
@@ -3304,6 +3339,9 @@ class GUI_Main(Gtk.Window):
 
     def on_Infobutton_clicked(self, widget):
         Info_subw = GUI_Additional_Information()
+        
+    def on_Run_Name_button_clicked(self, widget):
+        Info_subw = GUI_Set_Run_Name()
 
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
         self.progressbar.hide()
