@@ -3068,7 +3068,7 @@ class GUI_Main(Gtk.Window):
 
         self.statusbar = Gtk.Statusbar()
         self.context_id = self.statusbar.get_context_id('Status Main')
-        self.statusbar.push(self.context_id, 'Please initalize the hardware with "Hardware Init".')
+        self.statusbar.push(self.context_id, 'Please initialize the hardware with "Hardware Init".')
 
         self.notebook = Gtk.Notebook()
         self.grid.add(self.notebook)

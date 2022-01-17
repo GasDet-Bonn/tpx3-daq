@@ -1711,7 +1711,7 @@ class TPX3_CLI_TOP(object):
                                         elif key == 'colorsteps':
                                             TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
                                 except:
-                                    print('Error: I did not recieve any values from plotting window')
+                                    print('Error: I did not receive any values from plotting window')
                                 self.plot_window_process = None
 
                         else:
@@ -1743,7 +1743,7 @@ class TPX3_CLI_TOP(object):
                                         elif key == 'colorsteps':
                                             TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
                                 except:
-                                    print('Error: I did not recieve any values from plotting window')
+                                    print('Error: I did not receive any values from plotting window')
                                 self.plot_window_process = None
 
                         else:
@@ -1810,7 +1810,7 @@ class TPX3_CLI_TOP(object):
                                 print(Chipname + ' on ' + str(number_of_links) + ' active links')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the get chip names function. It showes the connected chips with their number of connected links.')
+                            print('This is the get chip names function. It shows the connected chips with their number of connected links.')
                         else :
                             print('Get chip names does not take parameters!')
 
@@ -1824,7 +1824,7 @@ class TPX3_CLI_TOP(object):
                             print('The mask file "' + mask_path + '" is loaded')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the get mask names function. It showes the path of the current mask.')
+                            print('This is the get mask names function. It shows the path of the current mask.')
                         else :
                             print('Get mask name does not take parameters!')
 
@@ -1838,7 +1838,7 @@ class TPX3_CLI_TOP(object):
                             print('The equalisation file "' + equalisation_path + '" is loaded')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the get equalisation names function. It showes the path of the current equalisation.')
+                            print('This is the get equalisation names function. It shows the path of the current equalisation.')
                         else :
                             print('Get equalisation name does not take parameters!')
 
@@ -1857,7 +1857,7 @@ class TPX3_CLI_TOP(object):
                         print('GasDet Bonn 2019-2022')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the about function. It showes software and firmware information.')
+                            print('This is the about function. It shows software and firmware information.')
                         else :
                             print('About does not take parameters!')
 
@@ -1880,7 +1880,7 @@ class TPX3_CLI_TOP(object):
                                 elif key == 'colorsteps':
                                     TPX3_datalogger.write_value(name = 'colorsteps', value = int(value))
                         except:
-                            print('Error: I did not recieve any values from plotting window')
+                            print('Error: I did not receive any values from plotting window')
                         self.plot_window_process = None
                     file_logger.write_backup(file = file_logger.create_file())
                     file_logger.delete_tmp_backups()

@@ -316,7 +316,7 @@ class TPX3(Dut):
         if ftoa:
             self.ftoa = np.zeros((256, 256), dtype=np.int8)
         # matrix storing hit counts of each pixel, if a hit happened without ToA and
-        # ToT being registered, i.e. two hits happenening too close to one another
+        # ToT being registered, i.e. two hits happening too close to one another
         # 4 bit values
         if hits:
             self.hits = np.zeros((256, 256), dtype=np.int8)
