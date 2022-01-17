@@ -102,11 +102,15 @@ def expert_completer(text, state):
 # With this you can end a wrong started function with "Ctrl. c" without ending the whole CLI.
 class TPX3_multiprocess_start(object):
     def process_call(function, **kwargs):
+        if function != "ScanHardware":
+            run_name = TPX3_datalogger.get_run_name(scan_type = function)
+        else:
+            run_name = ""
 
-        def startup_func(function, **kwargs):
+        def startup_func(function, run_name, **kwargs):
             system_exit = False
             try:  
-                call_func = (function + '()')
+                call_func = (function + '(run_name = "' + run_name + '")')
                 scan = eval(call_func)
                 scan.start(**kwargs)
                 scan.analyze(**kwargs)
@@ -127,7 +131,7 @@ class TPX3_multiprocess_start(object):
                 status.put('Scan finished')
 
         file_logger.write_tmp_backup()
-        new_process = Process(target = startup_func, args = (function, ), kwargs = kwargs)
+        new_process = Process(target = startup_func, args = (function, run_name, ), kwargs = kwargs)
         new_process.start()
         return new_process
 
