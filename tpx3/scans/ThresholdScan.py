@@ -34,7 +34,7 @@ local_configuration = {
 
 class ThresholdScan(ScanBase):
 
-    scan_id = "threshold_scan"
+    scan_id = "ThresholdScan"
     wafer_number = 0
     y_position = 0
     x_position = 'A'

@@ -35,7 +35,7 @@ local_configuration = {
 
 class TestpulseScan(ScanBase):
 
-    scan_id = "testpulse_scan"
+    scan_id = "TestpulseScan"
     wafer_number = 0
     y_position = 0
     x_position = 'A'

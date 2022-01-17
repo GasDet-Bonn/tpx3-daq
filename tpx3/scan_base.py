@@ -659,21 +659,21 @@ class ScanBase(object):
             self.chip.write_pcr(list(range(4 * i, 4 * i + 4)))
 
         # Set Op_mode for the scans, based on the scan id
-        if self.scan_id == 'Equalisation_charge':
+        if self.scan_id == 'EqualisationCharge':
             self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'Equalisation':
+        elif self.scan_id == 'EqualisationNoise':
             self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'PixelDAC_opt':
+        elif self.scan_id == 'PixelDACopt':
             self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'testpulse_scan':
+        elif self.scan_id == 'TestpulseScan':
             self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'threshold_scan':
+        elif self.scan_id == 'ThresholdScan':
             self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'threshold_calib':
+        elif self.scan_id == 'ThresholdCalib':
             self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'noise_scan':
+        elif self.scan_id == 'NoiseScan':
             self.chip._configs["Op_mode"] = 0
-        elif self.scan_id == 'ToT_calib':
+        elif self.scan_id == 'ToTCalib':
             self.chip._configs["Op_mode"] = 0
 
         # Setup HDF5 file

@@ -6,15 +6,15 @@ from multiprocessing import Process, Queue, Pipe
 from subprocess import Popen, PIPE
 from shutil import copy
 
-from tpx3.scans.ToT_calib import ToTCalib
-from tpx3.scans.scan_threshold import ThresholdScan
-from tpx3.scans.scan_testpulse import TestpulseScan
-from tpx3.scans.PixelDAC_opt_fast import PixelDAC_opt
-from tpx3.scans.equalisation_charge import Equalisation_charge
-from tpx3.scans.equalisation import Equalisation
-from tpx3.scans.take_data import DataTake
-from tpx3.scans.Threshold_calib import ThresholdCalib
-from tpx3.scans.scan_hardware import ScanHardware
+from tpx3.scans.ToTCalib import ToTCalib
+from tpx3.scans.ThresholdScan import ThresholdScan
+from tpx3.scans.TestpulseScan import TestpulseScan
+from tpx3.scans.PixelDACoptFast import PixelDACopt
+from tpx3.scans.EqualisationCharge import EqualisationCharge
+from tpx3.scans.EqualisationNoise import EqualisationNoise
+from tpx3.scans.DataTake import DataTake
+from tpx3.scans.ThresholdCalib import ThresholdCalib
+from tpx3.scans.ScanHardware import ScanHardware
 from tpx3.scan_base import ConfigError
 from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
 from UI.GUI.converter import utils as conv_utils
@@ -420,7 +420,7 @@ class TPX3_CLI_function_call(object):
                         print('Input needs to be a number!')
         print('Pixel DAC optimisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'offset =', offset)
         pixeldac_result = Queue()
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt',
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDACopt',
                                                            iteration = 0,
                                                            Vthreshold_start = Vthreshold_start,
                                                            Vthreshold_stop = Vthreshold_stop,
@@ -482,7 +482,7 @@ class TPX3_CLI_function_call(object):
 
         print('Equalisation with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ', n_injections, 'mask_step =', mask_step)
         result_path = Queue()
-        new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge',
+        new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationCharge',
                                                            Vthreshold_start = Vthreshold_start,
                                                            Vthreshold_stop = Vthreshold_stop,
                                                            n_injections = n_injections,

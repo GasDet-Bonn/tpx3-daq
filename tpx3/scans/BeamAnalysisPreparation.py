@@ -37,7 +37,7 @@ import argparse
 
 
 
-class Preparation():    
+class BeamAnalysisPreparation():    
 
     scan_id = "BeamAnalysisPreparation"
     
@@ -504,7 +504,7 @@ if __name__ == "__main__":
     toa_split = args_dict["toa"]
 
     # analyze and plot
-    prep = Preparation()
+    prep = BeamAnalysisPreparation()
     if toa_split==False:
         trigger_list = prep.generate_trigger_from_DUT1(datafiles[0], output_file_name=datafiles[0][:-3]+"_DUT0.h5")
         for i in range(1, len(datafiles)):

@@ -31,7 +31,7 @@ local_configuration = {
 
 class DataTake(ScanBase):
 
-    scan_id = "data_take"
+    scan_id = "DataTake"
 
     def handle_exit(sig, frame):
         raise(SystemExit)

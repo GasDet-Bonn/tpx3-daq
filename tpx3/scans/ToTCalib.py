@@ -34,7 +34,7 @@ local_configuration = {
 
 class ToTCalib(ScanBase):
 
-    scan_id = "ToT_calib"
+    scan_id = "ToTCalib"
     wafer_number = 0
     y_position = 0
     x_position = 'A'

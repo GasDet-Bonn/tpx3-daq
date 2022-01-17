@@ -37,7 +37,7 @@ local_configuration = {
 
 class ThresholdCalib(ScanBase):
 
-    scan_id = "threshold_calib"
+    scan_id = "ThresholdCalib"
     wafer_number = 0
     y_position = 0
     x_position = 'A'

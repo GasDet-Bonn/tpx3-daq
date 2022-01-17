@@ -16,7 +16,7 @@ class ChipIDError(Exception):
     pass
 
 class ScanHardware(object):
-    def __init__(self):
+    def __init__(self, run_name = None):
         pass
 
     def start(self, results = None, progress = None, status = None, **kwargs):

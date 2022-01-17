@@ -7,7 +7,7 @@
 
 '''
     This script performs an equalisation of pixels based on a threshold scan
-    with injected charge.
+    with noise.
 '''
 from __future__ import print_function
 from __future__ import absolute_import
@@ -29,20 +29,19 @@ from six.moves import range
 local_configuration = {
     # Scan parameters
     'mask_step'        : 16,
-    'Vthreshold_start' : 1500,
-    'Vthreshold_stop'  : 2000,
-    'n_injections'     : 100
+    'Vthreshold_start' : 1000,
+    'Vthreshold_stop'  : 1350
 }
 
 
-class Equalisation_charge(ScanBase):
+class EqualisationNoise(ScanBase):
 
-    scan_id = "Equalisation_charge"
+    scan_id = "EqualisationNoise"
     wafer_number = 0
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2000, n_injections = 16, mask_step = 32, tp_period = 1, progress = None, status = None, **kwargs):
+    def scan(self, Vthreshold_start = 1000, Vthreshold_stop = 1350, mask_step = 16, progress = None, status = None, **kwargs):
         '''
             Takes data for equalisation. Therefore a threshold scan is performed for all pixel thresholds at 0 and at 15.
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -56,8 +55,6 @@ class Equalisation_charge(ScanBase):
             raise ValueError("Value {} for Vthreshold_stop is not in the allowed range (0-2911)".format(Vthreshold_stop))
         if Vthreshold_stop <= Vthreshold_start:
             raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
-        if n_injections < 1 or n_injections > 65535:
-            raise ValueError("Value {} for n_injections is not in the allowed range (1-65535)".format(n_injections))
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
 
@@ -66,10 +63,8 @@ class Equalisation_charge(ScanBase):
 
         # Write to the test pulse registers of the Timepix3
         # Write to period and phase tp registers
-        data = self.chip.write_tp_period(tp_period, 0)
-
-        # Write to pulse number tp register
-        self.chip.write_tp_pulsenumber(n_injections)
+        # This is needed here to open the internal Timepix3 shutter
+        data = self.chip.write_tp_period(1, 0)
 
         self.logger.info('Preparing injection masks...')
         if status != None:
@@ -78,9 +73,6 @@ class Equalisation_charge(ScanBase):
         # Create the masks for all steps for the scan at 0 and at 15
         mask_cmds = self.create_scan_masks(mask_step, pixel_threhsold = 0, progress = progress)
         mask_cmds2 = self.create_scan_masks(mask_step, pixel_threhsold = 15, progress = progress)
-
-        # Get the shutter sleep time
-        sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = n_injections)
 
         # Scan with pixel threshold 0
         self.logger.info('Starting scan for THR = 0...')
@@ -103,17 +95,13 @@ class Equalisation_charge(ScanBase):
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id):
-                step = 0
                 for mask_step_cmd in mask_cmds:
-                    # Only activate testpulses for columns with active pixels
-                    self.chip.write_ctpr(list(range(step//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
-
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(sleep_time)
+                        time.sleep(0.01)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)
@@ -124,7 +112,6 @@ class Equalisation_charge(ScanBase):
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
-                    step += 1
                 self.chip.reset_sequential()
                 time.sleep(0.001)
             scan_param_id += 1
@@ -153,17 +140,13 @@ class Equalisation_charge(ScanBase):
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
-                step = 0
                 for mask_step_cmd in mask_cmds2:
                     # Only activate testpulses for columns with active pixels
-                    self.chip.write_ctpr(list(range(step//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
-
-                    # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(sleep_time)
+                        time.sleep(0.01)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)
@@ -174,7 +157,6 @@ class Equalisation_charge(ScanBase):
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
-                    step += 1
                 self.chip.reset_sequential()
                 time.sleep(0.001)
             scan_param_id += 1
@@ -241,7 +223,6 @@ class Equalisation_charge(ScanBase):
         # Read needed configuration parameters
         Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
         Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
-        n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
         chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
         chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
         chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
@@ -258,26 +239,27 @@ class Equalisation_charge(ScanBase):
         
         # Create histograms for number of detected hits for individual thresholds
         self.logger.info('Get the global threshold distributions for all pixels...')
-        scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
+        scurve_th0 = analysis.scurve_hist(hit_data_thr0, param_range_th0)
         hit_data_thr0 = None
-        scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
+        scurve_th15 = analysis.scurve_hist(hit_data_thr15, param_range_th15)
         hit_data_thr15 = None
 
-        # Fit S-Curves to the histogramms for all pixels
-        self.logger.info('Fit the scurves for all pixels...')
-        thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+        # Calculate the mean of the threshold distributions for all pixels
+        self.logger.info('Calculate the mean of the global threshold distributions for all pixels...')
+        vths_th0 = analysis.vths(scurve_th0, param_range_th0, Vthreshold_start)
         scurve_th0 = None
-        thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+        vths_th15 = analysis.vths(scurve_th15, param_range_th15, Vthreshold_start)
         scurve_th15 = None
 
-        # Put the threshold distribution based on the fit results in two histogramms
+        # Get the treshold distributions for both scan
         self.logger.info('Get the cumulated global threshold distributions...')
-        hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
-        hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
+        hist_th0 = analysis.vth_hist(vths_th0, Vthreshold_stop)
+        hist_th15 = analysis.vth_hist(vths_th15, Vthreshold_stop)
+        vths_th15 = None
 
         # Use the threshold histogramms and one threshold distribution to calculate the equalisation
         self.logger.info('Calculate the equalisation matrix...')
-        eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
+        eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop)
 
         # Don't mask any pixels in the mask file
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
@@ -291,6 +273,6 @@ class Equalisation_charge(ScanBase):
 
 
 if __name__ == "__main__":
-    scan = Equalisation_charge()
+    scan = Equalisation()
     scan.start(**local_configuration)
     scan.analyze()

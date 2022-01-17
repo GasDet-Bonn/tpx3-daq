@@ -922,7 +922,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
                                 lowerTHL = self.Threshold_start_value, 
                                 upperTHL = self.Threshold_stop_value, 
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', 
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDACopt', 
                                                             iteration = 0, 
                                                             Vthreshold_start = self.Threshold_start_value, 
                                                             Vthreshold_stop = self.Threshold_stop_value, 
@@ -2156,7 +2156,7 @@ class GUI_Equalisation(Gtk.Window):
                                 upperTHL = self.Threshold_stop_value, 
                                 iterations = self.Number_of_Iterations)
         if self.Equalisation_Type == 'Noise':
-            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation', 
+            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationNoise', 
                                                                 Vthreshold_start = self.Threshold_start_value, 
                                                                 Vthreshold_stop = self.Threshold_stop_value, 
                                                                 mask_step = self.Number_of_Iterations,
@@ -2166,7 +2166,7 @@ class GUI_Equalisation(Gtk.Window):
                                                                 result_path = GUI.eq_result_path, 
                                                                 plot_queue = GUI.plot_queue)
         elif self.Equalisation_Type == 'Testpulse':
-            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', 
+            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationCharge', 
                                                                 Vthreshold_start = self.Threshold_start_value, 
                                                                 Vthreshold_stop = self.Threshold_stop_value, 
                                                                 n_injections = 100, 
@@ -3431,7 +3431,7 @@ class GUI_Main(Gtk.Window):
             self.progressbar.show()
             self.progressbar.set_fraction(progress)
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'PixelDAC_opt'))
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'PixelDACopt'))
             self.statuslabel7.set_text(statusstring)
             self.show_progress_text = True
             self.statusstring4 = ''
@@ -3443,9 +3443,9 @@ class GUI_Main(Gtk.Window):
             self.progressbar.show()
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step')
             if subtype == 'Noise':
-                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'Equalisation'))
+                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'EqualisationNoise'))
             elif subtype == 'Testpulse':
-                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'Equalisation_charge'))
+                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'EqualisationCharge'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
@@ -3457,7 +3457,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>ToT Calibration</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step')
-            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ToT_calib'))
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ToTCalib'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
@@ -3469,7 +3469,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>Threshold Scan</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'threshold_scan'))
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ThresholdScan'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
@@ -3481,7 +3481,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>Threshold Calibration</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('Scanning ' + str(n_pulse_heights) + ' puls heights from THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'threshold_calib'))
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ThresholdCalib'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
@@ -3504,7 +3504,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_markup('<big><b>Testpuls Scan</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'testpulse_scan'))
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'TestpulseScan'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
@@ -3517,7 +3517,7 @@ class GUI_Main(Gtk.Window):
             if upperTHL != 'Datataking ends on user quit.':
                 self.progressbar.show()
             self.statuslabel2.set_text('Run datataking for ' + str(lowerTHL) + '\u200As. ' + upperTHL + '.')
-            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'data_take'))
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'DataTake'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = False
