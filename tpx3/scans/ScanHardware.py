@@ -184,33 +184,22 @@ class ScanHardware(object):
         proj_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         yaml_file =  os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
 
-        if not yaml_file == None:
-            with open(yaml_file) as file:
-                yaml_data = yaml.load(file, Loader=yaml.FullLoader)
+        dict_list = []
 
         # Write the registers based on the scan results
-        for i, register in enumerate(yaml_data['registers']):
-            register['name'] = rx_list_objects[i].name
-            register['fpga-link'] = i
-            try:
-                register['chip-link'] = int(np.where(rx_map[:][i] == 1)[0][0])
-            except:
-                if int(status_map[i]) != 6:
-                    status_map[i] = 6
-                register['chip-link'] = 0
-            register['chip-id'] = int(Chip_IDs[i])
-            register['data-delay'] = int(delays[i])
-            register['data-invert'] = 0
-            register['data-edge'] = 0
-            register['link-status'] = int(status_map[i])
+        for i, register in enumerate(rx_list_objects):
+            dict = {'name': rx_list_objects[i].name, 'fpga-link': i, 'chip-link': int(np.where(rx_map[:][i] == 1)[0][0]),
+                    'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': 0, 'data-edge': 0, 'link-status': int(status_map[i])}
+            dict_list.append(dict)
 
         # Write the ideal settings to the yaml file
+        dict_list = {'registers': dict_list}
         with open(yaml_file, 'w') as file:
-            yaml.dump(yaml_data, file)
+            yaml.dump(dict_list, file)
 
         # Create a list if unique Chip-ID strings and corresponding Chip-ID bits
         ID_List = []
-        for register in yaml_data['registers']:
+        for register in dict_list['registers']:
             bit_id = BitLogic.from_value(register['chip-id'])
 
             # Decode the Chip-ID
@@ -226,7 +215,7 @@ class ScanHardware(object):
         # Create a list of Chips with all link settings for the specific chip
         Chip_List = []
         # Iterate over all links
-        for register in yaml_data['registers']:
+        for register in dict_list['registers']:
             for ID in ID_List:
                 if ID[0] == register['chip-id']:
                     # If the list is empty or the current chip is not in the list add it with its settings
