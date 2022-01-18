@@ -557,9 +557,9 @@ class TPX3_data_logger(object):
                 for n in range(1, len(value_list)):
                     element_list = value_list[n]
                     chip_link = element_list[1]
-                    link_veto = element_list[5]
+                    link_status = element_list[5]
                     if chip_link == link:
-                        return int(link_veto)
+                        return int(link_status)
             else:
                 print('Error: Unknown link status')
                 return False
