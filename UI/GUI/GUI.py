@@ -3626,7 +3626,7 @@ class GUI_Main(Gtk.Window):
     def update_status(self):
         if not self.hardware_scan_results.empty():
             Chip_List = self.hardware_scan_results.get()
-            for n in range(0,2):
+            for n in range(0,3):
                 if n == 0 and Chip_List:
                     self.firmware_version = Chip_List.pop(0)
                     TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)
@@ -3640,11 +3640,13 @@ class GUI_Main(Gtk.Window):
                     except:
                         self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
                                                     '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+                elif n == 1 and Chip_List:
+                    TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0))
                 elif Chip_List:
-                    name = 'Chip' + str(n - 1) + '_name'
+                    name = 'Chip' + str(n - 2) + '_name'
                     TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
                 else:
-                    name = 'Chip' + str(n - 1) + '_name'
+                    name = 'Chip' + str(n - 2) + '_name'
                     TPX3_datalogger.write_value(name = name, value = [None])
             statusstring = 'Connected to '
             for n, Chipname in enumerate(TPX3_datalogger.get_chipnames()):

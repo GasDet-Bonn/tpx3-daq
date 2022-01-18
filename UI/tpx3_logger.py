@@ -333,7 +333,7 @@ class TPX3_data_logger(object):
     '''
     def __init__(self):
         check_user_folders()
-        self.config_keys = ['software_version', 'firmware_version', 
+        self.config_keys = ['software_version', 'firmware_version', 'hardware_links',
                             'Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 
                             'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name', 
                             'plottype', 'colorsteps', 'integration_length', 
@@ -350,6 +350,7 @@ class TPX3_data_logger(object):
     def default_config(self):
         return {'software_version' : 'x.x',
                 'firmware_version' : 'x.x',
+                'hardware_links' : 0,
                 'Chip0_name' : [None],#[W?_??, [FPGA n, link n , delay, data-invert, data-edge, link n-status], [FPGA m, link m , delay, data-invert, data-edge, link m-status], ... ]
                 'Chip1_name' : [None],
                 'Chip2_name' : [None],

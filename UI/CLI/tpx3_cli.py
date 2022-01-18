@@ -1626,15 +1626,17 @@ class TPX3_CLI_TOP(object):
                         print('Initialise Hardware')
                         try:
                             Chip_List = function_call.Initialise_Hardware()
-                            for n in range(0, 2):
+                            for n in range(0, 3):
                                 if n == 0 and Chip_List:
                                     self.firmware_version = Chip_List.pop(0)
                                     TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)
+                                elif n == 1 and Chip_List:
+                                    TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0))
                                 elif Chip_List:
-                                    name = 'Chip' + str(n - 1) + '_name'
+                                    name = 'Chip' + str(n - 2) + '_name'
                                     TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
                                 else:
-                                    name = 'Chip' + str(n - 1) + '_name'
+                                    name = 'Chip' + str(n - 2) + '_name'
                                     TPX3_datalogger.write_value(name = name, value = [None])
                         except KeyboardInterrupt:
                             print('User quit')

@@ -239,7 +239,7 @@ class ScanHardware(object):
             print(Chip_List)
             return Chip_List
         else:
-            results.put([self.chip.fw_version] + Chip_List)
+            results.put([self.chip.fw_version] + [len(rx_list_objects)] + Chip_List)
 
 
     def analyze(self, **kwargs):
