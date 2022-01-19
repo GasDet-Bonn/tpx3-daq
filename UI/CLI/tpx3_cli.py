@@ -819,16 +819,17 @@ class TPX3_CLI_function_call(object):
             print('Could not write file')
 
     def Enable_Link(object, link = None, flag = None):
+        hardware_links = TPX3_datalogger.read_value('hardware_links')
         if link == None:
-            print('> Please enter the link you like to disable/enable[0-7]:')
+            print('> Please enter the link you like to disable/enable [0-' + str(hardware_links - 1) + ']:')
             while(1):
                 link = input('>> ')
                 try:
                     link = int(link)
-                    if link in (0,1,2,3,4,5,6,7):
+                    if link in range(hardware_links):
                         break
                     else:
-                        print('Link needs to be between "0" and "7"')
+                        print('Link needs to be between "0" and "' + str(hardware_links - 1) + '"')
                 except:
                     if link in exit_list:
                         return
