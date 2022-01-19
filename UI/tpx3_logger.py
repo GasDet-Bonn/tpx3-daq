@@ -422,7 +422,7 @@ class TPX3_data_logger(object):
 
     def write_value(self, name, value):
         if self.name_valid(name) == True:
-            if name in ['Chip0_name']:#, 'Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']:
+            if name in ['Chip0_name']:
                 value_list = self.data[name]
                 if value == value_list:
                     return True
@@ -443,7 +443,7 @@ class TPX3_data_logger(object):
                             chip_link = element_list[1]
                             link_status = element_list[5]
                             if new_chip_link == chip_link:
-                                if new_link_status == 0: #not connected
+                                if new_link_status == 0: # not connected
                                     new_link_status = 0
                                 elif new_link_status == link_status:
                                     new_link_status = int(new_link_status)
@@ -463,7 +463,7 @@ class TPX3_data_logger(object):
                         self.data[name] = self.final_list
                         self.write_to_yaml(name = 'init')
                     return True
-            elif name in ['Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']:
+            elif name in ['Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']: #For multichip upgrade
                 pass
             else:
                 self.data[name] = value
