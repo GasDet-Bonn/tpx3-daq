@@ -3223,10 +3223,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'PixelDACopt'))
             self.statuslabel7.set_text(statusstring)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'Equalisation':
             self.statuslabel.set_markup('<big><b>' + subtype + '-based Equalisation</b></big>')
             self.progressbar.show()
@@ -3238,10 +3235,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'ToT_Calib':
             self.statuslabel.set_markup('<big><b>ToT Calibration</b></big>')
             self.progressbar.show()
@@ -3250,10 +3244,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'ThresholdScan':
             self.statuslabel.set_markup('<big><b>Threshold Scan</b></big>')
             self.progressbar.show()
@@ -3262,10 +3253,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'ThresholdCalib':
             self.statuslabel.set_markup('<big><b>Threshold Calibration</b></big>')
             self.progressbar.show()
@@ -3274,10 +3262,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'InitHardware':
             self.statuslabel.set_markup('<big><b>Hardware Initialization</b></big>')
             self.progressbar.show()
@@ -3285,10 +3270,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'TestpulsScan':
             self.statuslabel.set_markup('<big><b>Testpuls Scan</b></big>')
             self.progressbar.show()
@@ -3297,10 +3279,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'Run':
             self.statuslabel.set_markup('<big><b>Run</b></big>')
             if upperTHL != 'Datataking ends on user quit.':
@@ -3310,10 +3289,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = False
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'status':
             if statusstring == 'iteration_symbol':
                 self.iteration_symbol = True
@@ -3345,6 +3321,12 @@ class GUI_Main(Gtk.Window):
             self.statuslabel.set_text('Error: Call without functionname')
         else:
             self.statuslabel.set_text('Error: ' + function + ' is not known!')
+
+    def clear_statusstrings(self):
+        self.statusstring1 = ''
+        self.statusstring2 = ''
+        self.statusstring3 = ''
+        self.statusstring4 = ''
 
     def get_progress_bar(self):
         return self.progressbar
