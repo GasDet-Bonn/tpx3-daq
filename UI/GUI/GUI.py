@@ -185,6 +185,8 @@ class GUI_Plot_settings(Gtk.Window):
             color_depth_label.hide()
             self.color_depth.hide()
 
+        self.resize(1, 1)
+
     def plot_depth_set(self, event):
         self.plot_depth_value = self.plot_depth.get_value_as_int()
 
