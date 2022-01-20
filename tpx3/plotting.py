@@ -251,7 +251,7 @@ class Plotting(object):
                     (self.run_config[b'thrfile']).decode(), fontsize=6)
 
         if b'maskfile' in list(self.run_config.keys()) and self.run_config[b'maskfile'] is not None and not self.run_config[b'maskfile'] == b'None':
-            ax.text(0.01, -0.15, 'Maskfile:\n%s' %
+            ax.text(0.01, -0.11, 'Maskfile:\n%s' %
                     (self.run_config[b'maskfile']).decode(), fontsize=6)
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
