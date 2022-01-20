@@ -3317,9 +3317,6 @@ class GUI_Main(Gtk.Window):
         elif function == 'status':
             if statusstring == 'iteration_symbol':
                 self.iteration_symbol = True
-                self.statusstring4 = self.statusstring3
-                self.statusstring3 = self.statusstring2
-                self.statusstring2 = self.statusstring1
                 self.step_starttime = datetime.now()
                 runtime = datetime.now() - self.step_starttime
                 self.progressbar.set_text(str(int(0)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + 'xx:xx')
