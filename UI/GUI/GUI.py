@@ -1088,285 +1088,54 @@ class GUI_SetDAC(Gtk.Window):
         Space = Gtk.Label()
         Space.set_text("")
 
-        #Ibias_Preamp_ON
-        self.Ibias_Preamp_ON_value = TPX3_datalogger.read_value(name = 'Ibias_Preamp_ON')
-        Ibias_Preamp_ON_adj = Gtk.Adjustment()
-        Ibias_Preamp_ON_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_Preamp_ON = Gtk.SpinButton(adjustment = Ibias_Preamp_ON_adj, climb_rate = 1, digits=0)
-        self.Ibias_Preamp_ON.set_value(self.Ibias_Preamp_ON_value) 
-        self.Ibias_Preamp_ON.connect('value-changed', self.Ibias_Preamp_ON_set)
-        Ibias_Preamp_ON_label = Gtk.Label()
-        Ibias_Preamp_ON_label.set_text("Ibias_Preamp_ON ")
+        self.dac_dict = {'Ibias_Preamp_ON':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_Preamp_OFF':  {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None},
+                         'VPreamp_NCAS':      {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_Ikrum':       {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Vfbk':              {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Vthreshold_fine':   {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None},
+                         'Vthreshold_coarse': {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_DiscS1_ON':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_DiscS1_OFF':  {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_DiscS2_ON':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_DiscS2_OFF':  {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_PixelDAC':    {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_TPbufferIn':  {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_TPbufferOut': {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'VTP_coarse':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'VTP_fine':          {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None},
+                         'Ibias_CP_PLL':      {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None},
+                         'PLL_Vcntrl':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None}}
 
-        #Ibias_Preamp_OFF
-        self.Ibias_Preamp_OFF_value = 7
-        Ibias_Preamp_OFF_adj = Gtk.Adjustment()
-        Ibias_Preamp_OFF_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Ibias_Preamp_OFF = Gtk.SpinButton(adjustment = Ibias_Preamp_OFF_adj, climb_rate = 1, digits = 0)
-        self.Ibias_Preamp_OFF.set_value(self.Ibias_Preamp_OFF_value) 
-        self.Ibias_Preamp_OFF.connect('value-changed', self.Ibias_Preamp_OFF_set)
-        Ibias_Preamp_OFF_label = Gtk.Label()
-        Ibias_Preamp_OFF_label.set_text('Ibias_Preamp_OFF ')
-
-        #VPreamp_NCAS
-        self.VPreamp_NCAS_value = TPX3_datalogger.read_value(name = 'VPreamp_NCAS')
-        VPreamp_NCAS_adj = Gtk.Adjustment()
-        VPreamp_NCAS_adj.configure(127, 0, 255, 1, 0, 0)
-        self.VPreamp_NCAS = Gtk.SpinButton(adjustment = VPreamp_NCAS_adj, climb_rate = 1, digits = 0)
-        self.VPreamp_NCAS.set_value(self.VPreamp_NCAS_value) 
-        self.VPreamp_NCAS.connect('value-changed', self.VPreamp_NCAS_set)
-        VPreamp_NCAS_label = Gtk.Label()
-        VPreamp_NCAS_label.set_text('VPreamp_NCAS ')
-
-        #Ibias_Ikrum
-        self.Ibias_Ikrum_value = TPX3_datalogger.read_value(name = 'Ibias_Ikrum')
-        Ibias_Ikrum_adj = Gtk.Adjustment()
-        Ibias_Ikrum_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_Ikrum = Gtk.SpinButton(adjustment = Ibias_Ikrum_adj, climb_rate = 1, digits = 0)
-        self.Ibias_Ikrum.set_value(self.Ibias_Ikrum_value) 
-        self.Ibias_Ikrum.connect('value-changed', self.Ibias_Ikrum_set)
-        Ibias_Ikrum_label = Gtk.Label()
-        Ibias_Ikrum_label.set_text('Ibias_Ikrum ')
-
-        #Vfbk
-        self.Vfbk_value = TPX3_datalogger.read_value(name = 'Vfbk')
-        Vfbk_adj = Gtk.Adjustment()
-        Vfbk_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Vfbk = Gtk.SpinButton(adjustment = Vfbk_adj, climb_rate = 1, digits = 0)
-        self.Vfbk.set_value(self.Vfbk_value) 
-        self.Vfbk.connect('value-changed', self.Vfbk_set)
-        Vfbk_label = Gtk.Label()
-        Vfbk_label.set_text('Vfbk ')
-
-        #Vthreshold_fine
-        self.Vthreshold_fine_value = TPX3_datalogger.read_value(name = 'Vthreshold_fine')
-        Vthreshold_fine_adj = Gtk.Adjustment()
-        Vthreshold_fine_adj.configure(255, 0, 511, 1, 0, 0)
-        self.Vthreshold_fine = Gtk.SpinButton(adjustment = Vthreshold_fine_adj, climb_rate = 1, digits = 0)
-        self.Vthreshold_fine.set_value(self.Vthreshold_fine_value) 
-        self.Vthreshold_fine.connect('value-changed', self.Vthreshold_fine_set)
-        Vthreshold_fine_label = Gtk.Label()
-        Vthreshold_fine_label.set_text('Vthreshold_fine ')
-
-        #Vthreshold_coarse
-        self.Vthreshold_coarse_value = TPX3_datalogger.read_value(name = 'Vthreshold_coarse')
-        Vthreshold_coarse_adj = Gtk.Adjustment()
-        Vthreshold_coarse_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Vthreshold_coarse = Gtk.SpinButton(adjustment = Vthreshold_coarse_adj, climb_rate = 1, digits = 0)
-        self.Vthreshold_coarse.set_value(self.Vthreshold_coarse_value) 
-        self.Vthreshold_coarse.connect('value-changed', self.Vthreshold_coarse_set)
-        Vthreshold_coarse_label = Gtk.Label()
-        Vthreshold_coarse_label.set_text('Vthreshold_coarse ')
-
-        #Ibias_DiscS1_ON
-        self.Ibias_DiscS1_ON_value = TPX3_datalogger.read_value(name = 'Ibias_DiscS1_ON')
-        Ibias_DiscS1_ON_adj = Gtk.Adjustment()
-        Ibias_DiscS1_ON_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_DiscS1_ON = Gtk.SpinButton(adjustment = Ibias_DiscS1_ON_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS1_ON.set_value(self.Ibias_DiscS1_ON_value) 
-        self.Ibias_DiscS1_ON.connect('value-changed', self.Ibias_DiscS1_ON_set)
-        Ibias_DiscS1_ON_label = Gtk.Label()
-        Ibias_DiscS1_ON_label.set_text('Ibias_DiscS1_ON ')
-
-        #Ibias_DiscS1_OFF
-        self.Ibias_DiscS1_OFF_value = 7
-        Ibias_DiscS1_OFF_adj = Gtk.Adjustment()
-        Ibias_DiscS1_OFF_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Ibias_DiscS1_OFF = Gtk.SpinButton(adjustment = Ibias_DiscS1_OFF_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS1_OFF.set_value(self.Ibias_DiscS1_OFF_value) 
-        self.Ibias_DiscS1_OFF.connect('value-changed', self.Ibias_DiscS1_OFF_set)
-        Ibias_DiscS1_OFF_label = Gtk.Label()
-        Ibias_DiscS1_OFF_label.set_text('Ibias_DiscS1_OFF ')
-
-        #Ibias_DiscS2_ON
-        self.Ibias_DiscS2_ON_value = TPX3_datalogger.read_value(name = 'Ibias_DiscS2_ON')
-        Ibias_DiscS2_ON_adj = Gtk.Adjustment()
-        Ibias_DiscS2_ON_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_DiscS2_ON = Gtk.SpinButton(adjustment = Ibias_DiscS2_ON_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS2_ON.set_value(self.Ibias_DiscS2_ON_value) 
-        self.Ibias_DiscS2_ON.connect('value-changed', self.Ibias_DiscS2_ON_set)
-        Ibias_DiscS2_ON_label = Gtk.Label()
-        Ibias_DiscS2_ON_label.set_text('Ibias_DiscS2_ON ')
-
-        #Ibias_DiscS2_OFF
-        self.Ibias_DiscS2_OFF_value = 7
-        Ibias_DiscS2_OFF_adj = Gtk.Adjustment()
-        Ibias_DiscS2_OFF_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Ibias_DiscS2_OFF = Gtk.SpinButton(adjustment = Ibias_DiscS2_OFF_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS2_OFF.set_value(self.Ibias_DiscS2_OFF_value) 
-        self.Ibias_DiscS2_OFF.connect('value-changed', self.Ibias_DiscS2_OFF_set)
-        Ibias_DiscS2_OFF_label = Gtk.Label()
-        Ibias_DiscS2_OFF_label.set_text('Ibias_DiscS2_OFF ')
-
-        #Ibias_PixelDAC
-        self.Ibias_PixelDAC_value = TPX3_datalogger.read_value(name = 'Ibias_PixelDAC')
-        Ibias_PixelDAC_adj = Gtk.Adjustment()
-        Ibias_PixelDAC_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_PixelDAC = Gtk.SpinButton(adjustment = Ibias_PixelDAC_adj, climb_rate = 1, digits = 0)
-        self.Ibias_PixelDAC.set_value(self.Ibias_PixelDAC_value) 
-        self.Ibias_PixelDAC.connect('value-changed', self.Ibias_PixelDAC_set)
-        Ibias_PixelDAC_label = Gtk.Label()
-        Ibias_PixelDAC_label.set_text('Ibias_PixelDAC ')
-
-        #Ibias_TPbufferIn
-        self.Ibias_TPbufferIn_value = TPX3_datalogger.read_value(name = 'Ibias_TPbufferIn')
-        Ibias_TPbufferIn_adj = Gtk.Adjustment()
-        Ibias_TPbufferIn_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_TPbufferIn = Gtk.SpinButton(adjustment = Ibias_TPbufferIn_adj, climb_rate = 1, digits = 0)
-        self.Ibias_TPbufferIn.set_value(self.Ibias_TPbufferIn_value) 
-        self.Ibias_TPbufferIn.connect('value-changed', self.Ibias_TPbufferIn_set)
-        Ibias_TPbufferIn_label = Gtk.Label()
-        Ibias_TPbufferIn_label.set_text('Ibias_TPbufferIn ')
-
-        #Ibias_TPbufferOut
-        self.Ibias_TPbufferOut_value = TPX3_datalogger.read_value(name = 'Ibias_TPbufferOut')
-        Ibias_TPbufferOut_adj = Gtk.Adjustment()
-        Ibias_TPbufferOut_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_TPbufferOut = Gtk.SpinButton(adjustment = Ibias_TPbufferOut_adj, climb_rate = 1, digits = 0)
-        self.Ibias_TPbufferOut.set_value(self.Ibias_TPbufferOut_value) 
-        self.Ibias_TPbufferOut.connect('value-changed', self.Ibias_TPbufferOut_set)
-        Ibias_TPbufferOut_label = Gtk.Label()
-        Ibias_TPbufferOut_label.set_text('Ibias_TPbufferOut ')
-
-        #VTP_coarse
-        self.VTP_coarse_value = TPX3_datalogger.read_value(name = 'VTP_coarse')
-        VTP_coarse_adj = Gtk.Adjustment()
-        VTP_coarse_adj.configure(127, 0, 255, 1, 0, 0)
-        self.VTP_coarse = Gtk.SpinButton(adjustment = VTP_coarse_adj, climb_rate = 1, digits = 0)
-        self.VTP_coarse.set_value(self.VTP_coarse_value) 
-        self.VTP_coarse.connect('value-changed', self.VTP_coarse_set)
-        VTP_coarse_label = Gtk.Label()
-        VTP_coarse_label.set_text('VTP_coarse ')
-
-        #VTP_fine
-        self.VTP_fine_value = TPX3_datalogger.read_value(name = 'VTP_fine')
-        VTP_fine_adj = Gtk.Adjustment()
-        VTP_fine_adj.configure(255, 0, 511, 1, 0, 0)
-        self.VTP_fine = Gtk.SpinButton(adjustment = VTP_fine_adj, climb_rate = 1, digits = 0)
-        self.VTP_fine.set_value(self.VTP_fine_value) 
-        self.VTP_fine.connect('value-changed', self.VTP_fine_set)
-        VTP_fine_label = Gtk.Label()
-        VTP_fine_label.set_text('VTP_fine ')
-
-        #Ibias_CP_PLL
-        self.Ibias_CP_PLL_value = TPX3_datalogger.read_value(name = 'Ibias_CP_PLL')
-        Ibias_CP_PLL_adj = Gtk.Adjustment()
-        Ibias_CP_PLL_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_CP_PLL = Gtk.SpinButton(adjustment = Ibias_CP_PLL_adj, climb_rate = 1, digits = 0)
-        self.Ibias_CP_PLL.set_value(self.Ibias_CP_PLL_value) 
-        self.Ibias_CP_PLL.connect('value-changed', self.Ibias_CP_PLL_set)
-        Ibias_CP_PLL_label = Gtk.Label()
-        Ibias_CP_PLL_label.set_text('Ibias_CP_PLL ')
-
-        #PLL_Vcntrl
-        self.PLL_Vcntrl_value = TPX3_datalogger.read_value(name = 'PLL_Vcntrl')
-        PLL_Vcntrl_adj = Gtk.Adjustment()
-        PLL_Vcntrl_adj.configure(127, 0, 255, 1, 0, 0)
-        self.PLL_Vcntrl = Gtk.SpinButton(adjustment = PLL_Vcntrl_adj, climb_rate = 1, digits = 0)
-        self.PLL_Vcntrl.set_value(self.PLL_Vcntrl_value) 
-        self.PLL_Vcntrl.connect('value-changed', self.PLL_Vcntrl_set)
-        PLL_Vcntrl_label = Gtk.Label()
-        PLL_Vcntrl_label.set_text('PLL_Vcntrl ')
+        for dac in self.dac_dict:
+            if dac not in {"Ibias_Preamp_OFF", "Ibias_DiscS1_OFF", "Ibias_DiscS2_OFF"}:
+                self.dac_dict[dac]['value'] = TPX3_datalogger.read_value(name = dac)
+            else:
+                self.dac_dict[dac]['value'] = 7
+            self.dac_dict[dac]['adjust'] = Gtk.Adjustment()
+            self.dac_dict[dac]['adjust'].configure(self.dac_dict[dac]['default'], 0, self.dac_dict[dac]['size'], 1, 0, 0)
+            self.dac_dict[dac]['spinButton'] = Gtk.SpinButton(adjustment = self.dac_dict[dac]['adjust'], climb_rate = 1, digits=0)
+            self.dac_dict[dac]['spinButton'].set_value(self.dac_dict[dac]['value'])
+            self.dac_dict[dac]['spinButton'].connect('value-changed', self.DAC_set, dac)
+            self.dac_dict[dac]['label'] = Gtk.Label()
+            self.dac_dict[dac]['label'].set_text(dac + " ")
 
         #Save Button
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
 
+        for i, dac in enumerate(self.dac_dict):
+            if dac not in {"Ibias_Preamp_OFF", "Ibias_DiscS1_OFF", "Ibias_DiscS2_OFF"}:
+                grid.attach(self.dac_dict[dac]['label'], 0, i, 1, 1)
+                grid.attach(self.dac_dict[dac]['spinButton'], 1, i, 1, 1)
 
-        grid.attach(Ibias_Preamp_ON_label, 0, 0, 1, 1)
-        grid.attach(self.Ibias_Preamp_ON, 1, 0, 1, 1)
-        #grid.attach(Ibias_Preamp_OFF_label, 0, 1, 1, 1)
-        #grid.attach(self.Ibias_Preamp_OFF, 1, 1, 1, 1)
-        grid.attach(VPreamp_NCAS_label, 0, 2, 1, 1)
-        grid.attach(self.VPreamp_NCAS, 1, 2, 1, 1)
-        grid.attach(Ibias_Ikrum_label, 0, 3, 1, 1)
-        grid.attach(self.Ibias_Ikrum, 1, 3, 1, 1)
-        grid.attach(Vfbk_label, 0, 4, 1, 1)
-        grid.attach(self.Vfbk, 1, 4, 1, 1)
-        grid.attach(Vthreshold_fine_label, 0, 5, 1, 1)
-        grid.attach(self.Vthreshold_fine, 1, 5, 1, 1)
-        grid.attach(Vthreshold_coarse_label, 0, 6, 1, 1)
-        grid.attach(self.Vthreshold_coarse, 1, 6, 1, 1)
-        grid.attach(Ibias_DiscS1_ON_label, 0, 7, 1, 1)
-        grid.attach(self.Ibias_DiscS1_ON, 1, 7, 1, 1)
-        #grid.attach(Ibias_DiscS1_OFF_label, 0, 8, 1, 1)
-        #grid.attach(self.Ibias_DiscS1_OFF, 1, 8, 1, 1)
-        grid.attach(Ibias_DiscS2_ON_label, 0, 9, 1, 1)
-        grid.attach(self.Ibias_DiscS2_ON, 1, 9, 1, 1)
-        #grid.attach(Ibias_DiscS2_OFF_label, 0, 10, 1 , 1)
-        #grid.attach(self.Ibias_DiscS2_OFF, 1, 10, 1 , 1)
-        grid.attach(Ibias_PixelDAC_label, 0, 11, 1, 1)
-        grid.attach(self.Ibias_PixelDAC, 1, 11, 1, 1)
-        grid.attach(Ibias_TPbufferIn_label, 0, 12, 1, 1)
-        grid.attach(self.Ibias_TPbufferIn, 1, 12, 1, 1)
-        grid.attach(Ibias_TPbufferOut_label, 0, 13, 1, 1)
-        grid.attach(self.Ibias_TPbufferOut, 1, 13, 1, 1)
-        grid.attach(VTP_coarse_label, 0, 14, 1, 1)
-        grid.attach(self.VTP_coarse, 1, 14, 1, 1)
-        grid.attach(VTP_fine_label, 0, 15, 1, 1)
-        grid.attach(self.VTP_fine, 1, 15, 1, 1)
-        grid.attach(Ibias_CP_PLL_label, 0, 16, 1, 1)
-        grid.attach(self.Ibias_CP_PLL, 1, 16, 1, 1)
-        grid.attach(PLL_Vcntrl_label, 0, 17, 1, 1)
-        grid.attach(self.PLL_Vcntrl, 1, 17, 1, 1)
         grid.attach(Space, 0, 18, 1, 1)
         grid.attach(self.Savebutton, 1, 19, 1, 1)
 
         self.show_all()
 
-    def Ibias_Preamp_ON_set(self, event):
-        self.Ibias_Preamp_ON_value = self.Ibias_Preamp_ON.get_value_as_int()
-
-    def Ibias_Preamp_OFF_set(self, event):
-        self.Ibias_Preamp_OFF_value = self.Ibias_Preamp_OFF.get_value_as_int()
-
-    def VPreamp_NCAS_set(self, event):
-        self.VPreamp_NCAS_value = self.VPreamp_NCAS.get_value_as_int()
-
-    def Ibias_Ikrum_set(self, event):
-        self.Ibias_Ikrum_value = self.Ibias_Ikrum.get_value_as_int()
-
-    def Vfbk_set(self, event):
-        self.Vfbk_value = self.Vfbk.get_value_as_int()
-
-    def Vthreshold_fine_set(self, event):
-        self.Vthreshold_fine_value = self.Vthreshold_fine.get_value_as_int()
-
-    def Vthreshold_coarse_set(self, event):
-        self.Vthreshold_coarse_value = self.Vthreshold_coarse.get_value_as_int()
-
-    def Ibias_DiscS1_ON_set(self, event):
-        self.Ibias_DiscS1_ON_value = self.Ibias_DiscS1_ON.get_value_as_int()
-
-    def Ibias_DiscS1_OFF_set(self, event):
-        self.Ibias_DiscS1_OFF_value = self.Ibias_DiscS1_OFF.get_value_as_int()
-
-    def Ibias_DiscS2_ON_set(self, event):
-        self.Ibias_DiscS2_ON_value = self.Ibias_DiscS2_ON.get_value_as_int()
-
-    def Ibias_DiscS2_OFF_set(self, event):
-        self.Ibias_DiscS2_OFF_value = self.Ibias_DiscS2_OFF.get_value_as_int()
-
-    def Ibias_PixelDAC_set(self, event):
-        self.Ibias_PixelDAC_value = self.Ibias_PixelDAC.get_value_as_int()
-
-    def Ibias_TPbufferIn_set(self, event):
-        self.Ibias_TPbufferIn_value = self.Ibias_TPbufferIn.get_value_as_int()
-
-    def Ibias_TPbufferOut_set(self, event):
-        self.Ibias_TPbufferOut_value = self.Ibias_TPbufferOut.get_value_as_int()
-
-    def VTP_coarse_set(self, event):
-        self.VTP_coarse_value = self.VTP_coarse.get_value_as_int()
-
-    def VTP_fine_set(self, event):
-        self.VTP_fine_value = self.VTP_fine.get_value_as_int()
-
-    def Ibias_CP_PLL_set(self, event):
-        self.Ibias_CP_PLL_value = self.Ibias_CP_PLL.get_value_as_int()
-
-    def PLL_Vcntrl_set(self, event):
-        self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
+    def DAC_set(self, event, dac):
+        self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
 
     def on_Savebutton_clicked(self, widget):
         #check if process is running
@@ -1375,62 +1144,11 @@ class GUI_SetDAC(Gtk.Window):
             return
 
         #write values
-        self.Ibias_Preamp_ON_value = self.Ibias_Preamp_ON.get_value_as_int()
-        self.Ibias_Preamp_OFF_value = self.Ibias_Preamp_OFF.get_value_as_int()
-        self.VPreamp_NCAS_value = self.VPreamp_NCAS.get_value_as_int()
-        self.Ibias_Ikrum_value = self.Ibias_Ikrum.get_value_as_int()
-        self.Vfbk_value = self.Vfbk.get_value_as_int()
-        self.Vthreshold_fine_value = self.Vthreshold_fine.get_value_as_int()
-        self.Vthreshold_coarse_value = self.Vthreshold_coarse.get_value_as_int()
-        self.Ibias_DiscS1_ON_value = self.Ibias_DiscS1_ON.get_value_as_int()
-        self.Ibias_DiscS1_OFF_value = self.Ibias_DiscS1_OFF.get_value_as_int()
-        self.Ibias_DiscS2_ON_value = self.Ibias_DiscS2_ON.get_value_as_int()
-        self.Ibias_DiscS2_OFF_value = self.Ibias_DiscS2_OFF.get_value_as_int()
-        self.Ibias_PixelDAC_value = self.Ibias_PixelDAC.get_value_as_int()
-        self.Ibias_TPbufferIn_value = self.Ibias_TPbufferIn.get_value_as_int()
-        self.Ibias_TPbufferOut_value = self.Ibias_TPbufferOut.get_value_as_int()
-        self.VTP_coarse_value = self.VTP_coarse.get_value_as_int()
-        self.VTP_fine_value = self.VTP_fine.get_value_as_int()
-        self.Ibias_CP_PLL_value = self.Ibias_CP_PLL.get_value_as_int()
-        self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
-
-        #write values to datalogger
-        TPX3_datalogger.write_value(name = 'Ibias_Preamp_ON', value = self.Ibias_Preamp_ON_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_ON')
-        #TPX3_datalogger.write_value(name = 'Ibias_Preamp_OFF', value = self.Ibias_Preamp_OFF_value)
-        #TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_OFF')
-        TPX3_datalogger.write_value(name = 'VPreamp_NCAS', value = self.VPreamp_NCAS_value)
-        TPX3_datalogger.write_to_yaml(name = 'VPreamp_NCAS')
-        TPX3_datalogger.write_value(name = 'Ibias_Ikrum', value = self.Ibias_Ikrum_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_Ikrum')
-        TPX3_datalogger.write_value(name = 'Vfbk', value = self.Vfbk_value)
-        TPX3_datalogger.write_to_yaml(name = 'Vfbk')
-        TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = self.Vthreshold_fine_value)
-        TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine')
-        TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = self.Vthreshold_coarse_value)
-        TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse')
-        TPX3_datalogger.write_value(name = 'Ibias_DiscS1_ON', value = self.Ibias_DiscS1_ON_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS1_ON')
-        #TPX3_datalogger.write_value(name = 'Ibias_DiscS1_OFF', value = self.Ibias_DiscS1_OFF_value)
-        #TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS1_OFF')
-        TPX3_datalogger.write_value(name = 'Ibias_DiscS2_ON', value = self.Ibias_DiscS2_ON_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS2_ON')
-        #TPX3_datalogger.write_value(name = 'Ibias_DiscS2_OFF', value = self.Ibias_DiscS2_OFF_value)
-        #TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS2_OFF')
-        TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = self.Ibias_PixelDAC_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
-        TPX3_datalogger.write_value(name = 'Ibias_TPbufferIn', value = self.Ibias_TPbufferIn_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_TPbufferIn')
-        TPX3_datalogger.write_value(name = 'Ibias_TPbufferOut', value = self.Ibias_TPbufferOut_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_TPbufferOut')
-        TPX3_datalogger.write_value(name = 'VTP_coarse', value = self.VTP_coarse_value)
-        TPX3_datalogger.write_to_yaml(name = 'VTP_coarse')
-        TPX3_datalogger.write_value(name = 'VTP_fine', value = self.VTP_fine_value)
-        TPX3_datalogger.write_to_yaml(name = 'VTP_fine')
-        TPX3_datalogger.write_value(name = 'Ibias_CP_PLL', value = self.Ibias_CP_PLL_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_CP_PLL')
-        TPX3_datalogger.write_value(name = 'PLL_Vcntrl', value = self.PLL_Vcntrl_value)
-        TPX3_datalogger.write_to_yaml(name = 'PLL_Vcntrl')
+        for dac in self.dac_dict:
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            if dac not in {"Ibias_Preamp_OFF", "Ibias_DiscS1_OFF", "Ibias_DiscS2_OFF"}:
+                TPX3_datalogger.write_value(name = dac, value = self.dac_dict[dac]['value'])
+                TPX3_datalogger.write_to_yaml(name = dac)
 
     def window_destroy(self, widget, event):
         self.destroy()
