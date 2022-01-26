@@ -866,7 +866,7 @@ class Plotting(object):
             except:
                 coeff = None
                 self.logger.warning('Gauss fit failed!')
-        else: 
+        else:
             coeff = None
 
         if coeff is not None:

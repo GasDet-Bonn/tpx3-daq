@@ -40,8 +40,8 @@ class plotwidget(object):
         self.ax.plot()
 
     def fading_colormap(self, steps = 5):
-        # This creates a fading colormap of 'steps' steps. Each step is more transparent, 
-        #  so if plotted correctly the data appers to be fading out.
+        # This creates a fading colormap of 'steps' steps. Each step is more transparent,
+        # so if plotted correctly the data appears to be fading out.
         if steps <= 0:
             self.colorsteps = 1
             print('ERROR: Minimum number of colorsteps is 1. Colorsteps have been set to 1.')
@@ -61,7 +61,7 @@ class plotwidget(object):
 
     def get_new_vals(self):
         #Get values from Chip
-        #t need to between 0 and 1 then the calculation 1 - (t / self.colorsteps) needs 
+        #t need to between 0 and 1 then the calculation 1 - (t / self.colorsteps) needs
         #to be done in order to distribute is correctly over the colormap
         x = np.empty(0, np.uint16)
         y = np.empty(0, np.uint16)
@@ -89,7 +89,7 @@ class plotwidget(object):
         #Cut plotting arrays to n_colorsteps Timeblocks
         if self.i < (self.colorsteps):
             self.i = self.i + 1
-   
+
         elif self.i == (self.colorsteps):
             number = np.arange(self.length[0])
             self.length = np.delete(self.length, 0)

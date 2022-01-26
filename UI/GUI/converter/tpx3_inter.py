@@ -126,7 +126,7 @@ class Tpx3(Transceiver):
                 return None
 
     def _interpret_meta_data(self, data):
-        ''' Meta data interpratation is deducing timings '''
+        ''' Meta data interpretation is deducing timings '''
 
         meta_data = data[0][1]['meta_data']
         ts_now = float(meta_data['timestamp_stop'])
@@ -135,11 +135,11 @@ class Tpx3(Transceiver):
         recent_fps = 1.0 / (ts_now - self.ts_last_readout)
         self.fps = self.fps * 0.95 + recent_fps * 0.05
 
-        # Calulate hits per second with smoothing
+        # Calculate hits per second with smoothing
         recent_hps = self.hits_last_readout * recent_fps
         self.hps = self.hps * 0.95 + recent_hps * 0.05
 
-        # Calulate hits per second with smoothing
+        # Calculate hits per second with smoothing
         recent_eps = self.events_last_readout * recent_fps
         self.eps = self.eps * 0.95 + recent_eps * 0.05
 

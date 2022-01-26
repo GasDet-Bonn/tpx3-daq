@@ -112,7 +112,7 @@ class ScanBase(object):
 
         if no_chip == False:
             self.number_of_chips = 1
-            
+
             # Test if the link configuration is valid
             if self.test_links() == True:
                self.logger.info("Validity check of link configuration successful")
@@ -126,7 +126,7 @@ class ScanBase(object):
         user_path = os.path.join(user_path, 'Timepix3')
         if not os.path.exists(user_path):
             os.makedirs(user_path)
-        
+
         # Store runs in '~/Timepix3/data' and other scans in '~/Timepix3/scans'
         if self.scan_id == "data_take":
             scan_path = os.path.join(user_path, 'data')
@@ -162,7 +162,7 @@ class ScanBase(object):
 
     def get_basil_dir(self):
         '''
-            Returns the directroy of the basil installation
+            Returns the directory of the basil installation
         '''
         return str(os.path.dirname(os.path.dirname(basil.__file__)))
 
@@ -190,11 +190,11 @@ class ScanBase(object):
 
         # Iterate over all links
         for register in yaml_data['registers']:
-            
+
             # Reset the chip
             self.chip.toggle_pin("RESET")
 
-            # Write the PLL 
+            # Write the PLL
             data = self.chip.write_pll_config()
 
             # Create the chip output channel mask and write the output block
@@ -283,7 +283,7 @@ class ScanBase(object):
                 # Write new Chip-ID to the list
                 if ID not in ID_List:
                     ID_List.append(ID)
-        
+
         self.number_of_chips = len(ID_List)
         if self.number_of_chips > 1:
             raise NotImplementedError('Handling of multiple chips is not implemented yet')
@@ -524,7 +524,7 @@ class ScanBase(object):
             self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix_' + str(iteration), title='Mask Matrix ' + str(iteration), obj=self.chip.mask_matrix)
             self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix_' + str(iteration), title='Threshold Matrix ' + str(iteration), obj=self.chip.thr_matrix)
 
-        
+
         # save the link configuration
         # Scans without multiple iterations
         if iteration == None:
@@ -654,7 +654,7 @@ class ScanBase(object):
         self.thrfile = kwargs.get('thrfile', None)
         self.configure(**kwargs)
 
-        # Produce needed PCR (Pixel conficuration register)
+        # Produce needed PCR (Pixel configuration register)
         for i in range(256 // 4):
             self.chip.write_pcr(list(range(4 * i, 4 * i + 4)))
 

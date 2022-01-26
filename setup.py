@@ -49,7 +49,7 @@ setup(
 
 try:
     from online_monitor.utils import settings
-    # Get the absoulte path of this package
+    # Get the absolute path of this package
     package_path = os.path.dirname(tpx3.__file__)
     # Add online_monitor plugin folder to entity search paths
     settings.add_producer_sim_path(os.path.join(package_path,

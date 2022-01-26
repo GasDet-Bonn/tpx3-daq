@@ -129,7 +129,7 @@ class PixelDACopt(ScanBase):
             If there is a status queue information about the status of the scan are put into it
         '''
 
-        # Set general configuration registers of the Timepix3 
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Get the shutter sleep time
@@ -166,7 +166,7 @@ class PixelDACopt(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
@@ -216,7 +216,7 @@ class PixelDACopt(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
@@ -292,7 +292,7 @@ class PixelDACopt(ScanBase):
             param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
             meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
             param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
-            
+
             # THR = 15
             meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
             param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
@@ -336,7 +336,7 @@ class PixelDACopt(ScanBase):
         meta_data = None
         param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
         param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
-        
+
         # Create histograms for number of detected hits for individual thresholds
         self.logger.info('Get the global threshold distributions for all pixels...')
         scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
@@ -344,19 +344,19 @@ class PixelDACopt(ScanBase):
         scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
         hit_data_thr15 = None
 
-        # Fit S-Curves to the histogramms for all pixels
+        # Fit S-Curves to the histograms for all pixels
         self.logger.info('Fit the scurves for all pixels...')
         thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
         scurve_th0 = None
         thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
         scurve_th15 = None
 
-        # Put the threshold distribution based on the fit results in two histogramms
+        # Put the threshold distribution based on the fit results in two histograms
         self.logger.info('Get the cumulated global threshold distributions...')
         hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
         hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
 
-        # Use the threshold histogramms to calculate the new Ibias_PixelDAC setting
+        # Use the threshold histograms to calculate the new Ibias_PixelDAC setting
         self.logger.info('Calculate new pixelDAC value...')
         pixeldac_result = analysis.pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop)
         delta = pixeldac_result[1]
@@ -364,7 +364,7 @@ class PixelDACopt(ScanBase):
 
         # In the last iteration calculate also the equalisation matrix
         if delta > rms_delta - 2 and delta < rms_delta + 2:
-            # Use the threshold histogramms and one threshold distribution to calculate the equalisation
+            # Use the threshold histograms and one threshold distribution to calculate the equalisation
             self.logger.info('Calculate the equalisation matrix...')
             eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
 

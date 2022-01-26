@@ -100,7 +100,7 @@ class ThresholdCalib(ScanBase):
             If there is a status queue information about the status of the scan are put into it
         '''
 
-        # Set general configuration registers of the Timepix3 
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Get the shutter sleep time
@@ -133,7 +133,7 @@ class ThresholdCalib(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         # Set testpulse DACs
@@ -150,10 +150,10 @@ class ThresholdCalib(ScanBase):
                 for mask_step_cmd in mask_cmds:
                     # Only activate testpulses for columns with active pixels
                     self.chip.write_ctpr(list(range(step//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
-                    
+
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
-                    
+
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(sleep_time)
@@ -237,7 +237,7 @@ class ThresholdCalib(ScanBase):
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
             Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
-            # Fit S-Curves to the histogramms for all pixels
+            # Fit S-Curves to the histograms for all pixels
             param_range = list(range(Vthreshold_start, Vthreshold_stop))
             thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True, progress = progress)
 
@@ -280,7 +280,7 @@ class ThresholdCalib(ScanBase):
                     h5_file.remove_node(h5_file.root.calibration, recursive=True)
                 except:
                     pass
-                
+
                 # create a group for the calibration results
                 h5_file.create_group(h5_file.root, 'calibration', 'Threshold calibration results')
 

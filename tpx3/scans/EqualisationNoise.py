@@ -58,7 +58,7 @@ class EqualisationNoise(ScanBase):
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
 
-        # Set general configuration registers of the Timepix3 
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Write to the test pulse registers of the Timepix3
@@ -86,7 +86,7 @@ class EqualisationNoise(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
@@ -131,7 +131,7 @@ class EqualisationNoise(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
@@ -198,7 +198,7 @@ class EqualisationNoise(ScanBase):
             param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
             meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
             param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
-            
+
             # THR = 15
             meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
             param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
@@ -236,7 +236,7 @@ class EqualisationNoise(ScanBase):
         meta_data = None
         param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
         param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
-        
+
         # Create histograms for number of detected hits for individual thresholds
         self.logger.info('Get the global threshold distributions for all pixels...')
         scurve_th0 = analysis.scurve_hist(hit_data_thr0, param_range_th0)
@@ -257,7 +257,7 @@ class EqualisationNoise(ScanBase):
         hist_th15 = analysis.vth_hist(vths_th15, Vthreshold_stop)
         vths_th15 = None
 
-        # Use the threshold histogramms and one threshold distribution to calculate the equalisation
+        # Use the threshold histograms and one threshold distribution to calculate the equalisation
         self.logger.info('Calculate the equalisation matrix...')
         eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop)
 

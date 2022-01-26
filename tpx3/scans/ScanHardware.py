@@ -44,7 +44,7 @@ class ScanHardware(object):
             # Initialize the progress bar
             pbar = tqdm(total = len(rx_list_objects))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         if status != None:
@@ -58,7 +58,7 @@ class ScanHardware(object):
         self.chip['CONTROL']['RESET'] = 0
         self.chip['CONTROL'].write()
 
-        # Write the PLL 
+        # Write the PLL
         data = self.chip.write_pll_config()
 
         rx_map = np.zeros((8,8), np.int8)

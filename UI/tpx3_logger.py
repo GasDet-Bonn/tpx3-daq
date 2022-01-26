@@ -32,7 +32,7 @@ class mask_logger(object):
     def write_mask(mask_element, mask = None):
         '''
             This will mask the 'pixel', 'row' or 'column' given to it via mask_element.
-            Additionally the mask file to cahnge can be given via mask. 
+            Additionally the mask file to change can be given via mask.
         '''
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
         if mask == None:
@@ -70,8 +70,8 @@ class mask_logger(object):
 
     def delete_mask(mask_element, mask = None):
         '''
-            This will unmask the 'pixel', 'row' or 'column' given to it via mask_element. 
-            Additionally the mask file to cahnge can be given via mask.
+            This will unmask the 'pixel', 'row' or 'column' given to it via mask_element.
+            Additionally the mask file to change can be given via mask.
         '''
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
         if mask == None:
@@ -334,14 +334,14 @@ class TPX3_data_logger(object):
     def __init__(self):
         check_user_folders()
         self.config_keys = ['software_version', 'firmware_version', 'hardware_links',
-                            'Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 
-                            'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name', 
-                            'plottype', 'colorsteps', 'integration_length', 
-                            'color_depth', 'Ibias_Preamp_ON', 'VPreamp_NCAS', 
-                            'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
-                            'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 
-                            'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 
-                            'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 
+                            'Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name',
+                            'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name',
+                            'plottype', 'colorsteps', 'integration_length',
+                            'color_depth', 'Ibias_Preamp_ON', 'VPreamp_NCAS',
+                            'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine',
+                            'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON',
+                            'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut',
+                            'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl',
                             'Equalisation_path', 'Mask_path', 'Run_name', 'Polarity', 'Op_mode', 'Fast_Io_en',
                             'clk_fast_out', 'ClkOut_frequency_src', 'AckCommand_en', 'SelectTP_Ext_Int',
                             'clkphasediv', 'clkphasenum', 'PLLOutConfig', 'Readout_Speed', 'TP_Period', 'Sense_DAC']
@@ -359,25 +359,25 @@ class TPX3_data_logger(object):
                 'Chip5_name' : [None],
                 'Chip6_name' : [None],
                 'Chip7_name' : [None],
-                'plottype' : 'normal', 
-                'colorsteps' : 50, 
-                'integration_length' : 500, 
-                'color_depth' : 10, 
-                'Ibias_Preamp_ON' : 150, 
-                'VPreamp_NCAS' : 128, 
-                'Ibias_Ikrum' : 5, 
-                'Vfbk' : 132, 
-                'Vthreshold_fine' : 255, 
-                'Vthreshold_coarse' : 7, 
-                'Ibias_DiscS1_ON' : 100, 
-                'Ibias_DiscS2_ON' : 128, 
-                'Ibias_PixelDAC' : 120, 
-                'Ibias_TPbufferIn' : 128, 
-                'Ibias_TPbufferOut' : 128, 
+                'plottype' : 'normal',
+                'colorsteps' : 50,
+                'integration_length' : 500,
+                'color_depth' : 10,
+                'Ibias_Preamp_ON' : 150,
+                'VPreamp_NCAS' : 128,
+                'Ibias_Ikrum' : 5,
+                'Vfbk' : 132,
+                'Vthreshold_fine' : 255,
+                'Vthreshold_coarse' : 7,
+                'Ibias_DiscS1_ON' : 100,
+                'Ibias_DiscS2_ON' : 128,
+                'Ibias_PixelDAC' : 120,
+                'Ibias_TPbufferIn' : 128,
+                'Ibias_TPbufferOut' : 128,
                 'VTP_coarse' : 100,
-                'VTP_fine' : 300, 
-                'Ibias_CP_PLL' : 128, 
-                'PLL_Vcntrl' : 128, 
+                'VTP_fine' : 300,
+                'Ibias_CP_PLL' : 128,
+                'PLL_Vcntrl' : 128,
                 'Equalisation_path' : None,
                 'Mask_path' : None,
                 'Run_name' : None,
@@ -477,7 +477,7 @@ class TPX3_data_logger(object):
             return value
         print('Error: Unknown data name')
         return False
-        
+
     def get_run_name(self, scan_type = None):
         if scan_type == None:
             scan_type = 'Test'
@@ -490,7 +490,7 @@ class TPX3_data_logger(object):
             run_name = scan_type + '_' + self.data['Run_name']
             self.data['Run_name'] = None
         return run_name
-        
+
     def get_data(self):
         return self.data
 
@@ -524,7 +524,7 @@ class TPX3_data_logger(object):
                 print('Name of Chipname not in list')
                 return False
 
-    def change_link_status(self, link, status): 
+    def change_link_status(self, link, status):
         for i in range (0,7):
             name = 'Chip' + str(i) +'_name'
             value_list = self.data[name]
@@ -583,7 +583,7 @@ class TPX3_data_logger(object):
 
                         Chipname = value_list[0]
                         wafer_number = ''
-                        chip_coord2 = '' 
+                        chip_coord2 = ''
                         for i in range (1, len(Chipname)):
                             if Chipname[i] == '-':
                                 start_chipname = i
@@ -624,8 +624,8 @@ class TPX3_data_logger(object):
             return True
 
         else:
-            if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 
-                            'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 
+            if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine',
+                            'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC',
                             'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Sense_DAC'}:
                 yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
             elif name in {'clk_fast_out', 'ClkOut_frequency_src'}:
@@ -661,7 +661,7 @@ class TPX3_data_logger(object):
                 if not value_list == [None]:
                     Chipname = value_list[0]
                     wafer_number = ''
-                    chip_coord2 = '' 
+                    chip_coord2 = ''
                     for i in range (1, len(Chipname)):
                         if Chipname[i] == '-':
                             start_chipname = i

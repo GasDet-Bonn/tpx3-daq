@@ -68,7 +68,7 @@ class NoiseScan(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0

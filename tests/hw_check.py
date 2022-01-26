@@ -64,9 +64,9 @@ def main(args_dict):
 
     if delay_scan is True:
         for i in range(32):
-            chip['RX0'].reset()            
+            chip['RX0'].reset()
             chip['RX0'].INVERT = 0
-            chip['RX0'].SAMPLING_EDGE = 0                  
+            chip['RX0'].SAMPLING_EDGE = 0
             chip['RX0'].DATA_DELAY = i  # i
             chip['RX0'].ENABLE = 1
             chip['FIFO'].RESET
@@ -295,7 +295,7 @@ def main(args_dict):
             time.sleep(0.1)
 
             chip['gpio'].reset()
-            chip['FIFO'].RESET 
+            chip['FIFO'].RESET
             time.sleep(0.01)
             chip['FIFO'].get_data()
 
@@ -356,11 +356,11 @@ def main(args_dict):
                     else:
                         link = (r & 0x0e000000) >> 25
 
-                        if ((r & 0x0f000000) >> 24 == 0b0001 or 
+                        if ((r & 0x0f000000) >> 24 == 0b0001 or
                             (r & 0x0f000000) >> 24 == 0b0011 or
                             (r & 0x0f000000) >> 24 == 0b0101 or
                             (r & 0x0f000000) >> 24 == 0b0111 or
-                            (r & 0x0f000000) >> 24 == 0b1001 or 
+                            (r & 0x0f000000) >> 24 == 0b1001 or
                             (r & 0x0f000000) >> 24 == 0b1011 or
                             (r & 0x0f000000) >> 24 == 0b1101 or
                             (r & 0x0f000000) >> 24 == 0b1111):

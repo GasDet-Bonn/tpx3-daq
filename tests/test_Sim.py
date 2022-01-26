@@ -41,7 +41,7 @@ class TestSim(unittest.TestCase):
 
         tpx3_src = os.getenv("TPX3_SRC")
         if not tpx3_src:
-            raise Exception("Set TPX3_SRC variable. Point to TPX3 source direcotry!")
+            raise Exception("Set TPX3_SRC variable. Point to TPX3 source directory!")
 
         cocotb_compile_and_run(
             sim_files=[root_dir + "/tests/tpx3_tb.v"],
@@ -149,9 +149,9 @@ class TestSim(unittest.TestCase):
                     self.assertEqual(value, dout[len(dout) - 2][13:5].tovalue())
                     self.assertEqual(self.chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
                 pbar.update(1)
-           
+
         pbar.close()
-    
+
     def test_pixel_address_functions(self):
         self.startUp()
         logging.info("Test pixel address function errors")
@@ -164,7 +164,7 @@ class TestSim(unittest.TestCase):
             self.chip.pixel_address_to_x(BitLogic.from_value(0b10000000000000000))
         with self.assertRaises(ValueError):
             self.chip.pixel_address_to_y(BitLogic.from_value(0b10000000000000000))
-        
+
         logging.info("Test pixel address functions")
         # Test for valid addresses
         pbar = tqdm(total=256*256)
@@ -252,7 +252,7 @@ class TestSim(unittest.TestCase):
             self.chip.write_ctpr(list(range(257)), False)
         with self.assertRaises(ValueError):
             self.chip.write_ctpr(list(range(257, 256, -1)), False)
-        
+
         # Test values
         logging.info("Test reading and writing CTPR")
         pbar = tqdm(total = 256)

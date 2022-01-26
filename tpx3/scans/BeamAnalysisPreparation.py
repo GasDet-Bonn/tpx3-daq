@@ -40,7 +40,7 @@ import argparse
 class BeamAnalysisPreparation():    
 
     scan_id = "BeamAnalysisPreparation"
-    
+
     """
         Convert existing hdf5 file which is allready analysed into the format necessary for reading it
         in the beam telescope analysis (@SiLab). It requires:
@@ -104,7 +104,7 @@ class BeamAnalysisPreparation():
 
         assigned = np.full(hit_data.shape[0], False)
         hits_add = np.recarray((hit_data.shape[0]), dtype=data_type)
-        
+
         # assign triggers
         hits_index = 0
         first_hit_data_index = 0
@@ -138,11 +138,11 @@ class BeamAnalysisPreparation():
         print("%d Hits could not be assigned to a trigger. Throw them away."%(n))
         print("There were %d additional assignments."%(curr_add))
         hits = hits[assigned]
-        
+
         hits = np.hstack((hits, hits_add[:curr_add]))
         hits.sort(order="frame")
 
-        
+
         with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
             h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
 
@@ -230,7 +230,7 @@ class BeamAnalysisPreparation():
         first = True
 
         hits_trigger = np.recarray((hit_data.shape[0]), dtype=data_type)
-        
+
         # assign triggers
         hits_index = 0
         first_cluster_index = 0
@@ -264,7 +264,7 @@ class BeamAnalysisPreparation():
         print("%d Clusters could not be assigned to a trigger. Throw them away."%(n))
         #hits = hits[assigned]
 
-        
+
         with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
             h5_file.create_table(h5_file.root, 'Hits', hits_trigger, filters=tb.Filters(complib='zlib', complevel=5))
 
@@ -488,13 +488,13 @@ class BeamAnalysisPreparation():
 if __name__ == "__main__":
     # get command line arguments
     parser = argparse.ArgumentParser(description='Script to analyse Timepix3 data')
-    parser.add_argument('inputfolder', 
-                        metavar='inputfolder', 
+    parser.add_argument('inputfolder',
+                        metavar='inputfolder',
                         help='Input folder')
-    parser.add_argument('filenames_string', 
-                        metavar='datafiles', 
+    parser.add_argument('filenames_string',
+                        metavar='datafiles',
                         help='Name of the files to be analysed')
-    parser.add_argument('--toa', 
+    parser.add_argument('--toa',
                         action='store_true',
                         help='Use this to generate events as equally long toa frames')
     args_dict = vars(parser.parse_args())

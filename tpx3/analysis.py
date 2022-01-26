@@ -327,7 +327,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             raw_data = np.insert(raw_data,0,leftoverpackage[m],axis= 0)
         leftoverpackage = []
 
-    # make arrays for results and debugging values    
+    # make arrays for results and debugging values
     data_combined = np.zeros(raw_data.shape[0], dtype=np.uint64)
     index_combined = np.zeros(raw_data.shape[0], dtype=np.uint64)
     data0 = np.zeros(raw_data.shape[0], dtype=np.uint64)
@@ -342,7 +342,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
 
         if len(timestamps_raw)%2!=0:
             logger.error("Missing one 32bit subword of the 2 timer packages! Chunk nr. "+str(chunk_nr)+", chunk length = "+str(len(timestamps_raw)))
-            
+
             try:
                 timestamps_raw, timestamps_indices, num = save_and_correct_timer(timestamps_raw, timestamps_indices)
                 if num != 0:
@@ -389,7 +389,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
             if leftoverpackage_pot!=None:
                 leftoverpackage.append(leftoverpackage_pot)
-            #if len(link_filter) % 2 != 0: 
+            #if len(link_filter) % 2 != 0:
                 #logger.info("len after correction: ",len(link_combined)*2)
             if len(link_indices) % 2 != 0:
                 logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+" after correction.")
@@ -438,7 +438,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             data0_splits[0] = np.insert(data0_splits[0],0,0,axis=0)
             data1_splits[0] = np.insert(data1_splits[0],0,0,axis=0)
             minus = 1
-        
+
         # Check for packages that are shifted by more than 1 wrt the extension. Keep for future debugging
         num = 0
         wrong_hits = 0
@@ -477,7 +477,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             old_toas_indices = np.where(old_toa_filter)[0]
             timestamp_splits[i-1] = np.append(timestamp_splits[i-1], old_toas)
             timestamp_splits[i] = np.delete(timestamp_splits[i], old_toas_indices+1)
-            
+
         try:
             last = timestamp_splits[-1][0]
         except IndexError:
@@ -497,9 +497,9 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         data_words = np.concatenate([el[1:] for el in output])
 
         """if wrong_hits/len(data_words) > 0.2:
-            logger.error("Removed Chunk nr. "+str(chunk_nr)+" from data due to too many iregularities.")
+            logger.error("Removed Chunk nr. "+str(chunk_nr)+" from data due to too many irregularities.")
             return np.empty(0,dtype=np.uint64),np.empty(0,dtype=np.uint64),last,nlast"""
-    
+
     else:
         links = 8
         chunk_len = 0
@@ -518,7 +518,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
             if leftoverpackage_pot!=None:
                 leftoverpackage.append(leftoverpackage_pot)
-            #if len(link_filter) % 2 != 0: 
+            #if len(link_filter) % 2 != 0:
                 #logger.info("len after correction: ",len(link_combined)*2)
             if len(link_indices) % 2 != 0:
                 logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+" after correction.")
@@ -552,15 +552,15 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
     if len(meta_data):
         # standard case: only split into bunches which have the same param_id
         if split_fine == False:
-            # param = list of all occuring scan_param_ids
-            # index = positions of first occurence of each scan_param_ids
+            # param = list of all occurring scan_param_ids
+            # index = positions of first occurrence of each scan_param_ids
             param, index = np.unique(meta_data['scan_param_id'], return_index=True)
             # remove first entry
             index = index[1:]
             # append entry with total number of rows in meta_data
             index = np.append(index, meta_data.shape[0])
             # substract one from each element; the indices are now marking the last element with a
-            # specific scan_param_id (if they are not recuring).
+            # specific scan_param_id (if they are not recurring).
             index = index - 1
             # make list of the entries in 'index_stop' at the positions stored in index
             stops = meta_data['index_stop'][index]
@@ -794,7 +794,7 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
     # Calculate data errors, Binomial errors
     yerr = np.sqrt(y * (1. - y.astype(np.float) / n_injections))
     # Set minimum error != 0, needed for fit minimizers
-    # Set arbitrarly to error of 0.5 injections
+    # Set arbitrarily to error of 0.5 injections
     min_err = np.sqrt(0.5 - 0.5 / n_injections)
     yerr[yerr < min_err] = min_err
     # Additional hits not following fit model set high error
@@ -857,7 +857,7 @@ def imap_bar(func, args, n_processes=None, progress = None):
 
     if progress == None:
         pbar.close()
-    
+
     p.close()
     p.join()
     return res_list
@@ -866,14 +866,14 @@ def imap_bar(func, args, n_processes=None, progress = None):
 def fit_scurves_multithread(scurves, scan_param_range,
                             n_injections, invert_x=False, progress = None):
     _scurves = np.zeros((256*256, len(scan_param_range)), dtype=np.uint16)
-    
+
     # Set all values above n_injections to n_injections. This is necessary, as the noise peak can lead to problems in the scurve fits.
     # As we are only interested in the position of the scurve (which lays below n_injections) this should not cause a problem.
     logger.info("Cut S-curves to %i hits for S-curve fit", n_injections)
     pulse_check = scurves > n_injections
     _scurves[pulse_check] = n_injections
     _scurves[np.invert(pulse_check)] = scurves[np.invert(pulse_check)]
-    
+
     _scurves = np.ma.masked_array(_scurves)
     scan_param_range = np.array(scan_param_range)
 

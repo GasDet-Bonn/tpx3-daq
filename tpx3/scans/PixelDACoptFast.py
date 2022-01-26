@@ -136,7 +136,7 @@ class PixelDACopt(ScanBase):
             If there is a status queue information about the status of the scan are put into it
         '''
 
-        # Set general configuration registers of the Timepix3 
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Get the shutter sleep time
@@ -169,7 +169,7 @@ class PixelDACopt(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         # Only activate testpulses for columns with active pixels
@@ -217,7 +217,7 @@ class PixelDACopt(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total = len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
@@ -288,7 +288,7 @@ class PixelDACopt(ScanBase):
             param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
             meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
             param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
-            
+
             # THR = 15
             meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
             param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
@@ -337,19 +337,19 @@ class PixelDACopt(ScanBase):
         scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
         hit_data_thr15 = None
 
-        # Fit S-Curves to the histogramms for all pixels
+        # Fit S-Curves to the histograms for all pixels
         self.logger.info('Fit the scurves for all pixels...')
         thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
         scurve_th0 = None
         thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
         scurve_th15 = None
 
-        # Put the threshold distribution based on the fit results in two histogramms
+        # Put the threshold distribution based on the fit results in two histograms
         self.logger.info('Get the cumulated global threshold distributions...')
         hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
         hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
 
-        # Use the threshold histogramms to calculate the new Ibias_PixelDAC setting
+        # Use the threshold histograms to calculate the new Ibias_PixelDAC setting
         self.logger.info('Calculate new pixelDAC value...')
         pixeldac_result = analysis.pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop)
         delta = pixeldac_result[1]

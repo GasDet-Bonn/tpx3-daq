@@ -178,7 +178,7 @@ class FifoReadout(object):
         if not any(self.get_rx_sync_status()) or any(discard_count)  or any(decode_error_count) :
             self.logger.warning('RX errors detected')
 
-        self.logger.info('Recived words:               %d', self._record_count)
+        self.logger.info('Received words:              %d', self._record_count)
         self.logger.info('Data queue size:             %d', len(self._data_deque))
         self.logger.info('FIFO size:                   %d', self.chip['FIFO']['FIFO_SIZE'])
         self.logger.info('Channel:                     %s', " | ".join([channel.name.rjust(3) for channel in self.chip.get_modules('tpx3_rx')]))

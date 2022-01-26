@@ -70,7 +70,7 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
 # In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
                     'Testpulse_Scan', 'Initialise_Hardware', 'Run_Datataking', 'Set_DAC', 'Load_Equalisation', 'Save_Equalisation',
-                    'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask', 
+                    'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask',
                     'Save_Mask', 'TP_Period', 'Set_operation_mode', 'Set_Fast_Io', 'Set_Readout_Intervall', 'Set_Run_Name', 'Get_Run_Name',
                     'Plot', 'Stop_Plot', 'Chip_names', 'Mask_name', 'Equalisation_name', 'About', 'Help', 'Quit']
 
@@ -109,7 +109,7 @@ class TPX3_multiprocess_start(object):
 
         def startup_func(function, run_name, **kwargs):
             system_exit = False
-            try:  
+            try:
                 call_func = (function + '(run_name = "' + run_name + '")')
                 scan = eval(call_func)
                 scan.start(**kwargs)
@@ -702,7 +702,7 @@ class TPX3_CLI_function_call(object):
                         mask_logger.write_mask(mask_element = ['row', int(mask[1])])
                     else:
                         print('Row number out of range: There is only row 0 to 255')
-                else: 
+                else:
                     print('Error: No row number given!')
             elif mask[0] in {'column', 'Column', 'c'}:
                 if len(mask) >= 2:
@@ -711,7 +711,7 @@ class TPX3_CLI_function_call(object):
                         mask_logger.write_mask(mask_element = ['column', int(mask[1])])
                     else:
                         print('Column number out of range: There is only column 0 to 255')
-                else: 
+                else:
                     print('Error: No column number given!')
             elif mask[0] in {'pixel', 'Pixel', 'p'}:
                 if len(mask) >= 3:
@@ -726,7 +726,7 @@ class TPX3_CLI_function_call(object):
                 print('Unknown type:', mask)
 
     def Unset_Mask(object, mask_input_list = None):
-        if not TPX3_datalogger.read_value(name = 'Mask_path') == None: 
+        if not TPX3_datalogger.read_value(name = 'Mask_path') == None:
             if mask_input_list == None:
                 print('> Please enter what you like to unmask: (commands are "all", "row rownumber", "column columnnumber", "pixel x y" or "all". Multiple entries can be made by a "+" between them)')
                 mask_input = input('>> ')
@@ -753,7 +753,7 @@ class TPX3_CLI_function_call(object):
                             mask_logger.delete_mask(mask_element = ['row', int(mask[1])])
                         else:
                             print('Row number out of range: There is only row 0 to 255')
-                    else: 
+                    else:
                         print('Error: No row number given!')
                 elif mask[0] in {'column', 'Column', 'c'}:
                     if len(mask) >= 2:
@@ -762,7 +762,7 @@ class TPX3_CLI_function_call(object):
                             mask_logger.delete_mask(mask_element = ['column', int(mask[1])])
                         else:
                             print('Column number out of range: There is only column 0 to 255')
-                    else: 
+                    else:
                         print('Error: No column number given!')
                 elif mask[0] in {'pixel', 'Pixel', 'p'}:
                     if len(mask) >= 3:
@@ -1643,7 +1643,7 @@ class TPX3_CLI_TOP(object):
                             print('User quit')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the initialise hardware function. It initialises the hardware and looks how many links and Chips are connected')
+                            print('This is the initialise hardware function. It initializes the hardware and looks how many links and Chips are connected')
                         else :
                             print('Initialise hardware does not take parameters!')
 
@@ -1681,7 +1681,7 @@ class TPX3_CLI_TOP(object):
                             elif len(inputlist) > 1:
                                 print('GUI takes no parameters')
                     else:
-                        print('This is only aviable with a graphic backend')
+                        print('This is only available with a graphic backend')
 
                 #Start Plot window
                 elif inputlist[0] in {'Plot', 'plot'}:
@@ -1693,15 +1693,15 @@ class TPX3_CLI_TOP(object):
                                 color_depth = ('color_depth=' + str(TPX3_datalogger.read_value('color_depth')))
                                 colorsteps = ('colorsteps=' + str(TPX3_datalogger.read_value('colorsteps')))
 
-                                self.plot_window_process = Popen(['python', 'CLI_Plot_main.py', 
-                                                                                    plottype, 
+                                self.plot_window_process = Popen(['python', 'CLI_Plot_main.py',
+                                                                                    plottype,
                                                                                     integration_length,
                                                                                     color_depth,
-                                                                                    colorsteps], 
-                                                                                    stdout = PIPE, 
+                                                                                    colorsteps],
+                                                                                    stdout = PIPE,
                                                                                     text = True)
                             else:
-                                print('The Plot window is still open or not stoped vie "stop_plot". This will be done for you now.')
+                                print('The Plot window is still open or not stopped vie "stop_plot". This will be done for you now.')
                                 try:
                                     self.plot_window_process.terminate()
                                 except:
@@ -1723,11 +1723,11 @@ class TPX3_CLI_TOP(object):
 
                         else:
                             if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                                print('This will start an online ploting window for the data taken')
+                                print('This will start an online plotting window for the data taken')
                             elif len(inputlist) > 1:
                                 print('Plot takes no parameters')
                     else:
-                        print('This is only aviable with a graphic backend')
+                        print('This is only amiable with a graphic backend')
 
                 #Stop Plot window
                 elif inputlist[0] in {'Stop_Plot', 'stop_plot'}:
@@ -1755,11 +1755,11 @@ class TPX3_CLI_TOP(object):
 
                         else:
                             if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                                print('This will stop the online ploting window for the data taken')
+                                print('This will stop the online plotting window for the data taken')
                             elif len(inputlist) > 1:
                                 print('Stop Plot takes no parameters')
                     else:
-                        print('This is only aviable with a graphic backend')
+                        print('This is only available with a graphic backend')
 
                 #Set expert mode
                 elif inputlist[0] in {'Expert', 'expert'}:
@@ -1791,7 +1791,7 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 2:
                             print('To many parameters! The given function takes only one parameter:\n name addition of the run data file.')
-                   
+
                 #Get Run name
                 elif inputlist[0] in {'Get_Run_Name', 'get_run_name'}:
                     if len(inputlist) == 1:
@@ -1804,7 +1804,7 @@ class TPX3_CLI_TOP(object):
                             print('This is the get run name function. It shows the current run file name.')
                         else:
                             print('The get run name function takes no parameters.')
-                
+
                 #Get Chip names
                 elif inputlist[0] in {'Chip_names', 'chip_names', 'Who', 'who'}:
                     if len(inputlist) == 1:

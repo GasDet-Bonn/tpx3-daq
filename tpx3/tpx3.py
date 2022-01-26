@@ -112,7 +112,7 @@ class CustomDict(dict):
     """
     def __init__(self, valsize_map, dict_type):
         """
-        as initialization we need the alowed sizes of each DAC / value for each config
+        as initialization we need the allowed sizes of each DAC / value for each config
         """
         self.valsize_map = valsize_map
         self.dictErrors = customDictErrors[dict_type]
@@ -150,7 +150,7 @@ class TPX3(Dut):
 
     ''' Compatible firware version '''
     fw_version_required = 3
-    
+
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########
     ################################################################################
@@ -243,7 +243,7 @@ class TPX3(Dut):
         self.board_version = self.hw_map[self['intf'].read(0x0001, 1)[0]]
 
         logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
-        
+
         if self.fw_version != self.fw_version_required:
             raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
 
@@ -382,7 +382,7 @@ class TPX3(Dut):
             for key in elements:
                 tmp_dict[key] = register[key]
             outdict[register['name']]  = tmp_dict
-            valsize_map[register['name']] = int(tmp_dict['size'])        
+            valsize_map[register['name']] = int(tmp_dict['size'])
         # now create the correct custom dict
         c_dict = CustomDict(valsize_map, dict_type)
 
@@ -456,7 +456,7 @@ class TPX3(Dut):
         """
         Getter function for the `PLLConfig` dictionary of the Tpx3 class.
         With this a `self.PLLConfig[<PLLConfig name>]` statement will
-        return the value of the PLLConfig register stored in the `PLLConfigkDict`
+        return the value of the PLLConfig register stored in the `PLLConfigDict`
         dictionary _PLLConfigs
         """
         return self._PLLConfigs
@@ -717,7 +717,7 @@ class TPX3(Dut):
             # create a 48 bit bitarrray for the current 48 bit word
             dataout = BitLogic(48)
 
-            # tranform the header and data of the 32 bit words lists of bytes
+            # transform the header and data of the 32 bit words lists of bytes
             d1 = bitword_to_byte_list(int(data[2 * i]), string)
             d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
 
@@ -836,7 +836,7 @@ class TPX3(Dut):
             # value for the y position, check whether in allowed range
             raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
 
-        # create the variables for EoC, Superpixel and Pixel with their defined lenghts
+        # create the variables for EoC, Superpixel and Pixel with their defined lengths
         EoC = BitLogic(7)
         Superpixel = BitLogic(6)
         Pixel = BitLogic(3)
@@ -1362,7 +1362,7 @@ class TPX3(Dut):
         if fuse > 31:
             #  check if the fuse is allowed
             raise ValueError("The selected fuse must not be bigger than 31!")
-        
+
         data = self.read_periphery_template("EFuse_Burn", True)
         # create a 11 bit variable for the program width (bits [5:0]) and the fuse selection (bits [10:6])
         bits = BitLogic(11)

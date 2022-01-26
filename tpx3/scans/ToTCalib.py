@@ -90,7 +90,7 @@ class ToTCalib(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
@@ -178,7 +178,7 @@ class ToTCalib(ScanBase):
             else:
                 step_counter = 0
 
-            # Interpret data seperately per scan parameter id to save RAM
+            # Interpret data separately per scan parameter id to save RAM
             for param_id in param_range:
                 start_index = meta_data[meta_data['scan_param_id'] == param_id]
                 stop_index = meta_data[meta_data['scan_param_id'] == param_id]
@@ -224,7 +224,7 @@ class ToTCalib(ScanBase):
             VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
             VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
 
-            # Fit ToT-Curves to the histogramms for all pixels
+            # Fit ToT-Curves to the histograms for all pixels
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve', obj=totcurve)

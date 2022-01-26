@@ -28,7 +28,7 @@ class GUI_Plot1(Gtk.Window):
         self.connect('delete-event', self.window_destroy)
 
         self.set_default_size(400, 400)
-        self.started_from = startet_from 
+        self.started_from = startet_from
         self.Tag = None
 
         self.box = Gtk.Box(spacing = 6, orientation = Gtk.Orientation.HORIZONTAL)
@@ -119,9 +119,9 @@ class GUI_Plot1(Gtk.Window):
             TPX3_datalogger.write_value(name = 'integration_length', value = self.plotwidget.get_iteration_depth('occupancy'))
             TPX3_datalogger.write_value(name = 'color_depth', value = self.plotwidget.get_iteration_depth('occupancy.color'))
         if self.started_from == 'CLI':
-            print('plottype=' + str(self.plotwidget.get_plottype()) + 
-                    ' colorsteps=' + str(self.plotwidget.get_iteration_depth('normal')) + 
-                    ' integration_length=' + str(self.plotwidget.get_iteration_depth('occupancy')) + 
+            print('plottype=' + str(self.plotwidget.get_plottype()) +
+                    ' colorsteps=' + str(self.plotwidget.get_iteration_depth('normal')) +
+                    ' integration_length=' + str(self.plotwidget.get_iteration_depth('occupancy')) +
                     ' color_depth=' + str(self.plotwidget.get_iteration_depth('occupancy.color')))
         GLib.source_remove(self.Tag)
         if self.started_from == 'GUI':
@@ -160,7 +160,7 @@ class GUI_Plot_settings(Gtk.Window):
         plot_depth_adj = Gtk.Adjustment()
         plot_depth_adj.configure(nIteration, 0, 1000, 1, 0, 0)
         self.plot_depth = Gtk.SpinButton(adjustment = plot_depth_adj, climb_rate = 1, digits = 0)
-        self.plot_depth.set_value(self.plot_depth_value) 
+        self.plot_depth.set_value(self.plot_depth_value)
         self.plot_depth.connect('value-changed', self.plot_depth_set)
 
         #color depth
@@ -170,7 +170,7 @@ class GUI_Plot_settings(Gtk.Window):
         color_depth_adj = Gtk.Adjustment()
         color_depth_adj.configure(color_depth, 0, 255, 1, 0, 0)
         self.color_depth = Gtk.SpinButton(adjustment = color_depth_adj, climb_rate = 1, digits = 0)
-        self.color_depth.set_value(self.color_depth_value) 
+        self.color_depth.set_value(self.color_depth_value)
         self.color_depth.connect('value-changed', self.color_depth_set)
 
         grid.attach(plot_depth_label, 0, 0, 3, 1)
@@ -241,7 +241,7 @@ class GUI_ToT_Calib(Gtk.Window):
         Testpulse_range_start_adj = Gtk.Adjustment()
         Testpulse_range_start_adj.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
         self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
+        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value)
         self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
         Testpulse_range_start_label = Gtk.Label()
         Testpulse_range_start_label.set_text('Start ')
@@ -250,7 +250,7 @@ class GUI_ToT_Calib(Gtk.Window):
         Testpulse_range_stop_adj = Gtk.Adjustment()
         Testpulse_range_stop_adj.configure(500, self.Testpulse_range_start_value, 511, 1, 0, 0)
         self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
+        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value)
         self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
         Testpulse_range_stop_label = Gtk.Label()
         Testpulse_range_stop_label.set_text('Stop ')
@@ -321,19 +321,19 @@ class GUI_ToT_Calib(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'ToT_Calib', 
-                                lowerTHL = self.Testpulse_range_start_value, 
-                                upperTHL = self.Testpulse_range_stop_value, 
+        GUI.Status_window_call(function = 'ToT_Calib',
+                                lowerTHL = self.Testpulse_range_start_value,
+                                upperTHL = self.Testpulse_range_stop_value,
                                 iterations = self.Number_of_Iterations)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib', 
-                                                            VTP_fine_start = self.Testpulse_range_start_value, 
-                                                            VTP_fine_stop = self.Testpulse_range_stop_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib',
+                                                            VTP_fine_start = self.Testpulse_range_start_value,
+                                                            VTP_fine_stop = self.Testpulse_range_stop_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -372,7 +372,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start ')
@@ -382,7 +382,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop ')
@@ -392,7 +392,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections ')
@@ -467,21 +467,21 @@ class GUI_Threshold_Scan(Gtk.Window):
         elif GUI.get_simulation_alive():
             self.other_process.set_text('Simulation running')
             return
-        GUI.Status_window_call(function = 'ThresholdScan', 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
-                                iterations = self.Number_of_Iterations, 
+        GUI.Status_window_call(function = 'ThresholdScan',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
+                                iterations = self.Number_of_Iterations,
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan', 
-                                                            Vthreshold_start = self.Threshold_start_value, 
-                                                            Vthreshold_stop = self.Threshold_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan',
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -519,7 +519,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start ')
@@ -529,7 +529,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop ')
@@ -539,7 +539,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections ')
@@ -564,7 +564,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         n_pulse_heights_adj = Gtk.Adjustment()
         n_pulse_heights_adj.configure(4, 2, 100, 1, 0, 0)
         self.n_pulse_heights = Gtk.SpinButton(adjustment = n_pulse_heights_adj, climb_rate = 1, digits = 0)
-        self.n_pulse_heights.set_value(self.n_pulse_heights_value) 
+        self.n_pulse_heights.set_value(self.n_pulse_heights_value)
         self.n_pulse_heights.connect('value-changed', self.n_pulse_heights_set)
         n_pulse_heights_label = Gtk.Label()
         n_pulse_heights_label.set_text('Pulse height steps ')
@@ -630,24 +630,24 @@ class GUI_Threshold_Calib(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'ThresholdCalib', 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
-                                iterations = self.Number_of_Iterations, 
-                                n_injections = self.n_injections_value, 
+        GUI.Status_window_call(function = 'ThresholdCalib',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
+                                iterations = self.Number_of_Iterations,
+                                n_injections = self.n_injections_value,
                                 n_pulse_heights = self.n_pulse_heights_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', 
-                                                            iteration = 0, 
-                                                            Vthreshold_start = self.Threshold_start_value, 
-                                                            Vthreshold_stop = self.Threshold_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                            n_pulse_heights = self.n_pulse_heights_value, 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib',
+                                                            iteration = 0,
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                            n_pulse_heights = self.n_pulse_heights_value,
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -685,7 +685,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         Testpulse_range_start_adj = Gtk.Adjustment()
         Testpulse_range_start_adj.configure(200, 0, 511, 1, 0, 0)
         self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
+        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value)
         self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
         Testpulse_range_start_label = Gtk.Label()
         Testpulse_range_start_label.set_text('Start ')
@@ -695,7 +695,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         Testpulse_range_stop_adj = Gtk.Adjustment()
         Testpulse_range_stop_adj.configure(500, 0, 511, 1, 0, 0)
         self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
+        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value)
         self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
         Testpulse_range_stop_label = Gtk.Label()
         Testpulse_range_stop_label.set_text('Stop ')
@@ -705,7 +705,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections ')
@@ -780,21 +780,21 @@ class GUI_Testpulse_Scan(Gtk.Window):
         elif GUI.get_simulation_alive():
             self.other_process.set_text('Simulation running')
             return
-        GUI.Status_window_call(function = 'TestpulsScan', 
-                                lowerTHL = self.Testpulse_range_start_value, 
-                                upperTHL = self.Testpulse_range_stop_value, 
-                                iterations = self.Number_of_Iterations, 
+        GUI.Status_window_call(function = 'TestpulsScan',
+                                lowerTHL = self.Testpulse_range_start_value,
+                                upperTHL = self.Testpulse_range_stop_value,
+                                iterations = self.Number_of_Iterations,
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', 
-                                                            VTP_fine_start = self.Testpulse_range_start_value, 
-                                                            VTP_fine_stop = self.Testpulse_range_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan',
+                                                            VTP_fine_start = self.Testpulse_range_start_value,
+                                                            VTP_fine_stop = self.Testpulse_range_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -832,7 +832,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start ')
@@ -842,7 +842,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop ')
@@ -852,7 +852,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections')
@@ -920,21 +920,21 @@ class GUI_PixelDAC_opt(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'PixelDAC_opt', 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
+        GUI.Status_window_call(function = 'PixelDAC_opt',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDACopt', 
-                                                            iteration = 0, 
-                                                            Vthreshold_start = self.Threshold_start_value, 
-                                                            Vthreshold_stop = self.Threshold_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            offset = self.col_offset_value, 
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDACopt',
+                                                            iteration = 0,
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            offset = self.col_offset_value,
                                                             tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
-                                                            result = GUI.pixeldac_result, 
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            result = GUI.pixeldac_result,
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -1056,15 +1056,15 @@ class GUI_Run_Datataking(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'Run', lowerTHL = self.Datataking_Time_value, 
+        GUI.Status_window_call(function = 'Run', lowerTHL = self.Datataking_Time_value,
                                 upperTHL = self.finish_str)
-        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', 
-                                                            scan_timeout = self.Datataking_Time_value, 
-                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), 
-                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
-                                                            plot_queue = GUI.plot_queue, 
+        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake',
+                                                            scan_timeout = self.Datataking_Time_value,
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            plot_queue = GUI.plot_queue,
                                                             readout_interval = TPX3_datalogger.read_value(name = 'Readout_Speed'))
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -1158,8 +1158,8 @@ class GUI_Additional_Settings(Gtk.Window):
         Gtk.Window.__init__(self, title = 'Settings')
         self.connect('delete-event', self.window_destroy)
         self.expert_value = False
-        self.sense_DAC_dict = {'Off' : 0, 'Ibias_Preamp_ON' : 1, 'Ibias_Preamp_OFF' : 2, 'VPreamp_NCAS' : 3, 'Ibias_Ikrum' : 4, 'Vfbk' : 5, 
-                            'Vthreshold_fine' : 6, 'Vtreshold_corse' : 7, 'IBias_DiscS1_ON' : 8, 'IBias_DiscS1_OFF' : 9, 'IBias_DiscS2_ON' : 10, 
+        self.sense_DAC_dict = {'Off' : 0, 'Ibias_Preamp_ON' : 1, 'Ibias_Preamp_OFF' : 2, 'VPreamp_NCAS' : 3, 'Ibias_Ikrum' : 4, 'Vfbk' : 5,
+                            'Vthreshold_fine' : 6, 'Vtreshold_corse' : 7, 'IBias_DiscS1_ON' : 8, 'IBias_DiscS1_OFF' : 9, 'IBias_DiscS2_ON' : 10,
                             'IBias_DiscS2_OFF' : 11, 'IBias_PixelDAC' : 12, 'IBias_TPbufferIn' : 13, 'IBias_TPbufferOut' : 14, 'VTP_coarse' : 15,
                             'VTP_fine' : 16, 'Ibias_CP_PLL' : 17, 'PLL_Vcntrl' : 18, 'BandGap_output' : 28, 'BandGap_Temp' : 29,
                             'Ibias_dac' : 30, 'Ibias_dac_cas' : 31}
@@ -1412,7 +1412,7 @@ class GUI_Additional_Settings(Gtk.Window):
             self.resize(1,1)
 
     def readout_speed_entered(self, widget):
-        try: 
+        try:
             self.Readout_Speed_value = float(self.Readout_Speed_entry.get_text())
         except:
             self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
@@ -1489,7 +1489,7 @@ class GUI_Additional_Settings(Gtk.Window):
 
         # get values
         self.TP_Period_value = self.TP_Period.get_value_as_int()
-        try: 
+        try:
             self.Readout_Speed_value = float(self.Readout_Speed_entry.get_text())
         except:
             self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
@@ -1551,7 +1551,7 @@ class GUI_Equalisation(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start')
@@ -1561,7 +1561,7 @@ class GUI_Equalisation(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop')
@@ -1636,32 +1636,32 @@ class GUI_Equalisation(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function='Equalisation', 
-                                subtype = self.Equalisation_Type, 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
+        GUI.Status_window_call(function='Equalisation',
+                                subtype = self.Equalisation_Type,
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
                                 iterations = self.Number_of_Iterations)
         if self.Equalisation_Type == 'Noise':
-            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationNoise', 
-                                                                Vthreshold_start = self.Threshold_start_value, 
-                                                                Vthreshold_stop = self.Threshold_stop_value, 
+            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationNoise',
+                                                                Vthreshold_start = self.Threshold_start_value,
+                                                                Vthreshold_stop = self.Threshold_stop_value,
                                                                 mask_step = self.Number_of_Iterations,
                                                                 maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                                progress = GUI.get_progress_value_queue(), 
-                                                                status = GUI.get_status_queue(), 
-                                                                result_path = GUI.eq_result_path, 
+                                                                progress = GUI.get_progress_value_queue(),
+                                                                status = GUI.get_status_queue(),
+                                                                result_path = GUI.eq_result_path,
                                                                 plot_queue = GUI.plot_queue)
         elif self.Equalisation_Type == 'Testpulse':
-            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationCharge', 
-                                                                Vthreshold_start = self.Threshold_start_value, 
-                                                                Vthreshold_stop = self.Threshold_stop_value, 
-                                                                n_injections = 100, 
+            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationCharge',
+                                                                Vthreshold_start = self.Threshold_start_value,
+                                                                Vthreshold_stop = self.Threshold_stop_value,
+                                                                n_injections = 100,
                                                                 mask_step = self.Number_of_Iterations,
                                                                 maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                                tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                                progress = GUI.get_progress_value_queue(), 
-                                                                status = GUI.get_status_queue(), 
-                                                                result_path = GUI.eq_result_path, 
+                                                                tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                                progress = GUI.get_progress_value_queue(),
+                                                                status = GUI.get_status_queue(),
+                                                                result_path = GUI.eq_result_path,
                                                                 plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -1714,7 +1714,7 @@ class GUI_Mask_Entry_Window(Gtk.Window):
 
         self.show_all()
 
-    def mask_entered(self, widget): 
+    def mask_entered(self, widget):
         mask_input = self.Mask_entry.get_text()
         if mask_input == '':
             return
@@ -1994,7 +1994,7 @@ class GUI_Set_Mask(Gtk.Window):
                 else:
                     self.np_column_list[x_coord] = True
                     for y in range(256):
-                        self.np_mask_list[(x_coord * 256 + y)] = True 
+                        self.np_mask_list[(x_coord * 256 + y)] = True
                 self.draw_clicked()
             elif y_coord in range(256) and x_coord in [-3, -2]:
                 if self.np_row_list[y_coord]:
@@ -2004,7 +2004,7 @@ class GUI_Set_Mask(Gtk.Window):
                 else:
                     self.np_row_list[y_coord] = True
                     for x in range(256):
-                        self.np_mask_list[(x * 256 + y_coord)] = True 
+                        self.np_mask_list[(x * 256 + y_coord)] = True
                 self.draw_clicked()
             elif x_coord in range(256) and y_coord in range(256):
                 x_y_entry = x_coord * 256 + y_coord
@@ -2092,9 +2092,9 @@ class GUI_Additional_Information(Gtk.Window):
                 self.mask_file = 'None'
             else:
                 self.mask_file = 'Corrupt Data'
-        
+
         self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
-        
+
         grid = Gtk.Grid()
         grid.set_row_spacing(2)
         grid.set_column_spacing(10)
@@ -2132,9 +2132,9 @@ class GUI_Additional_Information(Gtk.Window):
                 self.mask_file = 'None'
             else:
                 self.mask_file = 'Corrupt Data'
-        
+
         self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
-        
+
         self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
 
     def window_destroy(self, widget, event):
@@ -2633,7 +2633,7 @@ class GUI_Main(Gtk.Window):
 
         self.Infobutton = Gtk.Button(label = 'Info')
         self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
-        
+
         self.Run_Name_button = Gtk.Button(label = 'Run Name')
         self.Run_Name_button.connect('clicked', self.on_Run_Name_button_clicked)
 
@@ -2649,7 +2649,7 @@ class GUI_Main(Gtk.Window):
                                         '\nGit date: ' + str(utils.get_git_date()) +
                                         '\n<small>GasDet Bonn 2019-2021</small>')
         except:
-            self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+            self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
                                         '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
 
         Status = Gtk.Frame()
@@ -2708,7 +2708,7 @@ class GUI_Main(Gtk.Window):
 
 
     #######################################################################################################
-        ### Page 2 
+        ### Page 2
         ChipName = 'Chip1'
         self.page2 = Gtk.Box()
         page2_label = Gtk.Label()
@@ -2739,7 +2739,7 @@ class GUI_Main(Gtk.Window):
 
         self.init_done = True
 
-    ################################################################################################### 
+    ###################################################################################################
     ### Overall window event
 
     def window_on_button_press_event(self, widget, event):
@@ -2792,10 +2792,10 @@ class GUI_Main(Gtk.Window):
 
     def on_Startupbutton_clicked(self, widget):
         self.Status_window_call(function = 'InitHardware')
-        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', 
-                                                            results = self.hardware_scan_results, 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware',
+                                                            results = self.hardware_scan_results,
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         self.set_running_process(running_process = new_process)
         self.set_quit_scan_label()
@@ -2835,7 +2835,7 @@ class GUI_Main(Gtk.Window):
 
     def on_Infobutton_clicked(self, widget):
         Info_subw = GUI_Additional_Information()
-        
+
     def on_Run_Name_button_clicked(self, widget):
         Info_subw = GUI_Set_Run_Name()
 
@@ -2855,7 +2855,7 @@ class GUI_Main(Gtk.Window):
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_show_text(False)
         self.resize(1,1)
-        if self.running_process == None: 
+        if self.running_process == None:
             file_logger.write_backup(file = file_logger.create_file())
             self.terminate_simulator()
             self.terminate_converter()
@@ -3072,7 +3072,7 @@ class GUI_Main(Gtk.Window):
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + utils.strfdelta(estimate, '%M:%S'))
             elif runtime.seconds >= 3600 and estimate.seconds < 3600:
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%H:%M:%S') + ' / ' + utils.strfdelta(estimate, '%M:%S'))
-            elif estimate.seconds >= 3600 and runtime.seconds < 3600: 
+            elif estimate.seconds >= 3600 and runtime.seconds < 3600:
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + utils.strfdelta(estimate, '%H:%M:%S'))
             else:
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%H:%M:%S') + ' / ' + utils.strfdelta(estimate, '%H:%M:%S'))
@@ -3103,7 +3103,7 @@ class GUI_Main(Gtk.Window):
                                                     '\nGit date: ' + str(utils.get_git_date()) +
                                                     '\n<small>GasDet Bonn 2019-2021</small>')
                     except:
-                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
                                                     '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
                 elif n == 1 and Chip_List:
                     TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0))
@@ -3240,7 +3240,7 @@ class GUI_Main(Gtk.Window):
         sim = ProducerSimManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', path = path, loglevel = 'INFO', delay = 0.1, kind = 'tpx3_sim', name = 'TPX3')
         self.simulator_process = Process(target = sim.start)
         self.simulator_process.start()
-    
+
     def make_run_name(self, scan_type):
         if TPX3_datalogger.read_value(name = 'Run_name') == None:
             run_name = str(scan_type) + '_' + time.strftime('%Y-%m-%d_%H-%M-%S')

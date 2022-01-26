@@ -38,7 +38,7 @@ class Transceiver(multiprocessing.Process):
     kind : str
         String describing the kind of converter (e.g. forwarder)
     max_buffer : number
-        Maximum messages buffered for interpretation, if exeeded
+        Maximum messages buffered for interpretation, if exceeded
         data is discarded. If None no limit is applied.
     loglevel : str
         The verbosity level for the logging (e.g. INFO, WARNING)

@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
         chip.write(data)
         data = chip.write_outputBlock_config(write=False)
         chip.write(data)
-        
+
         data = chip.reset_sequential(False)
         chip.write(data, True)
         fdata = chip['FIFO'].get_data()
@@ -107,7 +107,7 @@ class Test(unittest.TestCase):
                     self.assertEqual(value, dout[len(dout) - 2][13:5].tovalue())
                     self.assertEqual(chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
                 pbar.update(1)
-           
+
         pbar.close()
 
 
@@ -123,7 +123,7 @@ class Test(unittest.TestCase):
             chip.pixel_address_to_x(BitLogic.from_value(0b10000000000000000))
         with self.assertRaises(ValueError):
             chip.pixel_address_to_y(BitLogic.from_value(0b10000000000000000))
-        
+
         print("Test pixel address functions")
         # Test for valid addresses
         pbar = tqdm(total=256*256)
@@ -226,7 +226,7 @@ class Test(unittest.TestCase):
             chip.write_ctpr(list(range(257)), False)
         with self.assertRaises(ValueError):
             chip.write_ctpr(list(range(257, 256, -1)), False)
-        
+
         # Test values
         print("Test reading and writing CTPR")
         pbar = tqdm(total = 256)
@@ -246,7 +246,7 @@ class Test(unittest.TestCase):
                         self.assertEqual(column, dout[j][43:37].tovalue() * 2 + int(dout[j][1]))
         pbar.close()
 
-    
+
     def test_general_config(self):
         self.startUp()
 
@@ -300,7 +300,7 @@ class Test(unittest.TestCase):
             pbar.update(1)
         pbar.close()
 
-    
+
     def test_testpulse(self):
         self.startUp()
 
