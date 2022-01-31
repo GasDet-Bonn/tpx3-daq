@@ -1036,7 +1036,7 @@ class Plotting(object):
         sm.set_array([])
         cb = fig.colorbar(sm, cax=cax, ticks=np.linspace(
             start=min_tdac, stop=max_tdac, num=range_tdac, endpoint=True))
-        cb.set_label('TDAC')
+        cb.set_label('Pixel threshold')
 
         if coeff is not None:
             ax.plot(points, gau, "r-", label='Normal distribution')
