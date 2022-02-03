@@ -804,6 +804,111 @@ class GUI_Testpulse_Scan(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Noise_Scan(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Noise Scan')
+        self.connect('delete-event', self.window_destroy)
+
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+        self.add(grid)
+
+        Space = Gtk.Label()
+        Space.set_text("")
+
+        Threshold_label = Gtk.Label()
+        Threshold_label.set_text('Threshold')
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text('')
+
+        #Threshold_start
+        self.Threshold_start_value = 1400
+        Threshold_start_adj = Gtk.Adjustment()
+        Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
+        self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
+        self.Threshold_start.set_value(self.Threshold_start_value)
+        self.Threshold_start.connect('value-changed', self.Threshold_start_set)
+        Threshold_start_label = Gtk.Label()
+        Threshold_start_label.set_text('Start ')
+
+        #Threshold_stop
+        self.Threshold_stop_value = 2900
+        Threshold_stop_adj = Gtk.Adjustment()
+        Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
+        self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
+        self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
+        Threshold_stop_label = Gtk.Label()
+        Threshold_stop_label.set_text('Stop ')
+
+        #Startbutton
+        self.Startbutton = Gtk.Button(label = 'Start')
+        self.Startbutton.connect('clicked', self.on_Startbutton_clicked)
+
+        grid.attach(Threshold_label, 0, 0, 6, 1)
+        grid.attach(Threshold_start_label, 0, 1, 1, 1)
+        grid.attach(self.Threshold_start, 1, 1, 2, 1)
+        grid.attach(Threshold_stop_label, 3, 1, 1, 1)
+        grid.attach(self.Threshold_stop, 4, 1, 2, 1)
+        grid.attach(Space, 0, 2, 1, 1)
+        grid.attach(self.other_process, 0, 3, 4, 1)
+        grid.attach(self.Startbutton, 4, 3, 2, 1)
+
+        self.show_all()
+
+    def Threshold_start_set(self, event):
+        self.Threshold_start_value = self.Threshold_start.get_value_as_int()
+        temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Threshold_start_value,2911, 1, 0, 0)
+        self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
+        self.Threshold_stop.set_adjustment(adjustment = new_adjustment_start)
+        self.Threshold_stop.set_value(temp_Threshold_stop_value)
+        self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
+
+    def Threshold_stop_set(self, event):
+        self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+        temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
+        self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
+        self.Threshold_start.set_adjustment(adjustment = new_adjustment_stop)
+        self.Threshold_start.set_value(temp_Threshold_start_value)
+        self.Threshold_start.connect('value-changed', self.Threshold_start_set)
+
+    def on_Startbutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            self.other_process.set_text('Other process running')
+            return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text('Simulation running')
+            return
+        GUI.Status_window_call(function = 'NoiseScan',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value)
+        new_process = TPX3_multiprocess_start.process_call(function = 'NoiseScan',
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            plot_queue = GUI.plot_queue)
+        GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
+
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_PixelDAC_opt(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = 'PixelDAC optimisation')
@@ -2785,7 +2890,7 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Testpulse_Scan()
 
     def on_NoiseScanbutton_clicked(self, widget):
-        print('Function call: NoiseScan')
+        subw = GUI_Noise_Scan()
 
     def on_Runbutton_clicked(self, widget):
         subw = GUI_Run_Datataking()
@@ -2973,6 +3078,15 @@ class GUI_Main(Gtk.Window):
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
             self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'TestpulseScan'))
+            self.statuslabel7.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
+            self.clear_statusstrings()
+        elif function == 'NoiseScan':
+            self.statuslabel.set_markup('<big><b>Noise Scan</b></big>')
+            self.progressbar.show()
+            self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + '.')
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'NoiseScan'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
