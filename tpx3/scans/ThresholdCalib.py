@@ -271,7 +271,7 @@ class ThresholdCalib(ScanBase):
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix_0[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='tdac_distribution', plot_queue=plot_queue)
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
                 mask = h5_file.root.configuration.mask_matrix_0[:]
 
