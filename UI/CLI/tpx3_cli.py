@@ -15,6 +15,7 @@ from tpx3.scans.EqualisationNoise import EqualisationNoise
 from tpx3.scans.DataTake import DataTake
 from tpx3.scans.ThresholdCalib import ThresholdCalib
 from tpx3.scans.ScanHardware import ScanHardware
+from tpx3.scans.NoiseScan import NoiseScan
 from tpx3.scan_base import ConfigError
 from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
 from UI.GUI.converter import utils as conv_utils
@@ -29,6 +30,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Pixel_DAC_Optimisation', 'Pixel_DAC', 'PDAC', 'pixel_dac_optimisation', 'pixel_dac', 'pdac',
                 'Equalisation', 'Equal', 'EQ', 'equalisation', 'equal', 'eq',
                 'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp',
+                'Noise_Scan', 'Noise', 'noise_scan', 'noise',
                 'Initialise_Hardware', 'Init_Hardware', 'Init', 'initialise_hardware', 'init_hardware', 'init',
                 'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r',
                 'Set_DAC', 'set_dac',
@@ -68,7 +70,7 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
                     'Enable_Link', 'enable_link', 'Disable_Link', 'disable_link']
 
 # In this list all functions are named which will be shown when the help command is used
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
+help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation', 'Noise_Scan',
                     'Testpulse_Scan', 'Initialise_Hardware', 'Run_Datataking', 'Set_DAC', 'Load_Equalisation', 'Save_Equalisation',
                     'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask',
                     'Save_Mask', 'TP_Period', 'Set_operation_mode', 'Set_Fast_Io', 'Set_Readout_Intervall', 'Set_Run_Name', 'Get_Run_Name',
@@ -492,6 +494,40 @@ class TPX3_CLI_function_call(object):
                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
         TPX3_datalogger.write_value(name = 'Equalisation_path', value = result_path.get())
+
+    def Noise_Scan(object, Vthreshold_start = None, Vthreshold_stop = None):
+        if Vthreshold_start == None:
+            print('> Please enter the Vthreshold_start value (0-2911)[1400]:')
+            while(1):
+                Vthreshold_start = input('>> ')
+                try:
+                    Vthreshold_start = int(Vthreshold_start)
+                    break
+                except:
+                    if Vthreshold_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            print('> Please enter the Vthreshold_stop value (0-2911)[2900]:')
+            while(1):
+                Vthreshold_stop = input('>> ')
+                try:
+                    Vthreshold_stop = int(Vthreshold_stop)
+                    break
+                except:
+                    if Vthreshold_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+
+        print('Noise scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ')
+        new_process = TPX3_multiprocess_start.process_call(function = 'NoiseScan',
+                                                           Vthreshold_start = Vthreshold_start,
+                                                           Vthreshold_stop = Vthreshold_stop,
+                                                           tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
+        new_process.join()
 
     def Set_DAC(object, DAC_Name = None, DAC_value = None):
         if DAC_Name == None:
@@ -1248,6 +1284,31 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 5:
                             print('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+
+                #Noise_Scan
+                elif inputlist[0] in {'Noise_Scan', 'Noise', 'noise_scan', 'noise'}:
+                    if len(inputlist) == 1:
+                        print('Noise_Scan')
+                        try:
+                            function_call.Noise_Scan()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the Threshold scan. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911).')
+                        elif len(inputlist) < 3:
+                            print('Incomplete set of parameters:')
+                            try:
+                                function_call.Noise_Scan()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) == 3:
+                            try:
+                                function_call.Noise_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]))
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 3:
+                            print('To many parameters! The given function takes only two parameters:\n start threshold value (0-2911),\n stop threshold value (0-2911).')
 
                 #Set_DAC
                 elif inputlist[0] in {'Set_DAC', 'set_dac'}:
