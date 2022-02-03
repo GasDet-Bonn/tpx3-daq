@@ -1183,7 +1183,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
-                            print('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+                            print('To many parameters! The given function takes only four parameters:\n start threshold value (0-2911),\n stop threshold value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
 
                 #Threshold_Calib
                 elif inputlist[0] in {'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',}:
@@ -1208,7 +1208,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 6:
-                            print('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256),\n number of pulse height steps (2-100).')
+                            print('To many parameters! The given function takes only four parameters:\n start threshold value (0-2911),\n stop threshold value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256),\n number of pulse height steps (2-100).')
 
                 #Testpulse_Scan
                 elif inputlist[0] in {'Testpulse_Scan', 'TP_Scan', 'Tp_Scan' 'TP', 'testpulse_scan', 'tp_scan' 'tp'}:
@@ -1258,7 +1258,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
-                            print('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n column offset (0-15).')
+                            print('To many parameters! The given function takes only four parameters:\n start threshold value (0-2911),\n stop threshold value (0-2911),\n number of injections (1-65535),\n column offset (0-15).')
 
                 #Equalisation
                 elif inputlist[0] in {'Equalisation', 'Equal', 'EQ', 'equalisation', 'equal', 'eq'}:
@@ -1283,7 +1283,7 @@ class TPX3_CLI_TOP(object):
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 5:
-                            print('To many parameters! The given function takes only four parameters:\n start testpulse value (0-2911),\n stop testpulse value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
+                            print('To many parameters! The given function takes only four parameters:\n start threshold value (0-2911),\n stop threshold value (0-2911),\n number of injections (1-65535),\n number of steps (4, 16, 64, 256).')
 
                 #Noise_Scan
                 elif inputlist[0] in {'Noise_Scan', 'Noise', 'noise_scan', 'noise'}:
