@@ -60,18 +60,21 @@ def totcurve_hist(hit_data):
 
 @njit
 def noise_pixel_count(hit_data, param_range, Vthreshold_start):
-    noise_curve = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
+    noise_curve_pixel = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
+    noise_curve_hits = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
     pixel_list = np.zeros((256*256, Vthreshold_start + len(param_range)), dtype=np.uint16)
 
     for i in range(hit_data.shape[0]):
         x = hit_data['x'][i]
         y = hit_data['y'][i]
+        c = hit_data['EventCounter'][i]
         p = hit_data['scan_param_id'][i]
         if pixel_list[x * 256 + y, p + Vthreshold_start] == 0:
-            noise_curve[p + Vthreshold_start] += 1
+            noise_curve_pixel[p + Vthreshold_start] += 1
+            noise_curve_hits[p + Vthreshold_start] += c
         pixel_list[x * 256 + y, p + Vthreshold_start] += 1
 
-    return noise_curve
+    return noise_curve_pixel, noise_curve_hits
 
 def vths(scurves, param_range, Vthreshold_start):
     vths = np.zeros((256, 256), dtype=np.uint16)

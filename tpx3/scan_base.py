@@ -672,7 +672,7 @@ class ScanBase(object):
         elif self.scan_id == 'ThresholdCalib':
             self.chip._configs["Op_mode"] = 2
         elif self.scan_id == 'NoiseScan':
-            self.chip._configs["Op_mode"] = 0
+            self.chip._configs["Op_mode"] = 2
         elif self.scan_id == 'ToTCalib':
             self.chip._configs["Op_mode"] = 0
 

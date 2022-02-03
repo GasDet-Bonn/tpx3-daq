@@ -24,7 +24,7 @@ from six.moves import range
 
 local_configuration = {
     # Scan parameters
-    'Vthreshold_start' : 1450,
+    'Vthreshold_start' : 1335,
     'Vthreshold_stop'  : 1700,
     #'thrfile'        : './output_data/equal_?.h5'
 }
@@ -80,6 +80,8 @@ class NoiseScan(ScanBase):
             self.chip.set_threshold(vcal)
 
             with self.readout(scan_param_id=scan_param_id):
+                time.sleep(0.001)
+
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
                     time.sleep(0.01)
@@ -89,12 +91,13 @@ class NoiseScan(ScanBase):
                     else:
                         # Update the progress fraction and put it in the queue
                         step_counter += 1
-                        fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                        fraction = step_counter / len(cal_high_range)
                         progress.put(fraction)
                 self.chip.stop_readout()
-                time.sleep(0.001)
+                time.sleep(0.025)
             self.chip.reset_sequential()
             scan_param_id += 1
+            time.sleep(0.01)
 
         if progress == None:
             # Close the progress bar
@@ -151,9 +154,10 @@ class NoiseScan(ScanBase):
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
             Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
-            # Create histograms for number of active pixels for individual thresholds
-            noise_curve = analysis.noise_pixel_count(hit_data, param_range, Vthreshold_start)
-            h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurve', obj=noise_curve)
+            # Create histograms for number of active pixels and number of hits for individual thresholds
+            noise_curve_pixel, noise_curve_hits = analysis.noise_pixel_count(hit_data, param_range, Vthreshold_start)
+            h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurvePixel', obj=noise_curve_pixel)
+            h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurveHits', obj=noise_curve_hits)
 
     def plot(self, status = None, plot_queue = None, **kwargs):
         '''
@@ -184,8 +188,12 @@ class NoiseScan(ScanBase):
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
                 # Plot the noise pixels histogram
-                noise_curve = h5_file.root.interpreted.NoiseCurve[:]
-                p._plot_1d_hist(hist = noise_curve, plot_range = list(range(Vthreshold_start, Vthreshold_stop)), x_axis_title='Threshold', y_axis_title='Number of active pixels', plot_queue=plot_queue)
+                noise_curve_pixel = h5_file.root.interpreted.NoiseCurvePixel[:]
+                p._plot_1d_hist(hist = noise_curve_pixel, plot_range = list(range(Vthreshold_start, Vthreshold_stop)), title='Noise pixel per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Number of active pixels', log_y=True, plot_queue=plot_queue)
+
+                # Plot the noise hits histogram
+                noise_curve_hits = h5_file.root.interpreted.NoiseCurveHits[:]
+                p._plot_1d_hist(hist = noise_curve_hits, plot_range = list(range(Vthreshold_start, Vthreshold_stop)), title='Noise hits per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Total number of hits', log_y=True, plot_queue=plot_queue)
 
 
 if __name__ == "__main__":
