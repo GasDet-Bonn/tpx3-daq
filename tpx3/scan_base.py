@@ -33,8 +33,8 @@ class ConfigError(Exception):
     pass
 
 class MetaTable(tb.IsDescription):
-    index_start = tb.UInt32Col(pos=0)
-    index_stop = tb.UInt32Col(pos=1)
+    index_start = tb.UInt64Col(pos=0)
+    index_stop = tb.UInt64Col(pos=1)
     data_length = tb.UInt32Col(pos=2)
     timestamp_start = tb.Float64Col(pos=3)
     timestamp_stop = tb.Float64Col(pos=4)
