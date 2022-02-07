@@ -181,7 +181,7 @@ class NoiseScan(ScanBase):
                 # Plot a page with all parameters
                 p.plot_parameter_page()
 
-                mask = h5_file.root.configuration.mask_matrix[:]
+                mask = h5_file.root.configuration.mask_matrix[:].T
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],

@@ -217,7 +217,7 @@ class TestpulseScan(ScanBase):
                 # Plot a page with all parameters
                 p.plot_parameter_page()
 
-                mask = h5_file.root.configuration.mask_matrix[:]
+                mask = h5_file.root.configuration.mask_matrix[:].T
 
                 # Plot the occupancy matrix
                 occ_masked = np.ma.masked_array(h5_file.root.interpreted.HistOcc[:], mask)
