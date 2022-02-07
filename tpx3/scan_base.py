@@ -128,7 +128,7 @@ class ScanBase(object):
             os.makedirs(user_path)
 
         # Store runs in '~/Timepix3/data' and other scans in '~/Timepix3/scans'
-        if self.scan_id == "data_take":
+        if self.scan_id == "DataTake":
             scan_path = os.path.join(user_path, 'data')
         else:
             scan_path = os.path.join(user_path, 'scans')
@@ -470,7 +470,7 @@ class ScanBase(object):
                 row['value'] = value if isinstance(value, str) else str(value)
                 row.append()
 
-        if self.scan_id == 'PixelDAC_opt' and iteration == 0:
+        if self.scan_id == 'PixelDACopt' and iteration == 0:
             row = run_config_table.row
             row['attribute'] = 'pixeldac'
             row['value'] = str(127)
@@ -633,7 +633,7 @@ class ScanBase(object):
         self.chip['PULSE_GEN'].reset()
 
         # Only activate the timestamp pulse if TOA is of interest
-        if self.scan_id in {"data_take"}:
+        if self.scan_id in {"DataTake"}:
             self.chip['PULSE_GEN'].set_delay(40)
             self.chip['PULSE_GEN'].set_width(4056)
             self.chip['PULSE_GEN'].set_repeat(0)
