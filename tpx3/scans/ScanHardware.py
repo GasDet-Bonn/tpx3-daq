@@ -93,11 +93,12 @@ class ScanHardware(object):
             if noisy_map[fpga_link_number] > 0:
                 status_map[fpga_link_number] = 6
 
+        not_connected_counter = 0
         # Check for each link individually for which delay settings there are no errors
         for fpga_link_number, fpga_link in enumerate(rx_list_objects):
             # Do this check only on links which are connected and show no errors sofar
             if status_map[fpga_link_number] == 1:
-                self.chip._outputBlocks["chan_mask"] = 0b1 << int(np.where(rx_map == 1)[0][fpga_link_number])
+                self.chip._outputBlocks["chan_mask"] = 0b1 << int(np.where(rx_map == 1)[0][fpga_link_number - not_connected_counter])
                 data = self.chip.write_outputBlock_config()
 
                 for delay in range(32):
@@ -111,6 +112,8 @@ class ScanHardware(object):
                     # Check the number of errors for the current setting
                     error_map[fpga_link_number][delay] = fpga_link.get_decoder_error_counter()
                     fpga_link.ENABLE = 0
+            else:
+                not_connected_counter += 1
 
             if progress == None:
                 # Update the progress bar
@@ -188,8 +191,12 @@ class ScanHardware(object):
 
         # Write the registers based on the scan results
         for i, register in enumerate(rx_list_objects):
-            dict = {'name': rx_list_objects[i].name, 'fpga-link': i, 'chip-link': int(np.where(rx_map[:][i] == 1)[0][0]),
-                    'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': 0, 'data-edge': 0, 'link-status': int(status_map[i])}
+            if int(status_map[i]) != 0:
+                dict = {'name': rx_list_objects[i].name, 'fpga-link': i, 'chip-link': int(np.where(rx_map[:][i] == 1)[0][0]),
+                        'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': 0, 'data-edge': 0, 'link-status': int(status_map[i])}
+            else:
+                dict = {'name': rx_list_objects[i].name, 'fpga-link': i, 'chip-link': 0,
+                        'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': 0, 'data-edge': 0, 'link-status': int(status_map[i])}
             dict_list.append(dict)
 
         # Write the ideal settings to the yaml file
