@@ -122,12 +122,12 @@ class PixelDACopt(ScanBase):
 
             for register in doc['registers']:
                 if register['name'] == 'Ibias_PixelDAC':
-                    register['value'] = int(pixeldac)
+                    register['value'] = int(last_pixeldac)
 
             with open('../dacs.yml', 'w') as f:
                 yaml.dump(doc, f)
         else:
-            result.put(int(pixeldac))
+            result.put(int(last_pixeldac))
 
     def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, tp_period = 1, offset=0, mask_cmds = None, mask_cmds2 = None, progress = None, status = None, **kwargs):
         '''
