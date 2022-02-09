@@ -146,6 +146,7 @@ class TPX3(Dut):
         1: 'SIMULATION',
         2: 'FECv6',
         3: 'ML605',
+        4: 'MIMAS_A7'
     }
 
     ''' Compatible firware version '''
