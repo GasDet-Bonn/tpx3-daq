@@ -383,7 +383,66 @@ class PixelDACopt(ScanBase):
         self.logger.info('Result of iteration: Scan with pixeldac %i - New pixeldac %i. Delta was %f with optimal delta %f' % (int(pixeldac), int(pixeldac_result[0]), pixeldac_result[1], pixeldac_result[2]))
         return pixeldac_result
 
+    def plot(self, status = None, plot_queue = None, **kwargs):
+        '''
+            Plot data and histograms of the scan
+            If there is a status queue information about the status of the scan are put into it
+        '''
+
+        h5_filename = self.output_filename + '.h5'
+
+        self.logger.info('Starting plotting...')
+        if status != None:
+            status.put("Create Plots")
+        with tb.open_file(h5_filename, 'r+') as h5_file:
+            iterations_table = h5_file.root.configuration.iterations
+            iterations = 0
+            for row in iterations_table:
+                if row['attribute'] == b'iterations':
+                    iterations = int(row['value'])
+            mask = h5_file.root.configuration.mask_matrix[:].T
+
+            with plotting.Plotting(h5_filename, iteration = 0) as p:
+
+                # Read needed configuration parameters
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                n_injections = int(p.run_config[b'n_injections'])
+
+                # Plot a page with all parameters
+                p.plot_parameter_page()
+
+                for iteration in range(iterations):           
+                    pixelDAC_call = ('h5_file.root.configuration.run_config_' + str(iteration))
+                    pixelDAC_table = eval(pixelDAC_call)
+                    pixelDAC = 0
+                    for row in pixelDAC_table:
+                        if row['attribute'] == b'pixeldac':
+                            pixelDAC = str(int(row['value']))
+
+                    # Plot the S-Curve histogram
+                    scurve_th0_call = ('h5_file.root.interpreted.' + 'HistSCurve_th0_' + str(iteration) + '[:].T')
+                    scurve_th0_hist = eval(scurve_th0_call)
+                    max_occ = n_injections * 5
+                    p.plot_scurves(scurve_th0_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 0 - IBias_PixelDAC ' + pixelDAC, max_occ=max_occ, plot_queue=plot_queue)
+
+                    # Plot the threshold distribution based on the S-Curve fits
+                    hist_th0_call = ('h5_file.root.interpreted.' + 'ThresholdMap_th0_' + str(iteration) + '[:]')
+                    hist_th0 = np.ma.masked_array(eval(hist_th0_call), mask)
+                    p.plot_distribution(hist_th0, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 0 - IBias_PixelDAC ' + pixelDAC, suffix='threshold_distribution_th0_' + pixelDAC, plot_queue=plot_queue)
+
+                    # Plot the S-Curve histogram
+                    scurve_th15_call = ('h5_file.root.interpreted.' + 'HistSCurve_th15_' + str(iteration) + '[:].T')
+                    scurve_th15_hist = eval(scurve_th15_call)
+                    max_occ = n_injections * 5
+                    p.plot_scurves(scurve_th15_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 15 - IBias_PixelDAC ' + pixelDAC, max_occ=max_occ, plot_queue=plot_queue)
+
+                    # Plot the threshold distribution based on the S-Curve fits
+                    hist_th15_call = ('h5_file.root.interpreted.' + 'ThresholdMap_th15_' + str(iteration) + '[:]')
+                    hist_th15 = np.ma.masked_array(eval(hist_th15_call), mask)
+                    p.plot_distribution(hist_th15, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 15 - IBias_PixelDAC ' + pixelDAC, suffix='threshold_distribution_th15_' + pixelDAC, plot_queue=plot_queue)
 
 if __name__ == "__main__":
     scan = PixelDACopt()
     scan.start(iteration = 0, **local_configuration)
+    scan.plot()

@@ -111,22 +111,42 @@ class TPX3_multiprocess_start(object):
 
         def startup_func(function, run_name, **kwargs):
             system_exit = False
+            scan_error = False
+            scan = None
+            call_func = (function + '(run_name = "' + run_name + '")')
+            scan = eval(call_func)
             try:
-                call_func = (function + '(run_name = "' + run_name + '")')
-                scan = eval(call_func)
                 scan.start(**kwargs)
-                scan.analyze(**kwargs)
-                scan.plot(**kwargs)
             except KeyboardInterrupt:
                 sys.exit(1)
             except ValueError as e:
                 print(e)
+                scan_error = True
             except ConfigError:
                 print('The current link configuration is not valid. Please start "Init" or check your hardware.')
+                scan_error = True
             except NotImplementedError:
                 pass
             except SystemExit:
                 system_exit = True
+            if system_exit == False and scan_error == False:
+                try:
+                    scan.analyze(**kwargs)
+                except KeyboardInterrupt:
+                    sys.exit(1)
+                except NotImplementedError:
+                    pass
+                except SystemExit:
+                    system_exit = True
+            if system_exit == False and scan_error == False:
+                try:
+                    scan.plot(**kwargs)
+                except KeyboardInterrupt:
+                    sys.exit(1)
+                except NotImplementedError:
+                    pass
+                except SystemExit:
+                    system_exit = True
 
             status = kwargs.pop('status', None)
             if status != None and system_exit != True:
