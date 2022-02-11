@@ -197,9 +197,9 @@ class PixelDACopt(ScanBase):
             # Set the threshold
             self.chip.set_threshold(vcal)
 
-            self.chip.read_pixel_matrix_datadriven()
-
             with self.readout(scan_param_id=scan_param_id):
+                self.chip.read_pixel_matrix_datadriven()
+
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
                     time.sleep(sleep_time)
@@ -212,8 +212,9 @@ class PixelDACopt(ScanBase):
                         fraction = step_counter / len(cal_high_range)
                         progress.put(fraction)
                 self.chip.stop_readout()
-                time.sleep(0.001)
+                time.sleep(0.1)
             self.chip.reset_sequential()
+            time.sleep(0.001)
             scan_param_id += 1
 
         if progress == None:
@@ -242,9 +243,9 @@ class PixelDACopt(ScanBase):
             # Set the threshold
             self.chip.set_threshold(vcal)
 
-            self.chip.read_pixel_matrix_datadriven()
-
             with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
+                self.chip.read_pixel_matrix_datadriven()
+
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
                     time.sleep(sleep_time)
@@ -257,8 +258,9 @@ class PixelDACopt(ScanBase):
                         fraction = step_counter / len(cal_high_range)
                         progress.put(fraction)
                 self.chip.stop_readout()
-                time.sleep(0.001)
+                time.sleep(0.1)
             self.chip.reset_sequential()
+            time.sleep(0.001)
             scan_param_id += 1
 
         if progress == None:
