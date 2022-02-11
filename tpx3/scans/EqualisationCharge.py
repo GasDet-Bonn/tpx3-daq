@@ -291,6 +291,6 @@ class EqualisationCharge(ScanBase):
 
 
 if __name__ == "__main__":
-    scan = Equalisation_charge()
+    scan = EqualisationCharge()
     scan.start(**local_configuration)
     scan.analyze()

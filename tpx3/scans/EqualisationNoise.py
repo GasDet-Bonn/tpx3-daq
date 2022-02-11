@@ -273,6 +273,6 @@ class EqualisationNoise(ScanBase):
 
 
 if __name__ == "__main__":
-    scan = Equalisation()
+    scan = EqualisationNoise()
     scan.start(**local_configuration)
     scan.analyze()

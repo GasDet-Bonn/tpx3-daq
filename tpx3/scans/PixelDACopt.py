@@ -380,5 +380,5 @@ class PixelDACopt(ScanBase):
 
 
 if __name__ == "__main__":
-    scan = PixelDAC_opt()
+    scan = PixelDACopt()
     scan.start(iteration = 0, **local_configuration)
