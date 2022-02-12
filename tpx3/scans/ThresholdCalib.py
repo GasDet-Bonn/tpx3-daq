@@ -269,10 +269,10 @@ class ThresholdCalib(ScanBase):
                 p.plot_parameter_page()
 
                 # Plot the equalisation bits histograms
-                thr_matrix = h5_file.root.configuration.thr_matrix_0[:],
+                thr_matrix = h5_file.root.configuration.thr_matrix[:],
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
-                mask = h5_file.root.configuration.mask_matrix_0[:].T
+                mask = h5_file.root.configuration.mask_matrix[:].T
 
                 # remove the calibration node if it already exists
                 try:
