@@ -201,10 +201,8 @@ class ThresholdCalib(ScanBase):
             raw_data = eval(raw_data_call)
             meta_data_call = ('h5_file.root.' + 'meta_data_' + str(iteration) + '[:]')
             meta_data = eval(meta_data_call)
-            run_config_call = ('h5_file.root.' + 'configuration.run_config_' + str(iteration) + '[:]')
-            run_config = eval(run_config_call)
-            general_config_call = ('h5_file.root.' + 'configuration.generalConfig_' + str(iteration) + '[:]')
-            general_config = eval(general_config_call)
+            run_config = h5_file.root.configuration.run_config[:]
+            general_config = h5_file.root.configuration.generalConfig[:]
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
