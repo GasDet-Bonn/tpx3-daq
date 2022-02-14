@@ -210,6 +210,9 @@ class EqualisationCharge(ScanBase):
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
+            # Create group to save all data and histograms to the HDF file
+            h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
+
             self.logger.info('Interpret raw data...')
 
             # THR = 0
@@ -230,57 +233,64 @@ class EqualisationCharge(ScanBase):
             #THR = 0
             raw_data_thr0 = h5_file.root.raw_data[:meta_data_th0['index_stop'][-1]]
             hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, meta_data_th0, progress = progress)
+            h5_file.create_table(h5_file.root.interpreted, 'hit_data_th0', hit_data_thr0, filters=tb.Filters(complib='zlib', complevel=5))
             raw_data_thr0 = None
 
             self.logger.info('THR = 15')
             #THR = 15
             raw_data_thr15 = h5_file.root.raw_data[meta_data_th0['index_stop'][-1]:]
             hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, meta_data_th15, progress = progress)
+            h5_file.create_table(h5_file.root.interpreted, 'hit_data_th15', hit_data_thr15, filters=tb.Filters(complib='zlib', complevel=5))
             raw_data_thr15 = None
 
-        # Read needed configuration parameters
-        Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
-        Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
-        n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
-        chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
-        chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
-        chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
+            # Read needed configuration parameters
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
+            chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
+            chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
-        # Select only data which is hit data
-        hit_data_thr0 = hit_data_thr0[hit_data_thr0['data_header'] == 1]
-        hit_data_thr15 = hit_data_thr15[hit_data_thr15['data_header'] == 1]
+            # Select only data which is hit data
+            hit_data_thr0 = hit_data_thr0[hit_data_thr0['data_header'] == 1]
+            hit_data_thr15 = hit_data_thr15[hit_data_thr15['data_header'] == 1]
 
-        # Divide the data into two parts - data for pixel threshold 0 and 15
-        param_range = np.unique(meta_data['scan_param_id'])
-        meta_data = None
-        param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
-        param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
+            # Divide the data into two parts - data for pixel threshold 0 and 15
+            param_range = np.unique(meta_data['scan_param_id'])
+            meta_data = None
+            param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
+            param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
 
-        # Create histograms for number of detected hits for individual thresholds
-        self.logger.info('Get the global threshold distributions for all pixels...')
-        scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
-        hit_data_thr0 = None
-        scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
-        hit_data_thr15 = None
+            # Create histograms for number of detected hits for individual thresholds
+            self.logger.info('Get the global threshold distributions for all pixels...')
+            scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
+            hit_data_thr0 = None
+            scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
+            hit_data_thr15 = None
 
-        # Fit S-Curves to the histograms for all pixels
-        self.logger.info('Fit the scurves for all pixels...')
-        thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
-        scurve_th0 = None
-        thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
-        scurve_th15 = None
+            # Fit S-Curves to the histograms for all pixels
+            self.logger.info('Fit the scurves for all pixels...')
+            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th0', obj=scurve_th0)
+            h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th0', obj=thr2D_th0.T)
+            scurve_th0 = None
+            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th15', obj=scurve_th15)
+            h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th15', obj=thr2D_th15.T)
+            scurve_th15 = None
 
-        # Put the threshold distribution based on the fit results in two histograms
-        self.logger.info('Get the cumulated global threshold distributions...')
-        hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
-        hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
+            # Put the threshold distribution based on the fit results in two histograms
+            self.logger.info('Get the cumulated global threshold distributions...')
+            hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
+            hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
 
-        # Use the threshold histograms and one threshold distribution to calculate the equalisation
-        self.logger.info('Calculate the equalisation matrix...')
-        eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
+            # Use the threshold histograms and one threshold distribution to calculate the equalisation
+            self.logger.info('Calculate the equalisation matrix...')
+            eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
+            h5_file.create_carray(h5_file.root.interpreted, name='EqualisationMap', obj=eq_matrix)
 
         # Don't mask any pixels in the mask file
-        mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        mask_matrix = np.zeros((256, 256), dtype=bool)
         mask_matrix[:, :] = 0
 
         # Write the equalisation matrix to a new HDF5 file
