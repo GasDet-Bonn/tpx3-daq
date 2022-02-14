@@ -299,8 +299,58 @@ class EqualisationCharge(ScanBase):
         if result_path != None:
             result_path.put(self.thrfile)
 
+    def plot(self, status = None, plot_queue = None, **kwargs):
+        '''
+            Plot data and histograms of the scan
+            If there is a status queue information about the status of the scan are put into it
+        '''
+
+        h5_filename = self.output_filename + '.h5'
+
+        self.logger.info('Starting plotting...')
+        if status != None:
+            status.put("Create Plots")
+        with tb.open_file(h5_filename, 'r+') as h5_file:
+            with plotting.Plotting(h5_filename) as p:
+
+                # Read needed configuration parameters
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                n_injections = int(p.run_config[b'n_injections'])
+
+                # Plot a page with all parameters
+                p.plot_parameter_page()
+
+                mask = h5_file.root.configuration.mask_matrix[:].T
+
+                # Plot the S-Curve histogram
+                scurve_th0_hist = h5_file.root.interpreted.HistSCurve_th0[:].T
+                max_occ = n_injections * 5
+                p.plot_scurves(scurve_th0_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 0', max_occ=max_occ, plot_queue=plot_queue)
+
+                # Plot the threshold distribution based on the S-Curve fits
+                hist_th0 = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap_th0[:], mask)
+                p.plot_distribution(hist_th0, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 0', suffix='threshold_distribution_th0', plot_queue=plot_queue)
+
+                # Plot the S-Curve histogram
+                scurve_th15_hist = h5_file.root.interpreted.HistSCurve_th15[:].T
+                max_occ = n_injections * 5
+                p.plot_scurves(scurve_th15_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 15', max_occ=max_occ, plot_queue=plot_queue)
+
+                # Plot the threshold distribution based on the S-Curve fits
+                hist_th15 = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap_th15[:], mask)
+                p.plot_distribution(hist_th15, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 15', suffix='threshold_distribution_th15', plot_queue=plot_queue)
+
+                # Plot the occupancy matrix
+                eq_masked = np.ma.masked_array(h5_file.root.interpreted.EqualisationMap[:].T, mask)
+                p.plot_occupancy(eq_masked, title='Equalisation Map', z_max='median', suffix='equalisation', plot_queue=plot_queue)
+
+                # Plot the equalisation bits histograms
+                p.plot_distribution(eq_masked, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
+
 
 if __name__ == "__main__":
     scan = EqualisationCharge()
     scan.start(**local_configuration)
     scan.analyze()
+    scan.plot()
