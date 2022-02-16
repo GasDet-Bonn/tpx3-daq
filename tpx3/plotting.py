@@ -857,8 +857,7 @@ class Plotting(object):
 
         bin_centres = (bins[:-1] + bins[1:]) / 2.0
 
-        p0 = (np.amax(hist), np.argmax(hist) + plot_range[0],
-              (max(plot_range) - min(plot_range)) / 3)
+        p0 = (np.amax(hist), np.mean(data), np.std(data))
 
         if fit == True:
             try:
