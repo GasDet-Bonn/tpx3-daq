@@ -1219,12 +1219,12 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) < 6:
                             print('Incomplete set of parameters:')
                             try:
-                                function_call.Threshold_Scan()
+                                function_call.Threshold_Calib()
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) == 6:
                             try:
-                                function_call.Threshold_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]), n_pulse_height = int(inputlist[5]))
+                                function_call.Threshold_Calib(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), n_injections = int(inputlist[3]), mask_step = int(inputlist[4]), n_pulse_heights = int(inputlist[5]))
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 6:
