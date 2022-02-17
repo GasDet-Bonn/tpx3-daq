@@ -53,7 +53,11 @@ def totcurve_hist(hit_data):
         x = hit_data['x'][i]
         y = hit_data['y'][i]
         c = hit_data['TOT'][i]
-        totcurves_means[x*256+y] += c
+        if totcurves_hits[x*256+y] == 0:
+            totcurves_means[x*256+y] += c
+        # Ignore charge injections from post-pulse oscillations (lower amplitude)
+        elif c > 0.5 * (totcurves_means[x*256+y] / totcurves_hits[x*256+y]):
+            totcurves_means[x*256+y] += c
         totcurves_hits[x*256+y] += 1
 
     return totcurves_means, totcurves_hits

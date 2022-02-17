@@ -212,12 +212,13 @@ class ToTCalib(ScanBase):
 
             meta_data = None
 
-            # Calculate the mean ToT per pixel per pulse
-            totcurve = np.divide(totcurves_means, totcurves_hits, where = totcurves_hits > 0)
+            # Calculate the mean ToT per pixel per 110 injections
+            totcurve = np.divide(totcurves_means, 10, where = totcurves_hits > 0)
             totcurve = np.nan_to_num(totcurve)
 
-            # Only use pixel which saw exactly all pulses
-            totcurve[totcurves_hits != 10] = 0
+            # Only use pixel which saw at least all pulses
+            # Additional pulses are not part of the ToT sum (see analysis.totcurve_hist())
+            totcurve[totcurves_hits < 10] = 0
             hit_data = None
 
             # Read needed configuration parameters
