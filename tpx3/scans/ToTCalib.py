@@ -274,6 +274,10 @@ class ToTCalib(ScanBase):
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
+                # Plot the Hit-Curve histogram
+                ToT_hit_hist = h5_file.root.interpreted.HistToTCurve_Count[:].T
+                p.plot_scurves(ToT_hit_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=50, ylabel='Hits per pixel', title='Hit curves', plot_queue=plot_queue)
+                
                 # Plot the ToT-Curve histogram
                 ToT_hist = h5_file.root.interpreted.HistToTCurve[:].T
                 p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
