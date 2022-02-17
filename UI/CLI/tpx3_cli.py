@@ -57,6 +57,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Chip_names', 'chip_names', 'Who', 'who',
                 'Mask_name', 'mask_name',
                 'Equalisation_name', 'equalisation_name', 'Equal_name', 'equal_name',
+                'Get_DAC_Values', 'get_dac_values', 'DAC_Values', 'dac_values'
                 'About', 'about',
                 'Help', 'help', 'h', '-h',
                 'End', 'end', 'Quit', 'quit', 'q', 'Q', 'Exit', 'exit']
@@ -74,7 +75,7 @@ help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 
                     'Testpulse_Scan', 'Initialise_Hardware', 'Run_Datataking', 'Set_DAC', 'Load_Equalisation', 'Save_Equalisation',
                     'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask',
                     'Save_Mask', 'TP_Period', 'Set_operation_mode', 'Set_Fast_Io', 'Set_Readout_Intervall', 'Set_Run_Name', 'Get_Run_Name',
-                    'Plot', 'Stop_Plot', 'Chip_names', 'Mask_name', 'Equalisation_name', 'About', 'Help', 'Quit']
+                    'Plot', 'Stop_Plot', 'Chip_names', 'Mask_name', 'Equalisation_name','Get_DAC_Values', 'About', 'Help', 'Quit']
 
 help_expert = ['Set_CLK_fast_mode', 'Set_Acknowledgement', 'Set_TP_ext_in', 'Set_ClkOut_frequency', 'Set_Sense_DAC', 'Enable_Link']
 
@@ -1929,6 +1930,30 @@ class TPX3_CLI_TOP(object):
                             print('This is the get equalisation names function. It shows the path of the current equalisation.')
                         else :
                             print('Get equalisation name does not take parameters!')
+                
+                #Get DAC Values
+                elif inputlist[0] in {'Get_DAC_Values', 'get_dac_values', 'DAC_Values', 'dac_values'}:
+                    if len(inputlist) == 1:
+                        print('Ibias_Preamp_ON:\t' + str(TPX3_datalogger.read_value('Ibias_Preamp_ON')))
+                        print('VPreamp_NCAS:\t\t' + str(TPX3_datalogger.read_value('VPreamp_NCAS')))
+                        print('Ibias_Ikrum:\t\t' + str(TPX3_datalogger.read_value('Ibias_Ikrum')))
+                        print('Vfbk:\t\t\t' + str(TPX3_datalogger.read_value('Vfbk')))
+                        print('Vthreshold_fine:\t' + str(TPX3_datalogger.read_value('Vthreshold_fine')))
+                        print('Vthreshold_coarse:\t' + str(TPX3_datalogger.read_value('Vthreshold_coarse')))
+                        print('Ibias_DiscS1_ON:\t' + str(TPX3_datalogger.read_value('Ibias_DiscS1_ON')))
+                        print('Ibias_DiscS2_ON:\t' + str(TPX3_datalogger.read_value('Ibias_DiscS2_ON')))
+                        print('Ibias_PixelDAC:\t\t' + str(TPX3_datalogger.read_value('Ibias_PixelDAC')))
+                        print('Ibias_TPbufferIn:\t' + str(TPX3_datalogger.read_value('Ibias_TPbufferIn')))
+                        print('Ibias_TPbufferOut:\t' + str(TPX3_datalogger.read_value('Ibias_TPbufferOut')))
+                        print('VTP_coarse:\t\t' + str(TPX3_datalogger.read_value('VTP_coarse')))
+                        print('VTP_fine:\t\t' + str(TPX3_datalogger.read_value('VTP_fine')))
+                        print('Ibias_CP_PLL:\t\t' + str(TPX3_datalogger.read_value('Ibias_CP_PLL')))
+                        print('PLL_Vcntrl:\t\t' + str(TPX3_datalogger.read_value('PLL_Vcntrl')))
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the get DAC values function. It shows the current DAC values.')
+                        else :
+                            print('Get DAC values does not take parameters!')
 
                 #About
                 elif inputlist[0] in {'About', 'about'}:
