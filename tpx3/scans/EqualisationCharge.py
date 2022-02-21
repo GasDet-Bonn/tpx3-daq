@@ -343,7 +343,7 @@ class EqualisationCharge(ScanBase):
 
                 # Plot the occupancy matrix
                 eq_masked = np.ma.masked_array(h5_file.root.interpreted.EqualisationMap[:].T, mask)
-                p.plot_occupancy(eq_masked, title='Equalisation Map', z_max='median', suffix='equalisation', plot_queue=plot_queue)
+                p.plot_occupancy(eq_masked, title='Equalisation Map', z_max='median', z_label='PixelDAC', suffix='equalisation', plot_queue=plot_queue)
 
                 # Plot the equalisation bits histograms
                 p.plot_distribution(eq_masked, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
