@@ -327,7 +327,7 @@ class ThresholdCalib(ScanBase):
                 h5_file.create_table(h5_file.root.calibration, 'calibration_results', calib_results)
 
                 # Create the calibration plot
-                p.plot_datapoints(pulse_heights, thresholds, x_plot_range=np.arange(0, 5500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration', suffix='threshold_calibration', plot_queue=plot_queue)
+                p.plot_datapoints(pulse_heights, thresholds, x_plot_range=np.arange(0, 7500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration', suffix='threshold_calibration', plot_queue=plot_queue)
 
 if __name__ == "__main__":
     scan = ThresholdCalib()
