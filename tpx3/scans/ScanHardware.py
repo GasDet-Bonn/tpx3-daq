@@ -38,6 +38,11 @@ class ScanHardware(object):
         self.chip = TPX3()
         self.chip.init()
 
+        invert = 0
+        # For the MIMAS A7 readout board the output data must be inverted
+        if self.chip.board_version == 'MIMAS_A7':
+            invert = 1
+
         rx_list_objects = self.chip.get_modules('tpx3_rx')
 
         if progress == None:
@@ -106,7 +111,7 @@ class ScanHardware(object):
                     fpga_link.reset()
                     fpga_link.ENABLE = 1
                     fpga_link.DATA_DELAY = delay
-                    fpga_link.INVERT = 0
+                    fpga_link.INVERT = invert
                     fpga_link.SAMPLING_EDGE = 0
 
                     # Check the number of errors for the current setting
@@ -147,7 +152,7 @@ class ScanHardware(object):
             # Activate the current receivers
             fpga_link.ENABLE = 1
             fpga_link.DATA_DELAY = int(delays[fpga_link_number])
-            fpga_link.INVERT = 0
+            fpga_link.INVERT = invert
             fpga_link.SAMPLING_EDGE = 0
 
             # Enable the corrresponding chip link
@@ -193,10 +198,10 @@ class ScanHardware(object):
         for i, register in enumerate(rx_list_objects):
             if int(status_map[i]) != 0:
                 dict = {'name': rx_list_objects[i].name, 'fpga-link': i, 'chip-link': int(np.where(rx_map[:][i] == 1)[0][0]),
-                        'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': 0, 'data-edge': 0, 'link-status': int(status_map[i])}
+                        'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': invert, 'data-edge': 0, 'link-status': int(status_map[i])}
             else:
                 dict = {'name': rx_list_objects[i].name, 'fpga-link': i, 'chip-link': 0,
-                        'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': 0, 'data-edge': 0, 'link-status': int(status_map[i])}
+                        'chip-id': int(Chip_IDs[i]), 'data-delay': int(delays[i]), 'data-invert': invert, 'data-edge': 0, 'link-status': int(status_map[i])}
             dict_list.append(dict)
 
         # Write the ideal settings to the yaml file
