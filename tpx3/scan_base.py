@@ -112,6 +112,7 @@ class ScanBase(object):
 
         if no_chip == False:
             self.number_of_chips = 1
+            self.chip_links = 0
 
             # Test if the link configuration is valid
             if self.test_links() == True:
@@ -260,6 +261,8 @@ class ScanBase(object):
 
         ID_List = []
 
+        self.chip_links = 0
+
         # Iterate over all links
         for register in yaml_data['registers']:
             if register['link-status'] in [1, 3, 5]:
@@ -283,6 +286,8 @@ class ScanBase(object):
                 # Write new Chip-ID to the list
                 if ID not in ID_List:
                     ID_List.append(ID)
+
+                self.chip_links += 1
 
         self.number_of_chips = len(ID_List)
         if self.number_of_chips > 1:
@@ -386,6 +391,39 @@ class ScanBase(object):
         if progress == None:
             # Close the progress bar
             pbar.close()
+
+        return mask_cmds
+
+    def create_noise_scan_masks(self, mask_step, append_datadriven = True):
+        '''
+            Creates the pixel configuration register masks for noise scans based on the number of mask_step.
+            If append_datadriven is True the command read_pixel_matrix_datadriven is appended to the
+            matrix command list.
+            A list of commands to set the masks is returned
+        '''
+        mask_cmds = []
+
+        temp_mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        if self.maskfile:
+            with tb.open_file(self.maskfile, 'r') as infile:
+                temp_mask_matrix = infile.root.mask_matrix[:]
+
+        for i in range(mask_step):
+            mask_step_cmd = []
+            self.chip.mask_matrix[:, :] = self.chip.MASK_ON
+            self.chip.mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = self.chip.MASK_ON
+
+            if self.maskfile:
+                self.chip.mask_matrix[temp_mask_matrix == True] = self.chip.MASK_OFF
+
+            for j in range(256 // 4):
+                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
+
+            if append_datadriven == True:
+                # Append the command for initializing a data driven readout
+                mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
+
+            mask_cmds.append(mask_step_cmd)
 
         return mask_cmds
 

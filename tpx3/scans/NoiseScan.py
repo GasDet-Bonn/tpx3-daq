@@ -56,6 +56,23 @@ class NoiseScan(ScanBase):
         self.chip._configs["TP_en"] = 0
         self.chip.write_general_config()
 
+        self.logger.info('Preparing injection masks...')
+        if status != None:
+            status.put("Preparing injection masks")
+
+        mask_step = 1
+        if self.chip_links == 8:
+            mask_step = 1
+        elif self.chip_links < 8 and self.chip_links >= 4:
+            mask_step = 2
+        elif self.chip_links < 4 and self.chip_links >= 2:
+            mask_step = 4
+        else:
+            mask_step = 8
+
+        # Create the masks for all steps
+        mask_cmds = self.create_noise_scan_masks(mask_step)
+
         # Start the scan
         self.logger.info('Starting scan...')
         if status != None:
@@ -66,38 +83,37 @@ class NoiseScan(ScanBase):
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
         else:
             # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
         for vcal in cal_high_range:
-            # Initialize data-driven readout
-            self.chip.read_pixel_matrix_datadriven()
-
             # Set the threshold
             self.chip.set_threshold(vcal)
 
-            with self.readout(scan_param_id=scan_param_id):
-                time.sleep(0.001)
+            for mask_step_cmd in mask_cmds:
+                # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
+                self.chip.write(mask_step_cmd)
 
-                # Open the shutter, take data and update the progress bar
-                with self.shutter():
-                    time.sleep(0.01)
-                    if progress == None:
-                        # Update the progress bar
-                        pbar.update(1)
-                    else:
-                        # Update the progress fraction and put it in the queue
-                        step_counter += 1
-                        fraction = step_counter / len(cal_high_range)
-                        progress.put(fraction)
-                self.chip.stop_readout()
-                time.sleep(0.025)
-            self.chip.reset_sequential()
+                with self.readout(scan_param_id=scan_param_id):
+                    time.sleep(0.001)
+
+                    # Open the shutter, take data and update the progress bar
+                    with self.shutter():
+                        time.sleep(0.01)
+                        if progress == None:
+                            # Update the progress bar
+                            pbar.update(1)
+                        else:
+                            # Update the progress fraction and put it in the queue
+                            step_counter += 1
+                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            progress.put(fraction)
+                    self.chip.stop_readout()
+                    time.sleep(0.025)
             scan_param_id += 1
-            time.sleep(0.01)
 
         if progress == None:
             # Close the progress bar
