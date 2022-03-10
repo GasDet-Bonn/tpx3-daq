@@ -20,7 +20,7 @@ from tpx3.scan_base import ConfigError
 from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
 from UI.GUI.converter import utils as conv_utils
 from UI.GUI.converter.converter_manager import ConverterManager
-from tpx3.utils import get_software_version, get_git_branch, get_git_commit, get_git_date
+from tpx3.utils import get_software_version, get_git_branch, get_git_commit, get_git_date, threshold_compose, threshold_decompose
 
 
 # In this part all callable normal function names should be in the list functions
@@ -1974,6 +1974,7 @@ class TPX3_CLI_TOP(object):
                         print('Vfbk:\t\t\t' + str(TPX3_datalogger.read_value('Vfbk')))
                         print('Vthreshold_fine:\t' + str(TPX3_datalogger.read_value('Vthreshold_fine')))
                         print('Vthreshold_coarse:\t' + str(TPX3_datalogger.read_value('Vthreshold_coarse')))
+                        print('Vthreshold_combined:\t' + str(int(threshold_compose(TPX3_datalogger.read_value('Vthreshold_fine'), TPX3_datalogger.read_value('Vthreshold_coarse')))))
                         print('Ibias_DiscS1_ON:\t' + str(TPX3_datalogger.read_value('Ibias_DiscS1_ON')))
                         print('Ibias_DiscS2_ON:\t' + str(TPX3_datalogger.read_value('Ibias_DiscS2_ON')))
                         print('Ibias_PixelDAC:\t\t' + str(TPX3_datalogger.read_value('Ibias_PixelDAC')))
