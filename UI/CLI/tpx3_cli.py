@@ -516,7 +516,7 @@ class TPX3_CLI_function_call(object):
         new_process.join()
         TPX3_datalogger.write_value(name = 'Equalisation_path', value = result_path.get())
 
-    def Noise_Scan(object, Vthreshold_start = None, Vthreshold_stop = None):
+    def Noise_Scan(object, Vthreshold_start = None, Vthreshold_stop = None, shutter = None):
         if Vthreshold_start == None:
             print('> Please enter the Vthreshold_start value (0-2911)[1400]:')
             while(1):
@@ -540,11 +540,23 @@ class TPX3_CLI_function_call(object):
                         return
                     else:
                         print('Input needs to be a number!')
+            print('> Please enter a shutter length in seconds [0.01]:')
+            while(1):
+                shutter = input('>> ')
+                try:
+                    shutter = float(shutter)
+                    break
+                except:
+                    if shutter in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
 
         print('Noise scan with Vthreshold_start =', Vthreshold_start, 'Vthreshold_stop =', Vthreshold_stop, 'Number of injections = ')
         new_process = TPX3_multiprocess_start.process_call(function = 'NoiseScan',
                                                            Vthreshold_start = Vthreshold_start,
                                                            Vthreshold_stop = Vthreshold_stop,
+                                                           shutter = shutter,
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
@@ -1375,19 +1387,19 @@ class TPX3_CLI_TOP(object):
                             print('User quit')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the Threshold scan. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911).')
-                        elif len(inputlist) < 3:
+                            print('This is the Threshold scan. As arguments you can give the start threshold value (0-2911), the stop threshold value (0-2911) and the shutter length in seconds.')
+                        elif len(inputlist) < 4:
                             print('Incomplete set of parameters:')
                             try:
                                 function_call.Noise_Scan()
                             except KeyboardInterrupt:
                                 print('User quit')
-                        elif len(inputlist) == 3:
+                        elif len(inputlist) == 4:
                             try:
-                                function_call.Noise_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]))
+                                function_call.Noise_Scan(Vthreshold_start = int(inputlist[1]), Vthreshold_stop = int(inputlist[2]), shutter = float(inputlist[3]))
                             except KeyboardInterrupt:
                                 print('User quit')
-                        elif len(inputlist) > 3:
+                        elif len(inputlist) > 4:
                             print('To many parameters! The given function takes only two parameters:\n start threshold value (0-2911),\n stop threshold value (0-2911).')
 
                 #Set_DAC
