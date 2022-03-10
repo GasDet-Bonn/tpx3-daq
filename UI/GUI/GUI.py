@@ -1193,28 +1193,32 @@ class GUI_SetDAC(Gtk.Window):
         Space = Gtk.Label()
         Space.set_text("")
 
-        self.dac_dict = {'Ibias_Preamp_ON':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_Preamp_OFF':  {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
-                         'VPreamp_NCAS':      {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_Ikrum':       {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Vfbk':              {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Vthreshold_fine':   {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Vthreshold_coarse': {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_DiscS1_ON':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_DiscS1_OFF':  {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
-                         'Ibias_DiscS2_ON':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_DiscS2_OFF':  {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
-                         'Ibias_PixelDAC':    {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_TPbufferIn':  {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_TPbufferOut': {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'VTP_coarse':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'VTP_fine':          {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'Ibias_CP_PLL':      {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
-                         'PLL_Vcntrl':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True }}
+        self.dac_dict = {'Ibias_Preamp_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_Preamp_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
+                         'VPreamp_NCAS':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_Ikrum':         {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vfbk':                {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vthreshold_fine':     {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vthreshold_coarse':   {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vthreshold_combined': {"value" : 0, "default": 1375,"size" : 1911,"adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_DiscS1_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_DiscS1_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
+                         'Ibias_DiscS2_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_DiscS2_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
+                         'Ibias_PixelDAC':      {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_TPbufferIn':    {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_TPbufferOut':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'VTP_coarse':          {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'VTP_fine':            {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_CP_PLL':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'PLL_Vcntrl':          {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True }}
 
         for dac in self.dac_dict:
             if self.dac_dict[dac]['show']:
-                self.dac_dict[dac]['value'] = TPX3_datalogger.read_value(name = dac)
+                if dac != 'Vthreshold_combined':
+                    self.dac_dict[dac]['value'] = TPX3_datalogger.read_value(name = dac)
+                else:
+                    self.dac_dict[dac]['value'] = utils.threshold_compose(TPX3_datalogger.read_value(name = 'Vthreshold_fine'), TPX3_datalogger.read_value(name = 'Vthreshold_coarse'))
             else:
                 self.dac_dict[dac]['value'] = 7
             self.dac_dict[dac]['adjust'] = Gtk.Adjustment()
@@ -1240,7 +1244,25 @@ class GUI_SetDAC(Gtk.Window):
         self.show_all()
 
     def DAC_set(self, event, dac):
-        self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+        if dac not in{'Vthreshold_fine', 'Vthreshold_coarse', 'Vthreshold_combined'}:
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+        elif dac == 'Vthreshold_combined':
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
+            self.dac_dict['Vthreshold_fine']['value'] = fine
+            self.dac_dict['Vthreshold_fine']['spinButton'].set_value(fine)
+            self.dac_dict['Vthreshold_coarse']['value'] = coarse
+            self.dac_dict['Vthreshold_coarse']['spinButton'].set_value(coarse)
+        elif dac == 'Vthreshold_fine':
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.dac_dict[dac]['value'], self.dac_dict['Vthreshold_coarse']['value'])
+            self.dac_dict['Vthreshold_combined']['value'] = threshold
+            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
+        elif dac == 'Vthreshold_coarse':
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.dac_dict['Vthreshold_fine']['value'], self.dac_dict[dac]['value'])
+            self.dac_dict['Vthreshold_combined']['value'] = threshold
+            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
 
     def on_Savebutton_clicked(self, widget):
         #check if process is running
@@ -1252,8 +1274,15 @@ class GUI_SetDAC(Gtk.Window):
         for dac in self.dac_dict:
             self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
             if self.dac_dict[dac]['show']:
-                TPX3_datalogger.write_value(name = dac, value = self.dac_dict[dac]['value'])
-                TPX3_datalogger.write_to_yaml(name = dac)
+                if dac != 'Vthreshold_combined':
+                    TPX3_datalogger.write_value(name = dac, value = self.dac_dict[dac]['value'])
+                    TPX3_datalogger.write_to_yaml(name = dac)
+                else:
+                    fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
+                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine')
+                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse')
 
     def window_destroy(self, widget, event):
         self.destroy()
