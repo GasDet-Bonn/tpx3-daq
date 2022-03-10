@@ -848,6 +848,15 @@ class GUI_Noise_Scan(Gtk.Window):
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop ')
 
+        #Shutter
+        self.shutter_entry = Gtk.Entry()
+        self.shutter_entry.set_text('0.01')
+        self.shutter_entry.connect('activate', self.shutter_entry_text, 'h')
+        self.shutter_entry.set_width_chars(8)
+        shutter_label = Gtk.Label()
+        shutter_label.set_text('Shutter time [seconds]')
+        self.shutter_time = 0.01
+
         #Startbutton
         self.Startbutton = Gtk.Button(label = 'Start')
         self.Startbutton.connect('clicked', self.on_Startbutton_clicked)
@@ -857,9 +866,11 @@ class GUI_Noise_Scan(Gtk.Window):
         grid.attach(self.Threshold_start, 1, 1, 2, 1)
         grid.attach(Threshold_stop_label, 3, 1, 1, 1)
         grid.attach(self.Threshold_stop, 4, 1, 2, 1)
-        grid.attach(Space, 0, 2, 1, 1)
-        grid.attach(self.other_process, 0, 3, 4, 1)
-        grid.attach(self.Startbutton, 4, 3, 2, 1)
+        grid.attach(shutter_label, 0, 2, 6, 1)
+        grid.attach(self.shutter_entry, 2, 3, 2, 1)
+        grid.attach(Space, 0, 4, 1, 1)
+        grid.attach(self.other_process, 0, 5, 4, 1)
+        grid.attach(self.Startbutton, 4, 5, 2, 1)
 
         self.show_all()
 
@@ -883,6 +894,17 @@ class GUI_Noise_Scan(Gtk.Window):
         self.Threshold_start.set_value(temp_Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
 
+    def shutter_entry_text(self, button, name):
+        non_float_input = False
+        try:
+            self.shutter_time = float(self.shutter_entry.get_text())
+            self.shutter_entry.set_text(str(self.shutter_time))
+        except ValueError:
+            self.shutter_entry.set_text('')
+            non_float_input = True
+        if non_float_input == True:
+            return
+
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
             self.other_process.set_text('Other process running')
@@ -892,10 +914,12 @@ class GUI_Noise_Scan(Gtk.Window):
             return
         GUI.Status_window_call(function = 'NoiseScan',
                                 lowerTHL = self.Threshold_start_value,
-                                upperTHL = self.Threshold_stop_value)
+                                upperTHL = self.Threshold_stop_value,
+                                shutter = self.shutter_time)
         new_process = TPX3_multiprocess_start.process_call(function = 'NoiseScan',
                                                             Vthreshold_start = self.Threshold_start_value,
                                                             Vthreshold_stop = self.Threshold_stop_value,
+                                                            shutter = self.shutter_time,
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                             progress = GUI.get_progress_value_queue(),
@@ -3045,7 +3069,7 @@ class GUI_Main(Gtk.Window):
             self.QuitCurrentFunctionbutton.set_label('Quit')
             self.running_process = None
 
-    def Status_window_call(self, function = 'default', subtype = '', lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, statusstring = '', progress = 0):
+    def Status_window_call(self, function = 'default', subtype = '', lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, shutter = 0.01,statusstring = '', progress = 0):
         if function == 'PixelDAC_opt':
             self.statuslabel.set_markup('<big><b>PixelDAC Optimisation</b></big>')
             self.progressbar.show()
@@ -3114,7 +3138,7 @@ class GUI_Main(Gtk.Window):
         elif function == 'NoiseScan':
             self.statuslabel.set_markup('<big><b>Noise Scan</b></big>')
             self.progressbar.show()
-            self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + '.')
+            self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with a ' + str(shutter) + ' s shutter.')
             self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'NoiseScan'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
