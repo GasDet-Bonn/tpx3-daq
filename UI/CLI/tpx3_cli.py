@@ -552,10 +552,42 @@ class TPX3_CLI_function_call(object):
 
     def Set_DAC(object, DAC_Name = None, DAC_value = None):
         if DAC_Name == None:
-            print('> Please enter the DAC-name from:\n    Ibias_Preamp_ON (0-255)\n    VPreamp_NCAS (0-255)\n    Ibias_Ikrum (0-255)\n    Vfbk (0-255)\n    Vthreshold_fine (0-511)\n    Vthreshold_coarse (0-15)\n    Ibias_DiscS1_ON (0-255)\n    Ibias_DiscS2_ON (0-255)\n    Ibias_PixelDAC (0-255)\n    Ibias_TPbufferIn (0-255)\n    Ibias_TPbufferOut (0-255)\n    VTP_coarse (0-255)\n    VTP_fine (0-511)\n    Ibias_CP_PLL (0-255)\n    PLL_Vcntrl (0-255)')
+            print('> Please enter the DAC name or number from:\n    1.)  Ibias_Preamp_ON (0-255)\n    2.)  VPreamp_NCAS (0-255)\n    3.)  Ibias_Ikrum (0-255)\n    4.)  Vfbk (0-255)\n    5.)  Vthreshold_fine (0-511)\n    6.)  Vthreshold_coarse (0-15)\n    7.)  Ibias_DiscS1_ON (0-255)\n    8.)  Ibias_DiscS2_ON (0-255)\n    9.)  Ibias_PixelDAC (0-255)\n    10.) Ibias_TPbufferIn (0-255)\n    11.) Ibias_TPbufferOut (0-255)\n    12.) VTP_coarse (0-255)\n    13.) VTP_fine (0-511)\n    14.) Ibias_CP_PLL (0-255)\n    15.) PLL_Vcntrl (0-255)')
             DAC_Name = input('>> ')
+            if DAC_Name.isnumeric():
+                DAC_Name = int(DAC_Name)
+                if DAC_Name == 1:
+                    DAC_Name = 'Ibias_Preamp_ON'
+                elif DAC_Name == 2:
+                    DAC_Name = 'VPreamp_NCAS'
+                elif DAC_Name == 3:
+                    DAC_Name = 'Ibias_Ikrum'
+                elif DAC_Name == 4:
+                    DAC_Name = 'Vfbk'
+                elif DAC_Name == 5:
+                    DAC_Name = 'Vthreshold_fine'
+                elif DAC_Name == 6:
+                    DAC_Name = 'Vthreshold_coarse'
+                elif DAC_Name == 7:
+                    DAC_Name = 'Ibias_DiscS1_ON'
+                elif DAC_Name == 8:
+                    DAC_Name = 'Ibias_DiscS2_ON'
+                elif DAC_Name == 9:
+                    DAC_Name = 'Ibias_PixelDAC'
+                elif DAC_Name == 10:
+                    DAC_Name = 'Ibias_TPbufferIn'
+                elif DAC_Name == 11:
+                    DAC_Name = 'Ibias_TPbufferOut'
+                elif DAC_Name == 12:
+                    DAC_Name = 'VTP_coarse'
+                elif DAC_Name == 13:
+                    DAC_Name = 'VTP_fine'
+                elif DAC_Name == 14:
+                    DAC_Name = 'Ibias_CP_PLL'
+                elif DAC_Name == 15:
+                    DAC_Name = 'PLL_Vcntrl'
             if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
-                print('> Please enter the DAC value (0-255):')
+                print('> Please enter the DAC value of', DAC_Name, '(0-255):')
                 while(1):
                     DAC_value = input('>> ')
                     try:
@@ -567,7 +599,7 @@ class TPX3_CLI_function_call(object):
                         else:
                             print('Input needs to be a number!')
             elif DAC_Name in {'Vthreshold_coarse'}:
-                print('> Please enter the DAC value (0-15):')
+                print('> Please enter the DAC value', DAC_Name, '(0-15):')
                 while(1):
                     DAC_value = input('>> ')
                     try:
@@ -579,7 +611,7 @@ class TPX3_CLI_function_call(object):
                         else:
                             print('Input needs to be a number!')
             elif DAC_Name in {'Vthreshold_fine', 'VTP_fine'}:
-                print('> Please enter the DAC value (0-511):')
+                print('> Please enter the DAC value', DAC_Name, '(0-511):')
                 while(1):
                     DAC_value = input('>> ')
                     try:
@@ -612,6 +644,8 @@ class TPX3_CLI_function_call(object):
                 print('> Set ' + DAC_Name + ' to value ' + str(DAC_value) + '.')
             else:
                 print('> Value ' + str(DAC_value) + ' is not in range (0-511)')
+        elif DAC_Name in {'quit', 'exit'}:
+            print('Exit Set_DAC')
         else:
             print('Unknown DAC-name')
 
