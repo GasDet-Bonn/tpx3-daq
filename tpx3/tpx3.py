@@ -21,7 +21,7 @@ import basil
 
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
-from .utils import toByteList, bitword_to_byte_list
+from .utils import toByteList, bitword_to_byte_list, threshold_decompose
 from io import open
 import six
 from six.moves import range
@@ -1594,13 +1594,7 @@ class TPX3(Dut):
         """
         Calculates the fine and the coarse threshold and writes it to the chip
         """
-        if(threshold <= 511):
-                coarse_threshold = 0
-                fine_threshold = threshold
-        else:
-            relative_fine_threshold = (threshold - 512) % 160
-            coarse_threshold = (((threshold - 512) - relative_fine_threshold) // 160) + 1
-            fine_threshold = relative_fine_threshold + 352
+        fine_threshold, coarse_threshold = threshold_decompose(threshold)
 
         # Set the threshold DACs
         self.set_dac("Vthreshold_coarse", coarse_threshold)

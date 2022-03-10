@@ -72,6 +72,29 @@ def bitword_to_byte_list(data, string=False):
     result = toByteList(result, string)
     return result
 
+def threshold_compose(fine, coarse):
+    """
+    Returns the composed threshold based on the fine and the coarse threshold DACs
+    """
+    fine *= 0.5
+    coarse *= 80
+    threshold = (fine + coarse) / 0.5
+
+    return threshold
+
+def threshold_decompose(threshold):
+    """
+    Returns (fine, coarse) threshold DACs based on the composed threshold
+    """
+    if(threshold <= 511):
+        coarse_threshold = 0
+        fine_threshold = threshold
+    else:
+        relative_fine_threshold = (threshold - 512) % 160
+        coarse_threshold = (((threshold - 512) - relative_fine_threshold) // 160) + 1
+        fine_threshold = relative_fine_threshold + 352
+    
+    return fine_threshold, coarse_threshold
 
 def print_nice(f):
     if isinstance(f, int):
