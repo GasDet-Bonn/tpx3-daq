@@ -2002,7 +2002,7 @@ class TPX3_CLI_TOP(object):
                             print('Git date: ' + str(get_git_date(short = False)))
                         except:
                             pass
-                        print('GasDet Bonn 2019-2022')
+                        print('GasDet Bonn 2018-2022')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
                             print('This is the about function. It shows software and firmware information.')

@@ -2752,10 +2752,10 @@ class GUI_Main(Gtk.Window):
                                         '\nGit branch: ' + str(utils.get_git_branch()) +
                                         '\nGit commit: ' + str(utils.get_git_commit()) +
                                         '\nGit date: ' + str(utils.get_git_date()) +
-                                        '\n<small>GasDet Bonn 2019-2021</small>')
+                                        '\n<small>GasDet Bonn 2018-2022</small>')
         except:
             self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
-                                        '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+                                        '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2018-2022</small>')
 
         Status = Gtk.Frame()
         self.Statusbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 6)
