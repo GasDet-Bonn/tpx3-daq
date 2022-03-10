@@ -37,7 +37,7 @@ class NoiseScan(ScanBase):
     y_position = 0
     x_position = 'A'
 
-    def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, progress = None, status = None, **kwargs):
+    def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, shutter=0.01, progress = None, status = None, **kwargs):
         '''
             Takes data for threshold scan in a range of thresholds.
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -102,7 +102,7 @@ class NoiseScan(ScanBase):
 
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
-                        time.sleep(0.01)
+                        time.sleep(shutter)
                         if progress == None:
                             # Update the progress bar
                             pbar.update(1)

@@ -258,7 +258,10 @@ class Plotting(object):
         for key, value in six.iteritems(self.run_config):
             if key in [b'scan_id', b'run_name', b'chip_wafer', b'chip_x', b'chip_y', b'software_version', b'board_name', b'firmware_version', b'disable', b'thrfile', b'maskfile']:
                 continue
-            tb_dict[key] = int(value)
+            if key in [b'shutter']:
+                tb_dict[key] = float(value)
+            else:
+                tb_dict[key] = int(value)
 
         tb_list = []
         for i in range(0, len(list(tb_dict.keys())), 3):
