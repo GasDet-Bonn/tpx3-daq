@@ -9,7 +9,7 @@ from shutil import copy
 from tpx3.scans.ToTCalib import ToTCalib
 from tpx3.scans.ThresholdScan import ThresholdScan
 from tpx3.scans.TestpulseScan import TestpulseScan
-from tpx3.scans.PixelDACoptFast import PixelDACopt
+from tpx3.scans.PixelDACopt import PixelDACopt
 from tpx3.scans.EqualisationCharge import EqualisationCharge
 from tpx3.scans.EqualisationNoise import EqualisationNoise
 from tpx3.scans.DataTake import DataTake
