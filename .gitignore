@@ -135,5 +135,19 @@ timestamp_test.txt
 # Datafiles
 .h5
 
+# bit files
+*.bit
+
 firmware/work/
 tests/sim_build/
+
+# Vivado
+*.jou
+*.tcl
+*.xdc
+*.xpr
+*.wpc
+*.wdf
+*.lpr
+*.xml
+*.edif
