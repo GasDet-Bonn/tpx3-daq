@@ -694,7 +694,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.join(user_path, 'equalisations')
 
         if equal_path == None:
-            print('> Please enter the name of the equalisation you like to load:')
+            print('> Please enter the name of the equalisation you like to load (must be in ~/Timepix3/equalisations):')
             equal_path = input('>> ')
         try:
             #look if path exists
@@ -703,6 +703,8 @@ class TPX3_CLI_function_call(object):
                 TPX3_datalogger.write_value(name = 'Equalisation_path', value = full_path)
         except:
             print('Path does not exist')
+        else:
+            print('> Loaded equalisation ' + full_path)
 
     def Save_Equalisation(object, file_name = None):
         user_path = os.path.expanduser('~')
@@ -710,7 +712,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.join(user_path, 'equalisations')
 
         if file_name == None:
-            print('> Please enter the path of the name you like to save the equalisation under:')
+            print('> Please enter the path of the name you like to save the equalisation under (without ".h5"):')
             file_name = input('>> ')
         try:
             #look if path exists
@@ -722,6 +724,8 @@ class TPX3_CLI_function_call(object):
                 copy(current_equal, full_path)
         except:
             print('Could not write file')
+        else:
+            print('> Saved equalisation to ' + full_path)
 
     def Uniform_Equalisation(object, pixel_threshold = None):
         user_path = os.path.expanduser('~')
@@ -754,7 +758,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.join(user_path, 'backups')
 
         if file_name == None:
-            print('> Please enter the path you like to save the backup under:')
+            print('> Please enter the path you like to save the backup under (without ".TPX3"):')
             file_name = input('>> ')
         try:
             #look if path exists
@@ -766,6 +770,8 @@ class TPX3_CLI_function_call(object):
                 file_logger.write_backup(file = file)
         except:
             print('Could not write file')
+        else:
+            print('> Saved backup to ' + full_path)
 
     def Set_Polarity(object, polarity = None):
         if polarity == None:
@@ -943,7 +949,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.join(user_path, 'masks')
 
         if mask_path == None:
-            print('> Please enter the name of the mask file you like to load:')
+            print('> Please enter the name of the mask file you like to load (must be in ~/Timepix3/masks):')
             mask_path = input('>> ')
         try:
             #look if path exists
@@ -952,6 +958,8 @@ class TPX3_CLI_function_call(object):
                 TPX3_datalogger.write_value(name = 'Mask_path', value = full_path)
         except:
             print('Path does not exist')
+        else:
+            print('Loaded mask ' + full_path)
 
     def Save_Mask(object, file_name = None):
         user_path = '~'
@@ -960,7 +968,7 @@ class TPX3_CLI_function_call(object):
         user_path = os.path.join(user_path, 'masks')
 
         if file_name == None:
-            print('> Please enter the the name you like to save the mask under:')
+            print('> Please enter the the name you like to save the mask under (without ".h5"):')
             file_name = input('>> ')
         try:
             #look if path exists
@@ -972,6 +980,8 @@ class TPX3_CLI_function_call(object):
                 copy(current_mask, full_path)
         except:
             print('Could not write file')
+        else:
+            print('> Saved mask to ' + full_path)
 
     def Enable_Link(object, link = None, flag = None):
         hardware_links = TPX3_datalogger.read_value('hardware_links')
