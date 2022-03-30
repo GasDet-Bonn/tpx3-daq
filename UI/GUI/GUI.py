@@ -13,7 +13,7 @@ import numpy as np
 from multiprocessing import Process, Queue, Pipe
 
 from UI.GUI.PlotWidget import plotwidget
-from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger
+from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger, equal_logger
 from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import tpx3.utils as utils
 from UI.GUI.converter import utils as conv_utils
@@ -2318,6 +2318,9 @@ class GUI_Main_Settings(Gtk.Window):
         self.load_Mask_button = Gtk.Button(label = 'Load Mask')
         self.load_Mask_button.connect('clicked', self.on_load_Mask_button_clicked)
 
+        self.set_uniform_Equalisation_button = Gtk.Button(label = 'Set Uniform Equalisation')
+        self.set_uniform_Equalisation_button.connect('clicked', self.on_set_uniform_Equalisation_button_clicked)
+
         self.load_default_Equalisation_button = Gtk.Button(label = 'Load Default Equalisation')
         self.load_default_Equalisation_button.connect('clicked', self.on_load_default_Equalisation_button_clicked)
 
@@ -2336,11 +2339,12 @@ class GUI_Main_Settings(Gtk.Window):
         grid.attach(self.load_Backup_button, 0, 0, 1, 1)
         grid.attach(self.load_Equalisation_button, 0, 1, 1, 1)
         grid.attach(self.load_Mask_button, 0, 2, 1, 1)
-        grid.attach(self.load_default_Equalisation_button, 0, 3, 1, 1)
-        grid.attach(self.load_default_Mask_button, 0, 4, 1, 1)
-        grid.attach(self.save_Backup_button, 0, 5, 1, 1)
-        grid.attach(self.save_Equalisation_button, 0, 6, 1, 1)
-        grid.attach(self.save_Mask_button, 0, 7, 1, 1)
+        grid.attach(self.set_uniform_Equalisation_button, 0, 3, 1, 1)
+        grid.attach(self.load_default_Equalisation_button, 0, 4, 1, 1)
+        grid.attach(self.load_default_Mask_button, 0, 5, 1, 1)
+        grid.attach(self.save_Backup_button, 0, 6, 1, 1)
+        grid.attach(self.save_Equalisation_button, 0, 7, 1, 1)
+        grid.attach(self.save_Mask_button, 0, 8, 1, 1)
 
         self.show_all()
 
@@ -2433,6 +2437,10 @@ class GUI_Main_Settings(Gtk.Window):
 
         mask_dialog.destroy()
 
+    def on_set_uniform_Equalisation_button_clicked(self, widget):
+        self.input_window = GUI_Main_Set_Uniform_Equalisation_Input()
+        self.input_window.connect('destroy', self.window_destroy)
+
     def on_load_default_Equalisation_button_clicked(self, widget):
         TPX3_datalogger.write_value(name = 'Equalisation_path', value = None)
         GUI.statuslabel.set_text('Set equalisation to default.')
@@ -2500,6 +2508,54 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
         else:
             file = open(full_path, 'w')
             file_logger.write_backup(file = file)
+            self.destroy()
+
+    def window_destroy(self, widget, event = True):
+        self.destroy()
+
+class GUI_Main_Set_Uniform_Equalisation_Input(Gtk.Window):
+    def __init__(self):
+        self.user_path = os.path.expanduser('~')
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'equalisations')
+
+        Gtk.Window.__init__(self, title = 'Uniform Equalisation')
+        self.connect('delete-event', self.window_destroy)
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        self.add(grid)
+
+        label = Gtk.Label()
+        label.set_text('Enter pixel threshold value')
+
+        self.pixel_threshold = 0
+        self.pixel_threshold_entry = Gtk.Entry()
+        self.pixel_threshold_entry.connect('activate', self.entered_text)
+
+        self.existing_label = Gtk.Label()
+        self.existing_label.set_text('')
+
+        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(self.pixel_threshold_entry, 0, 1, 1, 1)
+        grid.attach(self.existing_label, 0, 2, 1, 1)
+
+        self.show_all()
+
+    def entered_text(self, widget):
+        non_int_input = False
+        try:
+            self.pixel_threshold = int(self.pixel_threshold_entry.get_text())
+            self.pixel_threshold_entry.set_text(str(self.pixel_threshold))
+            if self.pixel_threshold < 0 or self.pixel_threshold > 15:
+                raise ValueError
+        except ValueError:
+            self.pixel_threshold_entry.set_text('')
+            return
+        else:
+            uniform_equalisation_array = np.full((256, 256), dtype=np.uint8, fill_value=self.pixel_threshold)
+            full_path = self.user_path + os.sep + 'Uniform_thr_' + str(self.pixel_threshold) + '.h5'
+            equal_logger.write_full_equal(full_equal = uniform_equalisation_array, path = full_path)
+            GUI.statuslabel.set_text('Set equalisation to uniformly to ' + str(self.pixel_threshold) + '.')
             self.destroy()
 
     def window_destroy(self, widget, event = True):
