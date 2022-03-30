@@ -152,6 +152,26 @@ class mask_logger(object):
             mask_matrix = infile.root.mask_matrix[:]
             return mask_matrix
 
+class equal_logger(object):
+    '''
+        The equal logger takes care of the equalisation file
+    '''
+
+    def write_full_equal(full_equal, path):
+        '''
+            This overwrites the complete equal, so a proper mask has to be given via full_equal
+        '''
+        TPX3_datalogger.write_value(name = 'Equalisation_path', value = path)
+
+        #delete last equal
+        if os.path.isfile(path):
+            with tb.open_file(path, 'a') as infile:
+                infile.remove_node(infile.root.thr_matrix)
+
+        #Saving the final equal
+        with tb.open_file(path, 'a') as out_file:
+            out_file.create_carray(out_file.root, name='thr_matrix', title='Matrix Threshold', obj=full_equal)
+        return True
 
 class file_logger(object):
     '''
