@@ -2,6 +2,7 @@ import readline
 import sys
 import os
 import time
+import numpy as np
 from multiprocessing import Process, Queue, Pipe
 from subprocess import Popen, PIPE
 from shutil import copy
@@ -17,7 +18,7 @@ from tpx3.scans.ThresholdCalib import ThresholdCalib
 from tpx3.scans.ScanHardware import ScanHardware
 from tpx3.scans.NoiseScan import NoiseScan
 from tpx3.scan_base import ConfigError
-from UI.tpx3_logger import file_logger, mask_logger, TPX3_datalogger
+from UI.tpx3_logger import file_logger, mask_logger, equal_logger, TPX3_datalogger
 from UI.GUI.converter import utils as conv_utils
 from UI.GUI.converter.converter_manager import ConverterManager
 from tpx3.utils import get_software_version, get_git_branch, get_git_commit, get_git_date, threshold_compose, threshold_decompose
@@ -36,6 +37,7 @@ functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
                 'Set_DAC', 'set_dac',
                 'Load_Equalisation', 'Load_Equal', 'LEQ','load_equalisation', 'load_equal', 'leq',
                 'Save_Equalisation', 'Save_Equal', 'SEQ','save_equalisation', 'save_equal', 'seq',
+                'Uniform_Equalisation', 'Uniform_Equal', 'UE', 'uniform_equalisation', 'uniform_equal', 'ue',
                 'Save_Backup', 'Backup','save_backup', 'backup',
                 'Load_Backup', 'load_backup',
                 'Set_Default', 'Default', 'set_default', 'default',
@@ -73,7 +75,7 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
 # In this list all functions are named which will be shown when the help command is used
 help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation', 'Noise_Scan',
                     'Testpulse_Scan', 'Initialise_Hardware', 'Run_Datataking', 'Set_DAC', 'Load_Equalisation', 'Save_Equalisation',
-                    'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask',
+                    'Uniform_Equalisation', 'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask',
                     'Save_Mask', 'TP_Period', 'Set_operation_mode', 'Set_Fast_Io', 'Set_Readout_Intervall', 'Set_Run_Name', 'Get_Run_Name',
                     'Plot', 'Stop_Plot', 'Chip_names', 'Mask_name', 'Equalisation_name','Get_DAC_Values', 'About', 'Help', 'Quit']
 
@@ -720,6 +722,31 @@ class TPX3_CLI_function_call(object):
                 copy(current_equal, full_path)
         except:
             print('Could not write file')
+
+    def Uniform_Equalisation(object, pixel_threshold = None):
+        user_path = os.path.expanduser('~')
+        user_path = os.path.join(user_path, 'Timepix3')
+        user_path = os.path.join(user_path, 'equalisations')
+
+        if pixel_threshold == None:
+            print('> Please enter pixel threshold [0-15] that should be set for all pixels:')
+            while True:
+                try:
+                    entered_text = input('>> ')
+                    if entered_text in exit_list:
+                        return
+                    pixel_threshold = int(entered_text)
+                    if pixel_threshold < 0 or pixel_threshold > 15:
+                        raise ValueError
+                except ValueError:
+                    print('> Entered text is not valid. Please enter an integer between 0 and 15:')
+                else:
+                    break
+        
+        uniform_equalisation_array = np.full((256, 256), dtype=np.uint8, fill_value=pixel_threshold)
+        full_path = user_path + os.sep + 'Uniform_thr_' + str(pixel_threshold) + '.h5'
+        equal_logger.write_full_equal(full_equal = uniform_equalisation_array, path = full_path)
+        print('> Set a uniform equalisation matrix with pixel threshold ' + str(pixel_threshold) + '.')
 
     def Save_Backup(object, file_name = None):
         user_path = os.path.expanduser('~')
@@ -1557,6 +1584,25 @@ class TPX3_CLI_TOP(object):
                         elif len(inputlist) == 2:
                             try:
                                 function_call.Save_Equalisation(file_name = inputlist[1])
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 2:
+                            print('To many parameters! The given function takes only one parameter:\n equalisation file name.')
+
+                #Create uniform equalisation
+                elif inputlist[0] in {'Uniform_Equalisation', 'Uniform_Equal', 'UE', 'uniform_equalisation', 'uniform_equal', 'ue'}:
+                    if len(inputlist) == 1:
+                        print('Uniform_Equalisation')
+                        try:
+                            function_call.Uniform_Equalisation()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the uniform equalisation function. As argument you can give a pixel threshold [0-15]. All pixels will be set to this pixel threshold.')
+                        elif len(inputlist) == 2:
+                            try:
+                                function_call.Uniform_Equalisation(pixel_threshold = inputlist[1])
                             except KeyboardInterrupt:
                                 print('User quit')
                         elif len(inputlist) > 2:
