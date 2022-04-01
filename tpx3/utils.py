@@ -149,7 +149,7 @@ def get_range_thresholds(start, stop):
     stop_fine = stop_fines[0]
 
     # Catch the case that the lowest possible stop coarse is smaller than the highest possible start coarse
-    if stop_coarse < start_coarse:
+    if stop_coarse <= start_coarse:
         stop_coarse = start_coarse
         stop_fine = stop_fines[np.where(stop_coarses == stop_coarse)][0]
 
@@ -227,6 +227,9 @@ def get_coarse_jumps(start, stop):
     '''
     # Get the fine and coarse thresholds for start and stop
     start_coarse, start_fine, stop_coarse, stop_fine = get_range_thresholds(start, stop)
+
+    if(start_coarse == stop_coarse):
+        return [start_coarse, start_fine, stop_coarse, stop_fine]
 
     # Get the optimal coarse threshold for the middle of the range
     mid_threshold = int((start + stop) / 2)
