@@ -148,6 +148,11 @@ def get_range_thresholds(start, stop):
     stop_coarse = stop_coarses[0]
     stop_fine = stop_fines[0]
 
+    # Catch the case that the lowest possible stop coarse is smaller than the highest possible start coarse
+    if stop_coarse < start_coarse:
+        stop_coarse = start_coarse
+        stop_fine = stop_fines[np.where(stop_coarses == stop_coarse)][0]
+
     return start_coarse, start_fine, stop_coarse, stop_fine
 
 def recursive_jumps(target_coarse, current_coarse, current_fine, direction, start_coarses, start_fines):
