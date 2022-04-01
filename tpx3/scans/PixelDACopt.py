@@ -24,6 +24,7 @@ import yaml
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+import tpx3.utils as utils
 
 from tables.exceptions import NoSuchNodeError
 from io import open
@@ -172,7 +173,7 @@ class PixelDACopt(ScanBase):
             status.put("Preparing injection masks")
 
         # Scan with all masks over the given threshold range for pixelthreshold 0
-        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
+        thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
         self.logger.info('Starting scan for THR = 0...')
         if status != None:
             status.put("Starting scan for THR = 0")
@@ -181,7 +182,7 @@ class PixelDACopt(ScanBase):
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(cal_high_range))
+            pbar = tqdm(total=len(thresholds))
         else:
             # Initialize counter for progress
             step_counter = 0
@@ -193,9 +194,10 @@ class PixelDACopt(ScanBase):
         self.chip.write(mask_cmds)
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
             with self.readout(scan_param_id=scan_param_id):
                 self.chip.read_pixel_matrix_datadriven()
@@ -209,7 +211,7 @@ class PixelDACopt(ScanBase):
                     else:
                         # Update the progress fraction and put it in the queue
                         step_counter += 1
-                        fraction = step_counter / len(cal_high_range)
+                        fraction = step_counter / len(thresholds)
                         progress.put(fraction)
                 self.chip.stop_readout()
                 time.sleep(0.1)
@@ -230,7 +232,7 @@ class PixelDACopt(ScanBase):
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total = len(cal_high_range))
+            pbar = tqdm(total = len(thresholds))
         else:
             # Initialize counter for progress
             step_counter = 0
@@ -239,11 +241,12 @@ class PixelDACopt(ScanBase):
         self.chip.write(mask_cmds2)
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
-            with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
+            with self.readout(scan_param_id=scan_param_id + len(thresholds)):
                 self.chip.read_pixel_matrix_datadriven()
 
                 # Open the shutter, take data and update the progress bar
@@ -255,7 +258,7 @@ class PixelDACopt(ScanBase):
                     else:
                         # Update the progress fraction and put it in the queue
                         step_counter += 1
-                        fraction = step_counter / len(cal_high_range)
+                        fraction = step_counter / len(thresholds)
                         progress.put(fraction)
                 self.chip.stop_readout()
                 time.sleep(0.1)
@@ -358,11 +361,11 @@ class PixelDACopt(ScanBase):
 
             # Fit S-Curves to the histograms for all pixels
             self.logger.info('Fit the scurves for all pixels...')
-            thr2D_th0, _, _ = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D_th0, _, _ = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th0_' + str(iteration), obj=scurve_th0)
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th0_' + str(iteration), obj=thr2D_th0.T)
             scurve_th0 = None
-            thr2D_th15, _, _ = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D_th15, _, _ = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th15_' + str(iteration), obj=scurve_th15)
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th15_' + str(iteration) , obj=thr2D_th15.T)
             scurve_th15 = None

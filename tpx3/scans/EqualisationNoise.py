@@ -22,6 +22,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+import tpx3.utils as utils
 
 from tables.exceptions import NoSuchNodeError
 from six.moves import range
@@ -80,19 +81,20 @@ class EqualisationNoise(ScanBase):
             status.put("Starting scan for THR = 0")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
+        thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds) * len(thresholds))
         else:
             # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
             with self.readout(scan_param_id=scan_param_id):
                 for mask_step_cmd in mask_cmds:
@@ -108,7 +110,7 @@ class EqualisationNoise(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -129,17 +131,18 @@ class EqualisationNoise(ScanBase):
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds2) * len(threshold))
         else:
             # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
-            with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
+            with self.readout(scan_param_id=scan_param_id + len(thresholds)):
                 for mask_step_cmd in mask_cmds2:
                     # Only activate testpulses for columns with active pixels
                     self.chip.write(mask_step_cmd)
@@ -153,7 +156,7 @@ class EqualisationNoise(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds2) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds2) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)

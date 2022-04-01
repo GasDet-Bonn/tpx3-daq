@@ -20,6 +20,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+import tpx3.utils as utils
 from six.moves import range
 
 local_configuration = {
@@ -84,19 +85,20 @@ class ThresholdScan(ScanBase):
             status.put("Starting scan")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
+        thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds) * len(thresholds))
         else:
             # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
             with self.readout(scan_param_id=scan_param_id):
                 step = 0
@@ -116,7 +118,7 @@ class ThresholdScan(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -186,7 +188,7 @@ class ThresholdScan(ScanBase):
             Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
             # Fit S-Curves to the histograms for all pixels
-            param_range = list(range(Vthreshold_start, Vthreshold_stop))
+            param_range = list(range(Vthreshold_start, Vthreshold_stop + 1))
             thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True, progress = progress)
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve', obj=scurve)

@@ -22,6 +22,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+import tpx3.utils as utils
 
 from tables.exceptions import NoSuchNodeError
 from six.moves import range
@@ -88,19 +89,20 @@ class EqualisationCharge(ScanBase):
             status.put("Starting scan for THR = 0")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
+        thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds) * len(thresholds))
         else:
             # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
             with self.readout(scan_param_id=scan_param_id):
                 step = 0
@@ -120,7 +122,7 @@ class EqualisationCharge(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -142,17 +144,18 @@ class EqualisationCharge(ScanBase):
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds2) * len(thresholds))
         else:
             # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
-            with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
+            with self.readout(scan_param_id=scan_param_id + len(thresholds)):
                 step = 0
                 for mask_step_cmd in mask_cmds2:
                     # Only activate testpulses for columns with active pixels
@@ -170,7 +173,7 @@ class EqualisationCharge(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds2) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds2) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -270,11 +273,11 @@ class EqualisationCharge(ScanBase):
 
             # Fit S-Curves to the histograms for all pixels
             self.logger.info('Fit the scurves for all pixels...')
-            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th0', obj=scurve_th0)
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th0', obj=thr2D_th0.T)
             scurve_th0 = None
-            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th15', obj=scurve_th15)
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th15', obj=thr2D_th15.T)
             scurve_th15 = None

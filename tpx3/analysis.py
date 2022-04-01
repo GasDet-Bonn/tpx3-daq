@@ -94,7 +94,7 @@ def vths(scurves, param_range, Vthreshold_start):
     return vths
 
 def vth_hist(vths, Vthreshold_stop):
-    hist = np.zeros(Vthreshold_stop, dtype=np.uint16)
+    hist = np.zeros(Vthreshold_stop + 1, dtype=np.uint16)
     for x in range(256):
         for y in range(256):
             if int(vths[x, y]) >= Vthreshold_stop:
@@ -142,7 +142,7 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
     entries_th15 = 0.
     active_pixels_th0 = 0.
     active_pixels_th15 = 0.
-    for i in range(Vthreshold_start, Vthreshold_stop):
+    for i in range(Vthreshold_start, Vthreshold_stop + 1):
         sum_th0 += hist_th0[i]
         entries_th0 += hist_th0[i] / 100. * i
         sum_th15 += hist_th15[i]
@@ -151,7 +151,7 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
     mean_th15 = entries_th15 / (sum_th15 / 100.)
     sum_mean_difference_th0 = 0.
     sum_mean_difference_th15 = 0.
-    for i in range(Vthreshold_start, Vthreshold_stop):
+    for i in range(Vthreshold_start, Vthreshold_stop + 1):
         sum_mean_difference_th0 += math.pow(i - mean_th0, 2) * hist_th0[i] / 100.
         sum_mean_difference_th15 += math.pow(i - mean_th15, 2) * hist_th15[i] / 100.
         active_pixels_th0 += hist_th0[i] / 100.
