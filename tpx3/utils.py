@@ -283,7 +283,12 @@ def create_threshold_list(jump_list):
         coarse_list.extend(step_coarse_list)
         fine_list.extend(step_fine_list)
 
-    return coarse_list, fine_list
+    # Create threshold list array
+    threshold_list = np.empty((2, len(coarse_list)))
+    threshold_list[0] = coarse_list
+    threshold_list[1] = fine_list
+    threshold_list = threshold_list.T
+    return threshold_list
 
 def print_nice(f):
     if isinstance(f, int):
