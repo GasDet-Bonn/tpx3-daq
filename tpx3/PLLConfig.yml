@@ -4,7 +4,7 @@ registers:
   address: 0
   size: 1
   default: 1
-  value: 0
+  value: 1
 - name: reset
   description: With 0 the PLL is Reset while with 1 it is running
   address: 1

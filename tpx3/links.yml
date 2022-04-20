@@ -1,65 +1,65 @@
 registers:
-- name: RX0
+- chip-id: 3187
+  chip-link: 0
+  data-delay: 8
+  data-edge: 0
+  data-invert: 0
   fpga-link: 0
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
+  link-status: 1
+  name: RX0
+- chip-id: 3187
+  chip-link: 1
+  data-delay: 8
   data-edge: 0
-  link-status: 0
-- name: RX1
+  data-invert: 0
   fpga-link: 1
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
+  link-status: 1
+  name: RX1
+- chip-id: 3187
+  chip-link: 2
+  data-delay: 15
   data-edge: 0
-  link-status: 0
-- name: RX2
+  data-invert: 0
   fpga-link: 2
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
+  link-status: 1
+  name: RX2
+- chip-id: 3187
+  chip-link: 3
+  data-delay: 15
   data-edge: 0
-  link-status: 0
-- name: RX3
+  data-invert: 0
   fpga-link: 3
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
+  link-status: 6
+  name: RX3
+- chip-id: 3187
+  chip-link: 4
+  data-delay: 15
   data-edge: 0
-  link-status: 0
-- name: RX4
+  data-invert: 0
   fpga-link: 4
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
+  link-status: 1
+  name: RX4
+- chip-id: 3187
+  chip-link: 5
+  data-delay: 15
   data-edge: 0
-  link-status: 0
-- name: RX5
+  data-invert: 0
   fpga-link: 5
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
+  link-status: 1
+  name: RX5
+- chip-id: 3187
+  chip-link: 6
+  data-delay: 15
   data-edge: 0
-  link-status: 0
-- name: RX6
+  data-invert: 0
   fpga-link: 6
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
+  link-status: 1
+  name: RX6
+- chip-id: 3187
+  chip-link: 7
+  data-delay: 15
   data-edge: 0
-  link-status: 0
-- name: RX7
+  data-invert: 0
   fpga-link: 7
-  chip-link: 0
-  chip-id: 0
-  data-delay: 0
-  data-invert: 0
-  data-edge: 0
-  link-status: 0
+  link-status: 1
+  name: RX7

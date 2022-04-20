@@ -98,20 +98,44 @@ def main(args_dict):
 
     while(not chip['RX0'].is_ready):
         pass
-    print((chip.get_configuration()))
+    #print('Print chip pll configuration')
+    #print((chip.get_configuration()))
 
     print('Get ChipID')
-    data = chip.read_periphery_template('EFuse_Read')
-    data += [0x00]*4
-    print(data)
+    data_local_header  = chip.read_periphery_template('EFuse_Read', local_header=True)
+    data_global_header = chip.read_periphery_template('EFuse_Read', local_header=False)
+    print("data_local_header: " + str(data_local_header))
+    print("data_global_header: " + str(data_global_header))
+    #data_global_header += [0x00]*4
+    #data_local_header += [0x00]*4
+    # make input 64 bit
+    data_global_header.pop(-1)
+    data_local_header.pop(-1)
+
+    print("local: " + str(data_local_header)  + "\t length: " + str(len(data_local_header)))
+    print("global: " + str(data_global_header) + "\t length: " + str(len(data_global_header)))
+    
+    #print(data)
+    #print("data: " + str(data))
+
+    # check for local header to compare with global header input
     chip['FIFO'].RESET
     time.sleep(0.1)
-    chip.write(data)
+    chip.write(data_local_header)
     time.sleep(0.1)
     fdata = chip['FIFO'].get_data()
-    print(fdata)
-    dout = chip.decode_fpga(fdata, True)
+    print("fdata: " + str(fdata))
+    
+    # check for global header
+    chip['FIFO'].RESET
+    time.sleep(0.1)
+    chip.write(data_global_header)
+    time.sleep(0.1)
+    fdata = chip['FIFO'].get_data()
+    print("fdata: " + str(fdata))
 
+    #dout = chip.decode_fpga(fdata, True)
+'''
     if len(dout) == 2:
         wafer_number = dout[1][19:8]
         y_position = dout[1][7:4]
@@ -421,8 +445,8 @@ def main(args_dict):
         ttime = etime - stime
         bits = count * 4 * 8
         print(ttime, 's ', bits, 'b ', (float(bits) / ttime) / (1024 * 1024), 'Mb/s')
-
-    print('Happy day!')
+'''
+print('Happy day!')
 
 
 if __name__ == '__main__':
