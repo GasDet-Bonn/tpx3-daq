@@ -580,8 +580,8 @@ class TPX3(Dut):
             Else: command to perform read
         """
         # TODO: change to local sync header later
-        data = self.getGlobalSyncHeader()
-
+        #data = self.getGlobalSyncHeader()
+        data = self.getLocalSyncHeader()
         data += [self.periphery_header_map["ReadDAC"]]
 
         # add DAC code to last 4 bit of final 16 bit

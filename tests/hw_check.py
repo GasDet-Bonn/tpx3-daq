@@ -16,6 +16,7 @@ import math
 import numpy as np
 
 
+
 def pretty_print(string_val, bits=32):
     val = int(string_val)
     bits = BitLogic(bits)
@@ -102,40 +103,59 @@ def main(args_dict):
     #print((chip.get_configuration()))
 
     print('Get ChipID')
-    data_local_header  = chip.read_periphery_template('EFuse_Read', local_header=True)
+    
+    # Get periphery template
     data_global_header = chip.read_periphery_template('EFuse_Read', local_header=False)
-    print("data_local_header: " + str(data_local_header))
     print("data_global_header: " + str(data_global_header))
-    #data_global_header += [0x00]*4
-    #data_local_header += [0x00]*4
-    # make input 64 bit
-    data_global_header.pop(-1)
-    data_local_header.pop(-1)
-
-    print("local: " + str(data_local_header)  + "\t length: " + str(len(data_local_header)))
-    print("global: " + str(data_global_header) + "\t length: " + str(len(data_global_header)))
+    data_global_header += [0x00]*4
+    print("data_global_header: " + str(data_global_header) + "\t length: " + str(len(data_global_header)))
     
-    #print(data)
-    #print("data: " + str(data))
-
-    # check for local header to compare with global header input
-    chip['FIFO'].RESET
-    time.sleep(0.1)
-    chip.write(data_local_header)
-    time.sleep(0.1)
-    fdata = chip['FIFO'].get_data()
-    print("fdata: " + str(fdata))
-    
-    # check for global header
+    # read ou ChipID
     chip['FIFO'].RESET
     time.sleep(0.1)
     chip.write(data_global_header)
     time.sleep(0.1)
     fdata = chip['FIFO'].get_data()
-    print("fdata: " + str(fdata))
+    print(fdata)
+   
+    fdata_decoded = chip.decode_fpga(fdata)
+    print(fdata_decoded)
+    ID_data = str(fdata_decoded[1])[16:]
+    print(ID_data, len(ID_data))
+    ChipID = [int(ID_data[:8],2), int(ID_data[8:16],2), int(ID_data[16:24],2), int(ID_data[24:32],2)]
+    print(ChipID)
 
-    #dout = chip.decode_fpga(fdata, True)
+    
+    # write ChipId now to the object attribute!
+    #Id = [0x00, 0x00, 0x0c, 0x73]
+    #chip.chipId = current_ChipId_formatted
+    chip.chipId = ChipID
+    print('ChipId object:\t\t' + str(chip.chipId))
+
+    # Now do a check with the local header!
+    print("Read out a DAC with a local header ...")
+    chip['FIFO'].RESET
+    time.sleep(0.1)
+    fdata = chip.read_dac('VTP_coarse')
+    time.sleep(0.1)
+    fdata = chip['FIFO'].get_data()
+    print("fdata_local: " + str(fdata))
+
+    print("Read out EFuse with a local header ...")
+    chip.chipId = [0x00, 0x00, 0x0c, 0x73]
+    print('ChipId object:\t\t' + str(chip.chipId))
+    data_local_header = chip.read_periphery_template('EFuse_Read', local_header=True)
+    print(data_local_header)
+    chip['FIFO'].RESET
+    time.sleep(0.1)
+    fdata = chip.write(data_local_header)
+    time.sleep(0.1)
+    fdata = chip['FIFO'].get_data()
+    print("fdata_local: " + str(fdata))
+    
+    
 '''
+    dout = chip.decode_fpga(fdata, True)
     if len(dout) == 2:
         wafer_number = dout[1][19:8]
         y_position = dout[1][7:4]
