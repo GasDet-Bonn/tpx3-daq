@@ -110,7 +110,7 @@ def main(args_dict):
     data_global_header += [0x00]*4
     print("data_global_header: " + str(data_global_header) + "\t length: " + str(len(data_global_header)))
     
-    # read ou ChipID
+    # read out ChipID
     chip['FIFO'].RESET
     time.sleep(0.1)
     chip.write(data_global_header)
@@ -132,7 +132,7 @@ def main(args_dict):
     chip.chipId = ChipID
     print('ChipId object:\t\t' + str(chip.chipId))
 
-    # Now do a check with the local header!
+    # Now do read out a DAC, use the local header: rewritten in tpx3.py
     print("Read out a DAC with a local header ...")
     chip['FIFO'].RESET
     time.sleep(0.1)
@@ -142,40 +142,46 @@ def main(args_dict):
     print("fdata_local: " + str(fdata))
 
     print("Read out EFuse with a local header ...")
-    chip.chipId = [0x00, 0x00, 0x0c, 0x73]
-    print('ChipId object:\t\t' + str(chip.chipId))
-    data_local_header = chip.read_periphery_template('EFuse_Read', local_header=True)
-    print(data_local_header)
+    #if chip.chipId != [0x00, 0x00, 0x0c, 0x73]:
+    #    chip.chipId = [0x00, 0x00, 0x0c, 0x73]
+    #print('ChipId object:\t\t' + str(chip.chipId))
+    data_header = chip.read_periphery_template('EFuse_Read', local_header=True)
+    data_header += [0x00]*4
+    print(data_header)
     chip['FIFO'].RESET
     time.sleep(0.1)
-    fdata = chip.write(data_local_header)
+    fdata = chip.write(data_header)
     time.sleep(0.1)
     fdata = chip['FIFO'].get_data()
     print("fdata_local: " + str(fdata))
     
-    
-'''
-    dout = chip.decode_fpga(fdata, True)
+
+    print("Try another way to get ChipId, readable format")
+    dout = chip.decode_fpga(fdata, False)
     if len(dout) == 2:
-        wafer_number = dout[1][19:8]
-        y_position = dout[1][7:4]
-        x_position = dout[1][3:0]
+        wafer_number = dout[0][19:8]
+        y_position = dout[0][7:4]
+        x_position = dout[0][3:0]
         print('W{}-{}{}'.format(wafer_number.tovalue(), chr(ord('a') + x_position.tovalue() - 1).upper(), y_position.tovalue()))
 
     print('Test set DAC')
-    data = chip.set_dac('Vfbk', 0b10101011, write=False)
+    data = chip.set_dac('Vfbk', 0b10101011, write=False, chip=True)
+    print("set_dac output: " + str(data))
     chip['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.read_dac('Vfbk', write=False)
+    print("read_dac output: " + str(data))
 
     chip['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     fdata = chip['FIFO'].get_data()
+    print("fdata output: " + str(fdata))
     dout = chip.decode_fpga(fdata, True)
+    print("dout: " + str(dout))
     for i, d in enumerate(fdata):
         print(i, hex(d), (d & 0x01000000) != 0, bin(d & 0xffffff), hex(d & 0xffffff))
         pretty_print(d)
@@ -192,11 +198,13 @@ def main(args_dict):
 
     print('Test set general config')
     data = chip.write_general_config(write=False)
+    print("write_general_config output: " + str(data))
     chip['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.read_general_config(write=False)
+    print("read_general_config output: " + str(data))
 
     chip['FIFO'].RESET
     time.sleep(0.01)
@@ -222,17 +230,19 @@ def main(args_dict):
 
     print('Test test pulse registers')
     data = chip.write_tp_period(100, 0, write=False)
+    print("write_tp_period output: " + str(data))
     chip['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.write_tp_pulsenumber(1000, write=False)
+    print("write_tp_pulsenumber output: " + str(data))
     chip['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
     data = chip.read_tp_config(write=False)
-
+    print("read_tp_config output: " + str(data))
     chip['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
@@ -254,7 +264,7 @@ def main(args_dict):
     print('Decoded "End of Command":')
     for el in ddout:
         print('\tDecode: ', el)
-
+'''
     if timestamp_request is True:
         print('Test Timestamp extension')
         chip['gpio'].reset()
