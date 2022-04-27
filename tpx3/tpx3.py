@@ -580,8 +580,10 @@ class TPX3(Dut):
             Else: command to perform read
         """
         # TODO: change to local sync header later
-        #data = self.getGlobalSyncHeader()
-        data = self.getLocalSyncHeader()  
+        if self.chipId == []:
+            data = self.getGlobalSyncHeader()
+        else:
+            data = self.getLocalSyncHeader()  
 
         data += [self.periphery_header_map["ReadDAC"]]
 
