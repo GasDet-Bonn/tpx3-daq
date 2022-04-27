@@ -580,11 +580,9 @@ class TPX3(Dut):
             Else: command to perform read
         """
         # TODO: change to local sync header later
-        if self.chipId == []:
-            data = self.getGlobalSyncHeader()
-        else:
-            data = self.getLocalSyncHeader()
-        
+        #data = self.getGlobalSyncHeader()
+        data = self.getLocalSyncHeader()  
+
         data += [self.periphery_header_map["ReadDAC"]]
 
         # add DAC code to last 4 bit of final 16 bit
@@ -639,8 +637,8 @@ class TPX3(Dut):
         (see manual v1.9 p.34)
         """
         # TODO: change to local sync header later
-        data = self.getGlobalSyncHeader()
-
+        #data = self.getGlobalSyncHeader()
+        data = self.getLocalSyncHeader()
         data += [self.periphery_header_map["SenseDACsel"]]
 
         # add DAC code to last 4 bit of final 16 bit
@@ -1000,7 +998,8 @@ class TPX3(Dut):
         pixeldata = np.zeros((1536), dtype=np.uint8)
 
         # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
+        #data = self.getGlobalSyncHeader()
+        data = self.getLocalSyncHeader()
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["LoadConfigMatrix"]]
@@ -1037,7 +1036,7 @@ class TPX3(Dut):
         data = []
         configuration_bits = BitLogic(12)
 
-        data = self.read_periphery_template("GeneralConfig", header_only=True)
+        data = self.read_periphery_template("GeneralConfig", header_only=True, local_header=True)
 
         # create a 12 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the chip configuration
@@ -1129,7 +1128,7 @@ class TPX3(Dut):
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
         # append the code for the GeneralConfig_Read command header: 8 bits
-        data = self.read_periphery_template("GeneralConfig_Read")
+        data = self.read_periphery_template("GeneralConfig_Read", local_header = True)
 
         if write is True:
             self.write(data)
@@ -1309,7 +1308,8 @@ class TPX3(Dut):
         number_bits = BitLogic(16)
 
         # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
+        #data = self.getGlobalSyncHeader()
+        data = self.getLocalSyncHeader()
 
         # append the code for the GeneralConfig_Read command header: 8 bits
         data += [self.periphery_header_map["TP_PulseNumber"]]
@@ -1338,7 +1338,7 @@ class TPX3(Dut):
             #  check if the phase is allowed
             raise ValueError("The phase must not be bigger than 15!")
 
-        data = self.read_periphery_template("TP_Period", True)
+        data = self.read_periphery_template("TP_Period", header_only = True, local_header=True)
         # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
         bits = BitLogic(12)
 
@@ -1390,7 +1390,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the test pulse
         registers (see manual v1.9 p.35). The sent bytes are also returned.
         """
-        data = self.read_periphery_template("TPConfig_Read")
+        data = self.read_periphery_template("TPConfig_Read", local_header = True)
 
         if write is True:
             self.write(data)
