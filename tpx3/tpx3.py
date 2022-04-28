@@ -237,7 +237,7 @@ class TPX3(Dut):
         logger.info("Loading configuration file from %s" % conf)
         super(TPX3, self).__init__(conf)
 
-    def init(self, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
+    def init(self, ChipId=None, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
         super(TPX3, self).init()
 
         self.fw_version = self['intf'].read(0x0000, 1)[0]
@@ -256,8 +256,13 @@ class TPX3(Dut):
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
         # Our current chip seems to think its chip ID is all 0s. ?!
-        self.chipId = [0x00 for _ in range(3)] + [0x01]
+        #self.chipId = [0x00 for _ in range(3)] + [0x01]
 
+        # When creating TPX3 object without a chipId (ChipId=None),
+        # every function uses global sync header.
+        # If we create TPX3 object with a chipId (or if we set chipId after init),
+        # every function uses local sync header.
+        self.chipId = ChipId
         # reset all matrices to empty defaults
         self.reset_matrices()
 
@@ -508,7 +513,7 @@ class TPX3(Dut):
             assert(ddout[0][13:5].tovalue() == b.tovalue())
 
     # TODO: add the given values to the _dacs dictionary, if this function is used!
-    def set_dac(self, dac, value, chip=None, write=True):
+    def set_dac(self, dac, value, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -531,10 +536,10 @@ class TPX3(Dut):
         """
         data = []
         # first header, first 40 bits [63:24]
-        if chip is None:
-            data = self.getGlobalSyncHeader()
-        else:
+        if self.chipId != None:
             data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         # bit logic for final 24 bits
         bits = BitLogic(24)
@@ -580,10 +585,10 @@ class TPX3(Dut):
             Else: command to perform read
         """
         # TODO: change to local sync header later
-        if self.chipId == []:
-            data = self.getGlobalSyncHeader()
+        if self.chipId != None:
+            data = self.getLocalSyncHeader()
         else:
-            data = self.getLocalSyncHeader()  
+            data = self.getGlobalSyncHeader()  
 
         data += [self.periphery_header_map["ReadDAC"]]
 
@@ -639,8 +644,10 @@ class TPX3(Dut):
         (see manual v1.9 p.34)
         """
         # TODO: change to local sync header later
-        #data = self.getGlobalSyncHeader()
-        data = self.getLocalSyncHeader()
+        if self.chipId != None:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
         data += [self.periphery_header_map["SenseDACsel"]]
 
         # add DAC code to last 4 bit of final 16 bit
@@ -1000,8 +1007,10 @@ class TPX3(Dut):
         pixeldata = np.zeros((1536), dtype=np.uint8)
 
         # presync header: 40 bits; TODO: header selection
-        #data = self.getGlobalSyncHeader()
-        data = self.getLocalSyncHeader()
+        if self.chipId != None:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["LoadConfigMatrix"]]
@@ -1038,7 +1047,7 @@ class TPX3(Dut):
         data = []
         configuration_bits = BitLogic(12)
 
-        data = self.read_periphery_template("GeneralConfig", header_only=True, local_header=True)
+        data = self.read_periphery_template("GeneralConfig", header_only=True)
 
         # create a 12 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the chip configuration
@@ -1090,9 +1099,9 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def read_periphery_template(self, name, header_only = False, local_header = False):
+    def read_periphery_template(self, name, header_only = False):
         # presync header: 40 bits
-        if local_header:
+        if self.chipId != None:
             data = self.getLocalSyncHeader()
         else:
             data = self.getGlobalSyncHeader()
@@ -1108,8 +1117,8 @@ class TPX3(Dut):
 
         return data
 
-    def read_matrix_template(self, name, header_only = False, local_header = False):
-        if local_header:
+    def read_matrix_template(self, name, header_only = False):
+        if self.chipId != None:
             data = self.getLocalSyncHeader()
         else:
             data = self.getGlobalSyncHeader()
@@ -1130,7 +1139,7 @@ class TPX3(Dut):
         registers (see manual v1.9 p.40). The sent bytes are also returned.
         """
         # append the code for the GeneralConfig_Read command header: 8 bits
-        data = self.read_periphery_template("GeneralConfig_Read", local_header = True)
+        data = self.read_periphery_template("GeneralConfig_Read")
 
         if write is True:
             self.write(data)
@@ -1281,6 +1290,7 @@ class TPX3(Dut):
 
         if write is True:
             self.write(data)
+        return data
 
 
     def startTimer(self, write=True):
@@ -1310,8 +1320,10 @@ class TPX3(Dut):
         number_bits = BitLogic(16)
 
         # presync header: 40 bits; TODO: header selection
-        #data = self.getGlobalSyncHeader()
-        data = self.getLocalSyncHeader()
+        if self.chipId != None:    
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         # append the code for the GeneralConfig_Read command header: 8 bits
         data += [self.periphery_header_map["TP_PulseNumber"]]
@@ -1340,7 +1352,7 @@ class TPX3(Dut):
             #  check if the phase is allowed
             raise ValueError("The phase must not be bigger than 15!")
 
-        data = self.read_periphery_template("TP_Period", header_only = True, local_header=True)
+        data = self.read_periphery_template("TP_Period", header_only = True)
         # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
         bits = BitLogic(12)
 
@@ -1392,7 +1404,7 @@ class TPX3(Dut):
         SyncHeader and a dummy for DataIn to request the actual values of the test pulse
         registers (see manual v1.9 p.35). The sent bytes are also returned.
         """
-        data = self.read_periphery_template("TPConfig_Read", local_header = True)
+        data = self.read_periphery_template("TPConfig_Read")
 
         if write is True:
             self.write(data)

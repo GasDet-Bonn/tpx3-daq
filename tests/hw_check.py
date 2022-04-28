@@ -105,7 +105,7 @@ def main(args_dict):
     print('Get ChipID')
     
     # Get periphery template
-    data_global_header = chip.read_periphery_template('EFuse_Read', local_header=False)
+    data_global_header = chip.read_periphery_template('EFuse_Read')
     print("data_global_header: " + str(data_global_header))
     data_global_header += [0x00]*4
     print("data_global_header: " + str(data_global_header) + "\t length: " + str(len(data_global_header)))
@@ -124,6 +124,7 @@ def main(args_dict):
     print(ID_data, len(ID_data))
     ChipID = [int(ID_data[:8],2), int(ID_data[8:16],2), int(ID_data[16:24],2), int(ID_data[24:32],2)]
     print(ChipID)
+    print("ChipID has been read out succesfully ...")
 
     
     # write ChipId now to the object attribute!
@@ -134,9 +135,17 @@ def main(args_dict):
 
     # Now do read out a DAC, use the local header: rewritten in tpx3.py
     print("Read out a DAC with a local header ...")
+    data = chip.set_dac('VTP_coarse', 0b10101000, write = False)
+    print("set_dac output: " + str(data))
     chip['FIFO'].RESET
     time.sleep(0.1)
-    fdata = chip.read_dac('VTP_coarse')
+    chip.write(data)
+    time.sleep(0.1)
+    data = chip.read_dac('VTP_coarse', write=False)
+    print("read_dac output: " + str(data))
+    chip['FIFO'].RESET
+    time.sleep(0.1)
+    chip.write(data)
     time.sleep(0.1)
     fdata = chip['FIFO'].get_data()
     print("fdata_local: " + str(fdata))
@@ -145,7 +154,7 @@ def main(args_dict):
     #if chip.chipId != [0x00, 0x00, 0x0c, 0x73]:
     #    chip.chipId = [0x00, 0x00, 0x0c, 0x73]
     #print('ChipId object:\t\t' + str(chip.chipId))
-    data_header = chip.read_periphery_template('EFuse_Read', local_header=True)
+    data_header = chip.read_periphery_template('EFuse_Read')
     data_header += [0x00]*4
     print(data_header)
     chip['FIFO'].RESET
@@ -165,7 +174,7 @@ def main(args_dict):
         print('W{}-{}{}'.format(wafer_number.tovalue(), chr(ord('a') + x_position.tovalue() - 1).upper(), y_position.tovalue()))
 
     print('Test set DAC')
-    data = chip.set_dac('Vfbk', 0b10101011, write=False, chip=True)
+    data = chip.set_dac('Vfbk', 0b10101011, write=False)
     print("set_dac output: " + str(data))
     chip['FIFO'].RESET
     time.sleep(0.01)
@@ -173,7 +182,6 @@ def main(args_dict):
     time.sleep(0.01)
     data = chip.read_dac('Vfbk', write=False)
     print("read_dac output: " + str(data))
-
     chip['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
