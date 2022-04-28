@@ -110,6 +110,10 @@ class ScanBase(object):
         self.set_directory()
         self.make_files(run_name)
 
+        # Create list for chipIds and chip objects
+        self.chipIds = []
+        self.chips   = []
+
         if no_chip == False:
             self.number_of_chips = 1
             self.chip_links = 0
@@ -117,6 +121,10 @@ class ScanBase(object):
             # Test if the link configuration is valid
             if self.test_links() == True:
                self.logger.info("Validity check of link configuration successful")
+               self.logger.info("Create more chip objects!")
+               # If link config is valid, initialize more chips via chipId from links.yml
+               # create list of chipIds, no duplicates
+               # from this list create list of chip objects 
             else:
                self.logger.info("Validity check of link configuration failed")
                raise ConfigError("Link configuration is not valid for current setup")
