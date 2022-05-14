@@ -54,8 +54,13 @@ class NoiseScan(ScanBase):
             raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
 
         # Disable test pulses, set the mode to ToT/ToA and write the configuration to the Timepix3
-        self.chip._configs["TP_en"] = 0
-        self.chip.write_general_config()
+        #for chip in self.chips[1:]:
+        #self.chips[1]._configs["TP_en"] = 0
+        #self.chips[0].write(self.chips[1].write_general_config(write = False))
+        
+        self.chips[0]._configs["TP_en"] = 0
+        self.chips[0].write_general_config()
+        #self.chips[0].chipId = [0,0,12,115]
 
         self.logger.info('Preparing injection masks...')
         if status != None:
@@ -91,13 +96,14 @@ class NoiseScan(ScanBase):
 
         scan_param_id = 0
         for threshold in thresholds:
+            #for chip in self.chips[1:]:
             # Set the threshold
-            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
-            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
+            self.chips[0].write(self.chips[0].set_dac("Vthreshold_coarse", int(threshold[0]), write=False))
+            self.chips[0].write(self.chips[0].set_dac("Vthreshold_fine", int(threshold[1]), write=False))
 
             for mask_step_cmd in mask_cmds:
                 # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
-                self.chip.write(mask_step_cmd)
+                self.chips[0].write(mask_step_cmd)
 
                 with self.readout(scan_param_id=scan_param_id):
                     time.sleep(0.001)
@@ -113,7 +119,7 @@ class NoiseScan(ScanBase):
                             step_counter += 1
                             fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
-                    self.chip.stop_readout()
+                    self.chips[0].write(self.chips[0].stop_readout(write=False))
                     time.sleep(0.025)
             scan_param_id += 1
 

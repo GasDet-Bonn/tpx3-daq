@@ -11,6 +11,7 @@ import time
 import os
 import yaml
 import numpy as np
+from basil.dut import Dut
 
 class ChipIDError(Exception):
     pass
@@ -34,16 +35,21 @@ class ScanHardware(object):
             with open(yaml_file) as file:
                 yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
-        # Initialize the chip communication
+        # Create chip communication
+        dut_conf = os.path.join(proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
+        Dut_layer = Dut(dut_conf)
+        Dut_layer.init()
+
         self.chip = TPX3()
-        self.chip.init()
+        self.chip.init(inter_layer=Dut_layer)
+        #print('I am here!')
 
         invert = 0
         # For the MIMAS A7 readout board the output data must be inverted
         if self.chip.board_version == 'MIMAS_A7':
             invert = 1
 
-        rx_list_objects = self.chip.get_modules('tpx3_rx')
+        rx_list_objects = self.chip.Dut_layer.get_modules('tpx3_rx')
 
         if progress == None:
             # Initialize the progress bar
@@ -58,10 +64,10 @@ class ScanHardware(object):
             status.put("iteration_symbol")
 
         # Reset the chip
-        self.chip['CONTROL']['RESET'] = 1
-        self.chip['CONTROL'].write()
-        self.chip['CONTROL']['RESET'] = 0
-        self.chip['CONTROL'].write()
+        self.chip.Dut_layer['CONTROL']['RESET'] = 1
+        self.chip.Dut_layer['CONTROL'].write()
+        self.chip.Dut_layer['CONTROL']['RESET'] = 0
+        self.chip.Dut_layer['CONTROL'].write()
 
         # Write the PLL
         data = self.chip.write_pll_config()
@@ -167,15 +173,15 @@ class ScanHardware(object):
             data += [0x00]*4
 
             # Reset and clean the FIFO and then sent the request
-            self.chip['FIFO'].RESET
+            self.chip.Dut_layer['FIFO'].RESET
             time.sleep(0.1)
-            self.chip['FIFO'].get_data()
+            self.chip.Dut_layer['FIFO'].get_data()
             self.chip.write(data)
             time.sleep(0.1)
 
             try:
                 # Get the ChipID from the received data packages
-                fdata = self.chip['FIFO'].get_data()
+                fdata = self.chip.Dut_layer['FIFO'].get_data()
                 if len(fdata) < 4:
                     raise ChipIDError("ChipIDError: Unexpected amount of response packages")
                 elif (fdata[2] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 1) or (fdata[3] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 0):

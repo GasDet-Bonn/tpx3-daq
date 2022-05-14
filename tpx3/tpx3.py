@@ -139,7 +139,7 @@ class CustomDict(dict):
             else:
                 raise ValueError(self.dictErrors['negativeVal'].format(key))
 
-class TPX3(Dut):
+class TPX3():
 
     ''' Map hardware IDs for board identification '''
     hw_map = {
@@ -230,18 +230,18 @@ class TPX3(Dut):
         self.lfsr_14 = {}
         self.lfsr_4 = {}
 
+        #if not conf:
+        #    conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
 
-        if not conf:
-            conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
+        #logger.info("Loading configuration file from %s" % conf)
+        #super(TPX3, self).__init__(conf)
 
-        logger.info("Loading configuration file from %s" % conf)
-        super(TPX3, self).__init__(conf)
+    def init(self, ChipId=None, inter_layer=None, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
+        #super(TPX3, self).init()
 
-    def init(self, ChipId=None, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
-        super(TPX3, self).init()
-
-        self.fw_version = self['intf'].read(0x0000, 1)[0]
-        self.board_version = self.hw_map[self['intf'].read(0x0001, 1)[0]]
+        self.Dut_layer = inter_layer
+        self.fw_version = self.Dut_layer['intf'].read(0x0000, 1)[0]
+        self.board_version = self.hw_map[self.Dut_layer['intf'].read(0x0001, 1)[0]]
 
         logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
 
@@ -250,8 +250,8 @@ class TPX3(Dut):
 
         # self['CONF_SR'].set_size(3924)
 
-        self['CONTROL']['DATA_MUX_SEL'] = 1
-        self['CONTROL'].write()
+        self.Dut_layer['CONTROL']['DATA_MUX_SEL'] = 1
+        self.Dut_layer['CONTROL'].write()
 
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
@@ -474,13 +474,17 @@ class TPX3(Dut):
         """
         # Note: here we can now iterate over self.dacs instead of self._dacs
         # due to the `dacs` property!
+        data = []
+
         for dac, val in six.iteritems(self.dacs):
             if dac != 'Sense_DAC':
-                data = self.set_dac(dac, val, write = False)
-                self.write(data, True)
+                data.append([self.set_dac(dac, val, write = False)])
+                #self.write(data, True)
             else:
-                data = self.sense_dac_sel(dac = val, write = False)
-                self.write(data, True)
+                data.append([self.sense_dac_sel(dac = val, write = False)])
+                #self.write(data, True)
+        
+        return data
 
     def read_dacs(self):
         """
@@ -503,7 +507,7 @@ class TPX3(Dut):
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
             print("\tGet DAC value, DAC code and EoC:")
-            dout = self.decode_fpga(self['FIFO'].get_data(), True)
+            dout = self.decode_fpga(self.Dut_layer['FIFO'].get_data(), True)
             b = BitLogic(9)
             b[:] = val
             ddout = self.decode(dout[0], 0x03)
@@ -679,15 +683,15 @@ class TPX3(Dut):
             return
 
         if clear_fifo:
-            self['FIFO'].RESET
+            self.Dut_layer['FIFO'].RESET
             time.sleep(TPX3_SLEEP)
 
         # total size in bits
-        self['SPI'].set_size(len(data) * 8)
-        self['SPI'].set_data(data)
-        self['SPI'].start()
+        self.Dut_layer['SPI'].set_size(len(data) * 8)
+        self.Dut_layer['SPI'].set_data(data)
+        self.Dut_layer['SPI'].start()
 
-        while(not self['SPI'].is_ready):
+        while(not self.Dut_layer['SPI'].is_ready):
             # wait until SPI is done
             pass
 
@@ -1624,11 +1628,11 @@ class TPX3(Dut):
         if pin not in {"TO_SYNC", "RESET", "SHUTTER"}:
             raise ValueError("You can only toggle TO_SYNC, RESET and SHUTTER pins!")
 
-        self['CONTROL'][pin] = 1
-        self['CONTROL'].write()
+        self.Dut_layer['CONTROL'][pin] = 1
+        self.Dut_layer['CONTROL'].write()
         time.sleep(sleep_time)
-        self['CONTROL'][pin] = 0
-        self['CONTROL'].write()
+        self.Dut_layer['CONTROL'][pin] = 0
+        self.Dut_layer['CONTROL'].write()
 
     def lfsr_10_bit(self):
         """
