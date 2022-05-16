@@ -208,6 +208,7 @@ class FifoReadout(object):
                 while time() - time_read < self.readout_interval:
                     dlist.extend(self.read_data())
                 data = np.asarray(dlist, dtype=np.uint32)
+                #print('In fifo_readout readout: ' + str(data))
 
                 self._record_count += len(data)
             except Exception:

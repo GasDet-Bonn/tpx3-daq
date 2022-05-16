@@ -121,7 +121,6 @@ class ScanBase(object):
         if no_chip == False:
             chip = TPX3()
             chip.init(inter_layer=Dut_layer)
-            #chip.chipId = [0,0,12,115]
             self.chips.append(chip)
 
         # Initialize the files
@@ -147,8 +146,9 @@ class ScanBase(object):
                    Id_format = [int(Id_binary[:8],2),int(Id_binary[8:16],2) ,int(Id_binary[16:24],2) ,int(Id_binary[24:],2)]
                    #print(Id_format)
                    chip = TPX3()
-                   chip.init(inter_layer = Dut_layer, ChipId=Id_format)
+                   chip.init(ChipId=Id_format)
                    self.chips.append(chip)
+                   print(chip.chipId)
 
             else:
                self.logger.info("Validity check of link configuration failed")
@@ -225,6 +225,9 @@ class ScanBase(object):
         # Iterate over all links
         for register in yaml_data['registers']:
 
+            #if register['chip-link'] != 0:
+            #    break
+        
             # Reset the chip
             self.chips[0].toggle_pin("RESET")
 
@@ -233,6 +236,8 @@ class ScanBase(object):
 
             # Create the chip output channel mask and write the output block
             self.chips[0]._outputBlocks["chan_mask"] = 0b1 << register['chip-link']
+            
+            #print(self.chips[0]._outputBlocks["chan_mask"] )
             self.chips[0].write_outputBlock_config()
             #data = self.chip.write_outputBlock_config()
 
@@ -250,6 +255,7 @@ class ScanBase(object):
 
                 # Reset and clean the FIFO
                 self.chips[0].Dut_layer['FIFO'].RESET
+                #print('FIFO_SIZE after reset: ' + str(self.chips[0].Dut_layer['FIFO']['FIFO_SIZE']))
                 time.sleep(0.01)
                 fdata = self.chips[0].Dut_layer['FIFO'].get_data()
                 #print('fdata after FIFO reset: ' + str(fdata))
@@ -265,9 +271,9 @@ class ScanBase(object):
 
                 # Get the data from the chip
                 fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+                #print('EFuse_Read FIFO output: ' + str(fdata))
                 dout = self.chips[0].decode_fpga(fdata, True)
-                #print('EFuse_Read FIFO output: ' + str(dout))
-
+                #print(dout[0][19:0].tovalue())
                 # Check if the received Chip ID is identical with the expected
                 if dout[0][19:0].tovalue() != register['chip-id']:
                     valid = False
@@ -303,6 +309,8 @@ class ScanBase(object):
 
         # Iterate over all links
         for register in yaml_data['registers']:
+            #if register['chip-link'] != 0:
+            #    break
             if register['link-status'] in [1, 3, 5]:
                 # Create the chip output channel mask and write the output block
                 self.chips[0]._outputBlocks["chan_mask"] = self.chips[0]._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
@@ -312,6 +320,18 @@ class ScanBase(object):
                 self.chips[0].Dut_layer[register['name']].DATA_DELAY = register['data-delay']
                 self.chips[0].Dut_layer[register['name']].INVERT = register['data-invert']
                 self.chips[0].Dut_layer[register['name']].SAMPLING_EDGE = register['data-edge']
+
+                #self.chips[0].write_outputBlock_config(write=True)
+                # Before starting test chip[1]
+                #data = self.chips[0].read_periphery_template('EFuse_Read')
+                #data += [0x00]*4
+                #print(data)
+                #self.chips[0].Dut_layer['FIFO'].RESET
+                #time.sleep(0.1)
+                #self.chips[0].write(data)
+                #time.sleep(0.1)
+                #fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+                #print(fdata)
 
                 bit_id = BitLogic.from_value(register['chip-id'])
 
@@ -374,42 +394,42 @@ class ScanBase(object):
 
             #for chip in self.chips[1:]:
             # Start with deactivated testpulses on all pixels and all pixels masked
-            self.chips[0].test_matrix[:, :] = self.chips[0].TP_OFF
-            self.chips[0].mask_matrix[:, :] = self.chips[0].MASK_OFF
+            self.chips[1].test_matrix[:, :] = self.chips[1].TP_OFF
+            self.chips[1].mask_matrix[:, :] = self.chips[1].MASK_OFF
 
             # Switch on pixels and test pulses for pixels based on mask_step
             # e.g. for mask_step=16 every 4th pixel in x and y is active
             column_start = i//(mask_step//int(math.sqrt(mask_step)))
             row_start = i%(mask_step//int(math.sqrt(mask_step)))
             step = mask_step//int(math.sqrt(mask_step))
-            self.chips[0].test_matrix[column_start::step, row_start::step] = self.chips[0].TP_ON
-            self.chips[0].mask_matrix[column_start::step, row_start::step] = self.chips[0].MASK_ON
+            self.chips[1].test_matrix[column_start::step, row_start::step] = self.chips[1].TP_ON
+            self.chips[1].mask_matrix[column_start::step, row_start::step] = self.chips[1].MASK_ON
 
             if self.maskfile:
-                self.chips[0].test_matrix[temp_mask_matrix == True] = self.chips[0].TP_OFF
-                self.chips[0].mask_matrix[temp_mask_matrix == True] = self.chips[0].MASK_OFF
+                self.chips[1].test_matrix[temp_mask_matrix == True] = self.chips[1].TP_OFF
+                self.chips[1].mask_matrix[temp_mask_matrix == True] = self.chips[1].MASK_OFF
 
             # If a pixel threshold is defined set it to all pixels
             if pixel_threhsold != None:
-                self.chips[0].thr_matrix[:, :] = pixel_threhsold
+                self.chips[1].thr_matrix[:, :] = pixel_threhsold
 
             # Create the list of mask commands - only for columns that changed the pcr
             column_list = list(range(column_start, 256, step))
             if i == offset:
                 for i in range(256 // 4):
-                    mask_step_cmd.append(self.chips[0].write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
+                    mask_step_cmd.append(self.chips[1].write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
             else:
                 if column_start == (i-1)//(mask_step//int(math.sqrt(mask_step))):
                     for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                        mask_step_cmd.append(self.chips[0].write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                        mask_step_cmd.append(self.chips[1].write_pcr(column_list[4 * j : 4 * j + 4], write=False))
                 else:
                     previous_column_list = list([x - 1 for x in column_list])
                     if previous_column_list[0] < 0:
                         previous_column_list = previous_column_list[1:]
                         previous_column_list.append(255)
                     for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                        mask_step_cmd.append(self.chips[0].write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
-                        mask_step_cmd.append(self.chips[0].write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                        mask_step_cmd.append(self.chips[1].write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
+                        mask_step_cmd.append(self.chips[1].write_pcr(column_list[4 * j : 4 * j + 4], write=False))
 
             if append_datadriven == True:
                 # Append the command for initializing a data driven readout
@@ -451,19 +471,19 @@ class ScanBase(object):
             mask_step_cmd = []
 
             #for chip in self.chips[1:]:
-            self.chips[0].mask_matrix[:, :] = self.chips[0].MASK_ON
-            self.chips[0].mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = self.chips[0].MASK_ON
+            self.chips[1].mask_matrix[:, :] = self.chips[1].MASK_ON
+            self.chips[1].mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = self.chips[1].MASK_ON
 
             if self.maskfile:
-                self.chips[0].mask_matrix[temp_mask_matrix == True] = self.chips[0].MASK_OFF
+                self.chips[1].mask_matrix[temp_mask_matrix == True] = self.chips[1].MASK_OFF
 
             for j in range(256 // 4):
-                mask_step_cmd.append(self.chips[0].write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
+                mask_step_cmd.append(self.chips[1].write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
 
             if append_datadriven == True:
                 # Append the command for initializing a data driven readout
-                mask_step_cmd.append(self.chips[0].read_pixel_matrix_datadriven(write=False))
-
+                mask_step_cmd.append(self.chips[1].read_pixel_matrix_datadriven(write=False))
+            #print(mask_step_cmd)
             mask_cmds.append(mask_step_cmd)
 
         return mask_cmds
@@ -571,7 +591,7 @@ class ScanBase(object):
         if iteration == None or iteration == 0:
             #for chip in self.chips[1:]:
             general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig', title='GeneralConfig', description=ConfTable)
-            for conf, value in six.iteritems(self.chips[0].configs):
+            for conf, value in six.iteritems(self.chips[1].configs):
                 row = general_config_table.row
                 row['configuration'] = conf
                 row['value'] = value
@@ -587,7 +607,7 @@ class ScanBase(object):
         else:
             dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs_' + str(iteration), title='DACs ' + str(iteration), description=DacTable)
         #for chip in self.chips[1:]:
-        for dac, value in six.iteritems(self.chips[0].dacs):
+        for dac, value in six.iteritems(self.chips[1].dacs):
             row = dac_table.row
             row['DAC'] = dac
             row['value'] = value
@@ -599,8 +619,8 @@ class ScanBase(object):
         # TODO: Do this for each chip, also put in ChipId later
         if iteration == None or iteration == 1:
             #for chip in self.chips[1:]:
-            self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix', title='Mask Matrix', obj=self.chips[0].mask_matrix)
-            self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix', title='Threshold Matrix', obj=self.chips[0].thr_matrix)
+            self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix', title='Mask Matrix', obj=self.chips[1].mask_matrix)
+            self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix', title='Threshold Matrix', obj=self.chips[1].thr_matrix)
 
         # save the link configuration
         # In scans with multiple iterations only for the first iteration
@@ -691,12 +711,24 @@ class ScanBase(object):
 
         self.init_links()
 
+        self.chips[0].write_outputBlock_config(write=True)
+        
+        # To use local headers, we need to execute EFuse_Read globally
+        # once after resetting the chip, so that the ChipID of the
+        # chip is known to itself.
+        data = self.chips[0].read_periphery_template('EFuse_Read')
+        data += [0x00]*4
+        print(data)
+        self.chips[0].Dut_layer['FIFO'].RESET
+        time.sleep(0.1)
+        self.chips[0].write(data)
+        time.sleep(0.1)
+        fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+        print(fdata)
+
         # Set the output settings of the chip
         self.chips[0].write_outputBlock_config(write=True)
         self.fifo_readout.print_readout_status()
-        
-        #self.chips[1]._outputBlocks["chan_mask"] = 0b1 << 0
-        #self.chips[0].write(self.chips[1].write_outputBlock_config(write=False))
 
         # Enable power pulsing
         self.chips[0].Dut_layer['CONTROL']['EN_POWER_PULSING'] = 1
@@ -704,7 +736,7 @@ class ScanBase(object):
 
         # Set PLL Config
         self.chips[0].write_pll_config(write=True)
-        #self.chips[0].write(self.chips[1].write_pll_config(write=False))
+        self.chips[0].write(self.chips[1].write_pll_config(write=False))
 
         # Reset the fpga timestamp pulser
         self.chips[0].Dut_layer['PULSE_GEN'].reset()
@@ -718,17 +750,18 @@ class ScanBase(object):
         else:
             self.chips[0].Dut_layer['PULSE_GEN'].set_en(False)
 
-        #for chip in self.chips[1:]:
         # Reset DACs and set them to the values defined in dacs.yaml
-        self.chips[0].reset_dac_attributes(to_default = False)
-        data = self.chips[0].write_dacs()
+        self.chips[1].reset_dac_attributes(to_default = False)
+        data = self.chips[1].write_dacs()
         for chunk in data:
+            #print('Reset dacs chunk header: ' + str(chunk))
             self.chips[0].write(chunk)
 
         # Sequential reset of the pixel matrix
-        data = self.chips[0].reset_sequential(write=False)
+        data = self.chips[1].reset_sequential(write=False)
+        #print('Reset sequential header: ' + str(data))
         self.chips[0].write(data, True)
-        fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+        #fdata = self.chips[0].Dut_layer['FIFO'].get_data()
 
         self.maskfile = kwargs.get('maskfile', None)
         self.thrfile = kwargs.get('thrfile', None)
@@ -737,27 +770,36 @@ class ScanBase(object):
         # Produce needed PCR (Pixel configuration register)
         #for chip in self.chips[1:]:
         for i in range(256 // 4):
-            data = self.chips[0].write_pcr(list(range(4 * i, 4 * i + 4)), write=False)
+            data = self.chips[1].write_pcr(list(range(4 * i, 4 * i + 4)), write=False)
+            #print('Write pcr header: ' + str(data))
             self.chips[0].write(data)
 
         # Set Op_mode for the scans, based on the scan id
         #for chip in self.chips[1:]:
         if self.scan_id == 'EqualisationCharge':
             self.chips[0]._configs["Op_mode"] = 2
+            #self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'EqualisationNoise':
             self.chips[0]._configs["Op_mode"] = 2
+            #self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'PixelDACopt':
             self.chips[0]._configs["Op_mode"] = 2
+            #self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'TestpulseScan':
             self.chips[0]._configs["Op_mode"] = 2
+            #self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'ThresholdScan':
             self.chips[0]._configs["Op_mode"] = 2
+            #self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'ThresholdCalib':
             self.chips[0]._configs["Op_mode"] = 2
+            #self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'NoiseScan':
             self.chips[0]._configs["Op_mode"] = 2
+            #self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'ToTCalib':
             self.chips[0]._configs["Op_mode"] = 0
+            #self.chips[1]._configs["Op_mode"] = 0
 
         # Setup HDF5 file
         filename = self.output_filename + '.h5'
@@ -925,7 +967,7 @@ class ScanBase(object):
             out_file.create_carray(out_file.root,
                                 name='mask_matrix',
                                 title='Matrix mask',
-                                obj=self.chips[0].mask_matrix)
+                                obj=self.chips[1].mask_matrix)
             self.logger.info('Closing mask file: %s' % (self.maskfile))
 
     def save_thr_mask(self, eq_matrix, chip_wafer, chip_x ,chip_y):
@@ -959,8 +1001,7 @@ class ScanBase(object):
             self.logger.info('Loading mask_matrix file: %s' % (self.maskfile))
             try:
                 with tb.open_file(self.maskfile, 'r') as infile:
-                    #for chip in self.chips[1:]:
-                    self.chips[0].mask_matrix = infile.root.mask_matrix[:]
+                    self.chips[1].mask_matrix = infile.root.mask_matrix[:]
             except NoSuchNodeError:
                 self.logger.debug('Specified maskfile does not include a mask_matrix!')
                 pass
@@ -975,8 +1016,7 @@ class ScanBase(object):
             self.logger.info('Loading thr_matrix file: %s' % (self.thrfile))
             try:
                 with tb.open_file(self.thrfile, 'r') as infile:
-                    #for chip in self.chips[1:]:
-                    self.chips[0].thr_matrix = infile.root.thr_matrix[:]
+                    self.chips[1].thr_matrix = infile.root.thr_matrix[:]
             except NoSuchNodeError:
                 self.logger.debug('Specified thrfile does not include a thr_matrix!')
                 pass

@@ -54,13 +54,8 @@ class NoiseScan(ScanBase):
             raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
 
         # Disable test pulses, set the mode to ToT/ToA and write the configuration to the Timepix3
-        #for chip in self.chips[1:]:
-        #self.chips[1]._configs["TP_en"] = 0
-        #self.chips[0].write(self.chips[1].write_general_config(write = False))
-        
         self.chips[0]._configs["TP_en"] = 0
         self.chips[0].write_general_config()
-        #self.chips[0].chipId = [0,0,12,115]
 
         self.logger.info('Preparing injection masks...')
         if status != None:
@@ -86,6 +81,7 @@ class NoiseScan(ScanBase):
         if status != None:
             status.put("iteration_symbol")
         thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
+        #print('Thresholds: ' + str(thresholds))
 
         if progress == None:
             # Initialize progress bar
@@ -96,10 +92,13 @@ class NoiseScan(ScanBase):
 
         scan_param_id = 0
         for threshold in thresholds:
-            #for chip in self.chips[1:]:
             # Set the threshold
-            self.chips[0].write(self.chips[0].set_dac("Vthreshold_coarse", int(threshold[0]), write=False))
-            self.chips[0].write(self.chips[0].set_dac("Vthreshold_fine", int(threshold[1]), write=False))
+            data = self.chips[1].set_dac("Vthreshold_coarse", int(threshold[0]), write=False)
+            print('Set dac Vthreshold_coarse: ' + str(data))
+            self.chips[0].write(data)
+            data = self.chips[1].set_dac("Vthreshold_fine", int(threshold[1]), write=False)
+            print(data)
+            self.chips[0].write(data)
 
             for mask_step_cmd in mask_cmds:
                 # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
@@ -119,7 +118,8 @@ class NoiseScan(ScanBase):
                             step_counter += 1
                             fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
-                    self.chips[0].write(self.chips[0].stop_readout(write=False))
+                    data = self.chips[1].stop_readout(write=False)
+                    self.chips[0].write(data)
                     time.sleep(0.025)
             scan_param_id += 1
 

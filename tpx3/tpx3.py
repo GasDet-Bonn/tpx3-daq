@@ -239,19 +239,20 @@ class TPX3():
     def init(self, ChipId=None, inter_layer=None, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
         #super(TPX3, self).init()
 
-        self.Dut_layer = inter_layer
-        self.fw_version = self.Dut_layer['intf'].read(0x0000, 1)[0]
-        self.board_version = self.hw_map[self.Dut_layer['intf'].read(0x0001, 1)[0]]
+        if inter_layer != None:
+            self.Dut_layer = inter_layer
+            self.fw_version = self.Dut_layer['intf'].read(0x0000, 1)[0]
+            self.board_version = self.hw_map[self.Dut_layer['intf'].read(0x0001, 1)[0]]
 
-        logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
+            logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
 
-        if self.fw_version != self.fw_version_required:
-            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
+            if self.fw_version != self.fw_version_required:
+                raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
 
-        # self['CONF_SR'].set_size(3924)
+            # self['CONF_SR'].set_size(3924)
 
-        self.Dut_layer['CONTROL']['DATA_MUX_SEL'] = 1
-        self.Dut_layer['CONTROL'].write()
+            self.Dut_layer['CONTROL']['DATA_MUX_SEL'] = 1
+            self.Dut_layer['CONTROL'].write()
 
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
@@ -478,10 +479,10 @@ class TPX3():
 
         for dac, val in six.iteritems(self.dacs):
             if dac != 'Sense_DAC':
-                data.append([self.set_dac(dac, val, write = False)])
+                data.append(self.set_dac(dac, val, write = False))
                 #self.write(data, True)
             else:
-                data.append([self.sense_dac_sel(dac = val, write = False)])
+                data.append(self.sense_dac_sel(dac = val, write = False))
                 #self.write(data, True)
         
         return data

@@ -14,6 +14,8 @@ from tpx3.utils import toByteList, bitword_to_byte_list
 import sys
 import math
 import numpy as np
+from basil.dut import Dut
+import os
 
 
 
@@ -47,13 +49,19 @@ def main(args_dict):
     timestamp_request = args_dict['timestamp_request']
     timestamp_hits = args_dict['timestamp_hits']
 
+    proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    conf = os.path.join(proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
+ 
+    Dut_layer = Dut(conf)
+    Dut_layer.init()
+
     chip = TPX3()
-    chip.init()
+    chip.init(inter_layer = Dut_layer)
 
     chip.toggle_pin('RESET')
 
-    print('RX ready:', chip['RX0'].is_ready)
-    print('get_decoder_error_counter', chip['RX0'].get_decoder_error_counter())
+    print('RX ready:', chip.Dut_layer['RX0'].is_ready)
+    print('get_decoder_error_counter', chip.Dut_layer['RX0'].get_decoder_error_counter())
 
     data = chip.write_pll_config(write=False)
     chip.write(data)
@@ -61,29 +69,29 @@ def main(args_dict):
     data = chip.write_outputBlock_config(write=False)
     chip.write(data)
 
-    print('RX ready:', chip['RX0'].is_ready)
+    print('RX ready:', chip.Dut_layer['RX0'].is_ready)
 
     if delay_scan is True:
         for i in range(32):
-            chip['RX0'].reset()
-            chip['RX0'].INVERT = 0
-            chip['RX0'].SAMPLING_EDGE = 0
-            chip['RX0'].DATA_DELAY = i  # i
-            chip['RX0'].ENABLE = 1
-            chip['FIFO'].RESET
+            chip.Dut_layer['RX0'].reset()
+            chip.Dut_layer['RX0'].INVERT = 0
+            chip.Dut_layer['RX0'].SAMPLING_EDGE = 0
+            chip.Dut_layer['RX0'].DATA_DELAY = i  # i
+            chip.Dut_layer['RX0'].ENABLE = 1
+            chip.Dut_layer['FIFO'].RESET
             time.sleep(0.02)
-            chip['FIFO'].get_data()
+            chip.Dut_layer['FIFO'].get_data()
 
             for _ in range(100):
                 data = [0xAA, 0x00, 0x00, 0x00, 0x00] + [0x11] + [0x00 for _ in range(3)]
                 chip.write(data)
 
             time.sleep(0.01)
-            fdata = chip['FIFO'].get_data()
-            print('i =', i, '\tlen =', len(fdata), '\terror =', chip['RX0'].get_decoder_error_counter(), '\tready =', chip['RX0'].is_ready)
+            fdata = chip.Dut_layer['FIFO'].get_data()
+            print('i =', i, '\tlen =', len(fdata), '\terror =', chip.Dut_layer['RX0'].get_decoder_error_counter(), '\tready =', chip.Dut_layer['RX0'].is_ready)
 
-        print('get_decoder_error_counter', chip['RX0'].get_decoder_error_counter())
-        print('RX ready:', chip['RX0'].is_ready)
+        print('get_decoder_error_counter', chip.Dut_layer['RX0'].get_decoder_error_counter())
+        print('RX ready:', chip.Dut_layer['RX0'].is_ready)
 
         for i in fdata[:10]:
             print(hex(i), (i & 0x01000000) != 0, hex(i & 0xffffff))
@@ -92,12 +100,12 @@ def main(args_dict):
             print(b[:])
             pretty_print(i)
 
-    chip['RX0'].reset()
-    chip['RX0'].DATA_DELAY = 7
-    chip['RX0'].ENABLE = 1
+    chip.Dut_layer['RX0'].reset()
+    chip.Dut_layer['RX0'].DATA_DELAY = 7
+    chip.Dut_layer['RX0'].ENABLE = 1
     time.sleep(0.01)
 
-    while(not chip['RX0'].is_ready):
+    while(not chip.Dut_layer['RX0'].is_ready):
         pass
     #print('Print chip pll configuration')
     #print((chip.get_configuration()))
@@ -111,11 +119,11 @@ def main(args_dict):
     print("data_global_header: " + str(data_global_header) + "\t length: " + str(len(data_global_header)))
     
     # read out ChipID
-    chip['FIFO'].RESET
+    chip.Dut_layer['FIFO'].RESET
     time.sleep(0.1)
     chip.write(data_global_header)
     time.sleep(0.1)
-    fdata = chip['FIFO'].get_data()
+    fdata = chip.Dut_layer['FIFO'].get_data()
     print(fdata)
    
     fdata_decoded = chip.decode_fpga(fdata)
@@ -126,30 +134,60 @@ def main(args_dict):
     print(ChipID)
     print("ChipID has been read out succesfully ...")
 
-    
     # write ChipId now to the object attribute!
     #Id = [0x00, 0x00, 0x0c, 0x73]
     #chip.chipId = current_ChipId_formatted
-    chip.chipId = ChipID
+    #chip.chipId = ChipID
     print('ChipId object:\t\t' + str(chip.chipId))
 
     # Now do read out a DAC, use the local header: rewritten in tpx3.py
     print("Read out a DAC with a local header ...")
     data = chip.set_dac('VTP_coarse', 0b10101000, write = False)
     print("set_dac output: " + str(data))
-    chip['FIFO'].RESET
+    chip.Dut_layer['FIFO'].RESET
     time.sleep(0.1)
     chip.write(data)
     time.sleep(0.1)
     data = chip.read_dac('VTP_coarse', write=False)
     print("read_dac output: " + str(data))
-    chip['FIFO'].RESET
+    chip.Dut_layer['FIFO'].RESET
     time.sleep(0.1)
     chip.write(data)
     time.sleep(0.1)
-    fdata = chip['FIFO'].get_data()
+    fdata = chip.Dut_layer['FIFO'].get_data()
     print("fdata_local: " + str(fdata))
 
+    # Now create a second TPX3 object, which only prints command headers
+    # and gives them to the first object to execute them
+    chip2 = TPX3()
+    chip2.init(inter_layer = Dut_layer, ChipId = ChipID)
+
+    # write configurations
+    #data = chip2.write_pll_config(write=False)
+    #chip.write(chip2.write_pll_config(write=False))
+
+    #data = chip2.write_outputBlock_config(write=False)
+    #chip.write(chip2.write_outputBlock_config(write=False))
+
+    # Now do read out a DAC, use the local header: rewritten in tpx3.py
+    print("Read out a DAC with a local header from a second object...")
+    data = chip2.set_dac('VTP_coarse', 0b10101000, write = False)
+    print("set_dac output: " + str(data))
+    chip.Dut_layer['FIFO'].RESET
+    time.sleep(0.1)
+    chip.write(chip2.set_dac('VTP_coarse', 0b10101000, write=False))
+    time.sleep(0.1)
+    data = chip2.read_dac('VTP_coarse', write=False)
+    print("read_dac output: " + str(data))
+    chip.Dut_layer['FIFO'].RESET
+    time.sleep(0.1)
+    chip.write(chip2.read_dac('VTP_coarse', write=False))
+    time.sleep(0.1)
+    fdata = chip.Dut_layer['FIFO'].get_data()
+    print("fdata_local: " + str(fdata))
+
+
+    '''
     print("Read out EFuse with a local header ...")
     #if chip.chipId != [0x00, 0x00, 0x0c, 0x73]:
     #    chip.chipId = [0x00, 0x00, 0x0c, 0x73]
@@ -203,22 +241,22 @@ def main(args_dict):
     print('Decoded "End of Command":')
     for el in ddout:
         print('\tDecode: ', el)
-
+    '''
     print('Test set general config')
-    data = chip.write_general_config(write=False)
+    data = chip2.write_general_config(write=False)
     print("write_general_config output: " + str(data))
-    chip['FIFO'].RESET
+    chip.Dut_layer['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
-    data = chip.read_general_config(write=False)
+    data = chip2.read_general_config(write=False)
     print("read_general_config output: " + str(data))
-
-    chip['FIFO'].RESET
+    
+    chip.Dut_layer['FIFO'].RESET
     time.sleep(0.01)
     chip.write(data)
     time.sleep(0.01)
-    fdata = chip['FIFO'].get_data()
+    fdata = chip.Dut_layer['FIFO'].get_data()
     print(fdata)
     dout = chip.decode_fpga(fdata, True)
     print(dout)
@@ -235,7 +273,7 @@ def main(args_dict):
     print('Decoded "End of Command":')
     for el in ddout:
         print('\tDecode: ', el)
-
+    '''
     print('Test test pulse registers')
     data = chip.write_tp_period(100, 0, write=False)
     print("write_tp_period output: " + str(data))
@@ -272,7 +310,7 @@ def main(args_dict):
     print('Decoded "End of Command":')
     for el in ddout:
         print('\tDecode: ', el)
-'''
+    '''
     if timestamp_request is True:
         print('Test Timestamp extension')
         chip['gpio'].reset()
@@ -483,7 +521,7 @@ def main(args_dict):
         ttime = etime - stime
         bits = count * 4 * 8
         print(ttime, 's ', bits, 'b ', (float(bits) / ttime) / (1024 * 1024), 'Mb/s')
-'''
+
 print('Happy day!')
 
 
