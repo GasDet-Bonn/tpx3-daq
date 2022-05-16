@@ -1,7 +1,7 @@
 registers:
 - chip-id: 3187
   chip-link: 0
-  data-delay: 7
+  data-delay: 8
   data-edge: 0
   data-invert: 0
   fpga-link: 0

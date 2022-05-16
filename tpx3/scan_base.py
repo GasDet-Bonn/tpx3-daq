@@ -391,7 +391,7 @@ class ScanBase(object):
         # Create the masks for all steps
         for i in range(offset, number + offset):
             mask_step_cmd = []
-
+             
             #for chip in self.chips[1:]:
             # Start with deactivated testpulses on all pixels and all pixels masked
             self.chips[1].test_matrix[:, :] = self.chips[1].TP_OFF
@@ -470,20 +470,20 @@ class ScanBase(object):
         for i in range(mask_step):
             mask_step_cmd = []
 
-            #for chip in self.chips[1:]:
-            self.chips[1].mask_matrix[:, :] = self.chips[1].MASK_ON
-            self.chips[1].mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = self.chips[1].MASK_ON
+            for chip in self.chips[1:]:
+                chip.mask_matrix[:, :] = chip.MASK_ON
+                chip.mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = chip.MASK_ON
 
-            if self.maskfile:
-                self.chips[1].mask_matrix[temp_mask_matrix == True] = self.chips[1].MASK_OFF
+                if self.maskfile:
+                    chip.mask_matrix[temp_mask_matrix == True] = chip.MASK_OFF
 
-            for j in range(256 // 4):
-                mask_step_cmd.append(self.chips[1].write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
+                for j in range(256 // 4):
+                    mask_step_cmd.append(chip.write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
 
-            if append_datadriven == True:
-                # Append the command for initializing a data driven readout
-                mask_step_cmd.append(self.chips[1].read_pixel_matrix_datadriven(write=False))
-            #print(mask_step_cmd)
+                if append_datadriven == True:
+                    # Append the command for initializing a data driven readout
+                    mask_step_cmd.append(chip.read_pixel_matrix_datadriven(write=False))
+                #print(mask_step_cmd)
             mask_cmds.append(mask_step_cmd)
 
         return mask_cmds
@@ -711,7 +711,9 @@ class ScanBase(object):
 
         self.init_links()
 
+        # Set the output settings of the chip
         self.chips[0].write_outputBlock_config(write=True)
+        self.fifo_readout.print_readout_status()
         
         # To use local headers, we need to execute EFuse_Read globally
         # once after resetting the chip, so that the ChipID of the
@@ -726,17 +728,13 @@ class ScanBase(object):
         fdata = self.chips[0].Dut_layer['FIFO'].get_data()
         print(fdata)
 
-        # Set the output settings of the chip
-        self.chips[0].write_outputBlock_config(write=True)
-        self.fifo_readout.print_readout_status()
-
         # Enable power pulsing
         self.chips[0].Dut_layer['CONTROL']['EN_POWER_PULSING'] = 1
         self.chips[0].Dut_layer['CONTROL'].write()
 
         # Set PLL Config
-        self.chips[0].write_pll_config(write=True)
-        self.chips[0].write(self.chips[1].write_pll_config(write=False))
+        for chip in self.chips:
+            self.chips[0].write(chip.write_pll_config(write=False))
 
         # Reset the fpga timestamp pulser
         self.chips[0].Dut_layer['PULSE_GEN'].reset()
@@ -751,55 +749,56 @@ class ScanBase(object):
             self.chips[0].Dut_layer['PULSE_GEN'].set_en(False)
 
         # Reset DACs and set them to the values defined in dacs.yaml
-        self.chips[1].reset_dac_attributes(to_default = False)
-        data = self.chips[1].write_dacs()
-        for chunk in data:
-            #print('Reset dacs chunk header: ' + str(chunk))
-            self.chips[0].write(chunk)
+        for chip in self.chips[1:]:
+            chip.reset_dac_attributes(to_default = False)
+            data = chip.write_dacs()
+            for chunk in data:
+                #print('Reset dacs chunk header: ' + str(chunk))
+                self.chips[0].write(chunk)
 
-        # Sequential reset of the pixel matrix
-        data = self.chips[1].reset_sequential(write=False)
-        #print('Reset sequential header: ' + str(data))
-        self.chips[0].write(data, True)
-        #fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+            # Sequential reset of the pixel matrix
+            data = chip.reset_sequential(write=False)
+            #print('Reset sequential header: ' + str(data))
+            self.chips[0].write(data, True)
+            #fdata = self.chips[0].Dut_layer['FIFO'].get_data()
 
         self.maskfile = kwargs.get('maskfile', None)
         self.thrfile = kwargs.get('thrfile', None)
         self.configure(**kwargs)
 
         # Produce needed PCR (Pixel configuration register)
-        #for chip in self.chips[1:]:
-        for i in range(256 // 4):
-            data = self.chips[1].write_pcr(list(range(4 * i, 4 * i + 4)), write=False)
-            #print('Write pcr header: ' + str(data))
-            self.chips[0].write(data)
+        for chip in self.chips[1:]:
+            for i in range(256 // 4):
+                data = chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False)
+                #print('Write pcr header: ' + str(data))
+                self.chips[0].write(data)
 
         # Set Op_mode for the scans, based on the scan id
         #for chip in self.chips[1:]:
         if self.scan_id == 'EqualisationCharge':
             self.chips[0]._configs["Op_mode"] = 2
-            #self.chips[1]._configs["Op_mode"] = 2
+            self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'EqualisationNoise':
             self.chips[0]._configs["Op_mode"] = 2
-            #self.chips[1]._configs["Op_mode"] = 2
+            self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'PixelDACopt':
             self.chips[0]._configs["Op_mode"] = 2
-            #self.chips[1]._configs["Op_mode"] = 2
+            self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'TestpulseScan':
             self.chips[0]._configs["Op_mode"] = 2
-            #self.chips[1]._configs["Op_mode"] = 2
+            self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'ThresholdScan':
             self.chips[0]._configs["Op_mode"] = 2
-            #self.chips[1]._configs["Op_mode"] = 2
+            self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'ThresholdCalib':
             self.chips[0]._configs["Op_mode"] = 2
-            #self.chips[1]._configs["Op_mode"] = 2
+            self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'NoiseScan':
             self.chips[0]._configs["Op_mode"] = 2
-            #self.chips[1]._configs["Op_mode"] = 2
+            self.chips[1]._configs["Op_mode"] = 2
         elif self.scan_id == 'ToTCalib':
             self.chips[0]._configs["Op_mode"] = 0
-            #self.chips[1]._configs["Op_mode"] = 0
+            self.chips[1]._configs["Op_mode"] = 0
 
         # Setup HDF5 file
         filename = self.output_filename + '.h5'

@@ -54,8 +54,19 @@ class NoiseScan(ScanBase):
             raise ValueError("Value for Vthreshold_stop must be bigger than value for Vthreshold_start")
 
         # Disable test pulses, set the mode to ToT/ToA and write the configuration to the Timepix3
+        # Every object needs the same configurations for correct analysis right now
         self.chips[0]._configs["TP_en"] = 0
-        self.chips[0].write_general_config()
+        self.chips[1]._configs['TP_en'] = 0
+        '''
+        data = self.chips[0].write_general_config()
+        print('Write general config header of global object: ' + str(data))
+        data = self.chips[1].write_general_config(write=False)
+        print('Write general config header of local object: ' + str(data))
+        data = self.chips[0]._configs
+        print('Configs chip[0]: ' + str(data))
+        data = self.chips[1]._configs
+        print('Configs chip[1]: ' + str(data))
+        '''
 
         self.logger.info('Preparing injection masks...')
         if status != None:
@@ -93,12 +104,13 @@ class NoiseScan(ScanBase):
         scan_param_id = 0
         for threshold in thresholds:
             # Set the threshold
-            data = self.chips[1].set_dac("Vthreshold_coarse", int(threshold[0]), write=False)
-            print('Set dac Vthreshold_coarse: ' + str(data))
-            self.chips[0].write(data)
-            data = self.chips[1].set_dac("Vthreshold_fine", int(threshold[1]), write=False)
-            print(data)
-            self.chips[0].write(data)
+            for chip in self.chips[1:]:
+                data = chip.set_dac("Vthreshold_coarse", int(threshold[0]), write=False)
+                print('Set dac Vthreshold_coarse: ' + str(data))
+                self.chips[0].write(data)
+                data = chip.set_dac("Vthreshold_fine", int(threshold[1]), write=False)
+                print(data)
+                self.chips[0].write(data)
 
             for mask_step_cmd in mask_cmds:
                 # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
@@ -118,9 +130,10 @@ class NoiseScan(ScanBase):
                             step_counter += 1
                             fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
-                    data = self.chips[1].stop_readout(write=False)
-                    self.chips[0].write(data)
-                    time.sleep(0.025)
+                    for chip in self.chips[1:]:
+                        data = chip.stop_readout(write=False)
+                        self.chips[0].write(data)
+                        time.sleep(0.025)
             scan_param_id += 1
 
         if progress == None:
