@@ -106,10 +106,10 @@ class NoiseScan(ScanBase):
             # Set the threshold
             for chip in self.chips[1:]:
                 data = chip.set_dac("Vthreshold_coarse", int(threshold[0]), write=False)
-                print('Set dac Vthreshold_coarse: ' + str(data))
+                #print('Set dac Vthreshold_coarse: ' + str(data))
                 self.chips[0].write(data)
                 data = chip.set_dac("Vthreshold_fine", int(threshold[1]), write=False)
-                print(data)
+                #print(data)
                 self.chips[0].write(data)
 
             for mask_step_cmd in mask_cmds:
@@ -158,13 +158,16 @@ class NoiseScan(ScanBase):
         if status != None:
             status.put("Performing data analysis")
 
+        pix_occ  = [[]]*8
+        hist_occ = [[]]*8
+
         # Open the HDF5 which contains all data of the scan
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters
-            raw_data = h5_file.root.raw_data[:]
-            meta_data = h5_file.root.meta_data[:]
-            run_config = h5_file.root.configuration.run_config[:]
-            general_config = h5_file.root.configuration.generalConfig[:]
+            raw_data        = h5_file.root.raw_data[:]
+            meta_data       = h5_file.root.meta_data[:]
+            run_config      = h5_file.root.configuration.run_config[:]
+            general_config  = h5_file.root.configuration.generalConfig[:]
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
@@ -176,25 +179,30 @@ class NoiseScan(ScanBase):
             hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, meta_data, progress = progress)
             raw_data = None
 
-            # Select only data which is hit data
-            hit_data = hit_data[hit_data['data_header'] == 1]
-            h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
-            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
-            hist_occ = np.reshape(pix_occ, (256, 256)).T
-            h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
             param_range = np.unique(meta_data['scan_param_id'])
-            meta_data = None
-            pix_occ = None
-            hist_occ = None
-
+            print('parameter range: ' + str(param_range))
             # Read needed configuration parameters
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            Vthreshold_stop  = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
 
-            # Create histograms for number of active pixels and number of hits for individual thresholds
-            noise_curve_pixel, noise_curve_hits = analysis.noise_pixel_count(hit_data, param_range, Vthreshold_start)
-            h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurvePixel', obj=noise_curve_pixel)
-            h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurveHits', obj=noise_curve_hits)
+            # for now create tables and histograms for each link
+            for link in range(8):
+                # Select only data which is hit data
+                hit_data_link = hit_data[link][hit_data[link]['data_header'] == 1]
+                
+                h5_file.create_table(h5_file.root.interpreted, 'hit_data_%d' %link, hit_data_link, filters=tb.Filters(complib='zlib', complevel=5))
+                pix_occ  = np.bincount(hit_data_link['x'] * 256 + hit_data_link['y'], minlength=256 * 256).astype(np.uint32)
+                hist_occ = np.reshape(pix_occ, (256, 256)).T
+                h5_file.create_carray(h5_file.root.interpreted, name='HistOcc_%d' %link, obj=hist_occ)
+
+                meta_data   = None
+                pix_occ     = None
+                hist_occ    = None
+
+                # Create histograms for number of active pixels and number of hits for individual thresholds
+                noise_curve_pixel, noise_curve_hits = analysis.noise_pixel_count(hit_data_link, param_range, Vthreshold_start)
+                h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurvePixel_%d' %link, obj=noise_curve_pixel)
+                h5_file.create_carray(h5_file.root.interpreted, name='NoiseCurveHits_%d' %link, obj=noise_curve_hits)
 
     def plot(self, status = None, plot_queue = None, **kwargs):
         '''
@@ -223,15 +231,39 @@ class NoiseScan(ScanBase):
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
                 p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
+                
+                for table in h5_file.root.interpreted:
+                    if table._v_name[:-2] == 'NoiseCurvePixel':
+                        # Plot the noise pixels histogram
+                        #print(table._v_name[:-2])
+                        link = int(table._v_name[-1])
+                        noise_curve_pixel = table[:]
+                        print(noise_curve_pixel[noise_curve_pixel > 0])
+                        p._plot_1d_hist(hist = noise_curve_pixel, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise pixel per threshold, link = %d' %link, suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Number of active pixels', log_y=True, plot_queue=plot_queue)
 
-                # Plot the noise pixels histogram
-                noise_curve_pixel = h5_file.root.interpreted.NoiseCurvePixel[:]
-                p._plot_1d_hist(hist = noise_curve_pixel, plot_range = list(range(Vthreshold_start, Vthreshold_stop)), title='Noise pixel per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Number of active pixels', log_y=True, plot_queue=plot_queue)
 
-                # Plot the noise hits histogram
-                noise_curve_hits = h5_file.root.interpreted.NoiseCurveHits[:]
-                p._plot_1d_hist(hist = noise_curve_hits, plot_range = list(range(Vthreshold_start, Vthreshold_stop)), title='Noise hits per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Total number of hits', log_y=True, plot_queue=plot_queue)
+                    if table._v_name[:-2] == 'NoiseCurveHits':
+                        # Plot the noise hits histogram
+                        #print(table._v_name[:-2])
+                        link = int(table._v_name[-1])
+                        noise_curve_hits = table[:]
+                        print(noise_curve_hits[noise_curve_hits > 0])
+                        p._plot_1d_hist(hist = noise_curve_hits, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise hits per threshold, link = %d' %link, suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Total number of hits', log_y=True, plot_queue=plot_queue)
 
+                '''
+                for link in range(8):
+                    # Plot the noise pixels histogram
+                    #noise_curve_pixel = h5_file.root.interpreted.NoiseCurvePixel[:]
+                    noise_curve_pixel = h5_file.root.interpreted[link+16][:]
+                    print(noise_curve_pixel[noise_curve_pixel > 0])
+                    p._plot_1d_hist(hist = noise_curve_pixel, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise pixel per threshold, link = %d' %link, suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Number of active pixels', log_y=True, plot_queue=plot_queue)
+
+                    # Plot the noise hits histogram
+                    #noise_curve_hits = h5_file.root.interpreted.NoiseCurveHits[:]
+                    noise_curve_hits = h5_file.root.interpreted[link+8][:]
+                    print(noise_curve_hits[noise_curve_hits > 0])
+                    p._plot_1d_hist(hist = noise_curve_hits, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise hits per threshold, link = %d' %link, suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Total number of hits', log_y=True, plot_queue=plot_queue)
+                '''
 
 if __name__ == "__main__":
     scan = NoiseScan()

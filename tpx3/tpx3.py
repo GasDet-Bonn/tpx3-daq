@@ -230,15 +230,8 @@ class TPX3():
         self.lfsr_14 = {}
         self.lfsr_4 = {}
 
-        #if not conf:
-        #    conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
-
-        #logger.info("Loading configuration file from %s" % conf)
-        #super(TPX3, self).__init__(conf)
-
     def init(self, ChipId=None, inter_layer=None, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
-        #super(TPX3, self).init()
-
+        
         if inter_layer != None:
             self.Dut_layer = inter_layer
             self.fw_version = self.Dut_layer['intf'].read(0x0000, 1)[0]
@@ -253,7 +246,7 @@ class TPX3():
 
             self.Dut_layer['CONTROL']['DATA_MUX_SEL'] = 1
             self.Dut_layer['CONTROL'].write()
-
+        
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
         # Our current chip seems to think its chip ID is all 0s. ?!
@@ -406,7 +399,7 @@ class TPX3():
         var_name = dictNames[dict_type]["YamlContent"] + "_written_to_chip"
         # set this to False (Note: not used so far)
         setattr(self, var_name, False)
-
+    
     def getGlobalSyncHeader(self):
         """
         Returns the global sync header, which is used to address all available
@@ -417,7 +410,7 @@ class TPX3():
         """
         # 0xAA = global sync header
         return [0xAA] + [0x00 for _ in range(4)]
-
+    
     def getLocalSyncHeader(self):
         """
         Returns the local sync header, which is used to address a specific Timepix3
@@ -1714,6 +1707,288 @@ class TPX3():
 
         return gray_decrypt
 
+
+class TPX3_IO(Dut):
+
+    ''' Map hardware IDs for board identification '''
+    hw_map = {
+        1: 'SIMULATION',
+        2: 'FECv6',
+        3: 'ML605',
+        4: 'MIMAS_A7'
+    }
+
+    # number of bits a value for a DAC can have maximally
+    DAC_VALUE_BITS = 9
+
+    # PCR Definitions
+    MASK_ON = 0
+    MASK_OFF = 1
+    TP_ON = 1
+    TP_OFF = 0
+
+    ''' Compatible firware version '''
+    fw_version_required = 3
+
+    def __init__(self, conf=None, **kwargs):
+        self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.lfsr_10 = {}
+        self.lfsr_14 = {}
+        self.lfsr_4 = {}
+
+        if not conf:
+            conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
+
+        logger.info("Loading configuration file from %s" % conf)
+        super(TPX3_IO, self).__init__(conf)
+    
+    def init(self, config_file = None, dac_file = None, outputBlock_file = None, PLLConfig_file = None):
+        super(TPX3_IO, self).init()
+
+        self.fw_version = self['intf'].read(0x0000, 1)[0]
+        self.board_version = self.hw_map[self['intf'].read(0x0001, 1)[0]]
+
+        logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
+
+        if self.fw_version != self.fw_version_required:
+            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
+
+        # self['CONF_SR'].set_size(3924)
+
+        self['CONTROL']['DATA_MUX_SEL'] = 1
+        self['CONTROL'].write()
+
+        # global headerbroadcast
+        self.GlobalHeader = [0xAA] + [0x00 for _ in range(4)]
+
+        # set all configuration attributes to their default values, also sets
+        # the `config_written_to_chip` flag to False
+        self.lfsr_10_bit()
+        self.lfsr_14_bit()
+        self.lfsr_4_bit()
+
+        # assign filenames so we can check them
+        self.config_file = config_file
+        self.dac_file = dac_file
+        self.outputBlock_file = outputBlock_file
+        self.PLLConfig_file = PLLConfig_file
+
+        for dict_type, type_dict in six.iteritems(dictNames):
+            setattr(self, type_dict["YamlContent"], {})
+            # get the name of the variable, which stores the filename, e.g. `config_file`
+            var_name = type_dict["FnameVar"]
+            if getattr(self, var_name) is None:
+                setattr(
+                    self,
+                    var_name,
+                    os.path.join(self.proj_dir, 'tpx3' + os.sep + type_dict["Filename"])
+                )
+
+            # read the general configuration from the YAML file and set the _configs dictionary
+            # to the values given by the 'value' field (i.e. the user desired setting)
+            # read all 3 YAML files for config registers, DACS and the output block configuration
+            self.read_yaml(getattr(self, var_name), dict_type)
+
+    def read_yaml(self, filename, dict_type):
+        """
+        This function reads a given YAML file, stores each register in
+        a small dictionary containing its values. Depending on the
+        `dict_type` it generically creates a custom dictionary of the correct
+        type, writes the user defined values of the YAML file to that dictionary
+        and assigns it to the correct attribute, taken from the dictNames global
+        variable.
+        """
+        data = yaml.load(open(filename, 'r'), Loader=yaml.FullLoader)
+
+        # map storing the allowed sizes of each value
+        valsize_map = {}
+        # define a list of the different keys we have in each YAML file
+        elements = ["address", "size", "default", "value"]
+        # first fill this dictionary
+        outdict = {}
+        # iterate over all registers, build small dictionary for
+        # each register and assign to full dictionary
+        for register in data['registers']:
+            tmp_dict = {}
+            for key in elements:
+                tmp_dict[key] = register[key]
+            outdict[register['name']]  = tmp_dict
+            valsize_map[register['name']] = int(tmp_dict['size'])
+        # now create the correct custom dict
+        c_dict = CustomDict(valsize_map, dict_type)
+
+        # now write values to this dictionary
+        for k, v in six.iteritems(outdict):
+            c_dict[k] = v['value']
+
+        # set the (now filled) custom dict as attribute
+        setattr(self, dictNames[dict_type]["CustomDict"], c_dict)
+        # and set the dict containing the YAML content
+        setattr(self, dictNames[dict_type]["YamlContent"], outdict)
+
+        # now set the `_written_to_chip` variables as attributes, init with False
+        var_name = dictNames[dict_type]["YamlContent"] + "_written_to_chip"
+        # set this to False (Note: not used so far)
+        setattr(self, var_name, False)
+
+    # based on above proc, define methods with easier names to work with
+    def reset_config_attributes(self, to_default=False):
+        self.reset_attributes("ConfigDict", to_default)
+
+    def reset_outputBlock_attributes(self, to_default=False):
+        self.reset_attributes("OutputBlockDict", to_default)
+
+    def reset_dac_attributes(self, to_default=False):
+        self.reset_attributes("DacsDict", to_default)
+
+    def reset_PLLConfig_attributes(self, to_default=False):
+        self.reset_attributes("PLLConfigDict", to_default)
+
+    def reset_attributes(self, dict_type, to_default=False):
+        """
+        Resets all attributes of the given dictionary (cased on `dict_type`, either
+        _configs, _outputBlocks or _dacs) to their default values if `to_default` is
+        True, else we reset the values to the `value` field of the YAML file,
+        i.e. the user desired chip specific settings.
+        """
+        # build the correct attribute name based on dictNames "YamlContent" string
+        var_name = dictNames[dict_type]["YamlContent"] + "_written_to_chip"
+        # set this to False (Note: not used so far)
+        setattr(self, var_name, False)
+
+        yaml_dict = getattr(self, dictNames[dict_type]["YamlContent"])
+        c_dict = getattr(self, dictNames[dict_type]["CustomDict"])
+        for k, v in six.iteritems(yaml_dict):
+            if to_default:
+                c_dict[k] = v['default']
+            else:
+                c_dict[k] = v['value']
+
+        # set c_dict back as the correct CustomDict
+        setattr(self, dictNames[dict_type]["CustomDict"], c_dict)
+
+    def write(self, data, clear_fifo=False):
+        """
+        Performs a write of `data` on the SPI interface to the Tpx3.
+        Note: this function is blocking until the write is complete.
+        Inputs:
+            data: list of bytes to write. MSB is first element of list
+            clear_fifo: bool = if True, we clear the FIFO and wait before and
+                after writing to the chip
+        """
+
+        if isinstance(data[0], list):
+            for indata in data:
+                self.write(indata, clear_fifo)
+            return
+
+        if clear_fifo:
+            self.Dut_layer['FIFO'].RESET
+            time.sleep(TPX3_SLEEP)
+
+        # total size in bits
+        self.Dut_layer['SPI'].set_size(len(data) * 8)
+        self.Dut_layer['SPI'].set_data(data)
+        self.Dut_layer['SPI'].start()
+
+        while(not self.Dut_layer['SPI'].is_ready):
+            # wait until SPI is done
+            pass
+
+        if clear_fifo:
+            time.sleep(TPX3_SLEEP)
+    
+    def toggle_pin(self, pin, sleep_time = 0.01):
+        """
+        Toggles a pin for a defined time
+        """
+        if pin not in {"TO_SYNC", "RESET", "SHUTTER"}:
+            raise ValueError("You can only toggle TO_SYNC, RESET and SHUTTER pins!")
+
+        self['CONTROL'][pin] = 1
+        self['CONTROL'].write()
+        time.sleep(sleep_time)
+        self['CONTROL'][pin] = 0
+        self['CONTROL'].write()
+
+    def lfsr_10_bit(self):
+        """
+        Generates a 10bit LFSR according to Manual v1.9 page 19
+        """
+        lfsr = BitLogic(10)
+        lfsr[7:0] = 0xFF
+        lfsr[9:8] = 0b11
+        dummy = 0
+        for i in range(2**10):
+            self.lfsr_10[BitLogic.tovalue(lfsr)] = i
+            dummy = lfsr[9]
+            lfsr[9] = lfsr[8]
+            lfsr[8] = lfsr[7]
+            lfsr[7] = lfsr[6]
+            lfsr[6] = lfsr[5]
+            lfsr[5] = lfsr[4]
+            lfsr[4] = lfsr[3]
+            lfsr[3] = lfsr[2]
+            lfsr[2] = lfsr[1]
+            lfsr[1] = lfsr[0]
+            lfsr[0] = lfsr[7] ^ dummy
+        self.lfsr_10[2 ** 10 - 1] = 0
+
+    def lfsr_14_bit(self):
+        """
+        Generates a 14bit LFSR according to Manual v1.9 page 19
+        """
+        lfsr = BitLogic(14)
+        lfsr[7:0] = 0xFF
+        lfsr[13:8] = 63
+        dummy = 0
+        for i in range(2**14):
+            self.lfsr_14[BitLogic.tovalue(lfsr)] = i
+            dummy = lfsr[13]
+            lfsr[13] = lfsr[12]
+            lfsr[12] = lfsr[11]
+            lfsr[11] = lfsr[10]
+            lfsr[10] = lfsr[9]
+            lfsr[9] = lfsr[8]
+            lfsr[8] = lfsr[7]
+            lfsr[7] = lfsr[6]
+            lfsr[6] = lfsr[5]
+            lfsr[5] = lfsr[4]
+            lfsr[4] = lfsr[3]
+            lfsr[3] = lfsr[2]
+            lfsr[2] = lfsr[1]
+            lfsr[1] = lfsr[0]
+            lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
+        self.lfsr_14[2 ** 14 - 1] = 0
+
+    def lfsr_4_bit(self):
+        """
+        Generates a 4bit LFSR according to Manual v1.9 page 19
+        """
+        lfsr = BitLogic(4)
+        lfsr[3:0] = 0xF
+        dummy = 0
+        for i in range(2**4):
+            self.lfsr_4[BitLogic.tovalue(lfsr)] = i
+            dummy = lfsr[3]
+            lfsr[3] = lfsr[2]
+            lfsr[2] = lfsr[1]
+            lfsr[1] = lfsr[0]
+            lfsr[0] = lfsr[3] ^ dummy
+        self.lfsr_4[2 ** 4 - 1] = 0
+
+    def gray_decrypt(self, value):
+        """
+        Decrypts a gray encoded 48 bit value according to Manual v1.9 page 19
+        """
+        encoded_value = BitLogic(48)
+        encoded_value[47:0]=value
+        gray_decrypt = BitLogic(48)
+        gray_decrypt[47]=encoded_value[47]
+        for i in range (46, -1, -1):
+            gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
+
+        return gray_decrypt
 
 if __name__ == '__main__':
     pass

@@ -148,7 +148,7 @@ class ScanBase(object):
                    chip = TPX3()
                    chip.init(ChipId=Id_format)
                    self.chips.append(chip)
-                   print(chip.chipId)
+                   #print(chip.chipId)
 
             else:
                self.logger.info("Validity check of link configuration failed")
@@ -720,13 +720,13 @@ class ScanBase(object):
         # chip is known to itself.
         data = self.chips[0].read_periphery_template('EFuse_Read')
         data += [0x00]*4
-        print(data)
+        #print(data)
         self.chips[0].Dut_layer['FIFO'].RESET
         time.sleep(0.1)
         self.chips[0].write(data)
         time.sleep(0.1)
         fdata = self.chips[0].Dut_layer['FIFO'].get_data()
-        print(fdata)
+        #print(fdata)
 
         # Enable power pulsing
         self.chips[0].Dut_layer['CONTROL']['EN_POWER_PULSING'] = 1
@@ -889,7 +889,7 @@ class ScanBase(object):
         '''
             Handling of a chunk of data.
         '''
-
+        
         total_words = self.raw_data_earray.nrows
 
         # Append the data to the raw data earray in the HDF5 file
