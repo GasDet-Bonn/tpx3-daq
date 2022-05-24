@@ -856,7 +856,10 @@ class Plotting(object):
 
         tick_size = np.diff(plot_range)[0]
 
-        hist, bins = np.histogram(np.ravel(data), bins=plot_range)
+        if type(data) == np.ma.core.MaskedArray:
+            hist, bins = np.histogram(data.compressed(), bins=plot_range)
+        else:
+            hist, bins = np.histogram(np.ravel(data), bins=plot_range)
 
         bin_centres = (bins[:-1] + bins[1:]) / 2.0
 
