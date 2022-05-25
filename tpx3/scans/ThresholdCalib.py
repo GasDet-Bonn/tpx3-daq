@@ -139,7 +139,7 @@ class ThresholdCalib(ScanBase):
 
         # Set testpulse DACs
         self.chip.set_dac("VTP_coarse", 100)
-        self.chip.set_dac("VTP_fine", 211 + (100 // n_pulse_heights) * iteration)
+        self.chip.set_dac("VTP_fine", 240 + (100 // n_pulse_heights) * iteration)
 
         scan_param_id = 0
         for threshold in thresholds:
@@ -316,7 +316,7 @@ class ThresholdCalib(ScanBase):
                     it_parameters, it_errors = p.plot_distribution(hist, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution', plot_queue=plot_queue)
 
                     # Fill the iteration results in the calibration parameter arrays
-                    pulse_heights[iteration] = ((211 + (100 // iterations) * iteration) - 200) * 46.75
+                    pulse_heights[iteration] = ((240 + (100 // iterations) * iteration) - 200) * 46.75
                     thresholds[iteration] = it_parameters[1]
                     errors[iteration] = it_parameters[2]
 
