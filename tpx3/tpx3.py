@@ -246,7 +246,7 @@ class TPX3(Dut):
         logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
 
         if self.fw_version != self.fw_version_required:
-            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
+            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, self.fw_version_required))
 
         # self['CONF_SR'].set_size(3924)
 
