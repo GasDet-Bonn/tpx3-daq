@@ -81,7 +81,6 @@ class Tpx3(Receiver):
         occupancy_graphics = pg.GraphicsLayoutWidget()
         occupancy_graphics.show()
         view = occupancy_graphics.addViewBox()
-        view.invertY(True)
         self.occupancy_img = pg.ImageItem(border='w')
         # Set colormap from matplotlib
         lut = generateColorMapLut("viridis")
