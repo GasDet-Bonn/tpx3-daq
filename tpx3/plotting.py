@@ -786,7 +786,6 @@ class Plotting(object):
 
         x_bins = np.arange(min(scan_parameters) - 1, max(scan_parameters) + 2)
         y_bins = np.arange(-0.5, max_occ + 0.5)
-        n_pixel = 256 * 256
 
         param_count = scurves.shape[0]
         hist = np.empty([param_count, max_occ], dtype=np.uint32)
@@ -823,7 +822,7 @@ class Plotting(object):
         else:
             cb = fig.colorbar(im, fraction=0.04, pad=0.05)
         cb.set_label("# of pixels")
-        ax.set_title(title + ' for %d pixel(s)' % (n_pixel), color=TITLE_COLOR)
+        ax.set_title(title + ' for %d pixel(s)' % (scurves.shape[0]), color=TITLE_COLOR)
         if scan_parameter_name is None:
             ax.set_xlabel('Scan parameter')
         else:
