@@ -267,7 +267,7 @@ class GUI_ToT_Calib(Gtk.Window):
         Iterationbutton3.connect('toggled', self.on_Iterationbutton_toggled, '64')
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
 
         #Startbutton
         self.Startbutton = Gtk.Button(label = 'Start')
@@ -409,7 +409,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
 
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #Startbutton
@@ -556,7 +556,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
 
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #n_pulse_heights
@@ -722,7 +722,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
 
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #Startbutton
@@ -1735,7 +1735,7 @@ class GUI_Equalisation(Gtk.Window):
         Iterationbutton3.connect('toggled', self.on_Iterationbutton_toggled, '64')
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #Startbutton
