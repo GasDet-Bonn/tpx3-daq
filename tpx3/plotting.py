@@ -779,7 +779,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='fancy_occupancy', plot_queue=plot_queue)
 
-    def plot_scurves(self, scurves, scan_parameters, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
+    def plot_scurves(self, scurves, scan_parameters, chipID, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
 
         if max_occ is None:
             max_occ = np.max(scurves) + 5
@@ -823,7 +823,7 @@ class Plotting(object):
         else:
             cb = fig.colorbar(im, fraction=0.04, pad=0.05)
         cb.set_label("# of pixels")
-        ax.set_title(title + ' for %d pixel(s)' % (n_pixel), color=TITLE_COLOR)
+        ax.set_title(title + ' for %d pixel(s), chip %s' % (n_pixel, chipID), color=TITLE_COLOR)
         if scan_parameter_name is None:
             ax.set_xlabel('Scan parameter')
         else:

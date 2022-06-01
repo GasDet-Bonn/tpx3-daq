@@ -47,28 +47,28 @@ class FifoReadout(object):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(loglevel)
 
-        self.chip = chip
-        self.callback = None
-        self.errback = None
-        self.readout_thread = None
-        self.worker_thread = None
-        self.watchdog_thread = None
-        self.fill_buffer = False
-        self.readout_interval = readout_interval
+        self.chip                        = chip
+        self.callback                    = None
+        self.errback                     = None
+        self.readout_thread              = None
+        self.worker_thread               = None
+        self.watchdog_thread             = None
+        self.fill_buffer                 = False
+        self.readout_interval            = readout_interval
         self._moving_average_time_period = moving_average_time_period
-        self._data_deque = deque()
-        self._data_buffer = deque()
-        self._words_per_read = deque(maxlen=int(self._moving_average_time_period / self.readout_interval))
-        self._result = Queue(maxsize=1)
-        self._calculate = Event()
-        self.stop_readout = Event()
-        self.force_stop = Event()
-        self.timestamp = None
+        self._data_deque                 = deque()
+        self._data_buffer                = deque()
+        self._words_per_read             = deque(maxlen=int(self._moving_average_time_period / self.readout_interval))
+        self._result                     = Queue(maxsize=1)
+        self._calculate                  = Event()
+        self.stop_readout                = Event()
+        self.force_stop                  = Event()
+        self.timestamp                   = None
         self.update_timestamp()
-        self._is_running = False
+        self._is_running                 = False
         self.reset_rx()
         self.reset_sram_fifo()
-        self._record_count = 0
+        self._record_count               = 0
 
     @property
     def is_running(self):
@@ -103,11 +103,11 @@ class FifoReadout(object):
         if self._is_running:
             raise RuntimeError('Readout already running: use stop() before start()')
 
-        self._is_running = True
+        self._is_running    = True
         self.logger.debug('Starting FIFO readout...')
-        self.callback = callback
-        self.errback = errback
-        self.fill_buffer = fill_buffer
+        self.callback       = callback
+        self.errback        = errback
+        self.fill_buffer    = fill_buffer
         # self._record_count = 0
         if reset_rx:
             self.reset_rx()
@@ -126,15 +126,15 @@ class FifoReadout(object):
         self.stop_readout.clear()
         self.force_stop.clear()
         if self.errback:
-            self.watchdog_thread = Thread(target=self.watchdog, name='WatchdogThread')
+            self.watchdog_thread        = Thread(target=self.watchdog, name='WatchdogThread')
             self.watchdog_thread.daemon = True
             self.watchdog_thread.start()
         if self.callback:
-            self.worker_thread = Thread(target=self.worker, name='WorkerThread')
-            self.worker_thread.daemon = True
+            self.worker_thread          = Thread(target=self.worker, name='WorkerThread')
+            self.worker_thread.daemon   = True
             self.worker_thread.start()
-        self.readout_thread = Thread(target=self.readout, name='ReadoutThread', kwargs={'no_data_timeout': no_data_timeout})
-        self.readout_thread.daemon = True
+        self.readout_thread             = Thread(target=self.readout, name='ReadoutThread', kwargs={'no_data_timeout': no_data_timeout})
+        self.readout_thread.daemon      = True
         self.readout_thread.start()
 
     def stop(self, timeout=10.0):
@@ -163,17 +163,17 @@ class FifoReadout(object):
         if self.callback:
             self.worker_thread.join()
         self.callback = None
-        self.errback = None
+        self.errback  = None
         self.logger.debug('Stopped FIFO readout')
 
     def print_readout_status(self):
-        sync_status = self.get_rx_sync_status()
-        en_status = self.get_rx_en_status()
-        discard_count = self.get_rx_fifo_discard_count()
-        decode_error_count = self.get_rx_decode_error_count()
-        invert = [channel.INVERT for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
-        sampling_edge = [channel.SAMPLING_EDGE for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
-        data_delay = [channel.DATA_DELAY for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
+        sync_status         = self.get_rx_sync_status()
+        en_status           = self.get_rx_en_status()
+        discard_count       = self.get_rx_fifo_discard_count()
+        decode_error_count  = self.get_rx_decode_error_count()
+        invert              = [channel.INVERT for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
+        sampling_edge       = [channel.SAMPLING_EDGE for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
+        data_delay          = [channel.DATA_DELAY for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
 
         if not any(self.get_rx_sync_status()) or any(discard_count)  or any(decode_error_count) :
             self.logger.warning('RX errors detected')
@@ -220,10 +220,10 @@ class FifoReadout(object):
                 if self.stop_readout.is_set():
                     break
             else:
-                n_words = data.shape[0]
-                last_time, curr_time = self.update_timestamp()
-                discard_error = int(np.sum(self.get_rx_fifo_discard_count(), dtype=np.uint32))
-                decode_error = int(np.sum(self.get_rx_decode_error_count(), dtype=np.uint32))
+                n_words                 = data.shape[0]
+                last_time, curr_time    = self.update_timestamp()
+                discard_error           = int(np.sum(self.get_rx_fifo_discard_count(), dtype=np.uint32))
+                decode_error            = int(np.sum(self.get_rx_decode_error_count(), dtype=np.uint32))
                 if self.callback:
                     self._data_deque.append((data, last_time, curr_time, discard_error, decode_error))
                 if self.fill_buffer:

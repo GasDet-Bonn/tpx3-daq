@@ -26,7 +26,7 @@ import sys
 
 logger = logging.getLogger('Analysis')
 
-_lfsr_4_lut = np.zeros((2 ** 4), dtype=np.uint16)
+_lfsr_4_lut  = np.zeros((2 ** 4), dtype=np.uint16)
 _lfsr_10_lut = np.zeros((2 ** 10), dtype=np.uint16)
 _lfsr_14_lut = np.zeros((2 ** 14), dtype=np.uint16)
 _gray_14_lut = np.zeros((2 ** 14), dtype=np.uint16)
@@ -64,9 +64,9 @@ def totcurve_hist(hit_data):
 
 @njit
 def noise_pixel_count(hit_data, param_range, Vthreshold_start):
-    noise_curve_pixel = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
-    noise_curve_hits = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
-    pixel_list = np.zeros((256*256, Vthreshold_start + len(param_range)), dtype=np.uint16)
+    noise_curve_pixel   = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
+    noise_curve_hits    = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
+    pixel_list          = np.zeros((256*256, Vthreshold_start + len(param_range)), dtype=np.uint16)
 
     for i in range(hit_data.shape[0]):
         x = hit_data['x'][i]
@@ -75,7 +75,7 @@ def noise_pixel_count(hit_data, param_range, Vthreshold_start):
         p = hit_data['scan_param_id'][i]
         if pixel_list[x * 256 + y, p + Vthreshold_start] == 0:
             noise_curve_pixel[p + Vthreshold_start] += 1
-            noise_curve_hits[p + Vthreshold_start] += c
+            noise_curve_hits[p + Vthreshold_start]  += c
         pixel_list[x * 256 + y, p + Vthreshold_start] += 1
 
     return noise_curve_pixel, noise_curve_hits
@@ -84,10 +84,10 @@ def vths(scurves, param_range, Vthreshold_start):
     vths = np.zeros((256, 256), dtype=np.uint16)
     for x in range(256):
         for y in range(256):
-            sum_of_hits = 0
+            sum_of_hits          = 0
             weighted_sum_of_hits = 0
             for i in range(len(param_range)):
-                sum_of_hits += scurves[x*256+y, i]
+                sum_of_hits          += scurves[x*256+y, i]
                 weighted_sum_of_hits += scurves[x*256+y, i] * i
             if(sum_of_hits > 0):
                 vths[x, y] = Vthreshold_start + weighted_sum_of_hits / (sum_of_hits * 1.0)
@@ -106,10 +106,10 @@ def vth_hist(vths, Vthreshold_stop):
     return hist
 
 def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
-    matrix = np.zeros((256, 256), dtype=np.uint8)
-    means = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
-    eq_step_size = int((means[1] - means[0]) / 16)
-    eq_distance = (vths_th0 - means[0]) / eq_step_size
+    matrix          = np.zeros((256, 256), dtype=np.uint8)
+    means           = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
+    eq_step_size    = int((means[1] - means[0]) / 16)
+    eq_distance     = (vths_th0 - means[0]) / eq_step_size
 
     matrix = 8 - eq_distance
 
@@ -122,10 +122,10 @@ def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
     return matrix.astype(np.uint8)
 
 def pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop):
-    means = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
-    delta = means[4]
-    rms_delta = means[5]
-    pixeldac_ratio = (last_pixeldac - pixeldac)/(last_delta - delta)
+    means           = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)
+    delta           = means[4]
+    rms_delta       = means[5]
+    pixeldac_ratio  = (last_pixeldac - pixeldac)/(last_delta - delta)
     if pixeldac == last_pixeldac:
         new_pixeldac = pixeldac / 2.
     elif delta == last_delta:
@@ -136,47 +136,48 @@ def pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthre
     return (new_pixeldac, delta, rms_delta)
 
 def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
-    sum_th0 = 0
-    entries_th0 = 0.
-    sum_th15 = 0
-    entries_th15 = 0.
-    active_pixels_th0 = 0.
-    active_pixels_th15 = 0.
+    sum_th0             = 0
+    entries_th0         = 0.
+    sum_th15            = 0
+    entries_th15        = 0.
+    active_pixels_th0   = 0.
+    active_pixels_th15  = 0.
     for i in range(Vthreshold_start, Vthreshold_stop + 1):
-        sum_th0 += hist_th0[i]
-        entries_th0 += hist_th0[i] / 100. * i
-        sum_th15 += hist_th15[i]
-        entries_th15 += hist_th15[i] / 100. * i
-    mean_th0 = entries_th0 / (sum_th0 / 100.)
-    mean_th15 = entries_th15 / (sum_th15 / 100.)
-    sum_mean_difference_th0 = 0.
-    sum_mean_difference_th15 = 0.
+        sum_th0         += hist_th0[i]
+        entries_th0     += hist_th0[i] / 100. * i
+        sum_th15        += hist_th15[i]
+        entries_th15    += hist_th15[i] / 100. * i
+    mean_th0                    = entries_th0 / (sum_th0 / 100.)
+    mean_th15                   = entries_th15 / (sum_th15 / 100.)
+    sum_mean_difference_th0     = 0.
+    sum_mean_difference_th15    = 0.
     for i in range(Vthreshold_start, Vthreshold_stop + 1):
-        sum_mean_difference_th0 += math.pow(i - mean_th0, 2) * hist_th0[i] / 100.
-        sum_mean_difference_th15 += math.pow(i - mean_th15, 2) * hist_th15[i] / 100.
-        active_pixels_th0 += hist_th0[i] / 100.
-        active_pixels_th15 += hist_th15[i] / 100.
-    var_th0 = sum_mean_difference_th0 / (active_pixels_th0 - 1)
-    var_th15 = sum_mean_difference_th15 / (active_pixels_th15 - 1)
-    rms_th0 = np.sqrt(var_th0)
-    rms_th15 = np.sqrt(var_th15)
-    delta = mean_th15 - mean_th0
-    rms_delta = 3.3 * rms_th15 + 3.3 * rms_th0
+        sum_mean_difference_th0     += math.pow(i - mean_th0, 2) * hist_th0[i] / 100.
+        sum_mean_difference_th15    += math.pow(i - mean_th15, 2) * hist_th15[i] / 100.
+        active_pixels_th0           += hist_th0[i] / 100.
+        active_pixels_th15          += hist_th15[i] / 100.
+    var_th0     = sum_mean_difference_th0 / (active_pixels_th0 - 1)
+    var_th15    = sum_mean_difference_th15 / (active_pixels_th15 - 1)
+    rms_th0     = np.sqrt(var_th0)
+    rms_th15    = np.sqrt(var_th15)
+    delta       = mean_th15 - mean_th0
+    rms_delta   = 3.3 * rms_th15 + 3.3 * rms_th0
 
     return (mean_th0, mean_th15, rms_th0, rms_th15, delta, rms_delta)
 
 
-def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
+def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extension = None):
     data_type = {'names': ['data_header', 'header', 'hit_index', 'x',     'y',     'TOA',    'TOT',    'EventCounter', 'HitCounter', 'FTOA',  'scan_param_id', 'chunk_start_time', 'iTOT',   'TOA_Extension', 'TOA_Combined'],
                'formats': ['uint8',       'uint8',  'uint64', 'uint8', 'uint8', 'uint16', 'uint16', 'uint16',       'uint8',      'uint8', 'uint16',        'float',            'uint16', 'uint64',        'uint64']}
-
-    # For each link create a list of pix_data
-    #print('Data chunk of link 1: ' + str(data[0]))
-    pix_data = [[]]*8
-    for link in range(8):
-        pix_data[link] = np.recarray(len(data[link]), dtype=data_type)
+    print('Now in _interpret_raw_data')
+    num_of_chips = num_of_chips
     
-    #print('In _interpret_raw_data')
+    # For each chip create a list of pix_data
+    #print('Data chunk of link 1: ' + str(data[0]))
+    pix_data = [[]]*num_of_chips
+    for chip in range(num_of_chips):
+        pix_data[chip] = np.recarray(len(data[chip]), dtype=data_type)
+    
     n47 = np.uint64(47)
     n44 = np.uint64(44)
     n28 = np.uint64(28)
@@ -187,52 +188,52 @@ def _interpret_raw_data(data, op_mode = 0, vco = False, ToA_Extension = None):
     n3fff = np.uint64(0x3fff)
     nf = np.uint64(0xf)
 
-    for link in range(8):
-        pixel       = [(data_chunk >> n28) & np.uint64(0b111) for data_chunk in data[link]]
-        super_pixel = [(data_chunk >> np.uint64(28 + 3)) & np.uint64(0x3f) for data_chunk in data[link]]
+    for chip in range(num_of_chips):
+        pixel       = [(data_chunk >> n28) & np.uint64(0b111) for data_chunk in data[chip]]
+        super_pixel = [(data_chunk >> np.uint64(28 + 3)) & np.uint64(0x3f) for data_chunk in data[chip]]
         right_col   = [item > 3 for item in pixel]
-        eoc         = [(data_chunk >> np.uint64(28 + 9)) & np.uint64(0x7f) for data_chunk in data[link]]
+        eoc         = [(data_chunk >> np.uint64(28 + 9)) & np.uint64(0x7f) for data_chunk in data[chip]]
 
-        for i in range(len(data[link])):
-            pix_data[link][i]['data_header']   = data[link][i] >> n47
-            pix_data[link][i]['header']        = data[link][i] >> n44
-            pix_data[link][i]['y']             = (super_pixel[i] * 4) + (pixel[i] - right_col[i] * 4)
-            pix_data[link][i]['x']             = eoc[i] * 2 + right_col[i] * 1
+        for i in range(len(data[chip])):
+            pix_data[chip][i]['data_header']   = data[chip][i] >> n47
+            pix_data[chip][i]['header']        = data[chip][i] >> n44
+            pix_data[chip][i]['y']             = (super_pixel[i] * 4) + (pixel[i] - right_col[i] * 4)
+            pix_data[chip][i]['x']             = eoc[i] * 2 + right_col[i] * 1
             if(vco == False):
-                pix_data[link][i]['HitCounter'] = _lfsr_4_lut[data[link][i] & nf]
-                pix_data[link]['FTOA']          = np.zeros(len(data[link]))
+                pix_data[chip][i]['HitCounter'] = _lfsr_4_lut[data[chip][i] & nf]
+                pix_data[chip]['FTOA']          = np.zeros(len(data[chip]))
             else:
-                pix_data[link]['HitCounter']    = np.zeros(len(data[link]))
-                pix_data[link][i]['FTOA']       = data[link][i] & nf
+                pix_data[chip]['HitCounter']    = np.zeros(len(data[chip]))
+                pix_data[chip][i]['FTOA']       = data[chip][i] & nf
 
             # ToA and ToT mode
             if op_mode == 0b00:
-                pix_data[link]['TOT']           = _lfsr_10_lut[(data[link] >> n4) & n3ff]
-                pix_data[link]['TOA']           = _gray_14_lut[(data[link] >> n14) & n3fff]
-                pix_data[link]['EventCounter']  = np.zeros(len(data[link]))
+                pix_data[chip]['TOT']           = _lfsr_10_lut[(data[chip] >> n4) & n3ff]
+                pix_data[chip]['TOA']           = _gray_14_lut[(data[chip] >> n14) & n3fff]
+                pix_data[chip]['EventCounter']  = np.zeros(len(data[chip]))
                 if len(ToA_Extension):
-                    pix_data[link]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
-                    pix_data[link]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[link]['TOA']
+                    pix_data[chip]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
+                    pix_data[chip]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[chip]['TOA']
                 else:
-                    pix_data[link]['TOA_Extension'] = np.zeros(len(data[link]))
-                    pix_data[link]['TOA_Combined']  = np.zeros(len(data[link]))
+                    pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
+                    pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
             elif op_mode == 0b01: # ToA
-                pix_data[link]['TOA']           = _gray_14_lut[(data[link] >> n14) & n3fff]
-                pix_data[link]['EventCounter']  = np.zeros(len(data[link]))
-                pix_data[link]['TOT']           = np.zeros(len(data[link]))
+                pix_data[chip]['TOA']           = _gray_14_lut[(data[chip] >> n14) & n3fff]
+                pix_data[chip]['EventCounter']  = np.zeros(len(data[chip]))
+                pix_data[chip]['TOT']           = np.zeros(len(data[chip]))
                 if len(ToA_Extension):
-                    pix_data[link]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
-                    pix_data[link]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[link]['TOA']
+                    pix_data[chip]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
+                    pix_data[chip]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[chip]['TOA']
                 else:
-                    pix_data[link]['TOA_Extension'] = np.zeros(len(data[link]))
-                    pix_data[link]['TOA_Combined']  = np.zeros(len(data[link]))
+                    pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
+                    pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
             else: # Event and iToT
-                pix_data[link][i]['iTOT']          = _lfsr_14_lut[(data[link][i] >> n14) & n3fff]
-                pix_data[link][i]['EventCounter']  = _lfsr_10_lut[(data[link][i] >> n4) & n3ff]
-                pix_data[link]['TOT']           = np.zeros(len(data[link]))
-                pix_data[link]['TOA']           = np.zeros(len(data[link]))
-                pix_data[link]['TOA_Extension'] = np.zeros(len(data[link]))
-                pix_data[link]['TOA_Combined']  = np.zeros(len(data[link]))
+                pix_data[chip][i]['iTOT']          = _lfsr_14_lut[(data[chip][i] >> n14) & n3fff]
+                pix_data[chip][i]['EventCounter']  = _lfsr_10_lut[(data[chip][i] >> n4) & n3ff]
+                pix_data[chip]['TOT']              = np.zeros(len(data[chip]))
+                pix_data[chip]['TOA']              = np.zeros(len(data[chip]))
+                pix_data[chip]['TOA_Extension']    = np.zeros(len(data[chip]))
+                pix_data[chip]['TOA_Combined']     = np.zeros(len(data[chip]))
 
     return pix_data
 
@@ -253,15 +254,15 @@ def save_and_correct(raw_data, indices):
         # delete package belonging to the missing one
         if first == 0:
             raw_data = np.delete(raw_data, 0, axis = 0)
-            indices = np.delete(indices, 0, axis = 0)
+            indices  = np.delete(indices, 0, axis = 0)
             #logger.info("Deleted package at index "+str(0))
         elif package1[first] == 1:
             raw_data = np.delete(raw_data, 2*first+1, axis = 0)
-            indices = np.delete(indices, 2*first+1, axis = 0)
+            indices  = np.delete(indices, 2*first+1, axis = 0)
             #logger.info("Deleted package at index "+str(2*first+1))
         else:
             raw_data = np.delete(raw_data, 2*(first-1)+1, axis = 0)
-            indices = np.delete(indices, 2*(first-1)+1, axis = 0)
+            indices  = np.delete(indices, 2*(first-1)+1, axis = 0)
             #logger.info("Deleted package at index "+str(2*(first-1)+1))
 
         # call recursively until everything is as it should
@@ -290,15 +291,15 @@ def save_and_correct_timer(raw_data, indices):
         # delete the package that belongs to the missing package
         if first == 0:
             raw_data = np.delete(raw_data, 0, axis = 0)
-            indices = np.delete(indices, 0, axis = 0)
+            indices  = np.delete(indices, 0, axis = 0)
             #logger.info("Deleted package at index "+str(0))
         elif package0[first] == 0:
             raw_data = np.delete(raw_data, 2*first+1, axis = 0)
-            indices = np.delete(indices, 2*first+1, axis = 0)
+            indices  = np.delete(indices, 2*first+1, axis = 0)
             #logger.info("Deleted package at index "+str(2*first+1))
         else:
             raw_data = np.delete(raw_data, 2*(first-1)+1, axis = 0)
-            indices = np.delete(indices, 2*(first-1)+1, axis = 0)
+            indices  = np.delete(indices, 2*(first-1)+1, axis = 0)
             #logger.info("Deleted package at index "+str(2*(first-1)+1))
 
         # call recursively on the resulting new raw_data until everything is fine
@@ -320,47 +321,48 @@ def raw_data_to_dut_old(raw_data, indices):
         logger.info("Deleted "+str(num)+" link packages!")
     if len(raw_data) % 2 != 0:
         leftoverpackage = raw_data[-1]
-        raw_data = raw_data[:-1]
-        indices = indices[:-1]
+        raw_data        = raw_data[:-1]
+        indices         = indices[:-1]
         logger.info("One link package left over at the end! Try to integrate in next chunk...")
     else:
         leftoverpackage = None
-    data_words = np.empty((raw_data.shape[0] // 2), dtype=np.uint64)
-    k = (raw_data & 0xffffff)
-    data_words[:] = k[1::2].view('>u4')
-    data_words = (data_words << 16) + (k[0::2].view('>u4') >> 8)
-    package0 = raw_data[1::2]
-    package1 = raw_data[0::2]
+    data_words      = np.empty((raw_data.shape[0] // 2), dtype=np.uint64)
+    k               = (raw_data & 0xffffff)
+    data_words[:]   = k[1::2].view('>u4')
+    data_words      = (data_words << 16) + (k[0::2].view('>u4') >> 8)
+    package0        = raw_data[1::2]
+    package1        = raw_data[0::2]
     return data_words, indices, package0, package1, leftoverpackage
 
-def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0, leftoverpackage=[]):
+def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0, leftoverpackage=[]):
     # reintegrate leftover package if present
-    #print('in raw_data_to_dut')
+    print('Now in raw_data_to_dut...')
     if len(leftoverpackage):
         logger.info("Integrate package(s) in chunk nr. "+str(chunk_nr))
         for m in range(len(leftoverpackage)-1,-1,-1):
             raw_data = np.insert(raw_data,0,leftoverpackage[m],axis= 0)
         leftoverpackage = []
-
+    print('In raw_data_to_dut, get chip_links dict: ' + str(chip_links))
+    num_of_chips = len(chip_links)
+    
     # make arrays for results and debugging values
     # split the data also in different arrays for each link
-    data_combined = np.zeros((8,raw_data.shape[0]), dtype=np.uint64)
-    index_combined = np.zeros((8,raw_data.shape[0]), dtype=np.uint64)
-    data0 = np.zeros((8,raw_data.shape[0]), dtype=np.uint64)
-    data1 = np.zeros((8,raw_data.shape[0]), dtype=np.uint64)
+    data_combined   = np.zeros((num_of_chips,raw_data.shape[0]), dtype=np.uint64)
+    index_combined  = np.zeros((num_of_chips,raw_data.shape[0]), dtype=np.uint64)
+    data0           = np.zeros((num_of_chips,raw_data.shape[0]), dtype=np.uint64)
+    data1           = np.zeros((num_of_chips,raw_data.shape[0]), dtype=np.uint64)
 
-    data_combined_final = [[]]*8
-    data0_final         = [[]]*8
-    data1_final         = [[]]*8
+    data_combined_final = [[]]*num_of_chips
+    data0_final         = [[]]*num_of_chips
+    data1_final         = [[]]*num_of_chips
 
     # Get FPGA Timestamps and combine them to the full 48 bit timestamp
     timestamp_filter = (raw_data & 0xF0000000) >> 28 == 0b0101
     
     if np.sum(timestamp_filter):
-        pass
-        '''
-        timestamps_raw = raw_data[timestamp_filter]
-        timestamps_indices = np.where(timestamp_filter)[0]
+        
+        timestamps_raw      = raw_data[timestamp_filter]
+        timestamps_indices  = np.where(timestamp_filter)[0]
 
         if len(timestamps_raw)%2!=0:
             logger.error("Missing one 32bit subword of the 2 timer packages! Chunk nr. "+str(chunk_nr)+", chunk length = "+str(len(timestamps_raw)))
@@ -373,21 +375,21 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
                 logger.error("Unable to correct the timestamp data of chunk nr. "+str(chunk_nr))
             if len(timestamps_raw) % 2 != 0:
                 leftoverpackage.append(timestamps_raw[-1])
-                timestamps_raw = timestamps_raw[:-1]
-                timestamps_indices = timestamps_indices[:-1]
+                timestamps_raw      = timestamps_raw[:-1]
+                timestamps_indices  = timestamps_indices[:-1]
                 logger.info("One left over timer package! Try to integrate in next chunk...")
-            timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
-            k = (timestamps_raw & 0xFFFFFF)
-            timestamps_combined[:] = k[0::2]
-            timestamps_combined = (timestamps_combined << 24) + (k[1::2])
-            timestamps_combined = timestamps_combined | 0b0101 << 48
+            timestamps_combined         = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
+            k                           = (timestamps_raw & 0xFFFFFF)
+            timestamps_combined[:]      = k[0::2]
+            timestamps_combined         = (timestamps_combined << 24) + (k[1::2])
+            timestamps_combined         = timestamps_combined | 0b0101 << 48
             timestamps_combined_indices = timestamps_indices[0::2]
         else:
-            timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
-            k = (timestamps_raw & 0xFFFFFF)
-            timestamps_combined[:] = k[0::2]
-            timestamps_combined = (timestamps_combined << 24) + (k[1::2])
-            timestamps_combined = timestamps_combined | 0b0101 << 48
+            timestamps_combined         = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
+            k                           = (timestamps_raw & 0xFFFFFF)
+            timestamps_combined[:]      = k[0::2]
+            timestamps_combined         = (timestamps_combined << 24) + (k[1::2])
+            timestamps_combined         = timestamps_combined | 0b0101 << 48
             timestamps_combined_indices = timestamps_indices[0::2]
 
         # Put the FPGA timestamps in a new array on their initial positions
@@ -409,9 +411,9 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
                 #logger.info("len(link_filter) before correction: "+str(len(link_filter)))
                 #continue
             link_raw_data = raw_data[link_filter]
-            print(link_raw_data)
-            link_indices = np.where(link_filter)[0]
-            print(link_indices)
+            #print(link_raw_data)
+            link_indices  = np.where(link_filter)[0]
+            #print(link_indices)
             link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
             if leftoverpackage_pot!=None:
                 leftoverpackage.append(leftoverpackage_pot)
@@ -420,7 +422,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             if len(link_indices) % 2 != 0:
                 logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+" after correction.")
                 continue
-            link_combined_indices = link_indices[0::2]
+            link_combined_indices  = link_indices[0::2]
             link_combined_indices2 = link_indices[1::2]
             # Put the chip data in the new array on their initial positions
             np.put(data_combined, link_combined_indices, link_combined)
@@ -428,12 +430,12 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             np.put(data1, link_combined_indices, package1)
 
         # Delete array elements with no data - as all data is combined half of the array should be 0
-        data0 = np.delete(data0, data_combined == 0)
-        data1 = np.delete(data1, data_combined == 0)
+        data0         = np.delete(data0, data_combined == 0)
+        data1         = np.delete(data1, data_combined == 0)
         data_combined = np.delete(data_combined, data_combined == 0)
 
         # Split the array into smaller arrays starting with a fpga timestamp
-        timestamp_combined_filter = (data_combined & 0xF000000000000) >> 48 == 0b0101
+        timestamp_combined_filter  = (data_combined & 0xF000000000000) >> 48 == 0b0101
         timestamp_combined_indices = np.where(timestamp_combined_filter)[0]
 
         # to create an additional empty array element in timestamp_splits at the beginning, for insertion of last timestamps
@@ -445,24 +447,24 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
 
         #timestamp_splits = np.zeros(timestamp_combined_filter.shape[0], dtype='object')
         timestamp_splits = np.split(data_combined, timestamp_combined_indices)
-        data0_splits = np.split(data0, timestamp_combined_indices)
-        data1_splits = np.split(data1, timestamp_combined_indices)
+        data0_splits     = np.split(data0, timestamp_combined_indices)
+        data1_splits     = np.split(data1, timestamp_combined_indices)
 
         # attach last and next to last_timestamp if necessary
         minus = 0
         if len(timestamp_splits) > 1 and len(timestamp_splits[1]) > 0 and ((int(timestamp_splits[1][0]) & 0xF000000000000) >> 48 != 0b0101):
             timestamp_splits[1] = np.insert(timestamp_splits[1],0,np.uint64(last_timestamp),axis=0)
             timestamp_splits[0] = np.insert(timestamp_splits[0],0,next_to_last_timestamp,axis=0)
-            data0_splits[1] = np.insert(data0_splits[1],0,0,axis=0)
-            data0_splits[0] = np.insert(data0_splits[0],0,0,axis=0)
-            data1_splits[1] = np.insert(data1_splits[1],0,0,axis=0)
-            data1_splits[0] = np.insert(data1_splits[0],0,0,axis=0)
+            data0_splits[1]     = np.insert(data0_splits[1],0,0,axis=0)
+            data0_splits[0]     = np.insert(data0_splits[0],0,0,axis=0)
+            data1_splits[1]     = np.insert(data1_splits[1],0,0,axis=0)
+            data1_splits[0]     = np.insert(data1_splits[0],0,0,axis=0)
             minus = 2
         else:
             # only insert last timestamp
             timestamp_splits[0] = np.insert(timestamp_splits[0],0,last_timestamp,axis=0)
-            data0_splits[0] = np.insert(data0_splits[0],0,0,axis=0)
-            data1_splits[0] = np.insert(data1_splits[0],0,0,axis=0)
+            data0_splits[0]     = np.insert(data0_splits[0],0,0,axis=0)
+            data1_splits[0]     = np.insert(data1_splits[0],0,0,axis=0)
             minus = 1
 
         # Check for packages that are shifted by more than 1 wrt the extension. Keep for future debugging
@@ -473,13 +475,13 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
                 if timestamp_splits[j][l]!=0:
                     if not int((((int(timestamp_splits[j][0]) & 0x3000) >> 12) - ((int(_gray_14_lut[(int(timestamp_splits[j][l]) >> 14) & 0x3fff]) & 0x3000) >> 12))) in [1,0,-3]:
                         print("Chunk length: ",len(timestamp_splits)-1)
-                        diff = int(-(((int(timestamp_splits[j][0]) & 0x3000) >> 12) - ((int(_gray_14_lut[(int(timestamp_splits[j][l]) >> 14) & 0x3fff]) & 0x3000) >> 12)))
+                        diff        = int(-(((int(timestamp_splits[j][0]) & 0x3000) >> 12) - ((int(_gray_14_lut[(int(timestamp_splits[j][l]) >> 14) & 0x3fff]) & 0x3000) >> 12)))
                         #diff = (diff+3)%3
-                        data = int(timestamp_splits[j][l])
-                        pixel = (data >> 28) & 0b111
+                        data        = int(timestamp_splits[j][l])
+                        pixel       = (data >> 28) & 0b111
                         super_pixel = (data >> 31) & 0x3f
-                        right_col = pixel > 3
-                        eoc = (data >> 37) & 0x7f
+                        right_col   = pixel > 3
+                        eoc         = (data >> 37) & 0x7f
 
                         y = (super_pixel * 4) + (pixel - right_col * 4)
                         x = eoc * 2 + right_col * 1
@@ -499,10 +501,10 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             old_toa_filter = (((int(timestamp_splits[i][0]) & 0x3000) >> 12) != ((_gray_14_lut[(iteration_toas >> 14) & 0x3fff] & 0x3000) >> 12))
             if sum(old_toa_filter) == 0:
                 continue
-            old_toas = iteration_toas[old_toa_filter]
-            old_toas_indices = np.where(old_toa_filter)[0]
+            old_toas              = iteration_toas[old_toa_filter]
+            old_toas_indices      = np.where(old_toa_filter)[0]
             timestamp_splits[i-1] = np.append(timestamp_splits[i-1], old_toas)
-            timestamp_splits[i] = np.delete(timestamp_splits[i], old_toas_indices+1)
+            timestamp_splits[i]   = np.delete(timestamp_splits[i], old_toas_indices+1)
 
         try:
             last = timestamp_splits[-1][0]
@@ -525,13 +527,21 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         """if wrong_hits/len(data_words) > 0.2:
             logger.error("Removed Chunk nr. "+str(chunk_nr)+" from data due to too many irregularities.")
             return np.empty(0,dtype=np.uint64),np.empty(0,dtype=np.uint64),last,nlast"""
-    '''
+    
     else:
         links = 8
         chunk_len = 0
         # Get link-sorted data packages and combine the 32 bit words
         for link in range(links):
-            #print(link)
+
+            # get chip, which is connected to this link, maybe put this in a seperate function?!
+            for chip_number, chip in enumerate(chip_links):
+                if link in chip_links[chip]:
+                    current_chip = chip_number
+            
+            print(link, current_chip)
+            print([chip for number,chip in enumerate(chip_links) if link in chip_links[chip]])
+            
             link_filter = (raw_data & 0xfe000000) >> 25 == link
             #print(link_filter)
             chunk_len+=np.sum(link_filter)
@@ -556,47 +566,51 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             link_combined_indices = link_indices[0::2]
             link_combined_indices2 = link_indices[1::2]
             # Put the chip data in the new array on their initial positions
-            np.put(data_combined[link], link_combined_indices, link_combined)
-            np.put(data0[link], link_combined_indices, package0)
-            np.put(data1[link], link_combined_indices, package1)
+            np.put(data_combined[current_chip], link_combined_indices, link_combined)
+            np.put(data0[current_chip], link_combined_indices, package0)
+            np.put(data1[current_chip], link_combined_indices, package1)
             #print(package0, package1)
             #print(len(data0[link]), len(data0[link]), len(data_combined[link]))
             # Delete array elements with no data - as all data is combined half of the array should be 0
-            data0_temp         = np.delete(data0[link], data_combined[link] == 0)
-            data1_temp         = np.delete(data1[link], data_combined[link] == 0)
-            data_combined_temp = np.delete(data_combined[link], data_combined[link] == 0)
+            data0_temp         = np.delete(data0[current_chip], data_combined[current_chip] == 0)
+            data1_temp         = np.delete(data1[current_chip], data_combined[current_chip] == 0)
+            data_combined_temp = np.delete(data_combined[current_chip], data_combined[current_chip] == 0)
             
-            data0_final[link]         = np.array(data0_temp)
-            data1_final[link]         = np.array(data1_temp)
-            data_combined_final[link] = np.array(data_combined_temp)
+            data0_final[current_chip]         = np.array(data0_temp)
+            data1_final[current_chip]         = np.array(data1_temp)
+            data_combined_final[current_chip] = np.array(data_combined_temp)
             #print(data_combined)
             #print(data0)
             #print(data1)
 
         data_words = data_combined_final
         timestamps = np.empty(0,dtype=np.uint64)
-        last = 0
-        nlast = 0
+        last       = 0
+        nlast      = 0
         leftoverpackage = []
     #print(data_words, timestamps, last, nlast, leftoverpackage)
     return data_words, timestamps, last, nlast, leftoverpackage
 
-def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=None, split_fine=False, last_timestamp = 0, next_to_last_timestamp = 0, intern =False, chunk_nr = 0, leftoverpackage = [], progress = None):
+def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_start_time=None, split_fine=False, last_timestamp = 0, next_to_last_timestamp = 0, intern =False, chunk_nr = 0, leftoverpackage = [], progress = None):
     '''
     Chunk the data based on scan_param and interpret
     '''
     data_type = {'names': ['data_header', 'header', 'hit_index', 'x',     'y',     'TOA',    'TOT',    'EventCounter', 'HitCounter', 'FTOA',  'scan_param_id', 'chunk_start_time', 'iTOT',   'TOA_Extension', 'TOA_Combined'],
                'formats': ['uint8',       'uint8',  'uint64', 'uint8', 'uint8', 'uint16', 'uint16', 'uint16',       'uint8',      'uint8', 'uint16',        'float',            'uint16', 'uint64',        'uint64']}
 
-    ret = [[]]*8
-    for link in range(8):
-        ret[link] = np.recarray(0, dtype=data_type)
-    #print('Size of meta data: ' + str(len(meta_data)))
+    num_of_chips = len(chip_links) 
+
+    ret = [[]]*num_of_chips
+    for chip in range(num_of_chips):
+        ret[chip] = np.recarray(0, dtype=data_type)
+    
+    print('Now in interpret_raw_data...')
+    print('Size of meta data: ' + str(len(meta_data)))
     if len(meta_data):
         # standard case: only split into bunches which have the same param_id
         #print('Split data into same scan_param_ids')
         if split_fine == False:
-            #print('split_fine is false')
+            print('split_fine is false')
             # param = list of all occurring scan_param_ids
             # index = positions of first occurrence of each scan_param_ids
             param, index = np.unique(meta_data['scan_param_id'], return_index=True)
@@ -619,22 +633,22 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 step_counter = 0
             #print(index, stops, split)
             for i in range(len(split[:-1])):
-                #print('scan_id: ' +str(i))
+                # print('scan_id: ' +str(i))
                 # print param[i], stops[i], len(split[i]), split[i]
                 # sends split[i] (i.e. part of data that is currently treated) recursively
                 # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
-                int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(split[i], op_mode, vco, last_timestamp = last_timestamp, intern = True)
+                int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(split[i], op_mode, vco, chip_links, last_timestamp = last_timestamp, intern = True)
                 #print(int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage)
                 # reattach param_id TODO: good idea to also give timestamp here!
-                for link in range(8):
-                    int_pix_data[link]['scan_param_id'][:] = param[i]
-                    ret[link] = np.hstack((ret[link], int_pix_data[link]))
+                for chip in range(num_of_chips):
+                    int_pix_data[chip]['scan_param_id'][:] = param[i]
+                    ret[chip]                              = np.hstack((ret[chip], int_pix_data[chip]))
                 
                 if progress == None:
                     pbar.update(1)
                 else:
                     step_counter += 1
-                    fraction = step_counter / (len(split[:-1]))
+                    fraction      = step_counter / (len(split[:-1]))
                     progress.put(fraction)
             #print(ret[0][:10])
             #print(int_pix_data[0][:10])
@@ -649,31 +663,30 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
                 step_counter = 0
             for l in range(meta_data.shape[0]):
                 index_start = meta_data['index_start'][l]
-                index_stop = meta_data['index_stop'][l]
+                index_stop  = meta_data['index_stop'][l]
                 if index_start<index_stop:
-                    int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(raw_data[index_start:index_stop], op_mode, vco, last_timestamp = last_timestamp, next_to_last_timestamp = next_to_last_timestamp, intern = True, chunk_nr = l, leftoverpackage = leftoverpackage)
+                    int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(raw_data[index_start:index_stop], op_mode, vco, chip_links, last_timestamp = last_timestamp, next_to_last_timestamp = next_to_last_timestamp, intern = True, chunk_nr = l, leftoverpackage = leftoverpackage)
                     #print(int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage)
                     # reattach timestamp
                     int_pix_data['chunk_start_time'][:] = meta_data['timestamp_start'][l]
                     # append data we got back to return array or create new if this is the fist bunch of data treated
-                    if len(ret):
-                        ret = np.hstack((ret, int_pix_data))
-                    else:
-                        ret = int_pix_data
+                    for chip in range(num_of_chips):
+                        ret[chip] = np.hstack((ret[chip], int_pix_data[chip]))
+        
                     if progress == None:
                         pbar.update(1)
                     else:
                         step_counter += 1
-                        fraction = step_counter / (meta_data.shape[0])
+                        fraction      = step_counter / (meta_data.shape[0])
                         progress.put(fraction)
             if progress == None:
                 pbar.close()
     else:
         #print('Interpret the divided data chunks now')
         #it can be chunked and multithreaded here
-        data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage  = raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
+        data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage  = raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
         #print("data_words: "  +str(data_words[0]))
-        ret = _interpret_raw_data(data_words, op_mode, vco, timestamp)
+        ret = _interpret_raw_data(num_of_chips, data_words, op_mode, vco, timestamp)
         #print("when there is not meta_data: " + str(ret))
         #print(len(ret))
     if intern == True:
@@ -690,7 +703,7 @@ def init_lfsr_4_lut():
         dummy = 0
         for i in range(2**4):
             _lfsr_4_lut[BitLogic.tovalue(lfsr)] = i
-            dummy = lfsr[3]
+            dummy   = lfsr[3]
             lfsr[3] = lfsr[2]
             lfsr[2] = lfsr[1]
             lfsr[1] = lfsr[0]
@@ -709,7 +722,7 @@ def init_lfsr_10_lut():
     dummy = 0
     for i in range(2 ** 10):
         _lfsr_10_lut[BitLogic.tovalue(lfsr)] = i
-        dummy = lfsr[9]
+        dummy   = lfsr[9]
         lfsr[9] = lfsr[8]
         lfsr[8] = lfsr[7]
         lfsr[7] = lfsr[6]
@@ -727,7 +740,7 @@ def init_lfsr_14_lut():
     Generates a 14bit LFSR according to Manual v1.9 page 19
     """
     lfsr = BitLogic(14)
-    lfsr[7:0] = 0xFF
+    lfsr[7:0]  = 0xFF
     lfsr[13:8] = 63
     dummy = 0
     for i in range(2**14):
@@ -737,16 +750,16 @@ def init_lfsr_14_lut():
         lfsr[12] = lfsr[11]
         lfsr[11] = lfsr[10]
         lfsr[10] = lfsr[9]
-        lfsr[9] = lfsr[8]
-        lfsr[8] = lfsr[7]
-        lfsr[7] = lfsr[6]
-        lfsr[6] = lfsr[5]
-        lfsr[5] = lfsr[4]
-        lfsr[4] = lfsr[3]
-        lfsr[3] = lfsr[2]
-        lfsr[2] = lfsr[1]
-        lfsr[1] = lfsr[0]
-        lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
+        lfsr[9]  = lfsr[8]
+        lfsr[8]  = lfsr[7]
+        lfsr[7]  = lfsr[6]
+        lfsr[6]  = lfsr[5]
+        lfsr[5]  = lfsr[4]
+        lfsr[4]  = lfsr[3]
+        lfsr[3]  = lfsr[2]
+        lfsr[2]  = lfsr[1]
+        lfsr[1]  = lfsr[0]
+        lfsr[0]  = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
     _lfsr_14_lut[2 ** 14 - 1] = 0
 
 def init_gray_14_lut():
@@ -754,10 +767,10 @@ def init_gray_14_lut():
     Generates a 14bit gray according to Manual v1.9 page 19
     """
     for j in range(2**14):
-        encoded_value = BitLogic(14) #48
-        encoded_value[13:0]=j #47
-        gray_decrypt_v = BitLogic(14) #48
-        gray_decrypt_v[13]=encoded_value[13] #47
+        encoded_value       = BitLogic(14) #48
+        encoded_value[13:0] = j #47
+        gray_decrypt_v      = BitLogic(14) #48
+        gray_decrypt_v[13]  = encoded_value[13] #47
         for i in range (12, -1, -1): #46
             gray_decrypt_v[i]=gray_decrypt_v[i+1]^encoded_value[i]
         _gray_14_lut[j] = gray_decrypt_v.tovalue()
@@ -846,13 +859,13 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
         return (0., 0., 0.)
 
     # Calculate data errors, Binomial errors
-    yerr = np.sqrt(y * (1. - y.astype(np.float) / n_injections))
+    yerr                 = np.sqrt(y * (1. - y.astype(np.float) / n_injections))
     # Set minimum error != 0, needed for fit minimizers
     # Set arbitrarily to error of 0.5 injections
-    min_err = np.sqrt(0.5 - 0.5 / n_injections)
+    min_err              = np.sqrt(0.5 - 0.5 / n_injections)
     yerr[yerr < min_err] = min_err
     # Additional hits not following fit model set high error
-    sel_bad = y > n_injections
+    sel_bad              = y > n_injections
     yerr[sel_bad] = (y - n_injections)[sel_bad]
 
     # Calculate threshold start value:
@@ -924,11 +937,11 @@ def fit_scurves_multithread(scurves, scan_param_range,
     # Set all values above n_injections to n_injections. This is necessary, as the noise peak can lead to problems in the scurve fits.
     # As we are only interested in the position of the scurve (which lays below n_injections) this should not cause a problem.
     logger.info("Cut S-curves to %i hits for S-curve fit", n_injections)
-    pulse_check = scurves > n_injections
-    _scurves[pulse_check] = n_injections
+    pulse_check                      = scurves > n_injections
+    _scurves[pulse_check]            = n_injections
     _scurves[np.invert(pulse_check)] = scurves[np.invert(pulse_check)]
 
-    _scurves = np.ma.masked_array(_scurves)
+    _scurves         = np.ma.masked_array(_scurves)
     scan_param_range = np.array(scan_param_range)
 
     # Calculate noise median for fit start value
@@ -977,16 +990,16 @@ def fit_scurves_multithread(scurves, scan_param_range,
                                 sigma_0=sigma_0,
                                 invert_x=invert_x)
 
-    result_list = imap_bar(partialfit_scurve, _scurves.tolist(), progress = progress)
+    result_list  = imap_bar(partialfit_scurve, _scurves.tolist(), progress = progress)
     result_array = np.array(result_list)
     logger.info("S-curve fit finished")
 
-    thr = result_array[:, 0]
-    sig = result_array[:, 1]
+    thr     = result_array[:, 0]
+    sig     = result_array[:, 1]
     chi2ndf = result_array[:, 2]
 
-    thr2D = np.reshape(thr, (256, 256))
-    sig2D = np.reshape(sig, (256, 256))
+    thr2D     = np.reshape(thr, (256, 256))
+    sig2D     = np.reshape(sig, (256, 256))
     chi2ndf2D = np.reshape(chi2ndf, (256, 256))
     return thr2D, sig2D, chi2ndf2D
 
@@ -1012,8 +1025,8 @@ def fit_ToT(tot_data, scan_param_range, t_est):
 
     try:
         popt_lin = curve_fit(f=linear, xdata=x, ydata=y)[0]
-        a = popt_lin[0]
-        b = popt_lin[1]
+        a        = popt_lin[0]
+        b        = popt_lin[1]
     except RuntimeError:  # fit failed
         return (0., 0., 0., 0., 0.)
 
@@ -1031,15 +1044,15 @@ def fit_ToT(tot_data, scan_param_range, t_est):
 
 
 def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
-    totcurves = np.ma.masked_array(totcurves)
+    totcurves        = np.ma.masked_array(totcurves)
     scan_param_range = np.array(scan_param_range)
 
     logger.info("Start ToT-curve fit on %d CPU core(s)", mp.cpu_count())
 
-    t_est = np.average(np.where((totcurves > 0) & (totcurves <= 5))[1])
+    t_est                = np.average(np.where((totcurves > 0) & (totcurves <= 5))[1])
     partialfit_totcurves = partial(fit_ToT, scan_param_range=scan_param_range, t_est = t_est)
 
-    result_list = imap_bar(partialfit_totcurves, totcurves.tolist(), progress = progress)
+    result_list  = imap_bar(partialfit_totcurves, totcurves.tolist(), progress = progress)
     result_array = np.array(result_list)
     logger.info("ToT-curve fit finished")
 
@@ -1066,27 +1079,27 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
 
     # Get mean and standard deviation for non nan data
     totcurve_mean = np.nanmean(totcurves, axis=0)
-    totcurve_std = np.nanstd(totcurves, axis=0)
+    totcurve_std    = np.nanstd(totcurves, axis=0)
 
     # Get the start value for t with data close to the start of the curve
     t_est = np.average(np.where((totcurve_mean > 0) & (totcurve_mean <= 5)))
 
-    # Use only pulse height with at least 60% aktive pixels
-    active_pixels = np.count_nonzero(totcurves > 0, axis=0)
+    # Use only pulse height with at least 60% active pixels
+    active_pixels                                  = np.count_nonzero(totcurves > 0, axis=0)
     totcurve_mean[active_pixels < 0.4 * 256 * 256] = 0
-    totcurve_std[active_pixels < 0.4 * 256 * 256] = 0
+    totcurve_std[active_pixels < 0.4 * 256 * 256]  = 0
 
     # use only data which contains tot data
-    x = np.where(totcurve_mean>0)[0]
-    y = totcurve_mean[totcurve_mean > 0]
+    x     = np.where(totcurve_mean>0)[0]
+    y     = totcurve_mean[totcurve_mean > 0]
     y_err = totcurve_std[totcurve_mean > 0]
 
     # fit with a linear function to get start values for a and b
-    popt, pcov = curve_fit(f=linear, xdata=x, ydata=y)
-    a = popt[0]
-    b = popt[1]
-    ac = np.sqrt(pcov[0][0])
-    bc = np.sqrt(pcov[1][1])
+    popt, pcov  = curve_fit(f=linear, xdata=x, ydata=y)
+    a           = popt[0]
+    b           = popt[1]
+    ac          = np.sqrt(pcov[0][0])
+    bc          = np.sqrt(pcov[1][1])
 
     # fit whole function with the complete totcurve-function
     p0 = [a, b, 200, t_est]
@@ -1103,8 +1116,8 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
     data_type = {'names': ['tot', 'tot_error'],
                'formats': ['float32', 'float32']}
 
-    mean = np.recarray(len(totcurve_mean), dtype=data_type)
-    mean['tot'] = totcurve_mean
+    mean              = np.recarray(len(totcurve_mean), dtype=data_type)
+    mean['tot']       = totcurve_mean
     mean['tot_error'] = totcurve_std
 
     return mean, popt, pcov

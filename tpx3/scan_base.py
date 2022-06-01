@@ -34,40 +34,40 @@ class ConfigError(Exception):
     pass
 
 class MetaTable(tb.IsDescription):
-    index_start = tb.UInt64Col(pos=0)
-    index_stop = tb.UInt64Col(pos=1)
-    data_length = tb.UInt32Col(pos=2)
+    index_start     = tb.UInt64Col(pos=0)
+    index_stop      = tb.UInt64Col(pos=1)
+    data_length     = tb.UInt32Col(pos=2)
     timestamp_start = tb.Float64Col(pos=3)
-    timestamp_stop = tb.Float64Col(pos=4)
-    scan_param_id = tb.UInt32Col(pos=5)
-    discard_error = tb.UInt32Col(pos=6)
-    decode_error = tb.UInt32Col(pos=7)
-    trigger = tb.Float64Col(pos=8)
+    timestamp_stop  = tb.Float64Col(pos=4)
+    scan_param_id   = tb.UInt32Col(pos=5)
+    discard_error   = tb.UInt32Col(pos=6)
+    decode_error    = tb.UInt32Col(pos=7)
+    trigger         = tb.Float64Col(pos=8)
 
 
 class RunConfigTable(tb.IsDescription):
     attribute = tb.StringCol(64)
-    value = tb.StringCol(128)
+    value     = tb.StringCol(128)
 
 
 class DacTable(tb.IsDescription):
-    DAC = tb.StringCol(64)
+    DAC   = tb.StringCol(64)
     value = tb.UInt16Col()
 
 
 class ConfTable(tb.IsDescription):
     configuration = tb.StringCol(64)
-    value = tb.UInt16Col()
+    value         = tb.UInt16Col()
 
 
 class Links(tb.IsDescription):
-    receiver = tb.StringCol(64)
-    fpga_link = tb.UInt8Col()
-    chip_link = tb.UInt8Col()
-    chip_id = tb.StringCol(64)
-    data_delay = tb.UInt8Col()
+    receiver    = tb.StringCol(64)
+    fpga_link   = tb.UInt8Col()
+    chip_link   = tb.UInt8Col()
+    chip_id     = tb.StringCol(64)
+    data_delay  = tb.UInt8Col()
     data_invert = tb.UInt8Col()
-    data_edge = tb.UInt8Col()
+    data_edge   = tb.UInt8Col()
     link_status = tb.UInt8Col()
 
 
@@ -78,13 +78,13 @@ def send_data(socket, data, scan_par_id, name='ReadoutData'):
     '''
 
     data_meta_data = dict(
-        name=name,
-        dtype=str(data[0].dtype),
-        shape=data[0].shape,
-        timestamp_start=data[1],  # float
-        timestamp_stop=data[2],  # float
-        error=data[3],  # int
-        scan_par_id=scan_par_id
+        name            = name,
+        dtype           = str(data[0].dtype),
+        shape           = data[0].shape,
+        timestamp_start = data[1],  # float
+        timestamp_stop  = data[2],  # float
+        error           = data[3],  # int
+        scan_par_id     = scan_par_id
     )
     try:
         socket.send_json(data_meta_data, flags=zmq.SNDMORE | zmq.NOBLOCK)
@@ -113,7 +113,6 @@ class ScanBase(object):
             dut_conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
 
         #logger.info("Loading configuration file from %s" % conf)
-        #super(TPX3, self).__init__(conf)
         Dut_layer = Dut(dut_conf)
         Dut_layer.init()
 
@@ -130,7 +129,7 @@ class ScanBase(object):
 
         if no_chip == False:
             self.number_of_chips = 1
-            self.chip_links = 0
+            self.chip_links      = 0
 
             # Test if the link configuration is valid
             if self.test_links() == True:
@@ -145,7 +144,7 @@ class ScanBase(object):
                    Id_binary = '{:032b}'.format(chipId)
                    Id_format = [int(Id_binary[:8],2),int(Id_binary[8:16],2) ,int(Id_binary[16:24],2) ,int(Id_binary[24:],2)]
                    #print(Id_format)
-                   chip = TPX3()
+                   chip      = TPX3()
                    chip.init(ChipId=Id_format)
                    self.chips.append(chip)
                    #print(chip.chipId)
@@ -185,7 +184,7 @@ class ScanBase(object):
             self.run_name = self.scan_id + '_' + self.timestamp
         else:
             self.run_name = run_name
-        output_path = os.path.join(self.working_dir, 'hdf')
+        output_path          = os.path.join(self.working_dir, 'hdf')
         self.output_filename = os.path.join(output_path, self.run_name)
 
         # Setup the logger and the logfile
@@ -212,8 +211,8 @@ class ScanBase(object):
             If it is possible true is returned if not false is returned
         '''
         # Open the link yaml file
-        proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        yaml_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
+        proj_dir    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        yaml_file   = os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
 
         if not yaml_file == None:
             with open(yaml_file) as file:
@@ -239,7 +238,6 @@ class ScanBase(object):
             
             #print(self.chips[0]._outputBlocks["chan_mask"] )
             self.chips[0].write_outputBlock_config()
-            #data = self.chip.write_outputBlock_config()
 
             # Deactivate all fpga links
             for register2 in yaml_data['registers']:
@@ -248,17 +246,15 @@ class ScanBase(object):
 
             if register['link-status'] in [1, 3, 5]:
                 # Activate the current fpga link and set all its settings
-                self.chips[0].Dut_layer[register['name']].ENABLE = 1
-                self.chips[0].Dut_layer[register['name']].DATA_DELAY = register['data-delay']
-                self.chips[0].Dut_layer[register['name']].INVERT = register['data-invert']
+                self.chips[0].Dut_layer[register['name']].ENABLE        = 1
+                self.chips[0].Dut_layer[register['name']].DATA_DELAY    = register['data-delay']
+                self.chips[0].Dut_layer[register['name']].INVERT        = register['data-invert']
                 self.chips[0].Dut_layer[register['name']].SAMPLING_EDGE = register['data-edge']
 
                 # Reset and clean the FIFO
                 self.chips[0].Dut_layer['FIFO'].RESET
-                #print('FIFO_SIZE after reset: ' + str(self.chips[0].Dut_layer['FIFO']['FIFO_SIZE']))
                 time.sleep(0.01)
                 fdata = self.chips[0].Dut_layer['FIFO'].get_data()
-                #print('fdata after FIFO reset: ' + str(fdata))
 
                 # Send the EFuse_Read command to get the Chip ID and test the communication
                 data = self.chips[0].read_periphery_template("EFuse_Read")
@@ -272,7 +268,7 @@ class ScanBase(object):
                 # Get the data from the chip
                 fdata = self.chips[0].Dut_layer['FIFO'].get_data()
                 #print('EFuse_Read FIFO output: ' + str(fdata))
-                dout = self.chips[0].decode_fpga(fdata, True)
+                dout  = self.chips[0].decode_fpga(fdata, True)
                 #print(dout[0][19:0].tovalue())
                 # Check if the received Chip ID is identical with the expected
                 if dout[0][19:0].tovalue() != register['chip-id']:
@@ -309,37 +305,24 @@ class ScanBase(object):
 
         # Iterate over all links
         for register in yaml_data['registers']:
-            #if register['chip-link'] != 0:
-            #    break
+
             if register['link-status'] in [1, 3, 5]:
                 # Create the chip output channel mask and write the output block
                 self.chips[0]._outputBlocks["chan_mask"] = self.chips[0]._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
 
                 # Activate the current fpga link and set all its settings
-                self.chips[0].Dut_layer[register['name']].ENABLE = 1
-                self.chips[0].Dut_layer[register['name']].DATA_DELAY = register['data-delay']
-                self.chips[0].Dut_layer[register['name']].INVERT = register['data-invert']
+                self.chips[0].Dut_layer[register['name']].ENABLE        = 1
+                self.chips[0].Dut_layer[register['name']].DATA_DELAY    = register['data-delay']
+                self.chips[0].Dut_layer[register['name']].INVERT        = register['data-invert']
                 self.chips[0].Dut_layer[register['name']].SAMPLING_EDGE = register['data-edge']
-
-                #self.chips[0].write_outputBlock_config(write=True)
-                # Before starting test chip[1]
-                #data = self.chips[0].read_periphery_template('EFuse_Read')
-                #data += [0x00]*4
-                #print(data)
-                #self.chips[0].Dut_layer['FIFO'].RESET
-                #time.sleep(0.1)
-                #self.chips[0].write(data)
-                #time.sleep(0.1)
-                #fdata = self.chips[0].Dut_layer['FIFO'].get_data()
-                #print(fdata)
 
                 bit_id = BitLogic.from_value(register['chip-id'])
 
                 # Decode the Chip-ID
-                self.wafer_number = bit_id[19:8].tovalue()
-                self.x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
-                self.y_position = bit_id[7:4].tovalue()
-                ID = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
+                self.wafer_number   = bit_id[19:8].tovalue()
+                self.x_position     = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+                self.y_position     = bit_id[7:4].tovalue()
+                ID                  = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
 
                 # Write new Chip-ID to the list
                 if ID not in ID_List:
@@ -349,9 +332,9 @@ class ScanBase(object):
 
         self.number_of_chips = len(ID_List)
         if self.number_of_chips > 1:
-            raise NotImplementedError('Handling of multiple chips is not implemented yet, but we try :)')
+            raise NotImplementedError('Handling of multiple chips is not implemented yet, but we are working on it :)')
 
-    def create_scan_masks(self, mask_step, pixel_threhsold = None, number = None, offset = 0, append_datadriven = True, progress = None):
+    def create_scan_masks(self, mask_step, pixel_threshold = None, number = None, offset = 0, append_datadriven = True, progress = None):
         '''
             Creates the pixel configuration register masks for scans based on the number of mask_step.
             If a value is set for pixel threshold it is used for all pixels. Else the value which is
@@ -367,8 +350,8 @@ class ScanBase(object):
         # Check if parameters are valid
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
-        if pixel_threhsold not in range(16) and pixel_threhsold != None:
-            raise ValueError("Value {} for pixel_threhsold is not in the allowed range (0 to 15 or None)".format(pixel_threhsold))
+        if pixel_threshold not in range(16) and pixel_threshold != None:
+            raise ValueError("Value {} for pixel_threshold is not in the allowed range (0 to 15 or None)".format(pixel_threshold))
 
         # Empty array for the masks command for the scan
         mask_cmds = []
@@ -392,51 +375,51 @@ class ScanBase(object):
         for i in range(offset, number + offset):
             mask_step_cmd = []
              
-            #for chip in self.chips[1:]:
-            # Start with deactivated testpulses on all pixels and all pixels masked
-            self.chips[1].test_matrix[:, :] = self.chips[1].TP_OFF
-            self.chips[1].mask_matrix[:, :] = self.chips[1].MASK_OFF
+            for chip in self.chips[1:]:
+                # Start with deactivated testpulses on all pixels and all pixels masked
+                chip.test_matrix[:, :] = chip.TP_OFF
+                chip.mask_matrix[:, :] = chip.MASK_OFF
 
-            # Switch on pixels and test pulses for pixels based on mask_step
-            # e.g. for mask_step=16 every 4th pixel in x and y is active
-            column_start = i//(mask_step//int(math.sqrt(mask_step)))
-            row_start = i%(mask_step//int(math.sqrt(mask_step)))
-            step = mask_step//int(math.sqrt(mask_step))
-            self.chips[1].test_matrix[column_start::step, row_start::step] = self.chips[1].TP_ON
-            self.chips[1].mask_matrix[column_start::step, row_start::step] = self.chips[1].MASK_ON
+                # Switch on pixels and test pulses for pixels based on mask_step
+                # e.g. for mask_step=16 every 4th pixel in x and y is active
+                column_start                                            = i//(mask_step//int(math.sqrt(mask_step)))
+                row_start                                               = i%(mask_step//int(math.sqrt(mask_step)))
+                step                                                    = mask_step//int(math.sqrt(mask_step))
+                chip.test_matrix[column_start::step, row_start::step]   = chip.TP_ON
+                chip.mask_matrix[column_start::step, row_start::step]   = chip.MASK_ON
 
-            if self.maskfile:
-                self.chips[1].test_matrix[temp_mask_matrix == True] = self.chips[1].TP_OFF
-                self.chips[1].mask_matrix[temp_mask_matrix == True] = self.chips[1].MASK_OFF
+                if self.maskfile:
+                    chip.test_matrix[temp_mask_matrix == True] = chip.TP_OFF
+                    chip.mask_matrix[temp_mask_matrix == True] = chip.MASK_OFF
 
-            # If a pixel threshold is defined set it to all pixels
-            if pixel_threhsold != None:
-                self.chips[1].thr_matrix[:, :] = pixel_threhsold
+                # If a pixel threshold is defined set it to all pixels
+                if pixel_threshold != None:
+                    chip.thr_matrix[:, :] = pixel_threshold
 
-            # Create the list of mask commands - only for columns that changed the pcr
-            column_list = list(range(column_start, 256, step))
-            if i == offset:
-                for i in range(256 // 4):
-                    mask_step_cmd.append(self.chips[1].write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
-            else:
-                if column_start == (i-1)//(mask_step//int(math.sqrt(mask_step))):
-                    for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                        mask_step_cmd.append(self.chips[1].write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                # Create the list of mask commands - only for columns that changed the pcr
+                column_list = list(range(column_start, 256, step))
+                if i == offset:
+                    for i in range(256 // 4):
+                        mask_step_cmd.append(chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
                 else:
-                    previous_column_list = list([x - 1 for x in column_list])
-                    if previous_column_list[0] < 0:
-                        previous_column_list = previous_column_list[1:]
-                        previous_column_list.append(255)
-                    for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                        mask_step_cmd.append(self.chips[1].write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
-                        mask_step_cmd.append(self.chips[1].write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                    if column_start == (i-1)//(mask_step//int(math.sqrt(mask_step))):
+                        for j in range((256 // int(math.sqrt(mask_step))) // 4):
+                            mask_step_cmd.append(chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                    else:
+                        previous_column_list = list([x - 1 for x in column_list])
+                        if previous_column_list[0] < 0:
+                            previous_column_list = previous_column_list[1:]
+                            previous_column_list.append(255)
+                        for j in range((256 // int(math.sqrt(mask_step))) // 4):
+                            mask_step_cmd.append(chip.write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
+                            mask_step_cmd.append(chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
 
-            if append_datadriven == True:
-                # Append the command for initializing a data driven readout
-                mask_step_cmd.append(self.chips[0].read_pixel_matrix_datadriven(write=False))
+                if append_datadriven == True:
+                    # Append the command for initializing a data driven readout
+                    mask_step_cmd.append(chip.read_pixel_matrix_datadriven(write=False))
 
-            # Append the list of command for the current mask_step to the full command list
-            mask_cmds.append(mask_step_cmd)
+                # Append the list of command for the current mask_step to the full command list
+                mask_cmds.append(mask_step_cmd)
 
             if progress == None:
                 # Update the progress bar
@@ -444,7 +427,7 @@ class ScanBase(object):
             else:
                 # Update the progress fraction and put it in the queue
                 step_counter += 1
-                fraction = step_counter / number
+                fraction      = step_counter / number
                 progress.put(fraction)
 
         if progress == None:
@@ -471,7 +454,7 @@ class ScanBase(object):
             mask_step_cmd = []
 
             for chip in self.chips[1:]:
-                chip.mask_matrix[:, :] = chip.MASK_ON
+                chip.mask_matrix[:, :]                                             = chip.MASK_ON
                 chip.mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = chip.MASK_ON
 
                 if self.maskfile:
@@ -527,60 +510,60 @@ class ScanBase(object):
             run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config ' + str(iteration), description=RunConfigTable)
 
         # Common scan/run configuration parameters
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'scan_id'
-        row['value'] = self.scan_id
+        row['value']     = self.scan_id
         row.append()
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'run_name'
-        row['value'] = self.run_name
+        row['value']     = self.run_name
         row.append()
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'software_version'
-        row['value'] = get_software_version()
+        row['value']     = get_software_version()
         row.append()
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'board_name'
-        row['value'] = self.board_name
+        row['value']     = self.board_name
         row.append()
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'firmware_version'
-        row['value'] = self.firmware_version
+        row['value']     = self.firmware_version
         row.append()
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'chip_wafer'
-        row['value'] = self.wafer_number
+        row['value']     = self.wafer_number
         row.append()
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'chip_x'
-        row['value'] = self.x_position
+        row['value']     = self.x_position
         row.append()
-        row = run_config_table.row
+        row              = run_config_table.row
         row['attribute'] = 'chip_y'
-        row['value'] = self.y_position
+        row['value']     = self.y_position
         row.append()
 
         # scan/run specific configuration parameters
         run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'tp_period', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'thrfile', 'maskfile', 'offset', 'shutter']
         for kw, value in six.iteritems(kwargs):
             if kw in run_config_attributes:
-                row = run_config_table.row
+                row              = run_config_table.row
                 row['attribute'] = kw
-                row['value'] = value if isinstance(value, str) else str(value)
+                row['value']     = value if isinstance(value, str) else str(value)
                 row.append()
 
         if self.scan_id == 'PixelDACopt' and iteration == 0:
-            row = run_config_table.row
+            row              = run_config_table.row
             row['attribute'] = 'pixeldac'
-            row['value'] = str(127)
+            row['value']     = str(127)
             row.append()
-            row = run_config_table.row
+            row              = run_config_table.row
             row['attribute'] = 'last_pixeldac'
-            row['value'] = str(127)
+            row['value']     = str(127)
             row.append()
-            row = run_config_table.row
+            row              = run_config_table.row
             row['attribute'] = 'last_delta'
-            row['value'] = str(1)
+            row['value']     = str(1)
             row.append()
 
         run_config_table.flush()
@@ -592,9 +575,9 @@ class ScanBase(object):
             #for chip in self.chips[1:]:
             general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig', title='GeneralConfig', description=ConfTable)
             for conf, value in six.iteritems(self.chips[1].configs):
-                row = general_config_table.row
+                row                  = general_config_table.row
                 row['configuration'] = conf
-                row['value'] = value
+                row['value']         = value
                 row.append()
             general_config_table.flush()
 
@@ -608,8 +591,8 @@ class ScanBase(object):
             dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs_' + str(iteration), title='DACs ' + str(iteration), description=DacTable)
         #for chip in self.chips[1:]:
         for dac, value in six.iteritems(self.chips[1].dacs):
-            row = dac_table.row
-            row['DAC'] = dac
+            row          = dac_table.row
+            row['DAC']   = dac
             row['value'] = value
             row.append()
         dac_table.flush()
@@ -628,7 +611,7 @@ class ScanBase(object):
             link_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='links', title='Links', description=Links)
 
             # Open the link yaml file
-            proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            proj_dir  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             yaml_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
 
             if not yaml_file == None:
@@ -636,22 +619,22 @@ class ScanBase(object):
                     yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
             for register in yaml_data['registers']:
-                row = link_config_table.row
-                row['receiver'] = register['name']
+                row              = link_config_table.row
+                row['receiver']  = register['name']
                 row['fpga_link'] = register['fpga-link']
                 row['chip_link'] = register['chip-link']
 
                 # Decode the Chip-ID
                 bit_id = BitLogic.from_value(register['chip-id'])
-                wafer = bit_id[19:8].tovalue()
-                x = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
-                y =bit_id[7:4].tovalue()
-                ID = 'W' + str(wafer) + '-' + x + str(y)
-                row['chip_id'] = ID
-
-                row['data_delay'] = register['data-delay']
+                wafer  = bit_id[19:8].tovalue()
+                x      = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+                y      = bit_id[7:4].tovalue()
+                ID     = 'W' + str(wafer) + '-' + x + str(y)
+                
+                row['chip_id']     = ID
+                row['data_delay']  = register['data-delay']
                 row['data_invert'] = register['data-invert']
-                row['data_edge'] = register['data-edge']
+                row['data_edge']   = register['data-edge']
                 row['link_status'] = register['link-status']
                 row.append()
             link_config_table.flush()
@@ -663,7 +646,7 @@ class ScanBase(object):
             each iteration
         '''
 
-        filter_raw_data = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
+        filter_raw_data    = tb.Filters(complib='blosc', complevel=5, fletcher32=False)
         self.filter_tables = tb.Filters(complib='zlib', complevel=5, fletcher32=False)
 
         # Scans without multiple iterations
@@ -701,9 +684,9 @@ class ScanBase(object):
         self.scan_param_id = 0
 
         # Initialize the communication with the chip and read the board name and firmware version
-        self.fifo_readout = FifoReadout(chip = self.chips[0], readout_interval = readout_interval, moving_average_time_period = moving_average_time_period)
-        self.board_name = self.chips[0].board_version
-        self.firmware_version = self.chips[0].fw_version
+        self.fifo_readout       = FifoReadout(chip = self.chips[0], readout_interval = readout_interval, moving_average_time_period = moving_average_time_period)
+        self.board_name         = self.chips[0].board_version
+        self.firmware_version   = self.chips[0].fw_version
 
         # Chip start-up sequence
         # Reset the chip
@@ -753,56 +736,42 @@ class ScanBase(object):
             chip.reset_dac_attributes(to_default = False)
             data = chip.write_dacs()
             for chunk in data:
-                #print('Reset dacs chunk header: ' + str(chunk))
                 self.chips[0].write(chunk)
 
             # Sequential reset of the pixel matrix
-            data = chip.reset_sequential(write=False)
-            #print('Reset sequential header: ' + str(data))
-            self.chips[0].write(data, True)
-            #fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+            self.chips[0].write(chip.reset_sequential(write=False), True)
 
         self.maskfile = kwargs.get('maskfile', None)
-        self.thrfile = kwargs.get('thrfile', None)
+        self.thrfile  = kwargs.get('thrfile', None)
         self.configure(**kwargs)
 
         # Produce needed PCR (Pixel configuration register)
         for chip in self.chips[1:]:
             for i in range(256 // 4):
-                data = chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False)
-                #print('Write pcr header: ' + str(data))
-                self.chips[0].write(data)
+                self.chips[0].write(chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
         # Set Op_mode for the scans, based on the scan id
-        #for chip in self.chips[1:]:
-        if self.scan_id == 'EqualisationCharge':
-            self.chips[0]._configs["Op_mode"] = 2
-            self.chips[1]._configs["Op_mode"] = 2
-        elif self.scan_id == 'EqualisationNoise':
-            self.chips[0]._configs["Op_mode"] = 2
-            self.chips[1]._configs["Op_mode"] = 2
-        elif self.scan_id == 'PixelDACopt':
-            self.chips[0]._configs["Op_mode"] = 2
-            self.chips[1]._configs["Op_mode"] = 2
-        elif self.scan_id == 'TestpulseScan':
-            self.chips[0]._configs["Op_mode"] = 2
-            self.chips[1]._configs["Op_mode"] = 2
-        elif self.scan_id == 'ThresholdScan':
-            self.chips[0]._configs["Op_mode"] = 2
-            self.chips[1]._configs["Op_mode"] = 2
-        elif self.scan_id == 'ThresholdCalib':
-            self.chips[0]._configs["Op_mode"] = 2
-            self.chips[1]._configs["Op_mode"] = 2
-        elif self.scan_id == 'NoiseScan':
-            self.chips[0]._configs["Op_mode"] = 2
-            self.chips[1]._configs["Op_mode"] = 2
-        elif self.scan_id == 'ToTCalib':
-            self.chips[0]._configs["Op_mode"] = 0
-            self.chips[1]._configs["Op_mode"] = 0
+        for chip in self.chips:
+            if self.scan_id == 'EqualisationCharge':
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id == 'EqualisationNoise':
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id == 'PixelDACopt':
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id == 'TestpulseScan':
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id == 'ThresholdScan':
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id == 'ThresholdCalib':
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id == 'NoiseScan':
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id == 'ToTCalib':
+                chip._configs["Op_mode"] = 0
 
         # Setup HDF5 file
-        filename = self.output_filename + '.h5'
-        self.h5_file = tb.open_file(filename, mode='w', title=self.scan_id)
+        filename        = self.output_filename + '.h5'
+        self.h5_file    = tb.open_file(filename, mode='w', title=self.scan_id)
         self.setup_files(iteration = iteration)
 
         # Save configuration to HDF5 file in configuration group
@@ -813,8 +782,8 @@ class ScanBase(object):
         socket_addr = kwargs.pop('send_data', 'tcp://127.0.0.1:5500')
         if socket_addr:
             try:
-                self.context = zmq.Context()
-                self.socket = self.context.socket(zmq.PUB)  # publisher socket
+                self.context    = zmq.Context()
+                self.socket     = self.context.socket(zmq.PUB)  # publisher socket
                 self.socket.bind(socket_addr)
                 self.logger.debug('Sending data to server %s', socket_addr)
             except zmq.error.ZMQError:
@@ -874,13 +843,13 @@ class ScanBase(object):
 
     def start_readout(self, scan_param_id=0, *args, **kwargs):
         # Pop parameters for fifo_readout.start
-        callback = kwargs.pop('callback', self.handle_data)
-        clear_buffer = kwargs.pop('clear_buffer', False)
-        fill_buffer = kwargs.pop('fill_buffer', False)
-        reset_sram_fifo = kwargs.pop('reset_sram_fifo', True)
-        errback = kwargs.pop('errback', self.handle_err)
-        no_data_timeout = kwargs.pop('no_data_timeout', None)
-        self.scan_param_id = scan_param_id
+        callback            = kwargs.pop('callback', self.handle_data)
+        clear_buffer        = kwargs.pop('clear_buffer', False)
+        fill_buffer         = kwargs.pop('fill_buffer', False)
+        reset_sram_fifo     = kwargs.pop('reset_sram_fifo', True)
+        errback             = kwargs.pop('errback', self.handle_err)
+        no_data_timeout     = kwargs.pop('no_data_timeout', None)
+        self.scan_param_id  = scan_param_id
         time.sleep(0.02)  # sleep here for a while
         self.fifo_readout.start(reset_sram_fifo=reset_sram_fifo, fill_buffer=fill_buffer, clear_buffer=clear_buffer,
                                 callback=callback, errback=errback, no_data_timeout=no_data_timeout)
@@ -899,14 +868,14 @@ class ScanBase(object):
         # Get the meta data of the raw data and create a new row with it
         len_raw_data = data_tuple[0].shape[0]
         self.meta_data_table.row['timestamp_start'] = data_tuple[1]
-        self.meta_data_table.row['timestamp_stop'] = data_tuple[2]
-        self.meta_data_table.row['discard_error'] = data_tuple[3]
-        self.meta_data_table.row['decode_error'] = data_tuple[4]
-        self.meta_data_table.row['data_length'] = len_raw_data
-        self.meta_data_table.row['index_start'] = total_words
-        total_words += len_raw_data
-        self.meta_data_table.row['index_stop'] = total_words
-        self.meta_data_table.row['scan_param_id'] = self.scan_param_id
+        self.meta_data_table.row['timestamp_stop']  = data_tuple[2]
+        self.meta_data_table.row['discard_error']   = data_tuple[3]
+        self.meta_data_table.row['decode_error']    = data_tuple[4]
+        self.meta_data_table.row['data_length']     = len_raw_data
+        self.meta_data_table.row['index_start']     = total_words
+        total_words                                += len_raw_data
+        self.meta_data_table.row['index_stop']      = total_words
+        self.meta_data_table.row['scan_param_id']   = self.scan_param_id
 
         # Write the new meta data row to the meta data table in the HDF5 file
         self.meta_data_table.row.append()
@@ -930,9 +899,9 @@ class ScanBase(object):
         '''
             Setup the logfile
         '''
-        output_path = os.path.join(self.working_dir, 'logs')
+        output_path     = os.path.join(self.working_dir, 'logs')
         logger_filename = os.path.join(output_path, self.run_name)
-        self.fh = logging.FileHandler(logger_filename + '.log')
+        self.fh         = logging.FileHandler(logger_filename + '.log')
         self.fh.setLevel(loglevel)
         self.fh.setFormatter(logging.Formatter("%(asctime)s - [%(name)-15s] - %(levelname)-7s %(message)s"))
         for lg in six.itervalues(logging.Logger.manager.loggerDict):
@@ -973,6 +942,7 @@ class ScanBase(object):
         '''
             Write the pixel threshold matrix to file
         '''
+        # TODO: Save the matrix for each chip, make seperate table
         self.logger.info('Writing equalisation matrix to file...')
         if not self.thrfile:
             self.thrfile = os.path.join(get_equal_path(), 'W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_equal_' + self.timestamp + '.h5')

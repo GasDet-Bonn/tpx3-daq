@@ -34,7 +34,7 @@ registers:
   description: Fine control of Pixel Threshold
   name: Vthreshold_fine
   size: 9
-  value: 255
+  value: 380
 - address: 7
   default: 8
   description: Coarse Control of Pixel Threshold
