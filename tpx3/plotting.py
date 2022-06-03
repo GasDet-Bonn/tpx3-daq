@@ -822,7 +822,7 @@ class Plotting(object):
         else:
             cb = fig.colorbar(im, fraction=0.04, pad=0.05)
         cb.set_label("# of pixels")
-        ax.set_title(title + ' for %d pixel(s)' % (scurves.shape[0]), color=TITLE_COLOR)
+        ax.set_title(title + ' for %d pixel(s)' % (scurves.shape[1]), color=TITLE_COLOR)
         if scan_parameter_name is None:
             ax.set_xlabel('Scan parameter')
         else:
