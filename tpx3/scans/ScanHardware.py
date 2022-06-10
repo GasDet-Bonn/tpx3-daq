@@ -110,10 +110,10 @@ class ScanHardware(object):
                 for delay in range(32):
                     fpga_link.ENABLE = 0
                     fpga_link.reset()
-                    fpga_link.ENABLE = 1
                     fpga_link.DATA_DELAY = delay
                     fpga_link.INVERT = invert
                     fpga_link.SAMPLING_EDGE = 0
+                    fpga_link.ENABLE = 1
 
                     # Check the number of errors for the current setting
                     error_map[fpga_link_number][delay] = fpga_link.get_decoder_error_counter()
