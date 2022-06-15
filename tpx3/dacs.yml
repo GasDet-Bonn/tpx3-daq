@@ -34,13 +34,13 @@ registers:
   description: Fine control of Pixel Threshold
   name: Vthreshold_fine
   size: 9
-  value: 380
+  value: 360
 - address: 7
   default: 8
   description: Coarse Control of Pixel Threshold
   name: Vthreshold_coarse
   size: 4
-  value: 7
+  value: 4
 - address: 8
   default: 128
   description: Ibias_DiscS1 switched on

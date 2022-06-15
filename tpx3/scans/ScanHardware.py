@@ -28,7 +28,7 @@ class ScanHardware(object):
             Stores the result in links.yml and returns a table of chips with a list of their links and settings.
         '''
         # Open the link yaml file
-        proj_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        proj_dir  = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         yaml_file =  os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
 
         if not yaml_file == None:
@@ -36,7 +36,7 @@ class ScanHardware(object):
                 yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
         # Create chip communication
-        dut_conf = os.path.join(proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
+        dut_conf  = os.path.join(proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
         Dut_layer = Dut(dut_conf)
         Dut_layer.init()
 
@@ -70,17 +70,17 @@ class ScanHardware(object):
         self.chip.Dut_layer['CONTROL'].write()
 
         # Write the PLL
-        data = self.chip.write_pll_config()
+        data       = self.chip.write_pll_config()
 
-        rx_map = np.zeros((8,8), np.int8)
-        error_map = np.zeros((8, 32), np.int16)
+        rx_map     = np.zeros((8,8), np.int8)
+        error_map  = np.zeros((8, 32), np.int16)
         status_map = np.zeros(8, np.int8)
 
         # Check for which combinations of FPGA and chip links the connection is ready
         for chip_link in range(8):
             # Create the chip output channel mask and write the output block
             self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
-            data = self.chip.write_outputBlock_config()
+            data                                 = self.chip.write_outputBlock_config()
 
             for fpga_link_number, fpga_link in enumerate(rx_list_objects):
                 rx_map[chip_link][fpga_link_number] = fpga_link.is_ready
@@ -90,8 +90,8 @@ class ScanHardware(object):
 
         for fpga_link_number, fpga_link in enumerate(rx_list_objects):
             self.chip._outputBlocks["chan_mask"] = 0b00000000
-            data = self.chip.write_outputBlock_config()
-            fpga_link.ENABLE = 0
+            data                                 = self.chip.write_outputBlock_config()
+            fpga_link.ENABLE                     = 0
 
         # Test if links see data when everything is switched off
         noisy_map = np.zeros(8, np.int8)
@@ -110,19 +110,19 @@ class ScanHardware(object):
             # Do this check only on links which are connected and show no errors sofar
             if status_map[fpga_link_number] == 1:
                 self.chip._outputBlocks["chan_mask"] = 0b1 << int(np.where(rx_map == 1)[0][fpga_link_number - not_connected_counter])
-                data = self.chip.write_outputBlock_config()
+                data                                 = self.chip.write_outputBlock_config()
 
                 for delay in range(32):
-                    fpga_link.ENABLE = 0
+                    fpga_link.ENABLE        = 0
                     fpga_link.reset()
-                    fpga_link.ENABLE = 1
-                    fpga_link.DATA_DELAY = delay
-                    fpga_link.INVERT = invert
+                    fpga_link.ENABLE        = 1
+                    fpga_link.DATA_DELAY    = delay
+                    fpga_link.INVERT        = invert
                     fpga_link.SAMPLING_EDGE = 0
 
                     # Check the number of errors for the current setting
                     error_map[fpga_link_number][delay] = fpga_link.get_decoder_error_counter()
-                    fpga_link.ENABLE = 0
+                    fpga_link.ENABLE                   = 0
             else:
                 not_connected_counter += 1
 
@@ -132,7 +132,7 @@ class ScanHardware(object):
             else:
                 # Update the progress fraction and put it in the queue
                 step_counter += 1
-                fraction = step_counter / len(rx_list_objects)
+                fraction      = step_counter / len(rx_list_objects)
                 progress.put(fraction)
 
         # Find for each receiver the delay with the most distance to a delay with errors
@@ -144,8 +144,8 @@ class ScanHardware(object):
                 if len(zero_error_map) == 0:
                     status_map[receiver] = 4
                     continue
-                zero_delays = np.split(zero_error_map, np.where(zero_error_map[:-1] != zero_error_map[1:] - 1)[0])
-                list_index = np.argmax(np.array([zero_delays[i].size for i in range(len(zero_delays))]))
+                zero_delays      = np.split(zero_error_map, np.where(zero_error_map[:-1] != zero_error_map[1:] - 1)[0])
+                list_index       = np.argmax(np.array([zero_delays[i].size for i in range(len(zero_delays))]))
                 delays[receiver] = int(np.median(zero_delays[list_index]))
 
         # Check for each receiver the ChipID of the connected chip
@@ -156,9 +156,9 @@ class ScanHardware(object):
                 continue
 
             # Activate the current receivers
-            fpga_link.ENABLE = 1
-            fpga_link.DATA_DELAY = int(delays[fpga_link_number])
-            fpga_link.INVERT = invert
+            fpga_link.ENABLE        = 1
+            fpga_link.DATA_DELAY    = int(delays[fpga_link_number])
+            fpga_link.INVERT        = invert
             fpga_link.SAMPLING_EDGE = 0
 
             # Enable the corrresponding chip link
@@ -190,12 +190,12 @@ class ScanHardware(object):
                 Chip_IDs[fpga_link_number] = dout[1][19:0].tovalue()
             except Exception as a:
                 # If there is no valid ChipID set the ID to 0 and set the corresponding status (8)
-                Chip_IDs[fpga_link_number] = 0
+                Chip_IDs[fpga_link_number]   = 0
                 status_map[fpga_link_number] = 8
             fpga_link.ENABLE = 0
 
         # Open the link yaml file
-        proj_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        proj_dir  = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         yaml_file =  os.path.join(proj_dir, 'tpx3' + os.sep + 'links.yml')
 
         dict_list = []
@@ -222,13 +222,18 @@ class ScanHardware(object):
 
             # Decode the Chip-ID
             wafer_number = bit_id[19:8].tovalue()
-            x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
-            y_position =bit_id[7:4].tovalue()
-            ID = 'W' + str(wafer_number) + '-' + x_position + str(y_position)
+            x_position   = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+            y_position   = bit_id[7:4].tovalue()
+            ID           = 'W' + str(wafer_number) + '-' + x_position + str(y_position)
 
             # Write new Chip-ID to the list
             if register['chip-id'] not in ID_List:
                 ID_List.append([register['chip-id'], ID])
+
+        # For each ID create an entry in dacs.yml with standard values.
+        # chip -> registers -> values
+
+
 
         # Create a list of Chips with all link settings for the specific chip
         Chip_List = []

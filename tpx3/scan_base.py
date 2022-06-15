@@ -311,6 +311,7 @@ class ScanBase(object):
                 self.chips[0]._outputBlocks["chan_mask"] = self.chips[0]._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
 
                 # Activate the current fpga link and set all its settings
+                #if register['chip-link'] != 2:
                 self.chips[0].Dut_layer[register['name']].ENABLE        = 1
                 self.chips[0].Dut_layer[register['name']].DATA_DELAY    = register['data-delay']
                 self.chips[0].Dut_layer[register['name']].INVERT        = register['data-invert']
@@ -507,7 +508,7 @@ class ScanBase(object):
             run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config', title='Run config', description=RunConfigTable)
         # Scans with multiple iterations
         else:
-            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config ' + str(iteration), description=RunConfigTable)
+            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config' + str(iteration), description=RunConfigTable)
 
         # Common scan/run configuration parameters
         row              = run_config_table.row
@@ -600,14 +601,14 @@ class ScanBase(object):
         # Save the mask and the pixel threshold matrices
         # In scans with multiple iterations only for the first iteration
         # TODO: Do this for each chip, also put in ChipId later
-        if iteration == None or iteration == 1:
+        if iteration == None or iteration == 0:
             #for chip in self.chips[1:]:
             self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix', title='Mask Matrix', obj=self.chips[1].mask_matrix)
             self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix', title='Threshold Matrix', obj=self.chips[1].thr_matrix)
 
         # save the link configuration
         # In scans with multiple iterations only for the first iteration
-        if iteration == None or iteration == 1:
+        if iteration == None or iteration == 0:
             link_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='links', title='Links', description=Links)
 
             # Open the link yaml file

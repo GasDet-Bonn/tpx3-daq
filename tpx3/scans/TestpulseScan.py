@@ -165,9 +165,9 @@ class TestpulseScan(ScanBase):
             vco             = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
             # 'Simulate' more chips
-            chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
-            for new_Id in range(8):
-                h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
+            #chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
+            #for new_Id in range(8):
+            #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
             #print(h5_file.root.configuration.links[:]['chip_id'])
             #print(h5_file.root.configuration.links)
 
@@ -245,7 +245,7 @@ class TestpulseScan(ScanBase):
 
                 # Fit S-Curves to the histograms for all pixels
                 param_range             = list(range(VTP_fine_start, VTP_fine_stop))
-                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, progress = progress)
+                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, progress = progress, invert_x=True)
 
                 h5_file.create_carray(chip_group, name='HistSCurve', obj=scurve)
                 h5_file.create_carray(chip_group, name='Chi2Map', obj=chi2ndf2D.T)

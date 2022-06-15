@@ -44,10 +44,10 @@ class IterationTable(tb.IsDescription):
 
 class PixelDACopt(ScanBase):
 
-    scan_id = "PixelDACopt"
+    scan_id      = "PixelDACopt"
     wafer_number = 0
-    y_position = 0
-    x_position = 'A'
+    y_position   = 0
+    x_position   = 'A'
 
     def scan(self, Vthreshold_start = 1500, Vthreshold_stop = 2500, n_injections = 100, tp_period = 1, offset = 0, progress = None, status = None, result = None, **kwargs):
         '''
@@ -70,18 +70,29 @@ class PixelDACopt(ScanBase):
             raise ValueError("Value {} for offset is not in the allowed range (0-15)".format(offset))
 
         # Start parameters for the optimization
-        last_delta = 1
+        last_delta     = 1
         last_rms_delta = 22
-        pixeldac = 127
-        last_pixeldac = pixeldac
-        iteration = 0
+        pixeldac       = 127
+        last_pixeldac  = pixeldac
+        iteration      = 0
 
         # Create the masks for all steps for the scan at 0 and at 15
-        mask_cmds = self.create_scan_masks(16, pixel_threhsold = 0, number = 1, append_datadriven = False, progress = progress)
+        mask_cmds  = self.create_scan_masks(16, pixel_threhsold = 0, number = 1, append_datadriven = False, progress = progress)
         mask_cmds2 = self.create_scan_masks(16, pixel_threhsold = 15, number = 1, append_datadriven = False, progress = progress)
 
+        # Create a list of chips we want to optimize
+        self.chips_not_optimized = []
+        for chip in self.chips:
+            self.chips_not_optimized.append(chip)
+        print(self.chips_not_optimized)
+
         # Repeat until optimization is done
-        while last_delta < last_rms_delta - 2 or last_delta > last_rms_delta + 2:
+        #while last_delta < last_rms_delta - 2 or last_delta > last_rms_delta + 2:
+        while len(self.chips_not_optimized) > 0:
+
+            # Disable links, which are connected to chips, which are already optimized
+            
+            
             if status != None:
                 status.put("Linear regression step number {} with pixeldac {}".format(iteration + 1, int(pixeldac)))
 
@@ -109,13 +120,28 @@ class PixelDACopt(ScanBase):
             self.scan_iteration(progress = progress, status = status, **args)
 
             # Analyse the data of the current iteration
-            opt_results = self.analyze_iteration(iteration, progress = progress, status = status)
+            opt_results   = self.analyze_iteration(iteration, progress = progress, status = status)
             last_pixeldac = pixeldac
 
             # Store results of iteration
-            pixeldac = opt_results[0]
-            last_delta = opt_results[1]
+            pixeldac       = opt_results[0]
+            last_delta     = opt_results[1]
             last_rms_delta = opt_results[2]
+
+            # Prepare a list for chips, which are optimized in this iteration
+            chips_optimized = []
+
+            # Check, if the chips are optimized 
+            for chip in range(len(self.chips_not_optimized)):
+                if (last_delta[chip] < last_rms_delta[chip] - 2) or (last_delta[chip] > last_rms_delta[chip] + 2):
+                    pass
+                else:
+                    # If optimized, write off as optimized
+                    chips_optimized.append(self.chips_not_optimized[chip])
+            
+            # Remove chip from list of not optimized chips
+            for chip in chips_optimized:
+                self.chips_not_optimized.pop(chip)
 
             iteration += 1
 
@@ -124,9 +150,9 @@ class PixelDACopt(ScanBase):
         with tb.open_file(h5_filename, 'r+') as h5_file:
             iterations_table = self.h5_file.create_table(self.h5_file.root.configuration, name='iterations', title='iterations', description=IterationTable)
             # Common scan/run configuration parameters
-            row = iterations_table.row
+            row              = iterations_table.row
             row['attribute'] = 'iterations'
-            row['value'] = iteration
+            row['value']     = iteration
             row.append()
             iterations_table.flush()
 
@@ -152,20 +178,21 @@ class PixelDACopt(ScanBase):
         '''
 
         # Set general configuration registers of the Timepix3
-        self.chip.write_general_config()
+        for chip in self.chips_not_optimized:
+            self.chips[0].write(chip.write_general_config(write=False))
+
+            # Write to the test pulse registers of the Timepix3
+            # Write to period and phase tp register
+            self.chips[0].write(chip.write_tp_period(tp_period, 0, write=False))
+
+            # Write to pulse number tp register
+            self.chips[0].write(chip.write_tp_pulsenumber(n_injections, write=False))
+
+            # Set the pixeldac to the current iteration value
+            self.chips[0].write(chip.set_dac("Ibias_PixelDAC", pixeldac, write=False))
 
         # Get the shutter sleep time
         sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = n_injections)
-
-        # Write to the test pulse registers of the Timepix3
-        # Write to period and phase tp register
-        data = self.chip.write_tp_period(tp_period, 0)
-
-        # Write to pulse number tp register
-        self.chip.write_tp_pulsenumber(n_injections)
-
-        # Set the pixeldac to the current iteration value
-        self.chip.set_dac("Ibias_PixelDAC", pixeldac)
 
         self.logger.info('Scan with Pixeldac %i', pixeldac)
         self.logger.info('Preparing injection masks...')
@@ -187,20 +214,23 @@ class PixelDACopt(ScanBase):
             # Initialize counter for progress
             step_counter = 0
 
-        # Only activate testpulses for columns with active pixels
-        self.chip.write_ctpr(list(range(offset, 256, 4)))
+        for chip in self.chips_not_optimized:
+            # Only activate testpulses for columns with active pixels
+            self.chips[0].write(chip.write_ctpr(list(range(offset, 256, 4)), write=False))
 
         # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
-        self.chip.write(mask_cmds)
+        self.chips[0].write(mask_cmds)
 
         scan_param_id = 0
         for threshold in thresholds:
-            # Set the threshold
-            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
-            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
+            for chip in self.chips_not_optimized:
+                # Set the threshold
+                self.chips[0].write(chip.set_dac("Vthreshold_coarse", int(threshold[0]), write=False))
+                self.chips[0].write(chip.set_dac("Vthreshold_fine", int(threshold[1]), write=False))
 
             with self.readout(scan_param_id=scan_param_id):
-                self.chip.read_pixel_matrix_datadriven()
+                for chip in self.chips_not_optimized:
+                    self.chips[0].write(chip.read_pixel_matrix_datadriven(write=False))
 
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
@@ -211,12 +241,14 @@ class PixelDACopt(ScanBase):
                     else:
                         # Update the progress fraction and put it in the queue
                         step_counter += 1
-                        fraction = step_counter / len(thresholds)
+                        fraction      = step_counter / len(thresholds)
                         progress.put(fraction)
-                self.chip.stop_readout()
-                time.sleep(0.1)
-            self.chip.reset_sequential()
-            time.sleep(0.001)
+                for chip in self.chips_not_optimized:
+                    self.chips[0].write(chip.stop_readout(write=False))
+                    time.sleep(0.01)
+            for chip in self.chips_not_optimized:
+                self.chips[0].write(chip.reset_sequential(write=False))
+                time.sleep(0.001)
             scan_param_id += 1
 
         if progress == None:
@@ -238,16 +270,18 @@ class PixelDACopt(ScanBase):
             step_counter = 0
 
         # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
-        self.chip.write(mask_cmds2)
+        self.chips[0].write(mask_cmds2)
 
         scan_param_id = 0
         for threshold in thresholds:
-            # Set the threshold
-            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
-            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
+            for chip in self.chips_not_optimized:
+                # Set the threshold
+                self.chips[0].write(chip.set_dac("Vthreshold_coarse", int(threshold[0]), write=False))
+                self.chips[0].write(chip.set_dac("Vthreshold_fine", int(threshold[1]), write=False))
 
             with self.readout(scan_param_id=scan_param_id + len(thresholds)):
-                self.chip.read_pixel_matrix_datadriven()
+                for chip in self.chips_not_optimized:
+                    self.chips[0].write(chip.read_pixel_matrix_datadriven(write=False))
 
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
@@ -258,12 +292,14 @@ class PixelDACopt(ScanBase):
                     else:
                         # Update the progress fraction and put it in the queue
                         step_counter += 1
-                        fraction = step_counter / len(thresholds)
+                        fraction      = step_counter / len(thresholds)
                         progress.put(fraction)
-                self.chip.stop_readout()
-                time.sleep(0.1)
-            self.chip.reset_sequential()
-            time.sleep(0.001)
+                for chip in self.chips_not_optimized:
+                    self.chips[0].write(chip.stop_readout(write=False))
+                    time.sleep(0.01)
+            for chip in self.chips_not_optimized:
+                self.chips[0].write(chip.reset_sequential(write=False))
+                time.sleep(0.001)
             scan_param_id += 1
 
         if progress == None:
@@ -292,98 +328,142 @@ class PixelDACopt(ScanBase):
         # Open the HDF5 which contains all data of the optimization iteration
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters for the current iteration
-            meta_data_call = ('h5_file.root.' + 'meta_data_' + str(iteration) + '[:]')
-            meta_data = eval(meta_data_call)
+            meta_data_call  = ('h5_file.root.' + 'meta_data_' + str(iteration) + '[:]')
+            meta_data       = eval(meta_data_call)
             run_config_call = ('h5_file.root.' + 'configuration.run_config_' + str(iteration) + '[:]')
-            run_config = eval(run_config_call)
-            general_config = h5_file.root.configuration.generalConfig[:]
-            op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
-            vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
+            run_config      = eval(run_config_call)
+            general_config  = h5_file.root.configuration.generalConfig[:]
+            op_mode         = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
+            vco             = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
             if iteration == 0:
                 # Create group to save all data and histograms to the HDF file
                 h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
+            # 'Simulate' more chips
+            chip_IDs_new = [b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7', b'W18-K7',b'W18-K7', b'W18-K7']
+            for new_Id in range(8):
+                h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
+
+            # Get link configuration
+            link_config = h5_file.root.configuration.links[:]
+            print(link_config)
+            chip_IDs    = link_config['chip_id']
+
+            # Create dictionary of Chips and the links they are connected to
+            self.chip_links = {}
+    
+            for link, ID in enumerate(chip_IDs):
+                if ID not in self.chip_links:
+                    self.chip_links[ID] = [link]
+                else:
+                    self.chip_links[ID].append(link)
+            print('Chip links: ' + str(self.chip_links))
+
+            # Get the number of chips
+            self.num_of_chips = len(self.chip_links)
+
             self.logger.info('Interpret raw data...')
 
             # THR = 0
             param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
-            meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
-            param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
+            meta_data_th0      = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
+            param_range_th0    = np.unique(meta_data_th0['scan_param_id'])
 
             # THR = 15
-            meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
+            meta_data_th15   = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
             param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
 
             # shift indices so that they start with zero
-            start = meta_data_th15['index_start'][0]
+            start                         = meta_data_th15['index_start'][0]
             meta_data_th15['index_start'] = meta_data_th15['index_start']-start
-            meta_data_th15['index_stop'] = meta_data_th15['index_stop']-start
+            meta_data_th15['index_stop']  = meta_data_th15['index_stop']-start
 
             self.logger.info('THR = 0')
             #THR = 0
             raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[:' + str(meta_data_th0['index_stop'][-1]) + ']')
             raw_data_thr0 = eval(raw_data_call)
-            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, meta_data_th0, progress = progress)
-            raw_data_thr0 = None
+            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, self.chip_links, meta_data_th0, progress = progress)
+            #raw_data_thr0 = None
 
             self.logger.info('THR = 15')
             #THR = 15
-            raw_data_call = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[' + str(meta_data_th0['index_stop'][-1]) + ':]')
+            raw_data_call  = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[' + str(meta_data_th0['index_stop'][-1]) + ':]')
             raw_data_thr15 = eval(raw_data_call)
-            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, meta_data_th15, progress = progress)
-            raw_data_thr15 = None
+            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, self.chip_links, meta_data_th15, progress = progress)
+            #raw_data_thr15 = None
 
             # Read needed configuration parameters
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
-            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
-            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
-            pixeldac = [int(item[1]) for item in run_config if item[0] == b'pixeldac'][0]
-            last_pixeldac = [int(item[1]) for item in run_config if item[0] == b'last_pixeldac'][0]
-            last_delta = [float(item[1]) for item in run_config if item[0] == b'last_delta'][0]
+            Vthreshold_stop  = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            n_injections     = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            pixeldac         = [int(item[1]) for item in run_config if item[0] == b'pixeldac'][0]
+            last_pixeldac    = [int(item[1]) for item in run_config if item[0] == b'last_pixeldac'][0]
+            last_delta       = [float(item[1]) for item in run_config if item[0] == b'last_delta'][0]
 
-            # Select only data which is hit data
-            hit_data_thr0 = hit_data_thr0[hit_data_thr0['data_header'] == 1]
-            hit_data_thr15 = hit_data_thr15[hit_data_thr15['data_header'] == 1]
+            pixeldac_result  = [[]]*len(self.chips_not_optimized)
 
-            # Divide the data into two parts - data for pixel threshold 0 and 15
-            param_range = np.unique(meta_data['scan_param_id'])
-            meta_data = None
-            param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
-            param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
+            for chip in range(self.num_of_chips):
+                # get chipID of current chip
+                chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+                print(chip, chipID)
 
-            # Create histograms for number of detected hits for individual thresholds
-            self.logger.info('Get the global threshold distributions for all pixels...')
-            scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
-            hit_data_thr0 = None
-            scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
-            hit_data_thr15 = None
+                # create group for current chip
+                create_group_call = ('h5_file.root.interpreted_' + str(iteration))
+                h5_file.create_group(eval(create_group_call), name = chipID)
 
-            # Fit S-Curves to the histograms for all pixels
-            self.logger.info('Fit the scurves for all pixels...')
-            thr2D_th0, _, _ = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
-            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th0_' + str(iteration), obj=scurve_th0)
-            h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th0_' + str(iteration), obj=thr2D_th0.T)
-            scurve_th0 = None
-            thr2D_th15, _, _ = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
-            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th15_' + str(iteration), obj=scurve_th15)
-            h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th15_' + str(iteration) , obj=thr2D_th15.T)
-            scurve_th15 = None
+                # get group for current chip
+                chip_group_call = create_group_call + '._f_get_child(chipID)'
+                chip_group      = eval(chip_group_call)
 
-        # Put the threshold distribution based on the fit results in two histograms
-        self.logger.info('Get the cumulated global threshold distributions...')
-        hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
-        thr2D_th0 = None
-        hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
-        thr2D_th15 = None
+                # Select only data which is hit data
+                hit_data_thr0_chip  = hit_data_thr0[chip][hit_data_thr0[chip]['data_header'] == 1]
+                hit_data_thr15_chip = hit_data_thr15[chip][hit_data_thr15[chip]['data_header'] == 1]
 
-        # Use the threshold histograms to calculate the new Ibias_PixelDAC setting
-        self.logger.info('Calculate new pixelDAC value...')
-        pixeldac_result = analysis.pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop)
-        delta = pixeldac_result[1]
-        rms_delta = pixeldac_result[2]
+                # Divide the data into two parts - data for pixel threshold 0 and 15
+                param_range      = np.unique(meta_data['scan_param_id'])
+                #meta_data   = None
+                param_range_th0  = np.unique(hit_data_thr0['scan_param_id'])
+                param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
 
-        self.logger.info('Result of iteration: Scan with pixeldac %i - New pixeldac %i. Delta was %f with optimal delta %f' % (int(pixeldac), int(pixeldac_result[0]), pixeldac_result[1], pixeldac_result[2]))
+                # Create histograms for number of detected hits for individual thresholds
+                self.logger.info('Get the global threshold distributions for all pixels...')
+                scurve_th0          = analysis.scurve_hist(hit_data_thr0_chip, np.arange(len(param_range) // 2))
+                hit_data_thr0_chip  = None
+                scurve_th15         = analysis.scurve_hist(hit_data_thr15_chip, np.arange(len(param_range) // 2, len(param_range)))
+                hit_data_thr15_chip = None
+
+                # Fit S-Curves to the histograms for all pixels
+                self.logger.info('Fit the scurves for all pixels...')
+                thr2D_th0, _, _  = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=False, progress = progress)
+                h5_file.create_carray(chip_group, name='HistSCurve_th0', obj=scurve_th0)
+                h5_file.create_carray(chip_group, name='ThresholdMap_th0', obj=thr2D_th0.T)
+                scurve_th0       = None
+                thr2D_th15, _, _ = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=False, progress = progress)
+                h5_file.create_carray(chip_group, name='HistSCurve_th15', obj=scurve_th15)
+                h5_file.create_carray(chip_group, name='ThresholdMap_th15', obj=thr2D_th15.T)
+                scurve_th15      = None
+
+        ## Here also per chip
+        #pixeldac_result = [[]]*len(self.chips_not_optimized)
+        #for chip in range(len(self.chips_not_optimized)):
+            # Get ID of current chip
+            #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+
+                # Put the threshold distribution based on the fit results in two histograms
+                self.logger.info('Get the cumulated global threshold distributions...')
+                hist_th0   = analysis.vth_hist(thr2D_th0[chip], Vthreshold_stop)
+                thr2D_th0  = None
+                hist_th15  = analysis.vth_hist(thr2D_th15[chip], Vthreshold_stop)
+                thr2D_th15 = None
+
+                # Use the threshold histograms to calculate the new Ibias_PixelDAC setting
+                self.logger.info('Calculate new pixelDAC value...')
+                pixeldac_result[chip] = analysis.pixeldac_opt(hist_th0, hist_th15, pixeldac, last_pixeldac, last_delta, Vthreshold_start, Vthreshold_stop)
+                delta                 = pixeldac_result[chip][1]
+                rms_delta             = pixeldac_result[chip][2]
+
+            self.logger.info('Result of iteration: Scan with pixeldac %i - New pixeldac %i. Delta was %f with optimal delta %f' % (int(pixeldac), int(pixeldac_result[chip][0]), pixeldac_result[chip][1], pixeldac_result[chip][2]))
         return pixeldac_result
 
     def plot(self, status = None, plot_queue = None, **kwargs):
@@ -399,7 +479,7 @@ class PixelDACopt(ScanBase):
             status.put("Create Plots")
         with tb.open_file(h5_filename, 'r+') as h5_file:
             iterations_table = h5_file.root.configuration.iterations
-            iterations = 0
+            iterations       = 0
             for row in iterations_table:
                 if row['attribute'] == b'iterations':
                     iterations = int(row['value'])
@@ -409,16 +489,16 @@ class PixelDACopt(ScanBase):
 
                 # Read needed configuration parameters
                 Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
-                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
-                n_injections = int(p.run_config[b'n_injections'])
+                Vthreshold_stop  = int(p.run_config[b'Vthreshold_stop'])
+                n_injections     = int(p.run_config[b'n_injections'])
 
                 # Plot a page with all parameters
                 p.plot_parameter_page()
 
                 for iteration in range(iterations):           
-                    pixelDAC_call = ('h5_file.root.configuration.run_config_' + str(iteration))
+                    pixelDAC_call  = ('h5_file.root.configuration.run_config_' + str(iteration))
                     pixelDAC_table = eval(pixelDAC_call)
-                    pixelDAC = 0
+                    pixelDAC       = 0
                     for row in pixelDAC_table:
                         if row['attribute'] == b'pixeldac':
                             pixelDAC = str(int(row['value']))
@@ -426,23 +506,23 @@ class PixelDACopt(ScanBase):
                     # Plot the S-Curve histogram
                     scurve_th0_call = ('h5_file.root.interpreted.' + 'HistSCurve_th0_' + str(iteration) + '[:].T')
                     scurve_th0_hist = eval(scurve_th0_call)
-                    max_occ = n_injections * 5
+                    max_occ         = n_injections * 5
                     p.plot_scurves(scurve_th0_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 0 - IBias_PixelDAC ' + pixelDAC, max_occ=max_occ, plot_queue=plot_queue)
 
                     # Plot the threshold distribution based on the S-Curve fits
                     hist_th0_call = ('h5_file.root.interpreted.' + 'ThresholdMap_th0_' + str(iteration) + '[:]')
-                    hist_th0 = np.ma.masked_array(eval(hist_th0_call), mask)
+                    hist_th0      = np.ma.masked_array(eval(hist_th0_call), mask)
                     p.plot_distribution(hist_th0, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 0 - IBias_PixelDAC ' + pixelDAC, suffix='threshold_distribution_th0_' + pixelDAC, plot_queue=plot_queue)
 
                     # Plot the S-Curve histogram
                     scurve_th15_call = ('h5_file.root.interpreted.' + 'HistSCurve_th15_' + str(iteration) + '[:].T')
                     scurve_th15_hist = eval(scurve_th15_call)
-                    max_occ = n_injections * 5
+                    max_occ          = n_injections * 5
                     p.plot_scurves(scurve_th15_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 15 - IBias_PixelDAC ' + pixelDAC, max_occ=max_occ, plot_queue=plot_queue)
 
                     # Plot the threshold distribution based on the S-Curve fits
                     hist_th15_call = ('h5_file.root.interpreted.' + 'ThresholdMap_th15_' + str(iteration) + '[:]')
-                    hist_th15 = np.ma.masked_array(eval(hist_th15_call), mask)
+                    hist_th15      = np.ma.masked_array(eval(hist_th15_call), mask)
                     p.plot_distribution(hist_th15, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 15 - IBias_PixelDAC ' + pixelDAC, suffix='threshold_distribution_th15_' + pixelDAC, plot_queue=plot_queue)
 
 if __name__ == "__main__":

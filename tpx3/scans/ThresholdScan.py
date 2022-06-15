@@ -165,7 +165,7 @@ class ThresholdScan(ScanBase):
             op_mode        = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco            = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
             # 'Simulate' more chips
-            chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
+            chip_IDs_new = [b'W18-K7',b'W18-K7',b'W17-D8',b'W17-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
             for new_Id in range(8):
                 h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
@@ -185,10 +185,10 @@ class ThresholdScan(ScanBase):
             print('Chip links: ' + str(self.chip_links))
 
             # Sanity check
-            link_number = 3
-            for link, chipID in enumerate(self.chip_links):
-                if link_number in self.chip_links[chipID]:
-                    print(link, chipID)
+            #link_number = 3
+            #for link, chipID in enumerate(self.chip_links):
+            #    if link_number in self.chip_links[chipID]:
+            #        print(link, chipID)
 
             # Get the number of chips
             self.num_of_chips = len(self.chip_links)
@@ -234,7 +234,7 @@ class ThresholdScan(ScanBase):
 
                 # Fit S-Curves to the histograms for all pixels
                 param_range = list(range(Vthreshold_start, Vthreshold_stop + 1))
-                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True, progress = progress)
+                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=False, progress = progress)
 
                 h5_file.create_carray(chip_group, name='HistSCurve', obj=scurve)
                 h5_file.create_carray(chip_group, name='Chi2Map', obj=chi2ndf2D.T)

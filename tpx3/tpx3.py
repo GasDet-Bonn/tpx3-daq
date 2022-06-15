@@ -115,7 +115,7 @@ class CustomDict(dict):
         as initialization we need the allowed sizes of each DAC / value for each config
         """
         self.valsize_map = valsize_map
-        self.dictErrors = customDictErrors[dict_type]
+        self.dictErrors  = customDictErrors[dict_type]
 
     def __setitem__(self, key, value):
         """
@@ -218,23 +218,23 @@ class TPX3():
     DAC_VALUE_BITS = 9
 
     # PCR Definitions
-    MASK_ON = 0
+    MASK_ON  = 0
     MASK_OFF = 1
-    TP_ON = 1
-    TP_OFF = 0
+    TP_ON    = 1
+    TP_OFF   = 0
 
     def __init__(self, conf=None, **kwargs):
 
         self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.lfsr_10 = {}
-        self.lfsr_14 = {}
-        self.lfsr_4 = {}
+        self.lfsr_10  = {}
+        self.lfsr_14  = {}
+        self.lfsr_4   = {}
 
     def init(self, ChipId=None, inter_layer=None, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
         
         if inter_layer != None:
-            self.Dut_layer = inter_layer
-            self.fw_version = self.Dut_layer['intf'].read(0x0000, 1)[0]
+            self.Dut_layer     = inter_layer
+            self.fw_version    = self.Dut_layer['intf'].read(0x0000, 1)[0]
             self.board_version = self.hw_map[self.Dut_layer['intf'].read(0x0001, 1)[0]]
 
             logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
@@ -267,10 +267,10 @@ class TPX3():
         self.lfsr_4_bit()
 
         # assign filenames so we can check them
-        self.config_file = config_file
-        self.dac_file = dac_file
+        self.config_file      = config_file
+        self.dac_file         = dac_file
         self.outputBlock_file = outputBlock_file
-        self.PLLConfig_file = PLLConfig_file
+        self.PLLConfig_file   = PLLConfig_file
 
         for dict_type, type_dict in six.iteritems(dictNames):
             setattr(self, type_dict["YamlContent"], {})
@@ -501,9 +501,9 @@ class TPX3():
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
             print("\tGet DAC value, DAC code and EoC:")
-            dout = self.decode_fpga(self.Dut_layer['FIFO'].get_data(), True)
-            b = BitLogic(9)
-            b[:] = val
+            dout  = self.decode_fpga(self.Dut_layer['FIFO'].get_data(), True)
+            b     = BitLogic(9)
+            b[:]  = val
             ddout = self.decode(dout[0], 0x03)
             # TODO: this whole decode and printing can be made much nicer!!
             print("Data is ", ddout[0][13:5], " wrote ", b)
@@ -540,7 +540,7 @@ class TPX3():
             data = self.getGlobalSyncHeader()
 
         # bit logic for final 24 bits
-        bits = BitLogic(24)
+        bits        = BitLogic(24)
         # append the code for the SetDAC command header: bits 23:16
         bits[23:16] = self.periphery_header_map["SetDAC"]
 
@@ -554,7 +554,7 @@ class TPX3():
         # set the given value at positions indicated in manual
         bits[13:5] = value
         # final bits [4:0], DAC code
-        bits[4:0] = self.dac[dac]['address']
+        bits[4:0]  = self.dac[dac]['address']
         # append bits as list of bytes
         data += bits.toByteList()
 
@@ -591,7 +591,7 @@ class TPX3():
         data += [self.periphery_header_map["ReadDAC"]]
 
         # add DAC code to last 4 bit of final 16 bit
-        bits = BitLogic(16)
+        bits      = BitLogic(16)
         bits[4:0] = self.dac[dac]['address']
         # add 16 bits as list of byte to result
         data += bits.toByteList()
@@ -625,10 +625,10 @@ class TPX3():
         bits = BitLogic(40)
 
         # determine starting position in bits array, 13 starting pos
-        bits_start = 13 - (self.DAC_VALUE_BITS - dac_value_size)
+        bits_start         = 13 - (self.DAC_VALUE_BITS - dac_value_size)
         bits[bits_start:5] = value
 
-        bits[4:0] = self.dac[dac]['address']
+        bits[4:0]          = self.dac[dac]['address']
         # add 40 bits as list of bytes to result
         data += bits.toByteList()
 
@@ -649,7 +649,7 @@ class TPX3():
         data += [self.periphery_header_map["SenseDACsel"]]
 
         # add DAC code to last 4 bit of final 16 bit
-        bits = BitLogic(16)
+        bits      = BitLogic(16)
         bits[4:0] = dac
         # add 16 bits as list of byte to result
         data += bits.toByteList()
@@ -736,8 +736,8 @@ class TPX3():
             dataout[39:32] = d2[2]
             dataout[31:24] = d2[1]
             dataout[23:16] = d1[3]
-            dataout[15:8] = d1[2]
-            dataout[7:0] = d1[1]
+            dataout[15:8]  = d1[2]
+            dataout[7:0]   = d1[1]
 
             # add the bitarray for the current 48 bit word to the output list
             result.append(dataout)
@@ -790,11 +790,11 @@ class TPX3():
             # If the header is a acquisition header dataout is the following list:
             # [address - 16 bit, TOA (or iTOT) - 14 bit, TOT (or dummy or EventCounter) - 10 bit, FTOA (or dummy or HitCounter) - 4 bit]
             if header[7:5].tovalue() == 0b101:
-                address = data[43:28]
-                TOA = data[27:14]
-                TOT = data[13:4]
+                address    = data[43:28]
+                TOA        = data[27:14]
+                TOT        = data[13:4]
                 HitCounter = data[3:0]
-                dataout = [address, TOA, TOT, HitCounter]
+                dataout    = [address, TOA, TOT, HitCounter]
             # If the header is a Stop matrix readout or a reset sequential header dataout is the following list:
             # [dummy - 44 bit]
             elif header[7:5].tovalue() == 0b111:
@@ -803,21 +803,21 @@ class TPX3():
             # [address - 7 bit, EoC - 18 bit, CTPR - 2 bit]
             elif header[7:5].tovalue() == 0b110:
                 address = data[43:37]
-                EoC = data[27:10]
-                CTPR = data[1:0]
+                EoC     = data[27:10]
+                CTPR    = data[1:0]
                 dataout = [address, EoC, CTPR]
             # If the header is the pixel configuration header dataout is the following list:
             # [address - 14 bit, Config - 6 bit]
             elif header[7:5].tovalue() == 0b100:
                 address = data[43:28]
-                Config = data[19:14]
+                Config  = data[19:14]
                 dataout = [address, Config]
             # If the header is a control command header dataout is the following list:
             # [H1H2H3 - 8 bit, ChipID - 32 bit]
             elif header[7:5].tovalue() == 0b011:
                 ReturnedHeader = data[39:32]
-                ChipID = data[31:0]
-                dataout = [ReturnedHeader, ChipID]
+                ChipID         = data[31:0]
+                dataout        = [ReturnedHeader, ChipID]
             # If the header is none of the previous headers its a periphery command header and dataout is the following list:
             # [DataOutPeriphery - 40 bits]
             else:
@@ -846,22 +846,22 @@ class TPX3():
             raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
 
         # create the variables for EoC, Superpixel and Pixel with their defined lengths
-        EoC = BitLogic(7)
+        EoC        = BitLogic(7)
         Superpixel = BitLogic(6)
-        Pixel = BitLogic(3)
+        Pixel      = BitLogic(3)
 
         # calculate EoC, Superpixel and Pixel with the x and y position of the pixel
-        EoC = (x_pos - x_pos % 2) // 2
+        EoC        = (x_pos - x_pos % 2) // 2
         Superpixel = (y_pos - y_pos % 4) // 4
-        Pixel = (x_pos % 2) * 4 + (y_pos % 4)
+        Pixel      = (x_pos % 2) * 4 + (y_pos % 4)
 
         # create a 16 bit variable for the address
         timepix_pixel_address = BitLogic(16)
 
         # fill the address with the calculated values of EoC, Superpixel and Pixel
         timepix_pixel_address[15:9] = EoC
-        timepix_pixel_address[8:3] = Superpixel
-        timepix_pixel_address[2:0] = Pixel
+        timepix_pixel_address[8:3]  = Superpixel
+        timepix_pixel_address[2:0]  = Pixel
 
         return timepix_pixel_address
 
@@ -877,7 +877,7 @@ class TPX3():
             raise ValueError("The timepix pixel address must be a 16 bit value!")
 
         # get EoC and Pixel from the address, Superpixel is not needed for x
-        EoC = timepix_pixel_address[15:9]
+        EoC   = timepix_pixel_address[15:9]
         Pixel = timepix_pixel_address[2:0]
 
         # calculate the x position of the pixel based on EoC
@@ -902,7 +902,7 @@ class TPX3():
 
         # get Superpixel and Pixel from the address, EoC is not needed for y
         Superpixel = timepix_pixel_address[8:3]
-        Pixel = timepix_pixel_address[2:0]
+        Pixel      = timepix_pixel_address[2:0]
 
         # calculate the x position of the pixel based on EoC
         # <= 3: left column of a superpixel; > 3: right side of a superpixel
@@ -935,7 +935,7 @@ class TPX3():
 
         # set the new values for test, thr and mask
         self.test_matrix[x_pos, y_pos] = test
-        self.thr_matrix[x_pos, y_pos] = thr
+        self.thr_matrix[x_pos, y_pos]  = thr
         self.mask_matrix[x_pos, y_pos] = mask
 
     def matrices_to_pcr(self, x_pos, y_pos):
@@ -953,7 +953,7 @@ class TPX3():
         pcr = BitLogic(6)
 
         # fill the pcr with test, thr and mask
-        thr = BitLogic.from_value(self.thr_matrix[x_pos, y_pos])
+        thr    = BitLogic.from_value(self.thr_matrix[x_pos, y_pos])
         pcr[5] = np.int(self.test_matrix[x_pos, y_pos])
         pcr[4] = thr[3]
         pcr[3] = thr[2]
@@ -1019,13 +1019,13 @@ class TPX3():
         # append the pcr for the pixels in the selected columns: 1535*columns bits
         for column in columns:
             pixeldata[0::6] = self.mask_matrix[column,:]
-            col_thr_bits = np.unpackbits(self.thr_matrix[column,:])
+            col_thr_bits    = np.unpackbits(self.thr_matrix[column,:])
             pixeldata[1::6] = col_thr_bits[4::8]
             pixeldata[2::6] = col_thr_bits[5::8]
             pixeldata[3::6] = col_thr_bits[6::8]
             pixeldata[4::6] = col_thr_bits[7::8]
             pixeldata[5::6] = self.test_matrix[column,:]
-            data += np.packbits(pixeldata[::-1]).tolist()
+            data           += np.packbits(pixeldata[::-1]).tolist()
 
         data += [0x00]
 
@@ -1042,7 +1042,7 @@ class TPX3():
         reads the values for the GeneralConfig registers (see manual v1.9 p.40) from a yaml file
         and writes them to the chip. Furthermore the sent data is returned.
         """
-        data = []
+        data               = []
         configuration_bits = BitLogic(12)
 
         data = self.read_periphery_template("GeneralConfig", header_only=True)
@@ -1075,7 +1075,7 @@ class TPX3():
         reads the values for the outputBlock registers (see manual v1.9 p.37) from a yaml file
         and writes them to the chip. Furthermore the sent data is returned.
         """
-        data = []
+        data               = []
         configuration_bits = BitLogic(16)
 
         data = self.read_periphery_template("OutBlockConfig", header_only=True)
@@ -1244,9 +1244,9 @@ class TPX3():
         data = self.read_periphery_template("SetTimer_15_0", True)
 
         # fill with two dummy bytes for DataIN
-        time=BitLogic(16)
-        time[15:0]=setTime
-        data +=BitLogic.toByteList(time)
+        time       = BitLogic(16)
+        time[15:0] = setTime
+        data      += BitLogic.toByteList(time)
 
         data += [0x00]
 
@@ -1262,9 +1262,9 @@ class TPX3():
         data = self.read_periphery_template("SetTimer_31_16", True)
 
         # fill with two dummy bytes for DataIN
-        time=BitLogic(16)
-        time[15:0]=setTime
-        data +=BitLogic.toByteList(time)
+        time       = BitLogic(16)
+        time[15:0] = setTime
+        data      += BitLogic.toByteList(time)
 
         data += [0x00]
 
@@ -1280,9 +1280,9 @@ class TPX3():
         data = self.read_periphery_template("SetTimer_47_32", True)
 
         # fill with two dummy bytes for DataIN
-        time=BitLogic(16)
-        time[15:0]=setTime
-        data +=BitLogic.toByteList(time)
+        time       = BitLogic(16)
+        time[15:0] = setTime
+        data      += BitLogic.toByteList(time)
 
         data += [0x00]
 
@@ -1355,7 +1355,7 @@ class TPX3():
         bits = BitLogic(12)
 
         # fill the 12-bit variable with the period and the phase
-        bits[7:0] = period
+        bits[7:0]  = period
         bits[11:8] = phase
 
         # append the period/phase variable to the data
@@ -1384,7 +1384,7 @@ class TPX3():
         bits = BitLogic(11)
 
         # fill the 11-bit variable with the width and the fuse selection
-        bits[5:0] = width
+        bits[5:0]  = width
         bits[10:6] = fuse
 
         # append the variable to the data and add empty bits to create the complete data input
@@ -1532,13 +1532,13 @@ class TPX3():
 
         # create a 16 bit variable for the values of the PLLConfig registers based
         # on the read YAML file storing the PLL configuration
-        configuration_bits[0] = self._PLLConfigs["bypass"]
-        configuration_bits[1] = self._PLLConfigs["reset"]
-        configuration_bits[2] = self._PLLConfigs["selectVctl"]
-        configuration_bits[3] = self._PLLConfigs["dualedge"]
-        configuration_bits[5:4] = self._PLLConfigs["clkphasediv"]
-        configuration_bits[8:6] = self._PLLConfigs["clkphasenum"]
-        configuration_bits[13:9] = self._PLLConfigs["PLLOutConfig"]
+        configuration_bits[0]     = self._PLLConfigs["bypass"]
+        configuration_bits[1]     = self._PLLConfigs["reset"]
+        configuration_bits[2]     = self._PLLConfigs["selectVctl"]
+        configuration_bits[3]     = self._PLLConfigs["dualedge"]
+        configuration_bits[5:4]   = self._PLLConfigs["clkphasediv"]
+        configuration_bits[8:6]   = self._PLLConfigs["clkphasenum"]
+        configuration_bits[13:9]  = self._PLLConfigs["PLLOutConfig"]
         configuration_bits[15:14] = 0
 
         # append the the outputBlock register
@@ -1655,8 +1655,8 @@ class TPX3():
         """
         Generates a 14bit LFSR according to Manual v1.9 page 19
         """
-        lfsr = BitLogic(14)
-        lfsr[7:0] = 0xFF
+        lfsr       = BitLogic(14)
+        lfsr[7:0]  = 0xFF
         lfsr[13:8] = 63
         dummy = 0
         for i in range(2**14):
@@ -1666,16 +1666,16 @@ class TPX3():
             lfsr[12] = lfsr[11]
             lfsr[11] = lfsr[10]
             lfsr[10] = lfsr[9]
-            lfsr[9] = lfsr[8]
-            lfsr[8] = lfsr[7]
-            lfsr[7] = lfsr[6]
-            lfsr[6] = lfsr[5]
-            lfsr[5] = lfsr[4]
-            lfsr[4] = lfsr[3]
-            lfsr[3] = lfsr[2]
-            lfsr[2] = lfsr[1]
-            lfsr[1] = lfsr[0]
-            lfsr[0] = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
+            lfsr[9]  = lfsr[8]
+            lfsr[8]  = lfsr[7]
+            lfsr[7]  = lfsr[6]
+            lfsr[6]  = lfsr[5]
+            lfsr[5]  = lfsr[4]
+            lfsr[4]  = lfsr[3]
+            lfsr[3]  = lfsr[2]
+            lfsr[2]  = lfsr[1]
+            lfsr[1]  = lfsr[0]
+            lfsr[0]  = lfsr[2] ^ dummy ^ lfsr[12] ^ lfsr[13]
         self.lfsr_14[2 ** 14 - 1] = 0
 
     def lfsr_4_bit(self):
@@ -1687,7 +1687,7 @@ class TPX3():
         dummy = 0
         for i in range(2**4):
             self.lfsr_4[BitLogic.tovalue(lfsr)] = i
-            dummy = lfsr[3]
+            dummy   = lfsr[3]
             lfsr[3] = lfsr[2]
             lfsr[2] = lfsr[1]
             lfsr[1] = lfsr[0]
@@ -1698,11 +1698,11 @@ class TPX3():
         """
         Decrypts a gray encoded 48 bit value according to Manual v1.9 page 19
         """
-        encoded_value = BitLogic(48)
-        encoded_value[47:0]=value
-        gray_decrypt = BitLogic(48)
-        gray_decrypt[47]=encoded_value[47]
+        encoded_value       = BitLogic(48)
+        encoded_value[47:0] = value
+        gray_decrypt        = BitLogic(48)
+        gray_decrypt[47]    = encoded_value[47]
         for i in range (46, -1, -1):
-            gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
+            gray_decrypt[i] = gray_decrypt[i+1]^encoded_value[i]
 
         return gray_decrypt

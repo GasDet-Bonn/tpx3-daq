@@ -158,9 +158,9 @@ class NoiseScan(ScanBase):
             op_mode         = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco             = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
             # 'Simulate' more chips
-            chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
-            for new_Id in range(8):
-                h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
+            #chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
+            #for new_Id in range(8):
+            #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
             #print(h5_file.root.configuration.links[:]['chip_id'])
             #print(h5_file.root.configuration.links)
 

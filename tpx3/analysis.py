@@ -177,63 +177,86 @@ def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extens
     pix_data = [[]]*num_of_chips
     for chip in range(num_of_chips):
         pix_data[chip] = np.recarray(len(data[chip]), dtype=data_type)
+
+    print('created array for each chip')
+    #print(data[:5])
     
     n47 = np.uint64(47)
     n44 = np.uint64(44)
     n28 = np.uint64(28)
     n14 = np.uint(14)
-    n4 = np.uint64(4)
+    n4  = np.uint64(4)
 
-    n3ff = np.uint64(0x3ff)
+    n3ff  = np.uint64(0x3ff)
     n3fff = np.uint64(0x3fff)
-    nf = np.uint64(0xf)
+    nf    = np.uint64(0xf)
 
     for chip in range(num_of_chips):
+        print('Chip number %d' %chip)
         pixel       = [(data_chunk >> n28) & np.uint64(0b111) for data_chunk in data[chip]]
         super_pixel = [(data_chunk >> np.uint64(28 + 3)) & np.uint64(0x3f) for data_chunk in data[chip]]
         right_col   = [item > 3 for item in pixel]
         eoc         = [(data_chunk >> np.uint64(28 + 9)) & np.uint64(0x7f) for data_chunk in data[chip]]
-
+        print(len(data[chip]))
         for i in range(len(data[chip])):
-            pix_data[chip][i]['data_header']   = data[chip][i] >> n47
-            pix_data[chip][i]['header']        = data[chip][i] >> n44
-            pix_data[chip][i]['y']             = (super_pixel[i] * 4) + (pixel[i] - right_col[i] * 4)
-            pix_data[chip][i]['x']             = eoc[i] * 2 + right_col[i] * 1
+            if i%10000 == 0:
+                print('Data chunk %d of %d' %(i, len(data[chip])))
+            pix_data[chip][i]['data_header'] = data[chip][i] >> n47
+            pix_data[chip][i]['header']      = data[chip][i] >> n44
+            pix_data[chip][i]['y']           = (super_pixel[i] * 4) + (pixel[i] - right_col[i] * 4)
+            pix_data[chip][i]['x']           = eoc[i] * 2 + right_col[i] * 1
             if(vco == False):
                 pix_data[chip][i]['HitCounter'] = _lfsr_4_lut[data[chip][i] & nf]
-                pix_data[chip]['FTOA']          = np.zeros(len(data[chip]))
             else:
-                pix_data[chip]['HitCounter']    = np.zeros(len(data[chip]))
                 pix_data[chip][i]['FTOA']       = data[chip][i] & nf
 
             # ToA and ToT mode
             if op_mode == 0b00:
-                pix_data[chip]['TOT']           = _lfsr_10_lut[(data[chip] >> n4) & n3ff]
-                pix_data[chip]['TOA']           = _gray_14_lut[(data[chip] >> n14) & n3fff]
-                pix_data[chip]['EventCounter']  = np.zeros(len(data[chip]))
+                pix_data[chip][i]['TOT'] = _lfsr_10_lut[(data[chip][i] >> n4) & n3ff]
+                pix_data[chip][i]['TOA'] = _gray_14_lut[(data[chip][i] >> n14) & n3fff]
                 if len(ToA_Extension):
-                    pix_data[chip]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
-                    pix_data[chip]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[chip]['TOA']
+                    pix_data[chip][i]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
+                    pix_data[chip][i]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[chip][i]['TOA']
                 else:
-                    pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
-                    pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
+                    pass
             elif op_mode == 0b01: # ToA
-                pix_data[chip]['TOA']           = _gray_14_lut[(data[chip] >> n14) & n3fff]
-                pix_data[chip]['EventCounter']  = np.zeros(len(data[chip]))
-                pix_data[chip]['TOT']           = np.zeros(len(data[chip]))
+                pix_data[chip]['TOA'] = _gray_14_lut[(data[chip][i] >> n14) & n3fff]
                 if len(ToA_Extension):
-                    pix_data[chip]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
-                    pix_data[chip]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[chip]['TOA']
+                    pix_data[chip][i]['TOA_Extension'] = ToA_Extension & 0xFFFFFFFFFFFF # remove header marking it as timestamp
+                    pix_data[chip][i]['TOA_Combined']  = (ToA_Extension & 0xFFFFFFFFC000) + pix_data[chip][i]['TOA']
                 else:
-                    pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
-                    pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
+                    pass
             else: # Event and iToT
                 pix_data[chip][i]['iTOT']          = _lfsr_14_lut[(data[chip][i] >> n14) & n3fff]
                 pix_data[chip][i]['EventCounter']  = _lfsr_10_lut[(data[chip][i] >> n4) & n3ff]
-                pix_data[chip]['TOT']              = np.zeros(len(data[chip]))
-                pix_data[chip]['TOA']              = np.zeros(len(data[chip]))
-                pix_data[chip]['TOA_Extension']    = np.zeros(len(data[chip]))
-                pix_data[chip]['TOA_Combined']     = np.zeros(len(data[chip]))
+        
+        if(vco == False):
+            pix_data[chip]['FTOA'] = np.zeros(len(data[chip]))
+        else:
+            pix_data[chip]['HitCounter'] = np.zeros(len(data[chip]))
+
+        if op_mode == 0b00: # ToA and ToT mode
+            pix_data[chip]['EventCounter'] = np.zeros(len(data[chip]))
+            if len(ToA_Extension):
+                pass
+            else:
+                pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
+                pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
+        elif op_mode == 0b01: # ToA
+            pix_data[chip]['EventCounter'] = np.zeros(len(data[chip]))
+            pix_data[chip]['TOT']          = np.zeros(len(data[chip]))
+            if len(ToA_Extension):
+                pass
+            else:
+                pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
+                pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
+        else: # Event and iToT
+            pix_data[chip]['TOT']           = np.zeros(len(data[chip]))
+            pix_data[chip]['TOA']           = np.zeros(len(data[chip]))
+            pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
+            pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
+
+    #print(pix_data[:5])
 
     return pix_data
 

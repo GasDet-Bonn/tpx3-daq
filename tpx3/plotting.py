@@ -75,18 +75,18 @@ class Plotting(object):
         self.logger = logging.getLogger('Plotting')
         self.logger.setLevel(loglevel)
 
-        self.plot_cnt = 0
+        self.plot_cnt        = 0
         self.save_single_pdf = save_single_pdf
-        self.save_png = save_png
-        self.level = level
-        self.qualitative = qualitative
-        self.internal = internal
-        self.clustered = False
-        self.skip_plotting = False
+        self.save_png        = save_png
+        self.level           = level
+        self.qualitative     = qualitative
+        self.internal        = internal
+        self.clustered       = False
+        self.skip_plotting   = False
 
         if pdf_file is None:
-            path, name = os.path.split(analyzed_data_file)
-            path = os.path.dirname(path)
+            path, name    = os.path.split(analyzed_data_file)
+            path          = os.path.dirname(path)
             self.filename = os.path.join(path, name.split('.')[0] + '.pdf')
         else:
             self.filename = pdf_file
@@ -779,7 +779,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='fancy_occupancy', plot_queue=plot_queue)
 
-    def plot_scurves(self, scurves, scan_parameters, chipID, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
+    def plot_scurves(self, scurves, scan_parameters, chipID, iteration=None, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
 
         if max_occ is None:
             max_occ = np.max(scurves) + 5
@@ -823,7 +823,11 @@ class Plotting(object):
         else:
             cb = fig.colorbar(im, fraction=0.04, pad=0.05)
         cb.set_label("# of pixels")
-        ax.set_title(title + ' for %d pixel(s), chip %s' % (n_pixel, chipID), color=TITLE_COLOR)
+        if iteration == None:
+            ax.set_title(title + ' for %d pixel(s), chip %s' % (n_pixel, chipID), color=TITLE_COLOR)
+        else:
+            ax.set_title(title + ' for %d pixel(s), it %d, chip %s' % (n_pixel, iteration, chipID), color=TITLE_COLOR)
+
         if scan_parameter_name is None:
             ax.set_xlabel('Scan parameter')
         else:
@@ -844,7 +848,7 @@ class Plotting(object):
         self._save_plots(fig, suffix='scurves', plot_queue=plot_queue)
 
     def plot_distribution(self, data, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None, plot_queue=None):
-
+        #print('In plot_distribution...')
         if plot_range is None:
             diff = np.amax(data) - np.amin(data)
             if (np.amax(data)) > np.median(data) * 5:
@@ -857,6 +861,8 @@ class Plotting(object):
         tick_size = np.diff(plot_range)[0]
 
         hist, bins = np.histogram(np.ravel(data), bins=plot_range)
+        #print('Give histogram and bins....')
+        #print(hist, bins)
 
         bin_centres = (bins[:-1] + bins[1:]) / 2.0
 
@@ -920,9 +926,11 @@ class Plotting(object):
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
         self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
-
+        #print(coeff, errors)
         if coeff is not None:
             return coeff, errors
+        else:
+            return [0.,0.,0.],[0.,0.,0.]
 
     def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
         m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
