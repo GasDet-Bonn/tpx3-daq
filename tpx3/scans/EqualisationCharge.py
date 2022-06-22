@@ -223,7 +223,7 @@ class EqualisationCharge(ScanBase):
             vco            = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
             # 'Simulate' more chips
-            chip_IDs_new = [b'W18-K7',b'W18-K7',b'W17-D8',b'W17-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
+            chip_IDs_new = [b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7', b'W17-K6',b'W16-K5', b'W15-K4']
             for new_Id in range(8):
                 h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 

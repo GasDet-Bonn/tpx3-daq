@@ -81,25 +81,25 @@ dictNames = {
     "ConfigDict" : {
         "CustomDict" : "_configs",
         "YamlContent" : "config",
-        "Filename" : "GeneralConfiguration.yml",
+        "Filename" : ("GeneralConfiguration.yml" if self.chipID == None else "chip_GeneralConfiguration.yml"),
         "FnameVar" : "config_file"
     },
     "DacsDict" : {
         "CustomDict" : "_dacs",
         "YamlContent" : "dac",
-        "Filename" : "dacs.yml",
+        "Filename" : ("dacs.yml" if self.chipID == None else "chip_dacs.yml"),
         "FnameVar" : "dac_file"
     },
     "OutputBlockDict" : {
         "CustomDict" : "_outputBlocks",
         "YamlContent" : "outputBlock",
-        "Filename" : "outputBlock.yml",
+        "Filename" : ("outputBlock.yml" if self.chipID == None else "chip_outputBlock.yml"),
         "FnameVar" : "outputBlock_file"
     },
     "PLLConfigDict" : {
         "CustomDict" : "_PLLConfigs",
         "YamlContent" : "PLLConfigDict",
-        "Filename" : "PLLConfig.yml",
+        "Filename" : ("PLLConfig.yml" if self.chipID == None else "chip_PLLconfig.yml"),
         "FnameVar" : "PLLConfig_file"
     }
 }

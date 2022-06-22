@@ -7,6 +7,7 @@ from tpx3.tpx3 import TPX3
 from basil.utils.BitLogic import BitLogic
 from six.moves import range
 from tqdm import tqdm
+from copy import deepcopy
 import time
 import os
 import yaml
@@ -186,7 +187,7 @@ class ScanHardware(object):
                     raise ChipIDError("ChipIDError: Unexpected amount of response packages")
                 elif (fdata[2] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 1) or (fdata[3] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 0):
                     raise ChipIDError("ChipIDError: Unexpected headers in response packages")
-                dout = self.chip.decode_fpga(fdata, True)
+                dout                       = self.chip.decode_fpga(fdata, True)
                 Chip_IDs[fpga_link_number] = dout[1][19:0].tovalue()
             except Exception as a:
                 # If there is no valid ChipID set the ID to 0 and set the corresponding status (8)
@@ -225,15 +226,30 @@ class ScanHardware(object):
             x_position   = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
             y_position   = bit_id[7:4].tovalue()
             ID           = 'W' + str(wafer_number) + '-' + x_position + str(y_position)
-
+            print(register['chip-id'], ID_List)
             # Write new Chip-ID to the list
-            if register['chip-id'] not in ID_List:
+            if [register['chip-id'], ID] not in ID_List:
                 ID_List.append([register['chip-id'], ID])
 
-        # For each ID create an entry in dacs.yml with standard values.
+        # For each ID create an entry in chip_dacs.yml with standard values.
         # chip -> registers -> values
+        chip_dacs = os.path.join(proj_dir, 'tpx3' + os.sep + 'dacs.yml')
 
+        with open(chip_dacs, 'r') as file:
+            dac_default = yaml.load(file, Loader = yaml.FullLoader)
 
+        dac_yaml  = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
+        
+        with open(dac_yaml, 'w') as file:
+    
+            full_chip_dict = []
+
+            for chip in range(len(ID_List)):
+        
+                chip_dict = {'chip_number': chip, 'chip_ID_int': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(dac_default['registers'])}
+                full_chip_dict.append(chip_dict)
+    
+            yaml.dump({'chips': full_chip_dict}, file)
 
         # Create a list of Chips with all link settings for the specific chip
         Chip_List = []
