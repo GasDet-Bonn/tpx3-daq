@@ -779,7 +779,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='fancy_occupancy', plot_queue=plot_queue)
 
-    def plot_scurves(self, scurves, scan_parameters, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
+    def plot_scurves(self, scurves, scan_parameters, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None, non_log=False):
 
         if max_occ is None:
             max_occ = np.max(scurves) + 5
@@ -806,8 +806,8 @@ class Plotting(object):
             z_max = 1.0
         else:
             z_max = hist.max()
-        # for small z use linear scale, otherwise log scale
-        if z_max <= 10.0:
+        # for small z or if coosen use linear scale, otherwise log scale
+        if z_max <= 10.0 or non_log:
             bounds = np.linspace(start=0.0, stop=z_max, num=255, endpoint=True)
             norm = colors.BoundaryNorm(bounds, cmap.N)
         else:
