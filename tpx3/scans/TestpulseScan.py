@@ -230,7 +230,7 @@ class TestpulseScan(ScanBase):
                 # Plot the S-Curve histogram
                 scurve_hist = h5_file.root.interpreted.HistSCurve[:].T
                 max_occ = n_injections + 10
-                p.plot_scurves(scurve_hist, list(range(VTP_fine_start, VTP_fine_stop)), scan_parameter_name="VTP_fine", max_occ=max_occ, plot_queue=plot_queue)
+                p.plot_scurves(scurve_hist, list(range(VTP_fine_start, VTP_fine_stop - 1)), scan_parameter_name="VTP_fine", max_occ=max_occ, plot_queue=plot_queue)
 
                 # Do not plot pixels with converged  S-Curve fits
                 chi2_sel = h5_file.root.interpreted.Chi2Map[:] > 0.
