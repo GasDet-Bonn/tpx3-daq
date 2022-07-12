@@ -277,11 +277,11 @@ class ToTCalib(ScanBase):
 
                 # Plot the Hit-Curve histogram
                 ToT_hit_hist = h5_file.root.interpreted.HistToTCurve_Count[:].T
-                p.plot_scurves(ToT_hit_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=50, ylabel='Hits per pixel', title='Hit curves', plot_queue=plot_queue)
+                p.plot_scurves(ToT_hit_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop - 1)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=50, ylabel='Hits per pixel', title='Hit curves', plot_queue=plot_queue)
                 
                 # Plot the ToT-Curve histogram
                 ToT_hist = h5_file.root.interpreted.HistToTCurve[:].T
-                p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
+                p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop - 1)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
 
                 # Plot the mean ToT-Curve with fit
                 mean = h5_file.root.interpreted.mean_curve[:]
