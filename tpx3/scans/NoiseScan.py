@@ -154,9 +154,10 @@ class NoiseScan(ScanBase):
             raw_data        = h5_file.root.raw_data[:]
             meta_data       = h5_file.root.meta_data[:]
             run_config      = h5_file.root.configuration.run_config[:]
-            general_config  = h5_file.root.configuration.generalConfig[:]
-            op_mode         = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
-            vco             = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
+            general_config  = h5_file.root.configuration.generalConfig
+            op_mode         = general_config['Op_mode'][0]
+            vco             = general_config['Fast_Io_en'][0]
+            
             # 'Simulate' more chips
             #chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
             #for new_Id in range(8):
@@ -182,10 +183,10 @@ class NoiseScan(ScanBase):
             print(self.chip_links)
 
             # Sanity check
-            link_number = 3
-            for link, chipID in enumerate(self.chip_links):
-                if link_number in self.chip_links[chipID]:
-                    print(link, chipID)
+            #link_number = 3
+            #for link, chipID in enumerate(self.chip_links):
+            #    if link_number in self.chip_links[chipID]:
+            #        print(link, chipID)
 
             # Get the number of chips
             self.num_of_chips = len(self.chip_links)
@@ -193,8 +194,8 @@ class NoiseScan(ScanBase):
             pix_occ  = []
             hist_occ = []
 
-            print(pix_occ, hist_occ)
-            print(len(pix_occ), len(hist_occ))
+            #print(pix_occ, hist_occ)
+            #print(len(pix_occ), len(hist_occ))
 
             # Create a group to save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
@@ -207,13 +208,15 @@ class NoiseScan(ScanBase):
             param_range = np.unique(meta_data['scan_param_id'])
             print('parameter range: ' + str(param_range))
             # Read needed configuration parameters
-            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
-            Vthreshold_stop  = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            #Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            #Vthreshold_stop  = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            Vthreshold_start = int(run_config['Vthreshold_start'][0])
+            Vthreshold_stop  = int(run_config['Vthreshold_stop'][0])
 
             # for now create tables and histograms for each chip
             for chip in range(self.num_of_chips):
                 chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
-                print(chipID)
+                #print(chipID)
                 #chip_ID_format = chipID[:3] +str('_') + chipID[-2:]
 
                 # Create group for current chip
@@ -254,8 +257,12 @@ class NoiseScan(ScanBase):
             with plotting.Plotting(h5_filename) as p:
 
                 # Read needed configuration parameters
-                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
-                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                #Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                #Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                Vthreshold_start = int(p.run_config['Vthreshold_start'].decode())
+                Vthreshold_stop  = int(p.run_config['Vthreshold_stop'].decode())
+                print(p.run_config['Vthreshold_start'], p.run_config['Vthreshold_stop'])
+                print("Threshold Start: %d, Threshold Stop: %d" %(Vthreshold_start, Vthreshold_stop))
 
                 # Plot a page with all parameters
                 p.plot_parameter_page()

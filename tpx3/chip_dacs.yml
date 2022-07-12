@@ -1,7 +1,6 @@
 chips:
-- chip_ID_decoded: W18-K7
-  chip_ID_int: 4731
-  chip_number: 0
+- chip_ID: 4731
+  chip_ID_decoded: W18-K7
   registers:
   - address: 1
     default: 128
@@ -38,13 +37,13 @@ chips:
     description: Fine control of Pixel Threshold
     name: Vthreshold_fine
     size: 9
-    value: 360
+    value: 255
   - address: 7
     default: 8
     description: Coarse Control of Pixel Threshold
     name: Vthreshold_coarse
     size: 4
-    value: 4
+    value: 7
   - address: 8
     default: 128
     description: Ibias_DiscS1 switched on
@@ -117,9 +116,8 @@ chips:
     name: Sense_DAC
     size: 5
     value: 29
-- chip_ID_decoded: W0-`0
-  chip_ID_int: 0
-  chip_number: 1
+- chip_ID: 0
+  chip_ID_decoded: W0-`0
   registers:
   - address: 1
     default: 128
@@ -156,13 +154,13 @@ chips:
     description: Fine control of Pixel Threshold
     name: Vthreshold_fine
     size: 9
-    value: 360
+    value: 255
   - address: 7
     default: 8
     description: Coarse Control of Pixel Threshold
     name: Vthreshold_coarse
     size: 4
-    value: 4
+    value: 7
   - address: 8
     default: 128
     description: Ibias_DiscS1 switched on

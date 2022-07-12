@@ -231,22 +231,62 @@ class ScanHardware(object):
             if [register['chip-id'], ID] not in ID_List:
                 ID_List.append([register['chip-id'], ID])
 
-        # For each ID create an entry in chip_dacs.yml with standard values.
-        # chip -> registers -> values
-        chip_dacs = os.path.join(proj_dir, 'tpx3' + os.sep + 'dacs.yml')
-
-        with open(chip_dacs, 'r') as file:
-            dac_default = yaml.load(file, Loader = yaml.FullLoader)
-
-        dac_yaml  = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
+        # From the default yamls build new yamls, where every chip has their configuration
+        dacs_default_file          = os.path.join(proj_dir, 'tpx3' + os.sep + 'dacs.yml')
+        PLL_default_file           = os.path.join(proj_dir, 'tpx3' + os.sep + 'PLLConfig.yml')
+        outputBlock_default_file   = os.path.join(proj_dir, 'tpx3' + os.sep + 'outputBlock.yml')
+        GeneralConfig_default_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
         
-        with open(dac_yaml, 'w') as file:
-    
+        # Load default yamls
+        with open(dacs_default_file, 'r') as file:
+            dacs_default          = yaml.load(file, Loader = yaml.FullLoader)
+        with open(PLL_default_file, 'r') as file:
+            PLL_default           = yaml.load(file, Loader = yaml.FullLoader)
+        with open(outputBlock_default_file, 'r') as file:
+            outputBlock_default   = yaml.load(file, Loader = yaml.FullLoader)
+        with open(GeneralConfig_default_file, 'r') as file:
+            GeneralConfig_default = yaml.load(file, Loader = yaml.FullLoader)
+
+        dacs_chip_file          = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
+        PLL_chip_file           = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_PLLConfig.yml')
+        outputBlock_chip_file   = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_outputBlock.yml')
+        GeneralConfig_chip_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_GeneralConfiguration.yml')
+        
+        # Write default values into new chip yamls
+        # TODO: only do this for chips, which are not in the yaml yet,
+        # so we dont override previous settings
+        with open(dacs_chip_file, 'w') as file:
             full_chip_dict = []
 
             for chip in range(len(ID_List)):
+                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(dacs_default['registers'])}
+                full_chip_dict.append(chip_dict)
+    
+            yaml.dump({'chips': full_chip_dict}, file)
         
-                chip_dict = {'chip_number': chip, 'chip_ID_int': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(dac_default['registers'])}
+        with open(PLL_chip_file, 'w') as file:
+            full_chip_dict = []
+
+            for chip in range(len(ID_List)):
+                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(PLL_default['registers'])}
+                full_chip_dict.append(chip_dict)
+    
+            yaml.dump({'chips': full_chip_dict}, file)
+
+        with open(outputBlock_chip_file, 'w') as file:
+            full_chip_dict = []
+
+            for chip in range(len(ID_List)):
+                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(outputBlock_default['registers'])}
+                full_chip_dict.append(chip_dict)
+    
+            yaml.dump({'chips': full_chip_dict}, file)
+        
+        with open(GeneralConfig_chip_file, 'w') as file:
+            full_chip_dict = []
+
+            for chip in range(len(ID_List)):
+                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(GeneralConfig_default['registers'])}
                 full_chip_dict.append(chip_dict)
     
             yaml.dump({'chips': full_chip_dict}, file)

@@ -137,7 +137,7 @@ def main(args_dict):
     # write ChipId now to the object attribute!
     #Id = [0x00, 0x00, 0x0c, 0x73]
     #chip.chipId = current_ChipId_formatted
-    #chip.chipId = ChipID
+    chip.chipId = ChipID
     print('ChipId object:\t\t' + str(chip.chipId))
 
     # Now do read out a DAC, use the local header: rewritten in tpx3.py
@@ -160,7 +160,7 @@ def main(args_dict):
     # Now create a second TPX3 object, which only prints command headers
     # and gives them to the first object to execute them
     chip2 = TPX3()
-    chip2.init(inter_layer = Dut_layer, ChipId = ChipID)
+    chip2.init(ChipId = ChipID)
 
     # write configurations
     #data = chip2.write_pll_config(write=False)

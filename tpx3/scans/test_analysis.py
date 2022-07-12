@@ -27,12 +27,12 @@ faulthandler.enable()
 #h5_filename = '/home/tpc/Timepix3/scans/hdf/ThresholdScan_2022-05-31_18-35-18.h5'
 #h5_filename = '/home/tpc/Timepix3/scans/hdf/ThresholdScan_2022-06-02_16-11-35.h5'
 #h5_filename = '/home/tpc/Timepix3/scans/hdf/ThresholdCalib_2022-06-03_11-12-55.h5'
-h5_filename = '/home/tpc/Timepix3/scans/hdf/EqualisationCharge_2022-06-09_11-25-36.h5'
+h5_filename = '/home/tpc/Timepix3/scans/hdf/PixelDACopt_2022-06-29_23-28-33.h5'
 #self.logger.info('Starting data analysis...')
 #        if status != None:
 #            status.put("Performing data analysis")
 
-
+'''
 
 # Open the HDF5 which contains all data of the scan
 with tb.open_file(h5_filename, 'r+') as h5_file:
@@ -180,7 +180,7 @@ with tb.open_file(h5_filename, 'r+') as h5_file:
         #self.save_thr_mask(eq_matrix, chipID[:3], chipID[4], chipID[5])
         #if result_path != None:
         #    result_path.put(self.thrfile)
-
+'''
 
 '''
     Plot data and histograms of the scan
@@ -205,6 +205,15 @@ with tb.open_file(h5_filename, 'r+') as h5_file:
     #for new_Id in range(8):
     #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
+    
+        
+    iterations_table = h5_file.root.configuration.iterations
+    iterations       = 0
+    for row in iterations_table:
+        if row['attribute'] == b'iterations':
+            iterations = int(row['value'])
+    mask = h5_file.root.configuration.mask_matrix[:].T
+
     link_config = h5_file.root.configuration.links[:]
     chip_IDs = link_config['chip_id']
     chip_links = {}
@@ -218,8 +227,9 @@ with tb.open_file(h5_filename, 'r+') as h5_file:
 
     num_of_chips = len(chip_links)
     #n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+    mask = h5_file.root.configuration.mask_matrix[:].T
 
-    with plotting.Plotting(h5_filename) as p:
+    with plotting.Plotting(h5_filename, iteration = 0) as p:
 
         #run_config_call   = ('.run_config_' + str(iteration))
         # Read needed configuration parameters
@@ -232,41 +242,48 @@ with tb.open_file(h5_filename, 'r+') as h5_file:
         print('Plot parameter page...')
         p.plot_parameter_page()
         print('Done!')
-
-        mask = h5_file.root.configuration.mask_matrix[:].T
+        
+        for iteration in range(iterations):
+            pixelDAC_call  = ('h5_file.root.configuration.run_config_' + str(iteration))
+            pixelDAC_table = eval(pixelDAC_call)
+            pixelDAC       = 0
+            for row in pixelDAC_table:
+                if row['attribute'] == b'pixeldac':
+                    pixelDAC = str(int(row['value']))
 
         # create a group for the calibration results
         #h5_file.create_group(h5_file.root, 'calibration', 'Threshold calibration results')
 
-        for chip in range(num_of_chips):
-            # get chipID of current chip
-            chipID = str([ID for number, ID in enumerate(chip_links) if chip == number])[3:-2]
-            print(chip, chipID)
+            for chip in range(num_of_chips):
+                # get chipID of current chip
+                chipID = str([ID for number, ID in enumerate(chip_links) if chip == number])[3:-2]
+                print(chip, chipID)
 
-            # get group for current chip
-            chip_group  = h5_file.root.interpreted._f_get_child(chipID)
+                # get group for current chip
+                chip_group_call = 'h5_file.root.interpreted_' + str(iteration) + '._f_get_child(chipID)'
+                chip_group      = eval(chip_group_call)
 
-            # Plot the S-Curve histogram
-            scurve_th0_hist = chip_group.HistSCurve_th0[:].T
-            max_occ = n_injections * 5
-            p.plot_scurves(scurve_th0_hist, list(range(Vthreshold_start, Vthreshold_stop)), chipID, scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 0', max_occ=max_occ, plot_queue=None)
+                # Plot the S-Curve histogram
+                scurve_th0_hist = chip_group.HistSCurve_th0[:].T
+                max_occ         = n_injections * 5
+                p.plot_scurves(scurve_th0_hist, list(range(Vthreshold_start, Vthreshold_stop)), chipID, scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 0 - IBias_PixelDAC ' + pixelDAC, max_occ=max_occ, plot_queue=None)
 
-            # Plot the threshold distribution based on the S-Curve fits
-            hist_th0 = np.ma.masked_array(chip_group.ThresholdMap_th0[:], mask)
-            p.plot_distribution(hist_th0, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 0, chip %s' %chipID, suffix='threshold_distribution_th0', plot_queue=None)
+                # Plot the threshold distribution based on the S-Curve fits
+                hist_th0 = np.ma.masked_array(chip_group.ThresholdMap_th0[:], mask)
+                p.plot_distribution(hist_th0, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title=('Threshold distribution - PixelDAC 0 - IBias_PixelDAC ' + pixelDAC + ', chip %s') %str(chipID), suffix='threshold_distribution_th0', plot_queue=None)
 
-            # Plot the S-Curve histogram
-            scurve_th15_hist = chip_group.HistSCurve_th15[:].T
-            max_occ = n_injections * 5
-            p.plot_scurves(scurve_th15_hist, list(range(Vthreshold_start, Vthreshold_stop)), chipID, scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 15', max_occ=max_occ, plot_queue=None)
+                # Plot the S-Curve histogram
+                scurve_th15_hist = chip_group.HistSCurve_th15[:].T
+                max_occ = n_injections * 5
+                p.plot_scurves(scurve_th15_hist, list(range(Vthreshold_start, Vthreshold_stop)), chipID, scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 15 - IBias_PixelDAC ' + pixelDAC, max_occ=max_occ, plot_queue=None)
 
-            # Plot the threshold distribution based on the S-Curve fits
-            hist_th15 = np.ma.masked_array(chip_group.ThresholdMap_th15[:], mask)
-            p.plot_distribution(hist_th15, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 15, chip %s' %chipID, suffix='threshold_distribution_th15', plot_queue=None)
+                # Plot the threshold distribution based on the S-Curve fits
+                hist_th15 = np.ma.masked_array(chip_group.ThresholdMap_th15[:], mask)
+                p.plot_distribution(hist_th15, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title=('Threshold distribution - PixelDAC 15 - IBias_PixelDAC ' + pixelDAC + ', chip %s') %str(chipID), suffix='threshold_distribution_th15', plot_queue=None)
 
-            # Plot the occupancy matrix
-            eq_masked = np.ma.masked_array(chip_group.EqualisationMap[:].T, mask)
-            p.plot_occupancy(eq_masked, title='Equalisation Map, chip %s' %chipID, z_max='median', z_label='PixelDAC', suffix='equalisation', plot_queue=None)
+                # Plot the occupancy matrix
+                #eq_masked = np.ma.masked_array(chip_group.EqualisationMap[:].T, mask)
+                #p.plot_occupancy(eq_masked, title='Equalisation Map, chip %s' %chipID, z_max='median', z_label='PixelDAC', suffix='equalisation', plot_queue=None)
 
-            # Plot the equalisation bits histograms
-            p.plot_distribution(eq_masked, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution, chip %s' %chipID, x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=None)
+                # Plot the equalisation bits histograms
+                #p.plot_distribution(eq_masked, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution, chip %s' %chipID, x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=None)

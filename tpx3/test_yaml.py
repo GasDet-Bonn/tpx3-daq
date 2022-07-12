@@ -2,7 +2,7 @@ import yaml
 import os
 from copy import deepcopy
 
-'''
+
 proj_dir  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 yaml_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'dacs.yml')
 
@@ -20,7 +20,7 @@ with open(yaml_file) as file:
 # Now build a DAC yaml specifically for each chip
 
 dac_yaml = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
-
+'''
 with open(dac_yaml, 'w') as file:
     
     full_chip_dict = []
@@ -31,21 +31,23 @@ with open(dac_yaml, 'w') as file:
         full_chip_dict.append(chip_dict)
     
     yaml.dump({'chips': full_chip_dict}, file)
-
+'''
 # just dump a couple of registers
 with open(dac_yaml, 'r') as config:
 
     yaml_dacs = yaml.load(config, Loader= yaml.FullLoader)
     #chip_dicts = yaml_dacs['chips'][1]
-    for chip_dicts in yaml_dacs['chips']:
-        print(chip_dicts)
-        #for indx, (number, chip_config) in enumerate(chip_dicts.items()):
-        #    print(indx, number, chip_config)
+    #for chip_dicts in yaml_dacs['chips']:
+    #    print(chip_dicts)
+    #    for indx, (number, chip_config) in enumerate(chip_dicts.items()):
+    #        print(indx, number, chip_config)
         #print(chip_dicts[0]['chip_ID_decoded'])
-'''
+    Ids   = [chip['registers'] for chip in yaml_dacs['chips'] if chip['chip_ID_int'] > 9000][0]
+    #Ids = [yaml_dacs['chips'][:]]['chip_ID_int']
+    print(Ids)
 
-num = 'dec'
+#num = 'dec'
 
-my_dict = { 'zero': 0, 'one': 1, 'two': (10 if num == 'bin' else 2)}
+#my_dict = { 'zero': 0, 'one': 1, 'two': (10 if num == 'bin' else 2)}
 
-print(my_dict)
+#print(my_dict)

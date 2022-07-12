@@ -1,7 +1,7 @@
 registers:
 - chip-id: 4731
   chip-link: 0
-  data-delay: 7
+  data-delay: 6
   data-edge: 0
   data-invert: 0
   fpga-link: 0
@@ -9,19 +9,19 @@ registers:
   name: RX0
 - chip-id: 4731
   chip-link: 1
-  data-delay: 15
+  data-delay: 29
   data-edge: 0
   data-invert: 0
   fpga-link: 1
-  link-status: 6
+  link-status: 1
   name: RX1
 - chip-id: 0
-  chip-link: 0
+  chip-link: 2
   data-delay: 15
   data-edge: 0
   data-invert: 0
   fpga-link: 2
-  link-status: 0
+  link-status: 8
   name: RX2
 - chip-id: 4731
   chip-link: 3

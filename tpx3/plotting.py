@@ -53,8 +53,16 @@ class ConfigDict(dict):
         str / int / float depending on value
     '''
 
-    def __init__(self, *args):
-        super(ConfigDict, self).__init__(*args)
+    #def __init__(self, *args):
+    #    super(ConfigDict, self).__init__(*args)
+
+    def __init__(self, config_table):
+       # get column names
+       config_col_names = config_table.coldescrs.keys()
+       # get tuple of column name (key) and its value to build dictionary
+       config_args      = [(key, config_table.col(key)[0]) for key in config_col_names]
+
+       super(ConfigDict, self).__init__(config_args)
 
     def __getitem__(self, key):
         val = dict.__getitem__(self, key)
@@ -104,17 +112,21 @@ class Plotting(object):
             return
 
         if iteration == None:
-            self.run_config = ConfigDict(root.configuration.run_config[:])
+            #self.run_config = ConfigDict(root.configuration.run_config[:])
+            self.run_config = ConfigDict(root.configuration.run_config)
         else:
-            run_config_call = ('root.' + 'configuration.run_config_' + str(iteration) + '[:]')
+            #run_config_call = ('root.' + 'configuration.run_config_' + str(iteration) + '[:]')
+            run_config_call = ('root.' + 'configuration.run_config_' + str(iteration))
             self.run_config = ConfigDict(eval(run_config_call))
         
 
         try:
             if iteration == None:
-                self.dacs = ConfigDict(root.configuration.dacs[:])
+                #self.dacs = ConfigDict(root.configuration.dacs[:])
+                self.dacs = ConfigDict(root.configuration.dacs)
             else:
-                dacs_call = ('root.' + 'configuration.dacs_' + str(iteration) + '[:]')
+                #dacs_call = ('root.' + 'configuration.dacs_' + str(iteration) + '[:]')
+                dacs_call = ('root.' + 'configuration.dacs_' + str(iteration))
                 self.dacs = ConfigDict(eval(dacs_call))
         except tb.NoSuchNodeError:
             self.dacs = {}
@@ -175,15 +187,15 @@ class Plotting(object):
         if self.qualitative:
             fig.text(0.1, y_coord, 'Timepix3 qualitative',
                      fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config['chip_wafer'] is not None:
+            if self.run_config['wafer_number'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s',
-                         (self.run_config['chip_wafer'].decode(), self.run_config['chip_x'].decode(), self.run_config['chip_y'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                         (self.run_config['wafer_number'].decode(), self.run_config['x_position'].decode(), self.run_config['y_position'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         else:
             fig.text(0.1, y_coord, 'Timepix3 %s' %
                      (self.level), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config[b'chip_wafer'] is not None:
+            if self.run_config['wafer_number'] is not None:
                 fig.text(0.7, y_coord, 'Chip: W%s-%s%s' %
-                         (self.run_config[b'chip_wafer'].decode(), self.run_config[b'chip_x'].decode(), self.run_config[b'chip_y'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                         (self.run_config['wafer_number'].decode(), self.run_config['x_position'].decode(), self.run_config['y_position'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         if self.internal:
             fig.text(0.1, 1, 'Timepix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
                 boxstyle='round', facecolor='white', edgecolor='red', alpha=0.7), transform=fig.transFigure)
@@ -223,9 +235,9 @@ class Plotting(object):
     def plot_parameter_page(self):
         fig = Figure()
         FigureCanvas(fig)
-        ax = fig.add_subplot(111)
+        ax  = fig.add_subplot(111)
         ax.axis('off')
-
+        '''
         scan_id = self.run_config[b'scan_id'].decode()
         run_name = self.run_config[b'run_name'].decode()
         chip_wafer = self.run_config[b'chip_wafer'].decode()
@@ -234,6 +246,15 @@ class Plotting(object):
         sw_ver = self.run_config[b'software_version'].decode()
         board_name = self.run_config[b'board_name'].decode()
         fw_ver = self.run_config[b'firmware_version'].decode()
+        '''
+        scan_id    = self.run_config['scan_id'].decode()
+        run_name   = self.run_config['run_name'].decode()
+        chip_wafer = self.run_config['wafer_number'].decode()
+        chip_x     = self.run_config['x_position'].decode()
+        chip_y     = self.run_config['y_position'].decode()
+        sw_ver     = self.run_config['software_version'].decode()
+        board_name = self.run_config['board_name'].decode()
+        fw_ver     = self.run_config['firmware_version'].decode()
 
         if self.level != '':
             text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
@@ -246,19 +267,24 @@ class Plotting(object):
 
         ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
 
-        if b'thrfile' in list(self.run_config.keys()) and self.run_config[b'thrfile'] is not None and not self.run_config[b'thrfile'] == b'None':
+        if 'thrfile' in list(self.run_config.keys()) and self.run_config['thrfile'] is not None and not self.run_config['thrfile'] == b'None':
             ax.text(0.01, -0.05, 'Equalisation:\n%s' %
                     (self.run_config[b'thrfile']).decode(), fontsize=6)
 
-        if b'maskfile' in list(self.run_config.keys()) and self.run_config[b'maskfile'] is not None and not self.run_config[b'maskfile'] == b'None':
+        if 'maskfile' in list(self.run_config.keys()) and self.run_config['maskfile'] is not None and not self.run_config['maskfile'] == b'None':
             ax.text(0.01, -0.11, 'Maskfile:\n%s' %
-                    (self.run_config[b'maskfile']).decode(), fontsize=6)
+                    (self.run_config['maskfile']).decode(), fontsize=6)
 
         tb_dict = OrderedDict(sorted(self.dacs.items()))
+        # remove unnecessary keys
+        del tb_dict['x_position']
+        del tb_dict['y_position']
+        del tb_dict['wafer_number']
+
         for key, value in six.iteritems(self.run_config):
-            if key in [b'scan_id', b'run_name', b'chip_wafer', b'chip_x', b'chip_y', b'software_version', b'board_name', b'firmware_version', b'disable', b'thrfile', b'maskfile']:
+            if key in ['scan_id', 'run_name', 'wafer_number', 'x_position', 'y_position', 'software_version', 'board_name', 'firmware_version', 'disable', 'thrfile', 'maskfile']:
                 continue
-            if key in [b'shutter']:
+            if key in ['shutter']:
                 tb_dict[key] = float(value)
             else:
                 tb_dict[key] = int(value)
@@ -266,22 +292,22 @@ class Plotting(object):
         tb_list = []
         for i in range(0, len(list(tb_dict.keys())), 3):
             try:
-                key1 = list(tb_dict.keys())[i]
+                key1   = list(tb_dict.keys())[i]
                 value1 = tb_dict[key1]
                 try:
-                    key2 = list(tb_dict.keys())[i + 1]
+                    key2   = list(tb_dict.keys())[i + 1]
                     value2 = tb_dict[key2]
                 except:
-                    key2 = b''
-                    value2 = ''
+                    key2   = None
+                    value2 = None
                 try:
-                    key3 = list(tb_dict.keys())[i + 2]
+                    key3   = list(tb_dict.keys())[i + 2]
                     value3 = tb_dict[key3]
                 except:
-                    key3 = b''
-                    value3 = ''
+                    key3   = None
+                    value3 = None
                 tb_list.append(
-                    [key1.decode(), value1, '', key2.decode(), value2, '', key3.decode(), value3])
+                    [key1, value1, '', key2, value2, '', key3, value3])
             except:
                 pass
 

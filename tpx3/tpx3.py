@@ -77,32 +77,65 @@ customDictErrors = {
 # a dictionary containing the attribute names of the different
 # custom dictionaries and the corresponding dictionaries containing
 # the data from the YAML files
+# If the TPX3 object has an ID, it should pull the configs from
+# a file which contains chip-specific settings.
+# If the TPX3 object has no ID, it still needs default configs to
+# establish connection to the board for initialization.
+
 dictNames = {
     "ConfigDict" : {
         "CustomDict" : "_configs",
-        "YamlContent" : "config",
-        "Filename" : ("GeneralConfiguration.yml" if self.chipID == None else "chip_GeneralConfiguration.yml"),
-        "FnameVar" : "config_file"
+        "YamlContent": "config",
+        "Filename"   : "GeneralConfiguration.yml",
+        "FnameVar"   : "config_file"
     },
     "DacsDict" : {
         "CustomDict" : "_dacs",
-        "YamlContent" : "dac",
-        "Filename" : ("dacs.yml" if self.chipID == None else "chip_dacs.yml"),
-        "FnameVar" : "dac_file"
+        "YamlContent": "dac",
+        "Filename"   : "dacs.yml",
+        "FnameVar"   : "dac_file"
     },
     "OutputBlockDict" : {
         "CustomDict" : "_outputBlocks",
-        "YamlContent" : "outputBlock",
-        "Filename" : ("outputBlock.yml" if self.chipID == None else "chip_outputBlock.yml"),
-        "FnameVar" : "outputBlock_file"
+        "YamlContent": "outputBlock",
+        "Filename"   : "outputBlock.yml",
+        "FnameVar"   : "outputBlock_file"
     },
     "PLLConfigDict" : {
         "CustomDict" : "_PLLConfigs",
-        "YamlContent" : "PLLConfigDict",
-        "Filename" : ("PLLConfig.yml" if self.chipID == None else "chip_PLLconfig.yml"),
-        "FnameVar" : "PLLConfig_file"
+        "YamlContent": "PLLConfigDict",
+        "Filename"   : "PLLConfig.yml",
+        "FnameVar"   : "PLLConfig_file"
     }
 }
+
+chip_dictNames = {
+    "ConfigDict" : {
+        "CustomDict" : "_configs",
+        "YamlContent": "config",
+        "Filename"   : "chip_GeneralConfiguration.yml",
+        "FnameVar"   : "config_file"
+    },
+    "DacsDict" : {
+        "CustomDict" : "_dacs",
+        "YamlContent": "dac",
+        "Filename"   : "chip_dacs.yml",
+        "FnameVar"   : "dac_file"
+    },
+    "OutputBlockDict" : {
+        "CustomDict" : "_outputBlocks",
+        "YamlContent": "outputBlock",
+        "Filename"   : "chip_outputBlock.yml",
+        "FnameVar"   : "outputBlock_file"
+    },
+    "PLLConfigDict" : {
+        "CustomDict" : "_PLLConfigs",
+        "YamlContent": "PLLConfigDict",
+        "Filename"   : "chip_PLLConfig.yml",
+        "FnameVar"   : "PLLConfig_file"
+    }
+}
+
 
 class CustomDict(dict):
     """
@@ -256,7 +289,24 @@ class TPX3():
         # every function uses global sync header.
         # If we create TPX3 object with a chipId (or if we set chipId after init),
         # every function uses local sync header.
-        self.chipId = ChipId
+
+        if ChipId != None:
+            # Information about the chip comes here
+            # 4 Byte representation
+            self.chipId         = ChipId[0]
+            # Integer representation
+            self.chipId_int     = ChipId[1]
+            # Decoded representation
+            self.chipId_decoded = ChipId[2]
+            # Wafer number
+            self.wafer_number   = ChipId[3]
+            # X coordinate on wafer
+            self.x_position     = ChipId[4]
+            # Y coordinate on wafer
+            self.y_position     = ChipId[5]
+        else:
+            self.chipId = None
+        
         # reset all matrices to empty defaults
         self.reset_matrices()
 
@@ -272,7 +322,7 @@ class TPX3():
         self.outputBlock_file = outputBlock_file
         self.PLLConfig_file   = PLLConfig_file
 
-        for dict_type, type_dict in six.iteritems(dictNames):
+        for dict_type, type_dict in six.iteritems(chip_dictNames if self.chipId != None else dictNames):
             setattr(self, type_dict["YamlContent"], {})
             # get the name of the variable, which stores the filename, e.g. `config_file`
             var_name = type_dict["FnameVar"]
@@ -369,19 +419,25 @@ class TPX3():
         """
         data = yaml.load(open(filename, 'r'), Loader=yaml.FullLoader)
 
+        # If chipId is available, select register config for this Id
+        if self.chipId != None:
+            registers = [chip['registers'] for chip in data['chips'] if chip['chip_ID'] == self.chipId_int][0]
+        else: # If not, get from default file
+            registers = data['registers']
+
         # map storing the allowed sizes of each value
         valsize_map = {}
         # define a list of the different keys we have in each YAML file
-        elements = ["address", "size", "default", "value"]
+        elements    = ["address", "size", "default", "value"]
         # first fill this dictionary
-        outdict = {}
+        outdict     = {}
         # iterate over all registers, build small dictionary for
         # each register and assign to full dictionary
-        for register in data['registers']:
+        for register in registers:
             tmp_dict = {}
             for key in elements:
                 tmp_dict[key] = register[key]
-            outdict[register['name']]  = tmp_dict
+            outdict[register['name']]     = tmp_dict
             valsize_map[register['name']] = int(tmp_dict['size'])
         # now create the correct custom dict
         c_dict = CustomDict(valsize_map, dict_type)
