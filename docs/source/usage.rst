@@ -7,7 +7,8 @@ Installation
 ------------
 
 Installation of the software:
-.. code-block:: console
+
+.. code-block:: bash
 
    mkdir miniconda
    curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
@@ -22,20 +23,23 @@ Installation of the software:
    python setup.py develop
 
 Additional steps for using the GUI:
-.. code-block:: console
+
+.. code-block:: bash
 
    sudo apt install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0
    pip install pycairo
    pip install PyGObject
 
 If there are problems with the online monitor try:
-.. code-block:: console
+
+.. code-block:: bash
 
    sudo apt install libxcb-xinerama0
 
 For the ethernet connection to the readout board setup a static ip network with
 the following settings:
-.. code-block:: console
+
+.. code-block:: text
    Manual IPv4
    IP: 192.168.10.1
    Mask: 255.255.255.0
