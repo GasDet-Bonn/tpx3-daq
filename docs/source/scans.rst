@@ -16,6 +16,7 @@ the following parameters are checked at set for operation:
      without errors
    - The edge of data sampling (0 - rising edge; 1 - falling edge)
    - Inversion of the sampled data (0 - non inverted; 1 - inverted)
+
    - Status code of the link:
         0) Link not connected
         1) Link connected, active and no errors
@@ -68,6 +69,7 @@ approaches:
       at a given test pulse amplitude as set via VTP_coarse and VTP_fine in the
       DAC settings (set the threshold range accordingly) to investigate the
       pixel threshold behaviour with testpulses hits.
+
 The scan get the following arguments:
     - Start Threshold: the lower value of the threshold range that is scanned
     - Stop Threshold: the upper value of the threshold range that is scanned
