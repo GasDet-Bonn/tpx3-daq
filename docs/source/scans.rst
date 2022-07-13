@@ -8,7 +8,7 @@ Hardware Init
 -------------
 
 This scan checks the data links of the readout board for connections to
-Timepix3 ASICs. It checks which links are active and for each ative link
+Timepix3 ASICs. It checks which links are active and for each active link
 the following parameters are checked at set for operation:
    - ChipID of the connected Timepix3
    - Output data link of the connected Timepix3
@@ -53,3 +53,29 @@ pixel results are put in two histograms for the different pixel thresholds.
 Based on the width and the distance of both distributions a new value for the 
 IBias_PixelDAC is calculated and the process is repeated until an optimal
 overlap of both distributions is reached.
+
+Equalisation
+------------
+
+This scan optimises the PixelDACs (pixel thresholds, sometimes THS) of the pixels
+to achieve a uniform response of the pixel matrix. There are two equalisation
+approaches:
+    - Equalisation based on Noise: threshold scans are performed at the noise
+      peak of the chip (set the threshold range accordingly) to investigate the
+      pixel threshold behaviour with noise hits. `Note: Equalisations with this
+      approach are still in development and may not deliver reliable results yet.`
+    - Equalisation based on testpulse injections: threshold scans are performed
+      at a given test pulse amplitude as set via VTP_coarse and VTP_fine in the
+      DAC settings (set the threshold range accordingly) to investigate the
+      pixel threshold behaviour with testpulses hits.
+The scan get the following arguments:
+    - Start Threshold: the lower value of the threshold range that is scanned
+    - Stop Threshold: the upper value of the threshold range that is scanned
+    - Mask steps: number of steps that are needed to scan the full matrix. The
+      matrix is not completely active at the same time to reduce cross talk and
+      to prevent running in the power limit. More steps make the scan more
+      accurate but also increase the scan time.
+Within the scan two threshold scans of the given threshold range are performed.
+One at the minimum pixel threshold and one at the maximum pixel threshold.
+Based on the resulting threshold distributions the optimal pixel threshold for
+all pixels are calculated and stored in an equalisation HDF5 file.
