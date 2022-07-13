@@ -38,12 +38,11 @@ If there are problems with the online monitor try:
 
 For the ethernet connection to the readout board setup a static ip network with
 the following settings:
-
-.. code-block:: text
-   Manual IPv4
-   IP: 192.168.10.1
-   Mask: 255.255.255.0
-   IPv6 Off
+   - Manual IPv4
+   - IP: 192.168.10.1
+   - Mask: 255.255.255.0
+   - IPv6 Off
+   - MTU: automatic
 
 .. note::
 
