@@ -204,7 +204,7 @@ always set to 100 (500 mV). The VTP_fine is calculated as follows (iteration
 starts a 0):
 
 .. math::
-  \text{VTP_fine} = 240 + \frac{100, \text{Pulse height steps}} * iteration
+  \text{VTP_fine} = 240 + \frac{100}{\text{Pulse height steps}} * iteration
 
 As result of the calibration a linear function is expected and thus fitted to
 the calibration data points.
