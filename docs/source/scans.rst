@@ -152,6 +152,7 @@ the results (mean and width of the curves) into histograms.
 
 Testpulse scan
 --------------
+
 This scan iterates over a range of testpulse amplitudes while injecting a given
 amount of testpulses. For each pixel and testpulse iteration the number of measured
 testpulses in the HitCounter mode of the Timepix3 is recoded. The scan gets the
@@ -179,3 +180,31 @@ to a second plateau at zero recorded hits.
 
 The analysis of the scan fits the s-curves for all pixels individually and puts
 the results (mean and width of the curves) into histograms.
+
+THL Calibration
+---------------
+
+This scan performs a calibration of the threshold (THL) DAC values to charge in
+electrons. The scan gets the following arguments:
+    - Start Threshold: the lower value of the threshold range that is scanned
+    - Stop Threshold: the upper value of the threshold range that is scanned
+    - Number of injections: the number of testpulse injections per pixel and
+      per threshold step.
+    - Mask steps: number of steps that are needed to scan the full matrix. The
+      matrix is not completely active at the same time to reduce cross talk and
+      to prevent running in the power limit. More steps make the scan more
+      accurate but also increase the scan time.
+    - Pulse height steps: the number of different testpulse amplitudes that are
+      scanned. Each amplitude leads to one calibration data point.
+
+The scan performs for each pulse height step a THL scan. The mean of its
+threshold distribution form then together with the testpulse amplitude a data
+point for the threshold calibration. For the amplitudes the VTP_coarse is
+always set to 100 (500 mV). The VTP_fine is calculated as follows (iteration
+starts a 0):
+
+.. math::
+  \text{VTP_fine} = 240 + \frac{100, \text{Pulse height steps}} * iteration
+
+As result of the calibration a linear function is expected and thus fitted to
+the calibration data points.
