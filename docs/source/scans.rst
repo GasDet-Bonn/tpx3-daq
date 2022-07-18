@@ -203,7 +203,10 @@ point for the threshold calibration. For the amplitudes the VTP_coarse is
 always set to 100 (500 mV). The VTP_fine is calculated as follows (iteration
 starts a 0):
 
-.. math:: \text{VTP_fine} = 240 + \frac{100}{\text{Pulse height steps}} \cdot \text{iteration}
+.. math::
+  \begin{align}
+    \text{VTP fine} = 240 + \frac{100}{\text{Pulse height steps}} \cdot \text{iteration}
+  \end{align}
 
 As result of the calibration a linear function is expected and thus fitted to
 the calibration data points.
