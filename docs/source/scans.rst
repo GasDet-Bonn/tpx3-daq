@@ -217,3 +217,29 @@ starts a 0):
 
 As result of the calibration a linear function is expected and thus fitted to
 the calibration data points.
+
+Noise Scan
+----------
+
+This scan iterates over a range of thresholds in the HitCounter mode and
+without testpulses and records for every threshold how many pixels saw hits and
+how many hits in total were seen. Compared to other scans this scan is not
+performed with mask steps but with the complete matrix active at all times.
+The scan gets the following arguments:
+
+  * Start Threshold: the lower value of the threshold range that is scanned
+  * Stop Threshold: the upper value of the threshold range that is scanned
+  * Shutter time: the time in seconds for which the shutter for each threshold
+    is opened.
+
+The purpose of this scan is to estimate a good setting (low threshold and low
+number of noise hits) for the threshold for data taking. Therefore the scan
+should be performed close to the noise peak of the chip as far away from this
+there wont be any hits. This is also dependent on the shutter time as the
+expected number of noise hits for a given threshold rises with the time.
+Therefore the time should be selected such that the scan result is reasonable
+for the application of the chip.
+
+.. Note::
+  This scan is optimized for time and thus it does not do multiple readouts per
+  threshold. This leads to statistical fluctuations of the results.
