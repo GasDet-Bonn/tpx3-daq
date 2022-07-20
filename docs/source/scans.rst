@@ -81,6 +81,7 @@ The scan gets the following arguments:
     matrix is not completely active at the same time to reduce cross talk and
     to prevent running in the power limit. More steps make the scan more
     accurate but also increase the scan time.
+
 Within the scan two threshold scans of the given threshold range are performed.
 One at the minimum pixel threshold and one at the maximum pixel threshold.
 Based on the resulting threshold distributions the optimal pixel threshold for
