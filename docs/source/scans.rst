@@ -244,3 +244,12 @@ for the application of the chip.
 .. Note::
   This scan is optimized for time and thus it does not do multiple readouts per
   threshold. This leads to statistical fluctuations of the results.
+
+Readout
+-------
+
+With the readout "scan" pixel data is recorded in the mode which is set in the
+chip settings (ToA & ToT, only ToA or HitCounter and iToT). The only possible
+argument is the length of the run. If its set to 0 the readout runs indefinitely
+until it is stopped by the user. Within a readout testpulses are inactive and
+the most recent equalisation and mask are used.
