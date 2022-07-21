@@ -15,3 +15,4 @@ Contents
 
    usage
    scans
+   settings
