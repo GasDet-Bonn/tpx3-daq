@@ -60,7 +60,6 @@ class TestpulseScan(ScanBase):
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
 
         # Set general configuration registers of the Timepix3
-        #self.chips[0].write_general_config()
         for chip in self.chips[1:]:
             self.chips[0].write(chip.write_general_config(write=False))
 
@@ -87,7 +86,7 @@ class TestpulseScan(ScanBase):
             status.put("Starting scan")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(VTP_fine_start, VTP_fine_stop, 1))
+        cal_high_range = list(range(VTP_fine_start, VTP_fine_stop + 1, 1))
 
         if progress == None:
             # Initialize progress bar
@@ -159,23 +158,19 @@ class TestpulseScan(ScanBase):
             # Read raw data, meta data and configuration parameters
             raw_data        = h5_file.root.raw_data[:]
             meta_data       = h5_file.root.meta_data[:]
-            run_config      = h5_file.root.configuration.run_config[:]
-            general_config  = h5_file.root.configuration.generalConfig[:]
-            op_mode         = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
-            vco             = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
+            run_config      = h5_file.root.configuration.run_config
+            general_config  = h5_file.root.configuration.generalConfig
+            # op_mode and vco should be the same for all chips for the same scan
+            op_mode         = general_config.col('Op_mode')[0]
+            vco             = general_config.col('Fast_Io_en')[0]
 
             # 'Simulate' more chips
             #chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
             #for new_Id in range(8):
             #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
-            #print(h5_file.root.configuration.links[:]['chip_id'])
-            #print(h5_file.root.configuration.links)
-
-            #chip_IDs_links = link_config['chip_id']
 
             # Get link configuration
             link_config = h5_file.root.configuration.links[:]
-            print(link_config)
             chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
@@ -186,16 +181,6 @@ class TestpulseScan(ScanBase):
                     self.chip_links[ID] = [link]
                 else:
                     self.chip_links[ID].append(link)
-            print(self.chip_links)
-
-            # Sanity check
-            link_number = 3
-            for link, chipID in enumerate(self.chip_links):
-                if link_number in self.chip_links[chipID]:
-                    print(link, chipID)
-
-            # Get the number of chips
-            self.num_of_chips = len(self.chip_links)
 
             # Create a group to save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
@@ -204,19 +189,22 @@ class TestpulseScan(ScanBase):
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
             hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, self.chip_links, meta_data, progress = progress)
             raw_data = None
-            #param_range   = np.unique(meta_data['scan_param_id'])
+
             # Read needed configuration parameters
-            n_injections    = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
-            VTP_fine_start  = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
-            VTP_fine_stop   = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
+            n_injections   = run_config.col('n_injections')[0]
+            VTP_fine_start = run_config.col('VTP_fine_start')[0]
+            VTP_fine_stop  = run_config.col('VTP_fine_stop')[0]
                 
-            for chip in range(self.num_of_chips):
+            #for chip in range(self.num_of_chips):
+            for chip in self.chips[1:]:
+                # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
+                # the hit_data of the chip is.
+                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
                 
                 # Get current chipID
-                chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
-                print(chipID)
-                #chip_ID_format = chipID[:3] +str('_') + chipID[-2:]
-
+                #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+                chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
+                
                 # Create group for current chip
                 h5_file.create_group(h5_file.root.interpreted, name=chipID)
 
@@ -224,27 +212,21 @@ class TestpulseScan(ScanBase):
                 chip_group = h5_file.root.interpreted._f_get_child(chipID)
 
                 # Select only data which is hit data
-                hit_data_chip = hit_data[chip][hit_data[chip]['data_header'] == 1]
+                hit_data_chip = hit_data[chip_num][hit_data[chip_num]['data_header'] == 1]
                 h5_file.create_table(chip_group, 'hit_data', hit_data_chip, filters=tb.Filters(complib='zlib', complevel=5))
                 pix_occ       = np.bincount(hit_data_chip['x'] * 256 + hit_data_chip['y'], minlength=256 * 256).astype(np.uint32)
                 hist_occ      = np.reshape(pix_occ, (256, 256)).T
                 h5_file.create_carray(chip_group, name='HistOcc', obj=hist_occ)
                 param_range   = np.unique(meta_data['scan_param_id'])
-                #meta_data     = None
+
                 pix_occ       = None
                 hist_occ      = None
 
                 # Create histograms for number of detected hits for individual testpulses
                 scurve      = analysis.scurve_hist(hit_data_chip, param_range)
-                #hit_data    = None
-
-                # Read needed configuration parameters
-                #n_injections    = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
-                #VTP_fine_start  = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
-                #VTP_fine_stop   = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
 
                 # Fit S-Curves to the histograms for all pixels
-                param_range             = list(range(VTP_fine_start, VTP_fine_stop))
+                param_range             = list(range(VTP_fine_start, VTP_fine_stop + 1))
                 thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, progress = progress, invert_x=False)
 
                 h5_file.create_carray(chip_group, name='HistSCurve', obj=scurve)
@@ -267,38 +249,41 @@ class TestpulseScan(ScanBase):
             with plotting.Plotting(h5_filename) as p:
 
                 # Read needed configuration parameters
-                VTP_fine_start  = int(p.run_config[b'VTP_fine_start'])
-                VTP_fine_stop   = int(p.run_config[b'VTP_fine_stop'])
-                n_injections    = int(p.run_config[b'n_injections'])
+                VTP_fine_start = p.run_config['VTP_fine_start'][0]
+                VTP_fine_stop  = p.run_config['VTP_fine_stop'][0]
+                n_injections   = p.run_config['n_injections'][0]
 
                 # Plot a page with all parameters
                 p.plot_parameter_page()
 
-                # Plot the equalisation bits histograms
-                thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
-
                 #mask_scurve = h5_file.root.configuration.mask_matrix[:].T
 
-                for chip in range(self.num_of_chips):
-
+                #for chip in range(self.num_of_chips):
+                for chip in self.chips[1:]:
                     # Get current chipID
-                    chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
-                    print(chipID)
+                    # chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+                    chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
 
                     # Get group for current chip
                     chip_group = h5_file.root.interpreted._f_get_child(chipID)
+
+                    # Plot the equalisation bits histograms
+                    thr_matrix_call = f'h5_file.root.configuration.thr_matrix_{chipID}[:]'
+                    thr_matrix      = eval(thr_matrix_call)
+                    p.plot_distribution(thr_matrix, chipID, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
+                    
                     # TODO: Maybe we get different masks for different chips
-                    mask = h5_file.root.configuration.mask_matrix[:].T
+                    mask_call = f'h5_file.root.configuration.mask_matrix_{chipID}[:].T'
+                    mask      = eval(mask_call)
 
                     # Plot the occupancy matrix
                     occ_masked  = np.ma.masked_array(chip_group.HistOcc[:], mask)
-                    p.plot_occupancy(occ_masked, title='Integrated Occupancy, chip %s' %chipID, z_max='median', suffix='occupancy', plot_queue=plot_queue)
+                    p.plot_occupancy(occ_masked, chipID, title='Integrated Occupancy', z_max='median', suffix='occupancy', plot_queue=plot_queue)
 
                     # Plot the S-Curve histogram, put title for plot
                     scurve_hist = chip_group.HistSCurve[:].T
                     max_occ     = n_injections + 10
-                    p.plot_scurves(scurve_hist, list(range(VTP_fine_start, VTP_fine_stop)), chipID, scan_parameter_name="VTP_fine", max_occ=max_occ, plot_queue=plot_queue)
+                    p.plot_scurves(scurve_hist, chipID, list(range(VTP_fine_start, VTP_fine_stop + 1)), scan_parameter_name="VTP_fine", max_occ=max_occ, plot_queue=plot_queue)
 
                     # Do not plot pixels with converged S-Curve fits, Chi2Map together with ThresholdMap
                     chi2_sel        = chip_group.Chi2Map[:] > 0.
@@ -306,15 +291,15 @@ class TestpulseScan(ScanBase):
 
                     # Plot the threshold distribution based on the S-Curve fits
                     hist    = np.ma.masked_array(chip_group.ThresholdMap[:], mask)
-                    p.plot_distribution(hist, plot_range=np.arange(VTP_fine_start-0.5, VTP_fine_stop-0.5, 1), x_axis_title='VTP_fine', title='Threshold distribution, chip %s' %chipID, suffix='threshold_distribution', plot_queue=plot_queue)
+                    p.plot_distribution(hist, chipID, plot_range=np.arange(VTP_fine_start-0.5, VTP_fine_stop+0.5, 1), x_axis_title='VTP_fine', title='Threshold distribution', suffix='threshold_distribution', plot_queue=plot_queue)
 
                     # Plot the occupancy
-                    p.plot_occupancy(hist, z_label='Threshold', title='Threshold, chip %s' %chipID, show_sum=False, suffix='threshold_map', z_min=VTP_fine_start, z_max=VTP_fine_stop, plot_queue=plot_queue)
+                    p.plot_occupancy(hist, chipID, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=VTP_fine_start, z_max=VTP_fine_stop, plot_queue=plot_queue)
 
                     # Plot the noise map
                     hist    = np.ma.masked_array(chip_group.NoiseMap[:], mask)
-                    p.plot_distribution(hist, plot_range=np.arange(0.1, 4, 0.1), title='Noise distribution, chip %s' %chipID, suffix='noise_distribution', plot_queue=plot_queue)
-                    p.plot_occupancy(hist, z_label='Noise', title='Noise, chip %s' %chipID, show_sum=False, suffix='noise_map', z_min=0.1, z_max=4.0, plot_queue=plot_queue)
+                    p.plot_distribution(hist, chipID, plot_range=np.arange(0.1, 4, 0.1), title='Noise distribution', suffix='noise_distribution', plot_queue=plot_queue)
+                    p.plot_occupancy(hist, chipID, z_label='Noise', title='Noise', show_sum=False, suffix='noise_map', z_min=0.1, z_max=4.0, plot_queue=plot_queue)
 
 
 if __name__ == "__main__":

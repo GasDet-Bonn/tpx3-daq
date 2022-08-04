@@ -59,8 +59,9 @@ class ConfigDict(dict):
     def __init__(self, config_table):
        # get column names
        config_col_names = config_table.coldescrs.keys()
+       #print(config_col_names)
        # get tuple of column name (key) and its value to build dictionary
-       config_args      = [(key, config_table.col(key)[0]) for key in config_col_names]
+       config_args      = [(key, [value for value in config_table.col(key)]) for key in config_col_names]
 
        super(ConfigDict, self).__init__(config_args)
 
@@ -181,21 +182,25 @@ class Plotting(object):
         m, b = p
         return m * x + b
 
-    def _add_text(self, fig):
+    def _add_text(self, fig, chip_ID):
         fig.subplots_adjust(top=0.85)
         y_coord = 0.92
         if self.qualitative:
             fig.text(0.1, y_coord, 'Timepix3 qualitative',
                      fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config['wafer_number'] is not None:
-                fig.text(0.7, y_coord, 'Chip: W%s-%s%s',
-                         (self.run_config['wafer_number'].decode(), self.run_config['x_position'].decode(), self.run_config['y_position'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+            if chip_ID is not None:
+            #if chip_object is not None:
+                fig.text(0.7, y_coord, f'Chip: {chip_ID}',
+                         fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                #fig.text(0.7, y_coord, f'Chip: {chip_object}', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         else:
             fig.text(0.1, y_coord, 'Timepix3 %s' %
                      (self.level), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-            if self.run_config['wafer_number'] is not None:
-                fig.text(0.7, y_coord, 'Chip: W%s-%s%s' %
-                         (self.run_config['wafer_number'].decode(), self.run_config['x_position'].decode(), self.run_config['y_position'].decode()), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+            if chip_ID is not None:
+            #if chip_object is not None:
+                fig.text(0.7, y_coord, f'Chip: {chip_ID}',
+                         fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                #fig.text(0.7, y_coord, f'Chip: {chip_object}', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         if self.internal:
             fig.text(0.1, 1, 'Timepix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
                 boxstyle='round', facecolor='white', edgecolor='red', alpha=0.7), transform=fig.transFigure)
@@ -247,90 +252,101 @@ class Plotting(object):
         board_name = self.run_config[b'board_name'].decode()
         fw_ver = self.run_config[b'firmware_version'].decode()
         '''
-        scan_id    = self.run_config['scan_id'].decode()
-        run_name   = self.run_config['run_name'].decode()
-        chip_wafer = self.run_config['wafer_number'].decode()
-        chip_x     = self.run_config['x_position'].decode()
-        chip_y     = self.run_config['y_position'].decode()
-        sw_ver     = self.run_config['software_version'].decode()
-        board_name = self.run_config['board_name'].decode()
-        fw_ver     = self.run_config['firmware_version'].decode()
-
-        if self.level != '':
-            text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
-                scan_id, chip_wafer, chip_x, chip_y, run_name)
-        else:
-            text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
-                scan_id, chip_wafer, chip_x, chip_y, run_name)
-        ax.text(0.01, 1, text, fontsize=10)
-        ax.text(0.7, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %s' % (sw_ver, board_name, fw_ver), fontsize=6)
-
-        ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
-
-        if 'thrfile' in list(self.run_config.keys()) and self.run_config['thrfile'] is not None and not self.run_config['thrfile'] == b'None':
-            ax.text(0.01, -0.05, 'Equalisation:\n%s' %
-                    (self.run_config[b'thrfile']).decode(), fontsize=6)
-
-        if 'maskfile' in list(self.run_config.keys()) and self.run_config['maskfile'] is not None and not self.run_config['maskfile'] == b'None':
-            ax.text(0.01, -0.11, 'Maskfile:\n%s' %
-                    (self.run_config['maskfile']).decode(), fontsize=6)
-
         tb_dict = OrderedDict(sorted(self.dacs.items()))
+        #print(tb_dict)
         # remove unnecessary keys
         del tb_dict['x_position']
         del tb_dict['y_position']
         del tb_dict['wafer_number']
 
-        for key, value in six.iteritems(self.run_config):
-            if key in ['scan_id', 'run_name', 'wafer_number', 'x_position', 'y_position', 'software_version', 'board_name', 'firmware_version', 'disable', 'thrfile', 'maskfile']:
-                continue
-            if key in ['shutter']:
-                tb_dict[key] = float(value)
+        #Do this for each chip
+        for chip in range(len(self.run_config['scan_id'])):
+            scan_id    = self.run_config['scan_id'][chip].decode()
+            run_name   = self.run_config['run_name'][chip].decode()
+            chip_wafer = self.run_config['wafer_number'][chip].decode()
+            chip_x     = self.run_config['x_position'][chip].decode()
+            chip_y     = self.run_config['y_position'][chip].decode()
+            sw_ver     = self.run_config['software_version'][chip].decode()
+            board_name = self.run_config['board_name'][chip].decode()
+            fw_ver     = self.run_config['firmware_version'][chip].decode()
+
+            if self.level != '':
+                text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
+                    scan_id, chip_wafer, chip_x, chip_y, run_name)
             else:
-                tb_dict[key] = int(value)
+                text = 'This is a tpx3-daq %s for chip W%s-%s%s.\nRun name: %s' % (
+                    scan_id, chip_wafer, chip_x, chip_y, run_name)
+            ax.text(0.01, 1, text, fontsize=10)
+            ax.text(0.7, 0.02, 'Software version: %s \nReadout board: %s \nFirmware version: %s' % (sw_ver, board_name, fw_ver), fontsize=6)
 
-        tb_list = []
-        for i in range(0, len(list(tb_dict.keys())), 3):
-            try:
-                key1   = list(tb_dict.keys())[i]
-                value1 = tb_dict[key1]
+            ax.text(0.01, 0.02, r'Have a good day!', fontsize=6)
+
+            if 'thrfile' in list(self.run_config.keys()) and self.run_config['thrfile'][chip] is not None and not self.run_config['thrfile'][chip] == b'None':
+                ax.text(0.01, -0.05, 'Equalisation:\n%s' %
+                        (self.run_config[b'thrfile'][chip]).decode(), fontsize=6)
+
+            if 'maskfile' in list(self.run_config.keys()) and self.run_config['maskfile'][chip] is not None and not self.run_config['maskfile'][chip] == b'None':
+                ax.text(0.01, -0.11, 'Maskfile:\n%s' %
+                        (self.run_config['maskfile'][chip]).decode(), fontsize=6)
+
+            for key, value in six.iteritems(self.run_config):
+                print(key, value)
+                if key in ['scan_id', 'run_name', 'wafer_number', 'x_position', 'y_position', 'software_version',
+                           'board_name', 'firmware_version', 'disable', 'thrfile', 'maskfile']:
+                    continue
+                if key in ['shutter']:
+                    if chip == 0:
+                        tb_dict[key] = [float(value[0])]
+                    else:
+                        tb_dict[key].append(float(value[chip]))
+                else:
+                    if chip == 0:
+                        tb_dict[key] = [int(value[0])]
+                    else:
+                        tb_dict[key].append(int(value[chip]))
+
+            tb_list = []
+            for i in range(0, len(list(tb_dict.keys())), 3):
                 try:
-                    key2   = list(tb_dict.keys())[i + 1]
-                    value2 = tb_dict[key2]
+                    key1   = list(tb_dict.keys())[i]
+                    value1 = tb_dict[key1][chip]
+                    try:
+                        key2   = list(tb_dict.keys())[i + 1]
+                        value2 = tb_dict[key2][chip]
+                    except:
+                        key2   = None
+                        value2 = None
+                    try:
+                        key3   = list(tb_dict.keys())[i + 2]
+                        value3 = tb_dict[key3][chip]
+                    except:
+                        key3   = None
+                        value3 = None
+                    tb_list.append(
+                        [key1, value1, '', key2, value2, '', key3, value3])
                 except:
-                    key2   = None
-                    value2 = None
-                try:
-                    key3   = list(tb_dict.keys())[i + 2]
-                    value3 = tb_dict[key3]
-                except:
-                    key3   = None
-                    value3 = None
-                tb_list.append(
-                    [key1, value1, '', key2, value2, '', key3, value3])
-            except:
-                pass
+                    pass
 
-        widths = [0.2, 0.12, 0.1, 0.2, 0.12, 0.1, 0.2, 0.12]
-        labels = ['Parameter', 'Value', '', 'Parameter',
-                  'Value', '', 'Parameter', 'Value']
-        table = ax.table(cellText=tb_list, colWidths=widths,
-                         colLabels=labels, cellLoc='left', loc='center')
-        table.scale(0.8, 0.8)
+            widths = [0.2, 0.12, 0.1, 0.2, 0.12, 0.1, 0.2, 0.12]
+            labels = ['Parameter', 'Value', '', 'Parameter',
+                    'Value', '', 'Parameter', 'Value']
+            table = ax.table(cellText=tb_list, colWidths=widths,
+                            colLabels=labels, cellLoc='left', loc='center')
+            table.scale(0.8, 0.8)
 
-        for key, cell in table.get_celld().items():
-            row, col = key
-            if row == 0:
-                cell.set_color('#ffb300')
-                cell.set_edgecolor('Black')
-                cell.set_fontsize(8)
-            if col in [2, 5]:
-                cell.set_fill(False)
-                cell.visible_edges = 'vertical'
-                cell.set_fontsize(8)
-            if col in [1, 4, 7]:
-                cell._loc = 'center'
-                cell.set_fontsize(8)                
+            for key, cell in table.get_celld().items():
+                row, col = key
+                if row == 0:
+                    cell.set_color('#ffb300')
+                    cell.set_edgecolor('Black')
+                    cell.set_fontsize(8)
+                if col in [2, 5]:
+                    cell.set_fill(False)
+                    cell.visible_edges = 'vertical'
+                    cell.set_fontsize(8)
+                if col in [1, 4, 7]:
+                    cell._loc = 'center'
+                    cell.set_fontsize(8)                
 
         self._save_plots(fig, suffix='parameter_page')
 
@@ -365,12 +381,12 @@ class Plotting(object):
 
         self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
-    def _plot_1d_hist(self, hist, yerr=None, title=None, x_axis_title=None, y_axis_title=None, x_ticks=None, color='r',
+    def _plot_1d_hist(self, hist, chip_object, yerr=None, title=None, x_axis_title=None, y_axis_title=None, x_ticks=None, color='r',
                       plot_range=None, log_y=False, suffix=None, plot_queue=None):
         fig = Figure()
         FigureCanvas(fig)
-        ax = fig.add_subplot(111)
-        self._add_text(fig)
+        ax  = fig.add_subplot(111)
+        self._add_text(fig, chip_object)
 
         hist = np.array(hist)
         if plot_range is None:
@@ -510,7 +526,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='cluster_shape', plot_queue=plot_queue)
 
-    def plot_occupancy(self, hist, electron_axis=False, use_electron_offset=True, title='Occupancy', z_label='# of hits', z_min=None, z_max=None, show_sum=True, suffix=None, plot_queue=None):
+    def plot_occupancy(self, hist, chip_ID, electron_axis=False, use_electron_offset=True, title='Occupancy', z_label='# of hits', z_min=None, z_max=None, show_sum=True, suffix=None, plot_queue=None):
         if z_max == 'median':
             z_max = 2 * np.ma.median(hist)
         elif z_max == 'maximum' or z_max is None:
@@ -527,7 +543,7 @@ class Plotting(object):
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
-        self._add_text(fig)
+        self._add_text(fig, chip_ID)
 
         ax.set_adjustable('box')
         extent = [0.5, 256.5, 256.5, 0.5]
@@ -547,6 +563,8 @@ class Plotting(object):
                 (0 if hist.all() is np.ma.masked else np.ma.sum(hist))), color=TITLE_COLOR)
         ax.set_xlabel('Column')
         ax.set_ylabel('Row')
+        ax.set_xticks([0,50,100,150,200,250])
+        ax.set_xticklabels(['0','50','100','150','200','250'])
 
         divider = make_axes_locatable(ax)
         if electron_axis:
@@ -555,9 +573,10 @@ class Plotting(object):
             pad = 0.6
         cax = divider.append_axes("bottom", size="5%", pad=pad)
         cb = fig.colorbar(im, cax=cax, ticks=np.linspace(
-            start=z_min, stop=z_max, num=10, endpoint=True), orientation='horizontal')
-        cax.set_xticklabels([int(round(float(x.get_text())))
-                            for x in cax.xaxis.get_majorticklabels()])
+            start=z_min, stop=z_max, num=5, endpoint=True), orientation='horizontal')
+        #cax.set_xticklabels([int(round(float(x.get_text())))
+        #                    for x in cax.xaxis.get_majorticklabels()])
+        
         cb.set_label(z_label)
 
         if electron_axis:
@@ -805,7 +824,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='fancy_occupancy', plot_queue=plot_queue)
 
-    def plot_scurves(self, scurves, scan_parameters, chipID, iteration=None, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
+    def plot_scurves(self, scurves, chip_ID, scan_parameters, iteration=None, electron_axis=False, scan_parameter_name=None, title='S-curves', ylabel='Occupancy', max_occ=None, plot_queue=None):
 
         if max_occ is None:
             max_occ = np.max(scurves) + 5
@@ -825,7 +844,7 @@ class Plotting(object):
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
-        self._add_text(fig)
+        self._add_text(fig, chip_ID)
 
         fig.patch.set_facecolor('white')
         cmap = copy.copy(cm.get_cmap('cool'))
@@ -850,9 +869,9 @@ class Plotting(object):
             cb = fig.colorbar(im, fraction=0.04, pad=0.05)
         cb.set_label("# of pixels")
         if iteration == None:
-            ax.set_title(title + ' for %d pixel(s), chip %s' % (n_pixel, chipID), color=TITLE_COLOR)
+            ax.set_title(title + f' for {n_pixel} pixel(s)', color=TITLE_COLOR)
         else:
-            ax.set_title(title + ' for %d pixel(s), it %d, chip %s' % (n_pixel, iteration, chipID), color=TITLE_COLOR)
+            ax.set_title(title + f' for {n_pixel} pixel(s), iteration {iteration}', color=TITLE_COLOR)
 
         if scan_parameter_name is None:
             ax.set_xlabel('Scan parameter')
@@ -873,7 +892,7 @@ class Plotting(object):
 
         self._save_plots(fig, suffix='scurves', plot_queue=plot_queue)
 
-    def plot_distribution(self, data, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None, plot_queue=None):
+    def plot_distribution(self, data, chip_ID, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None, plot_queue=None):
         #print('In plot_distribution...')
         if plot_range is None:
             diff = np.amax(data) - np.amin(data)
@@ -911,7 +930,7 @@ class Plotting(object):
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
-        self._add_text(fig)
+        self._add_text(fig, chip_ID)
 
         ax.bar(bins[:-1], hist, width=tick_size, align='edge')
         if coeff is not None:
@@ -958,7 +977,7 @@ class Plotting(object):
         else:
             return [0.,0.,0.],[0.,0.,0.]
 
-    def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
+    def plot_datapoints(self, x, y, chip_object, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
         m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
         b = y[0] - m * x[0]
         p0 = (m, b)
@@ -976,7 +995,7 @@ class Plotting(object):
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
-        self._add_text(fig)
+        self._add_text(fig, chip_object)
 
         ax.errorbar(x, y, y_err, x_err, ls = 'None', marker = 'x', ms = 4)
         if coeff is not None:
@@ -1106,14 +1125,14 @@ class Plotting(object):
 
         self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
 
-    def plot_two_functions(self, x1, y1, x1_err, y1_err, x2, y2, label_1 = "data", label_2 = "fit", x_plot_range=None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
+    def plot_two_functions(self, chip_object, x1, y1, x1_err, y1_err, x2, y2, label_1 = "data", label_2 = "fit", x_plot_range=None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
         """
             Plot two functions (1 = data function, 2 = fit of data function)
         """
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
-        self._add_text(fig)
+        self._add_text(fig, chip_object)
 
         ax.errorbar(x1, y1, y1_err, label = label_1, ls = 'None', marker = '.', ms = 4, alpha = 0.8, zorder=0)
         ax.plot(x2, y2, label = label_2, alpha=0.8, zorder=1)

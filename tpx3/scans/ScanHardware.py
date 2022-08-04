@@ -252,43 +252,85 @@ class ScanHardware(object):
         outputBlock_chip_file   = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_outputBlock.yml')
         GeneralConfig_chip_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_GeneralConfiguration.yml')
         
-        # Write default values into new chip yamls
-        # TODO: only do this for chips, which are not in the yaml yet,
-        # so we dont override previous settings
-        with open(dacs_chip_file, 'w') as file:
+        # Write default values into new chip yamls, if settings for a chip are not
+        # in the file yet.  Don't overwrite settings for already existing entries
+        # TODO: Write this in functions, so we don't have this here four times
+        with open(dacs_chip_file, 'r+') as file:
+            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
+        
+        try:
+            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
+            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
+        except:
+            chip_list      = []
             full_chip_dict = []
 
-            for chip in range(len(ID_List)):
+        for chip in range(len(ID_List)):
+            # check if chip is already in YAML
+            if ID_List[chip][0] not in chip_list:
+                print(ID_List[chip][0], chip_list)
+                # If chip is not in list, make a new entry
                 chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(dacs_default['registers'])}
                 full_chip_dict.append(chip_dict)
-    
+        
+        with open(dacs_chip_file, 'w') as file:
             yaml.dump({'chips': full_chip_dict}, file)
         
-        with open(PLL_chip_file, 'w') as file:
+
+        with open(PLL_chip_file, 'r+') as file:
+            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
+        
+        try:
+            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
+            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
+        except:
+            chip_list      = []
             full_chip_dict = []
 
-            for chip in range(len(ID_List)):
+        for chip in range(len(ID_List)):
+            if ID_List[chip][0] not in chip_list:
                 chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(PLL_default['registers'])}
                 full_chip_dict.append(chip_dict)
     
+        with open(PLL_chip_file, 'w') as file:
             yaml.dump({'chips': full_chip_dict}, file)
 
-        with open(outputBlock_chip_file, 'w') as file:
+
+        with open(outputBlock_chip_file, 'r+') as file:
+            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
+            
+        try:
+            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
+            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
+        except:
+            chip_list      = []
             full_chip_dict = []
 
-            for chip in range(len(ID_List)):
+        for chip in range(len(ID_List)):
+            if ID_List[chip][0] not in chip_list:
                 chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(outputBlock_default['registers'])}
                 full_chip_dict.append(chip_dict)
     
+        with open(outputBlock_chip_file, 'w') as file:
             yaml.dump({'chips': full_chip_dict}, file)
         
-        with open(GeneralConfig_chip_file, 'w') as file:
+
+        with open(GeneralConfig_chip_file, 'r+') as file:
+            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
+            
+        try:
+            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
+            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
+        except:
+            chip_list      = []
             full_chip_dict = []
 
-            for chip in range(len(ID_List)):
+        for chip in range(len(ID_List)):
+            if ID_List[chip][0] not in chip_list:
                 chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(GeneralConfig_default['registers'])}
                 full_chip_dict.append(chip_dict)
     
+        with open(GeneralConfig_chip_file, 'w') as file:
             yaml.dump({'chips': full_chip_dict}, file)
 
         # Create a list of Chips with all link settings for the specific chip

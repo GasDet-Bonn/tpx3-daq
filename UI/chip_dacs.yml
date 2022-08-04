@@ -73,7 +73,7 @@ chips:
     description: Ibias Pixel DAC value
     name: Ibias_PixelDAC
     size: 8
-    value: 172
+    value: 158
   - address: 13
     default: 128
     description: Test Pulse Buffer input

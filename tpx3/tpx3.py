@@ -383,9 +383,8 @@ class TPX3():
         var_name = dictNames[dict_type]["YamlContent"] + "_written_to_chip"
         # set this to False (Note: not used so far)
         setattr(self, var_name, False)
-
         yaml_dict = getattr(self, dictNames[dict_type]["YamlContent"])
-        c_dict = getattr(self, dictNames[dict_type]["CustomDict"])
+        c_dict    = getattr(self, dictNames[dict_type]["CustomDict"])
         for k, v in six.iteritems(yaml_dict):
             if to_default:
                 c_dict[k] = v['default']
@@ -566,7 +565,7 @@ class TPX3():
             # assert we read the correct values we wrote before
             assert(ddout[0][13:5].tovalue() == b.tovalue())
 
-    # TODO: add the given values to the _dacs dictionary, if this function is used!
+    # TODO: add the given values to the _dacs dictionary, if this function is used! - Done!
     def set_dac(self, dac, value, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
@@ -615,6 +614,9 @@ class TPX3():
         data += bits.toByteList()
 
         data += [0x00]
+
+        # Write new value of the dac in dacs dictionary
+        self.dacs[dac] = value
 
         if write is True:
             self.write(data)

@@ -85,7 +85,7 @@ class ToTCalib(ScanBase):
             status.put("Starting scan")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(VTP_fine_start, VTP_fine_stop, 1))
+        cal_high_range = list(range(VTP_fine_start, VTP_fine_stop+1, 1))
 
         if progress == None:
             # Initialize progress bar
@@ -159,19 +159,19 @@ class ToTCalib(ScanBase):
         with tb.open_file(h5_filename, 'r+') as h5_file:
             # Read raw data, meta data and configuration parameters
             meta_data      = h5_file.root.meta_data[:]
-            run_config     = h5_file.root.configuration.run_config[:]
-            general_config = h5_file.root.configuration.generalConfig[:]
-            op_mode        = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
-            vco            = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
+            run_config     = h5_file.root.configuration.run_config
+            general_config = h5_file.root.configuration.generalConfig
+            op_mode        = general_config.col('Op_mode')[0]
+            vco            = general_config.col('Op_mode')[0]
 
             # 'Simulate' more chips
-            chip_IDs_new = [b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7', b'W18-K7',b'W18-K7', b'W18-K7']
-            for new_Id in range(8):
-                h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
+            #chip_IDs_new = [b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7', b'W18-K7',b'W18-K7', b'W18-K7']
+            #for new_Id in range(8):
+            #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
             # Get link configuration
             link_config = h5_file.root.configuration.links[:]
-            print(link_config)
+            #print(link_config)
             chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
@@ -182,11 +182,11 @@ class ToTCalib(ScanBase):
                     self.chip_links[ID] = [link]
                 else:
                     self.chip_links[ID].append(link)
-            print('Chip links: ' + str(self.chip_links))
+            #print('Chip links: ' + str(self.chip_links))
 
             # Get the number of chips
-            self.num_of_chips = len(self.chip_links)
-
+            #self.num_of_chips = len(self.chip_links)
+            self.num_of_chips = len(self.chips[1:])
             # Create group to save all data and histograms to the HDF file
             try:
                 h5_file.remove_node(h5_file.root.interpreted, recursive=True)
@@ -215,22 +215,24 @@ class ToTCalib(ScanBase):
                 raw_data_tmp = h5_file.root.raw_data[start_index['index_start'][0]:stop_index['index_stop'][-1]]
                 hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, self.chip_links, progress = progress)
 
-                for chip in range(self.num_of_chips):
-                    #hit_data_chip = hit_data_tmp[chip]
-                    #raw_data_tmp = None
+                #for chip in range(self.num_of_chips):
+                for chip in self.chips[1:]:
+                    # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
+                    # the hit_data of the chip is.
+                    chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
 
                     # Select only data which is hit data
-                    hit_data_chip = hit_data_tmp[chip][hit_data_tmp[chip]['data_header'] == 1]
+                    hit_data_chip = hit_data_tmp[chip_num][hit_data_tmp[chip_num]['data_header'] == 1]
 
                     # Create histograms for number of detected ToT clock cycles for individual testpulses
                     full_tmp, count_tmp = analysis.totcurve_hist(hit_data_chip)
 
                     # Put results of current scan parameter ID in overall arrays
-                    totcurves_means[chip][:, param_id] = full_tmp
-                    full_tmp                           = None
-                    totcurves_hits[chip][:, param_id]  = count_tmp
-                    count_tmp                          = None
-                    hit_data_chip                      = None
+                    totcurves_means[chip_num][:, param_id] = full_tmp
+                    full_tmp                               = None
+                    totcurves_hits[chip_num][:, param_id]  = count_tmp
+                    count_tmp                              = None
+                    hit_data_chip                          = None
                 
                 raw_data_tmp = None
                 hit_data_tmp = None
@@ -247,10 +249,14 @@ class ToTCalib(ScanBase):
 
             meta_data = None
 
-            for chip in range(self.num_of_chips):
-                # get chipID of current chip
-                chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
-                print(chip, chipID)
+            #for chip in range(self.num_of_chips):
+            for chip in self.chips[1:]:
+                # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
+                # the hit_data of the chip is.
+                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                # Get chipID in desirable formatting for HDF5 files (without '-')
+                #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+                chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
                 
                 # create group for current chip
                 h5_file.create_group(h5_file.root.interpreted, name=chipID)
@@ -259,31 +265,23 @@ class ToTCalib(ScanBase):
                 chip_group  = h5_file.root.interpreted._f_get_child(chipID)
 
                 # Calculate the mean ToT per pixel per 110 injections
-                totcurve = np.divide(totcurves_means[chip], 10, where = totcurves_hits > 0)
-                print(totcurve[0], len(totcurve[0]))
-                print(totcurves_hits[0], len(totcurves_hits[0]))
+                totcurve = np.divide(totcurves_means[chip_num], 10, where = totcurves_hits[chip_num] > 0)
                 totcurve = np.nan_to_num(totcurve)
-                # dereferencing list
-                totcurve = totcurve[0]
-
+                
                 # Only use pixel which saw at least all pulses
                 # Additional pulses are not part of the ToT sum (see analysis.totcurve_hist())
-                #totcurves_hits_chip = totcurves_hits[chip]
-                totcurve[totcurves_hits[0] < 10] = 0
-                print(len(totcurve))
+                totcurve[totcurves_hits[chip_num] < 10] = 0
 
                 # Read needed configuration parameters
-                VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
-                VTP_fine_stop  = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
+                VTP_fine_start = run_config.col('VTP_fine_start')[0]
+                VTP_fine_stop  = run_config.col('VTP_fine_stop')[0]
 
                 # Fit ToT-Curves to the histograms for all pixels
-                param_range = list(range(VTP_fine_start, VTP_fine_stop))
-                print(totcurve[totcurve>0])
-                print(param_range)
-                print(totcurve)
+                param_range = list(range(VTP_fine_start, VTP_fine_stop+1))
+                
                 h5_file.create_carray(chip_group, name='HistToTCurve', obj=totcurve)
-                h5_file.create_carray(chip_group, name='HistToTCurve_Full', obj=totcurves_means[chip])
-                h5_file.create_carray(chip_group, name='HistToTCurve_Count', obj=totcurves_hits[chip])
+                h5_file.create_carray(chip_group, name='HistToTCurve_Full', obj=totcurves_means[chip_num])
+                h5_file.create_carray(chip_group, name='HistToTCurve_Count', obj=totcurves_hits[chip_num])
                 
                 mean, popt, pcov = analysis.fit_totcurves_mean(totcurve, scan_param_range=param_range, progress = progress)
 
@@ -317,34 +315,33 @@ class ToTCalib(ScanBase):
             with plotting.Plotting(h5_filename) as p:
 
                 # Read needed configuration parameters
-                VTP_fine_start = int(p.run_config[b'VTP_fine_start'])
-                VTP_fine_stop  = int(p.run_config[b'VTP_fine_stop'])
-                VTP_coarse     = int(p.dacs[b'VTP_coarse'])
+                VTP_fine_start = p.run_config['VTP_fine_start'][0]
+                VTP_fine_stop  = p.run_config['VTP_fine_stop'][0]
+                VTP_coarse     = p.dacs['VTP_coarse'][0]
 
                 # Plot a page with all parameters
                 p.plot_parameter_page()
 
-                mask = h5_file.root.configuration.mask_matrix[:].T
-
-                for chip in range(self.num_of_chips):
-                    # get chipID of current chip
-                    chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
-                    print(chip, chipID)
+                #for chip in range(self.num_of_chips):
+                for chip in self.chips[1:]:
+                    # Get chipID in desirable formatting for HDF5 files (without '-')
+                    #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+                    chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
 
                     # get group for current chip
                     chip_group = h5_file.root.interpreted._f_get_child(chipID)
 
                     # Plot the equalisation bits histograms
-                    #thr_matrix = chip_group.thr_matrix[:],
-                    #p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution, chip %s' %chipID, x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
+                    thr_matrix = eval(f'h5_file.root.configuration.thr_matrix_{chipID}[:]')
+                    p.plot_distribution(thr_matrix, chipID, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
                     # Plot the Hit-Curve histogram
                     ToT_hit_hist = chip_group.HistToTCurve_Count[:].T
-                    p.plot_scurves(ToT_hit_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), chipID, electron_axis=False, scan_parameter_name="VTP_fine", max_occ=50, ylabel='Hits per pixel', title='Hit curves', plot_queue=plot_queue)
+                    p.plot_scurves(ToT_hit_hist.astype(int), chipID, list(range(VTP_fine_start, VTP_fine_stop+1)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=50, ylabel='Hits per pixel', title='Hit curves', plot_queue=plot_queue)
                     
                     # Plot the ToT-Curve histogram
                     ToT_hist = chip_group.HistToTCurve[:].T
-                    p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), chipID, electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
+                    p.plot_scurves(ToT_hist.astype(int), chipID, list(range(VTP_fine_start, VTP_fine_stop+1)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
 
                     # Plot the mean ToT-Curve with fit
                     mean = chip_group.mean_curve[:]
@@ -364,7 +361,7 @@ class ToTCalib(ScanBase):
                     points = np.linspace(t*1.001, len(mean['tot']), 500)
                     fit    = analysis.totcurve(points, a, b, c, t)
 
-                    p.plot_two_functions(range(len(mean['tot'])), mean['tot'], range(len(mean['tot'])), mean['tot_error'], points, fit, y_plot_range = [0, np.amax(fit[1])], label_1 = 'mean ToT', label_2='fit with \na=(%.2f+/-%.2f), \nb=(%.2f+/-%.2f), \nc=(%.2f+/-%.2f), \nt=(%.2f+/-%.2f)'%(a, ac, b, bc, c, cc, t ,tc), x_axis_title='VTP [2.5 mV]', y_axis_title='ToT Clock Cycles [25 ns]', title='ToT fit, chip %s' %chipID, suffix='ToT fit', plot_queue=plot_queue )
+                    p.plot_two_functions(chipID, range(len(mean['tot'])), mean['tot'], range(len(mean['tot'])), mean['tot_error'], points, fit, y_plot_range = [0, np.amax(fit[1])], label_1 = 'mean ToT', label_2='fit with \na=(%.2f+/-%.2f), \nb=(%.2f+/-%.2f), \nc=(%.2f+/-%.2f), \nt=(%.2f+/-%.2f)'%(a, ac, b, bc, c, cc, t ,tc), x_axis_title='VTP [2.5 mV]', y_axis_title='ToT Clock Cycles [25 ns]', title='ToT fit', suffix='ToT fit', plot_queue=plot_queue )
 
 
 if __name__ == "__main__":

@@ -169,7 +169,7 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
 def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extension = None):
     data_type = {'names': ['data_header', 'header', 'hit_index', 'x',     'y',     'TOA',    'TOT',    'EventCounter', 'HitCounter', 'FTOA',  'scan_param_id', 'chunk_start_time', 'iTOT',   'TOA_Extension', 'TOA_Combined'],
                'formats': ['uint8',       'uint8',  'uint64', 'uint8', 'uint8', 'uint16', 'uint16', 'uint16',       'uint8',      'uint8', 'uint16',        'float',            'uint16', 'uint64',        'uint64']}
-    print('Now in _interpret_raw_data')
+    #print('Now in _interpret_raw_data')
     num_of_chips = num_of_chips
     
     # For each chip create a list of pix_data
@@ -178,7 +178,7 @@ def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extens
     for chip in range(num_of_chips):
         pix_data[chip] = np.recarray(len(data[chip]), dtype=data_type)
 
-    print('created array for each chip')
+    #print('created array for each chip')
     #print(data[:5])
     
     n47 = np.uint64(47)
@@ -192,15 +192,15 @@ def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extens
     nf    = np.uint64(0xf)
 
     for chip in range(num_of_chips):
-        print('Chip number %d' %chip)
+        #print('Chip number %d' %chip)
         pixel       = [(data_chunk >> n28) & np.uint64(0b111) for data_chunk in data[chip]]
         super_pixel = [(data_chunk >> np.uint64(28 + 3)) & np.uint64(0x3f) for data_chunk in data[chip]]
         right_col   = [item > 3 for item in pixel]
         eoc         = [(data_chunk >> np.uint64(28 + 9)) & np.uint64(0x7f) for data_chunk in data[chip]]
-        print(len(data[chip]))
+        #print(len(data[chip]))
         for i in range(len(data[chip])):
-            if i%10000 == 0:
-                print('Data chunk %d of %d' %(i, len(data[chip])))
+            #if i%10000 == 0:
+            #    print('Data chunk %d of %d' %(i, len(data[chip])))
             pix_data[chip][i]['data_header'] = data[chip][i] >> n47
             pix_data[chip][i]['header']      = data[chip][i] >> n44
             pix_data[chip][i]['y']           = (super_pixel[i] * 4) + (pixel[i] - right_col[i] * 4)
@@ -359,13 +359,13 @@ def raw_data_to_dut_old(raw_data, indices):
 
 def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0, leftoverpackage=[]):
     # reintegrate leftover package if present
-    print('Now in raw_data_to_dut...')
+    #print('Now in raw_data_to_dut...')
     if len(leftoverpackage):
         logger.info("Integrate package(s) in chunk nr. "+str(chunk_nr))
         for m in range(len(leftoverpackage)-1,-1,-1):
             raw_data = np.insert(raw_data,0,leftoverpackage[m],axis= 0)
         leftoverpackage = []
-    print('In raw_data_to_dut, get chip_links dict: ' + str(chip_links))
+    #print('In raw_data_to_dut, get chip_links dict: ' + str(chip_links))
     num_of_chips = len(chip_links)
     
     # make arrays for results and debugging values
@@ -423,9 +423,9 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
         chunk_len = 0
         # Get link-sorted data packages and combine the 32 bit words
         for link in range(links):
-            print(link)
+            #print(link)
             link_filter = (raw_data & 0xfe000000) >> 25 == link
-            print(link_filter)
+            #print(link_filter)
             chunk_len+=np.sum(link_filter)
             if np.sum(link_filter) == 0:
                 continue
@@ -562,8 +562,8 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
                 if link in chip_links[chip]:
                     current_chip = chip_number
             
-            print(link, current_chip)
-            print([chip for number,chip in enumerate(chip_links) if link in chip_links[chip]])
+            #print(link, current_chip)
+            #print([chip for number,chip in enumerate(chip_links) if link in chip_links[chip]])
             
             link_filter = (raw_data & 0xfe000000) >> 25 == link
             #print(link_filter)
@@ -627,13 +627,13 @@ def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_s
     for chip in range(num_of_chips):
         ret[chip] = np.recarray(0, dtype=data_type)
     
-    print('Now in interpret_raw_data...')
-    print('Size of meta data: ' + str(len(meta_data)))
+    #print('Now in interpret_raw_data...')
+    #print('Size of meta data: ' + str(len(meta_data)))
     if len(meta_data):
         # standard case: only split into bunches which have the same param_id
         #print('Split data into same scan_param_ids')
         if split_fine == False:
-            print('split_fine is false')
+            #print('split_fine is false')
             # param = list of all occurring scan_param_ids
             # index = positions of first occurrence of each scan_param_ids
             param, index = np.unique(meta_data['scan_param_id'], return_index=True)

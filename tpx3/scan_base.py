@@ -7,12 +7,8 @@
 
 from __future__ import absolute_import
 from __future__ import division
-#from http.server import SimpleHTTPRequestHandler
-#from importlib.machinery import OPTIMIZED_BYTECODE_SUFFIXES
-#from msilib import type_nullable
 import time
 import os
-#from wsgiref.simple_server import software_version
 import yaml
 import logging
 import tables as tb
@@ -60,66 +56,66 @@ class RunConfig_General(tb.IsDescription):
     y_position       = tb.StringCol(128)
 
 class RunConfig_PixelDACopt(RunConfig_General):
-    Vthreshold_start = tb.StringCol(128)
-    Vthreshold_stop  = tb.StringCol(128)
-    n_injections     = tb.StringCol(128)
-    offset           = tb.StringCol(128)
-    tp_period        = tb.StringCol(128)
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    offset           = tb.UInt16Col()
+    tp_period        = tb.UInt16Col()
     maskfile         = tb.StringCol(128)
-    pixeldac         = tb.StringCol(128)
-    last_pixeldac    = tb.StringCol(128)
-    last_delta       = tb.StringCol(128)
+    pixeldac         = tb.UInt16Col()
+    last_pixeldac    = tb.UInt16Col()
+    last_delta       = tb.Float64Col()
 
 class RunConfig_EqualisationCharge(RunConfig_General):
-    Vthreshold_start = tb.StringCol(128)
-    Vthreshold_stop  = tb.StringCol(128)
-    n_injections     = tb.StringCol(128)
-    mask_step        = tb.StringCol(128)
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    mask_step        = tb.UInt16Col()
     maskfile         = tb.StringCol(128)
-    tp_period        = tb.StringCol(128)
+    tp_period        = tb.UInt16Col()
 
 
 class RunConfig_ThresholdCalib(RunConfig_General):
-    Vthreshold_start = tb.StringCol(128)
-    Vthreshold_stop  = tb.StringCol(128)
-    n_injections     = tb.StringCol(128)
-    mask_step        = tb.StringCol(128)
-    tp_period        = tb.StringCol(128)
-    n_pulse_heights  = tb.StringCol(128)
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    mask_step        = tb.UInt16Col()
+    tp_period        = tb.UInt16Col()
+    n_pulse_heights  = tb.UInt16Col()
     thrfile          = tb.StringCol(128)
     maskfile         = tb.StringCol(128)
     
 class RunConfig_ThresholdScan(RunConfig_General):
-    Vthreshold_start = tb.StringCol(128)
-    Vthreshold_stop  = tb.StringCol(128)
-    n_injections     = tb.StringCol(128)
-    mask_step        = tb.StringCol(128)
-    tp_period        = tb.StringCol(128)
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    mask_step        = tb.UInt16Col()
+    tp_period        = tb.UInt16Col()
     thrfile          = tb.StringCol(128)
     maskfile         = tb.StringCol(128)
 
 class RunConfig_TestpulseScan(RunConfig_General):
-    VTP_fine_start = tb.StringCol(128)
-    VTP_fine_stop  = tb.StringCol(128)
-    n_injections   = tb.StringCol(128)
-    mask_step      = tb.StringCol(128)
-    tp_period      = tb.StringCol(128)
+    VTP_fine_start = tb.UInt16Col()
+    VTP_fine_stop  = tb.UInt16Col()
+    n_injections   = tb.UInt16Col()
+    mask_step      = tb.UInt16Col()
+    tp_period      = tb.UInt16Col()
     thrfile        = tb.StringCol(128)
     maskfile       = tb.StringCol(128)
 
 class RunConfig_ToTCalib(RunConfig_General):
-    VTP_fine_start = tb.StringCol(128)
-    VTP_fine_stop  = tb.StringCol(128)
-    mask_step      = tb.StringCol(128)
-    tp_period      = tb.StringCol(128)
+    VTP_fine_start = tb.UInt16Col()
+    VTP_fine_stop  = tb.UInt16Col()
+    mask_step      = tb.UInt16Col()
+    tp_period      = tb.UInt16Col()
     thrfile        = tb.StringCol(128)
     maskfile       = tb.StringCol(128)
 
 
 class RunConfig_NoiseScan(RunConfig_General):
-    Vthreshold_start = tb.StringCol(128)
-    Vthreshold_stop  = tb.StringCol(128)
-    shutter          = tb.StringCol(128)
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    shutter          = tb.Float64Col()
     thrfile          = tb.StringCol(128)
     maskfile         = tb.StringCol(128)
 
@@ -132,7 +128,7 @@ RunConfigTables = {
     'ThresholdScan'     : RunConfig_ThresholdScan,
     'ThresholdCalib'    : RunConfig_ThresholdCalib,
     'NoiseScan'         : RunConfig_NoiseScan,
-    'ToTcalib'          : RunConfig_ToTCalib
+    'ToTCalib'          : RunConfig_ToTCalib
 }
 
 
@@ -176,6 +172,9 @@ class ConfTable(tb.IsDescription):
 
 
 class ConfTable_alt(tb.IsDescription):
+    wafer_number         = tb.StringCol(128)
+    x_position           = tb.StringCol(128)
+    y_position           = tb.StringCol(128)
     Polarity             = tb.UInt16Col()
     Op_mode              = tb.UInt16Col()
     Gray_count_en        = tb.UInt16Col()
@@ -638,7 +637,6 @@ class ScanBase(object):
             Dumps the current configuration in tables of the configuration group in the HDF5 file.
             For scans with multiple iterations separate tables for each iteration will be created.
         '''
-        print(self.num_of_chips)
         # Get table description for this run
         config_table = RunConfigTables[self.scan_id]
 
@@ -650,7 +648,12 @@ class ScanBase(object):
         else:
             run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config' + str(iteration), description=config_table)
 
-        for chip in range(self.num_of_chips):
+        if self.scan_id != 'PixelDACopt': # or (self.scan_id == 'PixelDACopt' and iteration == 0):
+            chip_list = self.chips[1:]
+        else:
+            chip_list = self.chips_not_optimized
+
+        for chip in chip_list:
             # Common scan/run configuration parameters
             row                     = run_config_table.row
             row['scan_id']          = self.scan_id
@@ -658,10 +661,9 @@ class ScanBase(object):
             row['software_version'] = get_software_version()
             row['board_name']       = self.board_name
             row['firmware_version'] = self.firmware_version
-            row['wafer_number']     = self.chips[chip+1].wafer_number
-            row['x_position']       = self.chips[chip+1].x_position
-            row['y_position']       = self.chips[chip+1].y_position
-            print('In dump_configuration: ' + str(self.chips[chip+1].wafer_number) + ' ' + str(self.chips[chip+1].x_position) + ' ' + str(self.chips[chip+1].y_position))
+            row['wafer_number']     = chip.wafer_number
+            row['x_position']       = chip.x_position
+            row['y_position']       = chip.y_position
             
             # scan/run specific configuration parameters
             run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'tp_period', 'n_pulse_heights', 
@@ -670,90 +672,16 @@ class ScanBase(object):
             for kw, value in six.iteritems(kwargs):
                 if kw in run_config_attributes:
                     if kw not in ['pixeldac', 'last_pixeldac', 'last_delta']:
-                        row[kw] = str(value)
-                    else:
-                        row[kw] = str(value[chip])
-
+                        row[kw] = value
+                    else: # use this for PixelDACopt
+                        if iteration == 0: 
+                            # here the start values set in GUI.py - class GUI_PixelDAC_opt 
+                            # -> process_call are used 
+                            # (pixeldac = 127, last_pixeldac = 127, last_delta = 1.0)
+                            row[kw] = value
+                        else: # here for value the optimization_params dict is used in PixelDACopt
+                            row[kw] = value[chip.chipId_decoded][kw]
             row.append()
-
-        '''
-        row              = run_config_table.row
-        row['attribute'] = 'scan_id'
-        row['value']     = self.scan_id
-        row.append()
-        
-        row              = run_config_table.row
-        row['attribute'] = 'run_name'
-        row['value']     = self.run_name
-        row.append()
-        
-        row              = run_config_table.row
-        row['attribute'] = 'software_version'
-        row['value'] = get_software_version()
-        row.append()
-        
-        row              = run_config_table.row
-        row['attribute'] = 'board_name'
-        for chip in range(self.num_of_chips):
-            row[str(chip)] = self.board_name
-        row.append()
-        
-        row              = run_config_table.row
-        row['attribute'] = 'firmware_version'
-        for chip in range(self.num_of_chips):
-            row[str(chip)] = self.firmware_version
-        row.append()
-        
-        row              = run_config_table.row
-        row['attribute'] = 'chip_wafer'
-        for chip in range(self.num_of_chips):
-            row[str(chip)] = self.chips[chip+1].wafer_number
-        row.append()
-        
-        row              = run_config_table.row
-        row['attribute'] = 'chip_x'
-        for chip in range(self.num_of_chips):
-            row[str(chip)] = self.chips[chip+1].x_position
-        row.append()
-        
-        row              = run_config_table.row
-        row['attribute'] = 'chip_y'
-        for chip in range(self.num_of_chips):
-            row[str(chip)] = self.chips[chip+1].y_position
-        row.append()
-        
-        # scan/run specific configuration parameters
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'tp_period', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'thrfile', 'maskfile', 'offset', 'shutter']
-        for kw, value in six.iteritems(kwargs):
-            if kw in run_config_attributes:
-                row              = run_config_table.row
-                row['attribute'] = kw
-                for chip in range(self.num_of_chips):
-                    if kw in ['pixeldac', 'last_pixeldac', 'last_delta']:
-                        row[str(chip)] = value[chip] if isinstance(value[chip], str) else str(value[chip])
-                    else:
-                        row[str(chip)] = value if isinstance(value, str) else str(value)
-                    row.append()
-
-        if self.scan_id == 'PixelDACopt' and iteration == 0:
-            row              = run_config_table.row
-            row['attribute'] = 'pixeldac'
-            for chip in range(self.num_of_chips):
-                row[str(chip)] = str(127)
-            row.append()
-            
-            row              = run_config_table.row
-            row['attribute'] = 'last_pixeldac'
-            for chip in range(self.num_of_chips):
-                row[str(chip)] = str(127)
-            row.append()
-            
-            row              = run_config_table.row
-            row['attribute'] = 'last_delta'
-            for chip in range(self.num_of_chips):
-                row[str(chip)] = str(1)
-            row.append()
-        '''
 
         run_config_table.flush()
 
@@ -763,8 +691,11 @@ class ScanBase(object):
         if iteration == None or iteration == 0:
             general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig',
                                                                  title='GeneralConfig', description=ConfTable_alt)
-            for chip in self.chips[1:]:
-                row = general_config_table.row
+            for chip in chip_list:
+                row                 = general_config_table.row
+                row['wafer_number'] = chip.wafer_number
+                row['x_position']   = chip.x_position
+                row['y_position']   = chip.y_position
                 for conf, value in six.iteritems(chip.configs):
                     row[conf] = value
                 row.append()
@@ -779,24 +710,23 @@ class ScanBase(object):
         else:
             dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs_' + str(iteration), title='DACs ' + str(iteration), description=DacTable_alt)
         
-        for chip in self.chips[1:]:
-            row = dac_table.row
+        for chip in chip_list:
+            row                 = dac_table.row
             row['wafer_number'] = chip.wafer_number
             row['x_position']   = chip.x_position
             row['y_position']   = chip.y_position
-            
+
             for dac, value in six.iteritems(chip.dacs):
                 row[dac] = value
                 
             row.append()
-        
         dac_table.flush()
 
         # Save the mask and the pixel threshold matrices
         # In scans with multiple iterations only for the first iteration
         # TODO: Do this for each chip, also put in ChipId later
         if iteration == None or iteration == 0:
-            for chip in self.chips[1:]:
+            for chip in chip_list:
                 self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix_W%s_%s%s' %(chip.wafer_number, chip.x_position, chip.y_position), title='Mask Matrix', obj=chip.mask_matrix)
                 self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix_W%s_%s%s' %(chip.wafer_number, chip.x_position, chip.y_position), title='Threshold Matrix', obj=chip.thr_matrix)
 
@@ -898,13 +828,11 @@ class ScanBase(object):
         # chip is known to itself.
         data = self.chips[0].read_periphery_template('EFuse_Read')
         data += [0x00]*4
-        #print(data)
         self.chips[0].Dut_layer['FIFO'].RESET
         time.sleep(0.1)
         self.chips[0].write(data)
         time.sleep(0.1)
         fdata = self.chips[0].Dut_layer['FIFO'].get_data()
-        #print(fdata)
 
         # Enable power pulsing
         self.chips[0].Dut_layer['CONTROL']['EN_POWER_PULSING'] = 1
@@ -947,21 +875,10 @@ class ScanBase(object):
 
         # Set Op_mode for the scans, based on the scan id
         for chip in self.chips:
-            if self.scan_id == 'EqualisationCharge':
+            if self.scan_id in ['EqualisationCharge', 'EqualisationNoise', 'PixelDACopt', 'TestpulseScan',
+                                'ThresholdScan', 'ThresholdCalib', 'NoiseScan']:
                 chip._configs["Op_mode"] = 2
-            elif self.scan_id == 'EqualisationNoise':
-                chip._configs["Op_mode"] = 2
-            elif self.scan_id == 'PixelDACopt':
-                chip._configs["Op_mode"] = 2
-            elif self.scan_id == 'TestpulseScan':
-                chip._configs["Op_mode"] = 2
-            elif self.scan_id == 'ThresholdScan':
-                chip._configs["Op_mode"] = 2
-            elif self.scan_id == 'ThresholdCalib':
-                chip._configs["Op_mode"] = 2
-            elif self.scan_id == 'NoiseScan':
-                chip._configs["Op_mode"] = 2
-            elif self.scan_id == 'ToTCalib':
+            elif self.scan_id in ['ToTCalib']:
                 chip._configs["Op_mode"] = 0
 
         # Setup HDF5 file

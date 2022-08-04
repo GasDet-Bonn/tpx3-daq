@@ -92,7 +92,7 @@ class ThresholdCalib(ScanBase):
             opt_results = self.analyze_iteration(iteration, progress = progress, status = status)
 
         # Create the plots for the full calibration
-        #self.plot(status = status, plot_queue = plot_queue)
+        self.plot(status = status, plot_queue = plot_queue)
 
 
     def scan_iteration(self, iteration, n_pulse_heights, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, tp_period = 1, mask_step=16, progress = None, status = None, **kwargs):
@@ -208,24 +208,21 @@ class ThresholdCalib(ScanBase):
         with tb.open_file(h5_filename, 'r+') as h5_file:
 
             # Read raw data, meta data and configuration parameters for the current iteration
-            raw_data_call   = ('h5_file.root.' + 'raw_data_' + str(iteration) + '[:]')
-            raw_data        = eval(raw_data_call)
-            meta_data_call  = ('h5_file.root.' + 'meta_data_' + str(iteration) + '[:]')
-            meta_data       = eval(meta_data_call)
-            run_config_call = ('h5_file.root.' + 'configuration.run_config_' + str(iteration) + '[:]')
-            run_config      = eval(run_config_call)
-            general_config  = h5_file.root.configuration.generalConfig[:]
-            op_mode         = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
-            vco             = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
+            raw_data        = eval(f'h5_file.root.raw_data_{iteration}[:]')
+            meta_data       = eval(f'h5_file.root.meta_data_{iteration}[:]')
+            run_config      = eval(f'h5_file.root.configuration.run_config_{iteration}')
+            general_config  = h5_file.root.configuration.generalConfig
+            op_mode         = general_config.col('Op_mode')[0]
+            vco             = general_config.col('Fast_Io_en')[0]
 
             # 'Simulate' more chips
-            chip_IDs_new = [b'W18-K7',b'W18-K7',b'W17-D8',b'W17-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
-            for new_Id in range(8):
-                h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
+            #chip_IDs_new = [b'W18-K7',b'W18-K7',b'W17-D8',b'W17-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
+            #for new_Id in range(8):
+            #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
             # Get link configuration
             link_config = h5_file.root.configuration.links[:]
-            print(link_config)
+            #print(link_config)
             chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
@@ -236,27 +233,26 @@ class ThresholdCalib(ScanBase):
                     self.chip_links[ID] = [link]
                 else:
                     self.chip_links[ID].append(link)
-            print('Chip links: ' + str(self.chip_links))
-
-            # Get the number of chips
-            self.num_of_chips = len(self.chip_links)
 
             # Create group to save all data and histograms to the HDF file
-            h5_file.create_group(h5_file.root, 'interpreted_' + str(iteration), 'Interpreted Data')
-            interpreted_call = ('h5_file.root.' + 'interpreted_' + str(iteration))
+            h5_file.create_group(h5_file.root, f'interpreted_{iteration}', 'Interpreted Data')
 
             self.logger.info('Interpret raw data...')
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
             hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, self.chip_links, meta_data, progress = progress)
-            #raw_data = None
+            raw_data = None
 
-            for chip in range(self.num_of_chips):
-                # get chipID of current chip
-                chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
-                print(chip, chipID)
+            #for chip in range(self.num_of_chips):
+            for chip in self.chips[1:]:
+                # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
+                # the hit_data of the chip is.
+                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                # Get chipID in desirable formatting for HDF5 files (without '-')
+                #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+                chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
 
                 # create group for current chip
-                create_group_call = ('h5_file.root.interpreted_' + str(iteration))
+                create_group_call = f'h5_file.root.interpreted_{iteration}'
                 h5_file.create_group(eval(create_group_call), name = chipID)
 
                 # get group for current chip
@@ -264,24 +260,24 @@ class ThresholdCalib(ScanBase):
                 chip_group      = eval(chip_group_call)
 
                 # Select only data which is hit data
-                hit_data_chip = hit_data[chip][hit_data[chip]['data_header'] == 1]
+                hit_data_chip = hit_data[chip_num][hit_data[chip_num]['data_header'] == 1]
                 h5_file.create_table(chip_group, 'hit_data', hit_data_chip, filters=tb.Filters(complib='zlib', complevel=5))
                 pix_occ       = np.bincount(hit_data_chip['x'] * 256 + hit_data_chip['y'], minlength=256 * 256).astype(np.uint32)
                 hist_occ      = np.reshape(pix_occ, (256, 256)).T
                 h5_file.create_carray(chip_group, name='HistOcc', obj=hist_occ)
                 param_range   = np.unique(meta_data['scan_param_id'])
-                #meta_data = None
+                
                 pix_occ       = None
                 hist_occ      = None
 
                 # Create histograms for number of detected hits for individual thresholds
                 scurve   = analysis.scurve_hist(hit_data_chip, param_range)
-                #hit_data = None
+                hit_data_chip = None
 
                 # Read needed configuration parameters
-                n_injections     = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
-                Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
-                Vthreshold_stop  = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+                n_injections     = run_config.col('n_injections')[0]
+                Vthreshold_start = run_config.col('Vthreshold_start')[0]
+                Vthreshold_stop  = run_config.col('Vthreshold_stop')[0]
 
                 # Fit S-Curves to the histograms for all pixels
                 param_range             = list(range(Vthreshold_start, Vthreshold_stop + 1))
@@ -307,19 +303,13 @@ class ThresholdCalib(ScanBase):
             with plotting.Plotting(h5_filename, iteration = 0) as p:
 
                 # Read needed configuration parameters
-                iterations       = int(p.run_config[b'n_pulse_heights'])
-                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
-                Vthreshold_stop  = int(p.run_config[b'Vthreshold_stop'])
-                n_injections     = int(p.run_config[b'n_injections'])
+                iterations       = p.run_config['n_pulse_heights'][0]
+                Vthreshold_start = p.run_config['Vthreshold_start'][0]
+                Vthreshold_stop  = p.run_config['Vthreshold_stop'][0]
+                n_injections     = p.run_config['n_injections'][0]
 
                 # Plot a page with all parameters
                 p.plot_parameter_page()
-
-                # Plot the equalisation bits histograms
-                thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
-
-                #mask = h5_file.root.configuration.mask_matrix[:].T
 
                 # remove the calibration node if it already exists
                 try:
@@ -330,13 +320,15 @@ class ThresholdCalib(ScanBase):
                 # create a group for the calibration results
                 h5_file.create_group(h5_file.root, 'calibration', 'Threshold calibration results')
 
-                for chip in range(self.num_of_chips):
+                #for chip in range(self.num_of_chips):
+                for chip in self.chips[1:]:
                     # get chipID of current chip
-                    chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
-                    print(chip, chipID)
+                    #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
+                    chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
 
-                    # create group for current chip for calibration results
-                    h5_file.create_group(h5_file.root.calibration, name=chipID)
+                    # Plot the equalisation bits histograms
+                    thr_matrix = eval(f'h5_file.root.configuration.thr_matrix_{chipID}[:]')
+                    p.plot_distribution(thr_matrix, chipID, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
                     # create a table for the calibration results
                     data_type = {'names': ['pulse_height', 'threshold', 'threshold_error'],
@@ -348,20 +340,19 @@ class ThresholdCalib(ScanBase):
                     thresholds    = np.zeros(iterations, dtype=float)
                     errors        = np.zeros(iterations, dtype=float)
 
+                    # Get pixel mask
+                    mask = eval(f'h5_file.root.configuration.mask_matrix_{chipID}[:].T')
+
                     # iterate though the iteration to plot the iteration specific results
                     for iteration in range(iterations):
-                        mask = h5_file.root.configuration.mask_matrix[:].T
-                        #HistSCurve_call   = ('h5_file.root.interpreted_' + str(iteration) + '.' + str(chipID) + '.HistSCurve' + '[:]')
-                        #Chi2Map_call      = ('h5_file.root.interpreted_' + str(iteration) + '.' + str(chipID) + '.Chi2Map' + '[:]')
-                        #ThresholdMap_call = ('h5_file.root.interpreted_' + str(iteration) + '.' + str(chipID) + '.ThresholdMap' + '[:]')
-
-                        chip_group_call = ('h5_file.root.interpreted_' + str(iteration) + '._f_get_child(chipID)')
-                        chip_group      = eval(chip_group_call)
+                        
+                        # Get the chip group of the HDF5 file
+                        chip_group      = eval(f'h5_file.root.interpreted_{iteration}._f_get_child(chipID)')
 
                         # Plot the S-Curve histogram
                         scurve_hist = chip_group.HistSCurve[:].T
                         max_occ     = n_injections * 5
-                        p.plot_scurves(scurve_hist, list(range(Vthreshold_start, Vthreshold_stop)), chipID, iteration=iteration, scan_parameter_name="Vthreshold", max_occ=max_occ, plot_queue=plot_queue)
+                        p.plot_scurves(scurve_hist, chipID, list(range(Vthreshold_start, Vthreshold_stop+1)), iteration=iteration, scan_parameter_name="Vthreshold", max_occ=max_occ, plot_queue=plot_queue)
 
                         # Do not plot pixels with converged  S-Curve fits
                         chi2_sel        = chip_group.Chi2Map[:] > 0. # Mask not converged fits (chi2 = 0)
@@ -369,7 +360,7 @@ class ThresholdCalib(ScanBase):
 
                         # Plot the threshold distribution based on the S-Curve fits
                         hist                     = np.ma.masked_array(chip_group.ThresholdMap[:], mask)
-                        it_parameters, it_errors = p.plot_distribution(hist, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution, it %d, chip %s' %(iteration, chipID), suffix='threshold_distribution', plot_queue=plot_queue)
+                        it_parameters, it_errors = p.plot_distribution(hist, chipID, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop+0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution, it %d' %iteration, suffix='threshold_distribution', plot_queue=plot_queue)
 
                         # Fill the iteration results in the calibration parameter arrays
                         pulse_heights[iteration] = ((211 + (100 // iterations) * iteration) - 200) * 46.75
@@ -382,10 +373,10 @@ class ThresholdCalib(ScanBase):
                     calib_results['threshold_error'] = errors
 
                     # Save the table to the HDF5 file
-                    h5_file.create_table(h5_file.root.calibration, 'calibration_results_' + str(chipID), calib_results)
+                    h5_file.create_table(h5_file.root.calibration, chipID, calib_results)
 
                     # Create the calibration plot
-                    p.plot_datapoints(pulse_heights, thresholds, x_plot_range=np.arange(0, 7500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration, chip %s' %chipID, suffix='threshold_calibration', plot_queue=plot_queue)
+                    p.plot_datapoints(pulse_heights, thresholds, chip, x_plot_range=np.arange(0, 7500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration', suffix='threshold_calibration', plot_queue=plot_queue)
 
 if __name__ == "__main__":
     scan = ThresholdCalib()

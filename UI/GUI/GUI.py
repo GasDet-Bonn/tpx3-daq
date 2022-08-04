@@ -1053,18 +1053,21 @@ class GUI_PixelDAC_opt(Gtk.Window):
                                 lowerTHL = self.Threshold_start_value,
                                 upperTHL = self.Threshold_stop_value,
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDACopt',
-                                                            iteration = 0,
+        new_process = TPX3_multiprocess_start.process_call(function          = 'PixelDACopt',
+                                                            iteration        = 0,
                                                             Vthreshold_start = self.Threshold_start_value,
-                                                            Vthreshold_stop = self.Threshold_stop_value,
-                                                            n_injections = self.n_injections_value,
-                                                            offset = self.col_offset_value,
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
-                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
-                                                            progress = GUI.get_progress_value_queue(),
-                                                            status = GUI.get_status_queue(),
-                                                            result = GUI.pixeldac_result,
-                                                            plot_queue = GUI.plot_queue)
+                                                            Vthreshold_stop  = self.Threshold_stop_value,
+                                                            n_injections     = self.n_injections_value,
+                                                            offset           = self.col_offset_value,
+                                                            last_delta       = 1.0,
+                                                            last_pixeldac    = 0,
+                                                            pixeldac         = 127,
+                                                            tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                            maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress         = GUI.get_progress_value_queue(),
+                                                            status           = GUI.get_status_queue(),
+                                                            result           = GUI.pixeldac_result,
+                                                            plot_queue       = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
 
