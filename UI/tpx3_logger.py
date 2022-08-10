@@ -440,7 +440,7 @@ class TPX3_data_logger(object):
                 return True
         return False
 
-    def write_value(self, name, value):
+    def write_value(self, name, value, chip):
         if self.name_valid(name) == True:
             if name in ['Chip0_name']:
                 value_list = self.data[name]
@@ -588,7 +588,7 @@ class TPX3_data_logger(object):
             print('No link data, run Init')
             return False
 
-    def write_to_yaml(self, name):
+    def write_to_yaml(self, name, chip='default'):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if name == 'init':
             yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'links.yml')
@@ -647,24 +647,45 @@ class TPX3_data_logger(object):
             if name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine',
                             'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC',
                             'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Sense_DAC'}:
-                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
+                if chip == 'default':
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'dacs.yml')
+                else:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'chip_dacs.yml')
             elif name in {'clk_fast_out', 'ClkOut_frequency_src'}:
-                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
+                if chip == 'default':
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'outputBlock.yml')
+                else:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'chip_outputBlock.yml')
             elif name in {'Polarity', 'Op_mode', 'Fast_Io_en', 'AckCommand_en', 'SelectTP_Ext_Int'}:
-                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+                if chip == 'default':
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+                else:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'chip_GeneralConfiguration.yml')
             elif name in {'clkphasediv', 'clkphasenum', 'PLLOutConfig'}:
-                yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'PLLConfig.yml')
+                if chip == 'default':
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'PLLConfig.yml')
+                else:
+                    yaml_file = os.path.join(current_path, 'tpx3' + os.sep + 'chip_PLLConfig.yml')
             else:
                 yaml_file = None
 
             if not yaml_file == None:
                 with open(yaml_file) as file:
                     yaml_data = yaml.load(file, Loader=yaml.FullLoader)
-                for register in yaml_data['registers']:
-                    if register['name'] == name:
-                        register['value'] = self.data[name]
+                if chip == 'default':
+                    for register in yaml_data['registers']:
+                        if register['name'] == name:
+                            register['value'] = self.data[name]
+                    
+                else:
+                    for current_chip in yaml_data['chips']:
+                        if chip == current_chip['chip_ID_decoded']:
+                            for register in current_chip['registers']:
+                                if register['name'] == name:
+                                    register['value'] = self.data[name]
+
                 with open(yaml_file, 'w') as file:
-                    yaml.dump(yaml_data, file)
+                        yaml.dump(yaml_data, file)
                 return True
             else:
                 print('No known .yml contains the asked name.')

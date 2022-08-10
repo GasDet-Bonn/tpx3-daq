@@ -359,13 +359,12 @@ def raw_data_to_dut_old(raw_data, indices):
 
 def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0, leftoverpackage=[]):
     # reintegrate leftover package if present
-    #print('Now in raw_data_to_dut...')
     if len(leftoverpackage):
         logger.info("Integrate package(s) in chunk nr. "+str(chunk_nr))
         for m in range(len(leftoverpackage)-1,-1,-1):
             raw_data = np.insert(raw_data,0,leftoverpackage[m],axis= 0)
         leftoverpackage = []
-    #print('In raw_data_to_dut, get chip_links dict: ' + str(chip_links))
+
     num_of_chips = len(chip_links)
     
     # make arrays for results and debugging values
@@ -562,11 +561,7 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
                 if link in chip_links[chip]:
                     current_chip = chip_number
             
-            #print(link, current_chip)
-            #print([chip for number,chip in enumerate(chip_links) if link in chip_links[chip]])
-            
             link_filter = (raw_data & 0xfe000000) >> 25 == link
-            #print(link_filter)
             chunk_len+=np.sum(link_filter)
             if np.sum(link_filter) == 0:
                 continue
@@ -575,9 +570,7 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
                 #logger.info("len(link_filter) before correction: "+str(len(link_filter)))
                 #continue
             link_raw_data = raw_data[link_filter]
-            #print(link_raw_data)
             link_indices = np.where(link_filter)[0]
-            #print(link_indices)
             link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
             if leftoverpackage_pot!=None:
                 leftoverpackage.append(leftoverpackage_pot)
@@ -592,8 +585,6 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
             np.put(data_combined[current_chip], link_combined_indices, link_combined)
             np.put(data0[current_chip], link_combined_indices, package0)
             np.put(data1[current_chip], link_combined_indices, package1)
-            #print(package0, package1)
-            #print(len(data0[link]), len(data0[link]), len(data_combined[link]))
             # Delete array elements with no data - as all data is combined half of the array should be 0
             data0_temp         = np.delete(data0[current_chip], data_combined[current_chip] == 0)
             data1_temp         = np.delete(data1[current_chip], data_combined[current_chip] == 0)
@@ -602,16 +593,12 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
             data0_final[current_chip]         = np.array(data0_temp)
             data1_final[current_chip]         = np.array(data1_temp)
             data_combined_final[current_chip] = np.array(data_combined_temp)
-            #print(data_combined)
-            #print(data0)
-            #print(data1)
 
         data_words = data_combined_final
         timestamps = np.empty(0,dtype=np.uint64)
         last       = 0
         nlast      = 0
         leftoverpackage = []
-    #print(data_words, timestamps, last, nlast, leftoverpackage)
     return data_words, timestamps, last, nlast, leftoverpackage
 
 def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_start_time=None, split_fine=False, last_timestamp = 0, next_to_last_timestamp = 0, intern =False, chunk_nr = 0, leftoverpackage = [], progress = None):
@@ -627,17 +614,12 @@ def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_s
     for chip in range(num_of_chips):
         ret[chip] = np.recarray(0, dtype=data_type)
     
-    #print('Now in interpret_raw_data...')
-    #print('Size of meta data: ' + str(len(meta_data)))
     if len(meta_data):
         # standard case: only split into bunches which have the same param_id
-        #print('Split data into same scan_param_ids')
         if split_fine == False:
-            #print('split_fine is false')
             # param = list of all occurring scan_param_ids
             # index = positions of first occurrence of each scan_param_ids
             param, index = np.unique(meta_data['scan_param_id'], return_index=True)
-            #print(param, index)
             # remove first entry
             index = index[1:]
             # append entry with total number of rows in meta_data
@@ -654,14 +636,11 @@ def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_s
                 pbar = tqdm(total = len(split[:-1]))
             else:
                 step_counter = 0
-            #print(index, stops, split)
+
             for i in range(len(split[:-1])):
-                # print('scan_id: ' +str(i))
-                # print param[i], stops[i], len(split[i]), split[i]
                 # sends split[i] (i.e. part of data that is currently treated) recursively
                 # to this function. Get pixel_data back (splitted in a readable way, not packages any more)
                 int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(split[i], op_mode, vco, chip_links, last_timestamp = last_timestamp, intern = True)
-                #print(int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage)
                 # reattach param_id TODO: good idea to also give timestamp here!
                 for chip in range(num_of_chips):
                     int_pix_data[chip]['scan_param_id'][:] = param[i]
@@ -673,13 +652,10 @@ def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_s
                     step_counter += 1
                     fraction      = step_counter / (len(split[:-1]))
                     progress.put(fraction)
-            #print(ret[0][:10])
-            #print(int_pix_data[0][:10])
             if progress == None:
                 pbar.close()
         # case used for clustering: split further into the time frames defined through one row in meta_data
         else:
-            #print('Split fine is true')
             if progress == None:
                 pbar = tqdm(total = meta_data.shape[0])
             else:
@@ -689,7 +665,6 @@ def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_s
                 index_stop  = meta_data['index_stop'][l]
                 if index_start<index_stop:
                     int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage = interpret_raw_data(raw_data[index_start:index_stop], op_mode, vco, chip_links, last_timestamp = last_timestamp, next_to_last_timestamp = next_to_last_timestamp, intern = True, chunk_nr = l, leftoverpackage = leftoverpackage)
-                    #print(int_pix_data, last_timestamp, next_to_last_timestamp, leftoverpackage)
                     # reattach timestamp
                     int_pix_data['chunk_start_time'][:] = meta_data['timestamp_start'][l]
                     # append data we got back to return array or create new if this is the fist bunch of data treated
@@ -705,13 +680,9 @@ def interpret_raw_data(raw_data, op_mode, vco, chip_links, meta_data=[], chunk_s
             if progress == None:
                 pbar.close()
     else:
-        #print('Interpret the divided data chunks now')
         #it can be chunked and multithreaded here
         data_words, timestamp, last_timestamp, next_to_last_timestamp,leftoverpackage  = raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp, chunk_nr = chunk_nr, leftoverpackage=leftoverpackage)
-        #print("data_words: "  +str(data_words[0]))
         ret = _interpret_raw_data(num_of_chips, data_words, op_mode, vco, timestamp)
-        #print("when there is not meta_data: " + str(ret))
-        #print(len(ret))
     if intern == True:
         return ret, last_timestamp, next_to_last_timestamp, leftoverpackage
     else:

@@ -11,6 +11,9 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 import numpy as np
 from multiprocessing import Process, Queue, Pipe
+import yaml
+import tables as tb
+from copy import deepcopy
 
 from UI.GUI.PlotWidget import plotwidget
 from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger, equal_logger
@@ -1211,15 +1214,26 @@ class GUI_SetDAC(Gtk.Window):
         Gtk.Window.__init__(self, title = 'DAC settings')
         self.connect('delete-event', self.window_destroy)
 
-        grid = Gtk.Grid()
-        grid.set_row_spacing(2)
-        grid.set_column_spacing(10)
-        grid.set_border_width(10)
-        self.add(grid)
+        self.grid = Gtk.Grid()
+        self.grid.set_row_spacing(2)
+        self.grid.set_column_spacing(10)
+        self.grid.set_border_width(10)
+        self.add(self.grid)
 
-        Space = Gtk.Label()
-        Space.set_text("")
+        # Import DAC settings from chip_dacs.yml
+        # Open the link yaml file
+        proj_dir     = os.path.dirname(os.path.dirname((os.path.dirname(os.path.abspath(__file__)))))
+        yaml_file    = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
+        yaml_default = os.path.join(proj_dir, 'tpx3' + os.sep + 'dacs.yml')
 
+        with open(yaml_file, 'r') as file:
+            dict_yaml    = yaml.load(file, Loader=yaml.FullLoader)
+        with open(yaml_default, 'r') as file:
+            dict_default = yaml.load(file, Loader=yaml.FullLoader)
+
+        chips_dict  = dict_yaml['chips']
+        
+        # Use this as template
         self.dac_dict = {'Ibias_Preamp_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
                          'Ibias_Preamp_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
                          'VPreamp_NCAS':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
@@ -1240,58 +1254,196 @@ class GUI_SetDAC(Gtk.Window):
                          'Ibias_CP_PLL':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
                          'PLL_Vcntrl':          {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True }}
 
+        self.full_dac_dict = {}
+
+        self.full_dac_dict['default'] = deepcopy(self.dac_dict)
+
+        for chip in chips_dict:
+            self.full_dac_dict[chip['chip_ID_decoded']] = deepcopy(self.dac_dict)
+
+        # Set default values from dacs.yaml
         for dac in self.dac_dict:
             if self.dac_dict[dac]['show']:
                 if dac != 'Vthreshold_combined':
-                    self.dac_dict[dac]['value'] = TPX3_datalogger.read_value(name = dac)
+                    for register in dict_default['registers']:
+                        if dac == register['name']:
+                            value = register['value']
+                    self.full_dac_dict['default'][dac]['value'] = value
                 else:
-                    self.dac_dict[dac]['value'] = utils.threshold_compose(TPX3_datalogger.read_value(name = 'Vthreshold_fine'), TPX3_datalogger.read_value(name = 'Vthreshold_coarse'))
+                    for register in dict_default['registers']:
+                        if register['name'] == 'Vthreshold_fine':
+                            value_fine = register['value']
+                    for register in dict_default['registers']:
+                        if register['name'] == 'Vthreshold_coarse':
+                            value_coarse = register['value']
+                    self.full_dac_dict['default'][dac]['value'] = utils.threshold_compose(value_fine, value_coarse)
             else:
-                self.dac_dict[dac]['value'] = 7
-            self.dac_dict[dac]['adjust'] = Gtk.Adjustment()
-            self.dac_dict[dac]['adjust'].configure(self.dac_dict[dac]['default'], 0, self.dac_dict[dac]['size'], 1, 0, 0)
-            self.dac_dict[dac]['spinButton'] = Gtk.SpinButton(adjustment = self.dac_dict[dac]['adjust'], climb_rate = 1, digits=0)
-            self.dac_dict[dac]['spinButton'].set_value(self.dac_dict[dac]['value'])
-            self.dac_dict[dac]['spinButton'].connect('value-changed', self.DAC_set, dac)
-            self.dac_dict[dac]['label'] = Gtk.Label()
-            self.dac_dict[dac]['label'].set_text(dac + " ")
+                self.full_dac_dict['default'][dac]['value'] = 7
 
-        #Save Button
-        self.Savebutton = Gtk.Button(label = 'Save')
-        self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
+            self.full_dac_dict['default'][dac]['adjust'] = Gtk.Adjustment()
+            self.full_dac_dict['default'][dac]['adjust'].configure(self.full_dac_dict['default'][dac]['default'], 0, self.full_dac_dict['default'][dac]['size'], 1, 0, 0)
+            self.full_dac_dict['default'][dac]['spinButton'] = Gtk.SpinButton(adjustment = self.full_dac_dict['default'][dac]['adjust'], climb_rate = 1, digits=0)
+            self.full_dac_dict['default'][dac]['spinButton'].set_value(self.full_dac_dict['default'][dac]['value'])
+            self.full_dac_dict['default'][dac]['spinButton'].connect('value-changed', self.DAC_set, dac, 'default')
+            self.full_dac_dict['default'][dac]['label'] = Gtk.Label()
+            self.full_dac_dict['default'][dac]['label'].set_text(dac + " ")
 
+        # Set values from chip_dacs.yml
+        for chip in chips_dict:
+            chipID = chip['chip_ID_decoded']
+            for dac in self.dac_dict:
+                # Get value from yaml
+                for register in chip['registers']:
+                    if register['name'] == dac:
+                        value = register['value']
+
+                if self.dac_dict[dac]['show']:
+                    if dac != 'Vthreshold_combined':
+                        self.full_dac_dict[chipID][dac]['value'] = value
+                    else:
+                        for register in chip['registers']:
+                            if register['name'] == 'Vthreshold_fine':
+                                value_fine = register['value']
+                        for register in chip['registers']:
+                            if register['name'] == 'Vthreshold_coarse':
+                                value_coarse = register['value']
+                        self.full_dac_dict[chipID][dac]['value'] = utils.threshold_compose(value_fine, value_coarse)
+                else:
+                    self.full_dac_dict[chipID][dac]['value'] = 7
+                
+                self.full_dac_dict[chipID][dac]['adjust'] = Gtk.Adjustment()
+                self.full_dac_dict[chipID][dac]['adjust'].configure(self.full_dac_dict[chipID][dac]['default'], 0, self.full_dac_dict[chipID][dac]['size'], 1, 0, 0)
+                self.full_dac_dict[chipID][dac]['spinButton'] = Gtk.SpinButton(adjustment = self.full_dac_dict[chipID][dac]['adjust'], climb_rate = 1, digits=0)
+                self.full_dac_dict[chipID][dac]['spinButton'].set_value(self.full_dac_dict[chipID][dac]['value'])
+                self.full_dac_dict[chipID][dac]['spinButton'].connect('value-changed', self.DAC_set, dac, chipID)
+
+
+        # Create labels and spinbuttons for default values
         for i, dac in enumerate(self.dac_dict):
             if self.dac_dict[dac]['show']:
-                grid.attach(self.dac_dict[dac]['label'], 0, i, 1, 1)
-                grid.attach(self.dac_dict[dac]['spinButton'], 1, i, 1, 1)
+                self.grid.attach(self.full_dac_dict['default'][dac]['label'], 0, i, 1, 1)
+                self.grid.attach(self.full_dac_dict['default'][dac]['spinButton'], 1, i, 1, 1)
+        
 
-        grid.attach(Space, 0, 18, 1, 1)
-        grid.attach(self.Savebutton, 1, 19, 1, 1)
+        # Make list of available chipIDs
+        chip_ID_list = [chip['chip_ID_decoded'] for chip in dict_yaml['chips']]
+
+        # Create dropdown menu, where we select a chip, the dac values
+        # are loaded and displayed to be edited
+        self.chip_dac_edit = Gtk.ComboBoxText()
+        self.chip_dac_edit.connect('changed', self.on_chip_dac_edit_changed)
+        
+        for id in chip_ID_list:
+            self.chip_dac_edit.append_text(id)
+        
+        self.chip_dac_edit.set_active(0)
+        
+        # attach is triggered in on_chip_dac_edit_changed by self.chip_dac_edit.set_active(0)
+        self.Savebutton_Chip = Gtk.Button(label = 'Save to chip')
+
+        Space = Gtk.Label()
+        Space.set_text("")
+        self.grid.attach(Space, 0, 19, 1, 1)
+
+        self.Savebutton = Gtk.Button(label = 'Save default')
+        self.Savebutton.connect('clicked', self.on_Savebutton_clicked, 'default')
+        self.grid.attach(self.Savebutton, 1, 21, 1, 1)
+
+        self.Savebutton_default_to_all = Gtk.Button(label = 'Save default to all')
+        self.Savebutton_default_to_all.connect('clicked', self.on_Savebutton_to_all_clicked)
+        self.grid.attach(self.Savebutton_default_to_all, 0, 21, 1, 1)
+
+        self.Savebutton_default_to_chip = Gtk.Button(label = 'Save default to chip')
+        self.Savebutton_default_to_chip.connect('clicked', self.on_Savebutton_default_to_chip)
+        self.grid.attach(self.Savebutton_default_to_chip, 0, 20, 1, 1)
 
         self.show_all()
 
-    def DAC_set(self, event, dac):
-        if dac not in{'Vthreshold_fine', 'Vthreshold_coarse', 'Vthreshold_combined'}:
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-        elif dac == 'Vthreshold_combined':
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-            fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
-            self.dac_dict['Vthreshold_fine']['value'] = fine
-            self.dac_dict['Vthreshold_fine']['spinButton'].set_value(fine)
-            self.dac_dict['Vthreshold_coarse']['value'] = coarse
-            self.dac_dict['Vthreshold_coarse']['spinButton'].set_value(coarse)
-        elif dac == 'Vthreshold_fine':
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-            threshold = utils.threshold_compose(self.dac_dict[dac]['value'], self.dac_dict['Vthreshold_coarse']['value'])
-            self.dac_dict['Vthreshold_combined']['value'] = threshold
-            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
-        elif dac == 'Vthreshold_coarse':
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-            threshold = utils.threshold_compose(self.dac_dict['Vthreshold_fine']['value'], self.dac_dict[dac]['value'])
-            self.dac_dict['Vthreshold_combined']['value'] = threshold
-            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
+    def on_Savebutton_to_all_clicked(self, event):
+        #check if process is running
+        if GUI.get_process_alive():
+            subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
+            return
 
-    def on_Savebutton_clicked(self, widget):
+        #write values
+        for chipID in self.full_dac_dict:
+            if chipID != 'default':
+                for dac in self.dac_dict:
+                    self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict['default'][dac]['spinButton'].get_value_as_int()
+                    self.full_dac_dict[chipID][dac]['spinButton'].set_value(self.full_dac_dict[chipID][dac]['value'])
+                    if self.dac_dict[dac]['show']:
+                        if dac != 'Vthreshold_combined':
+                            TPX3_datalogger.write_value(name = dac, value = self.full_dac_dict[chipID][dac]['value'], chip = chipID)
+                            TPX3_datalogger.write_to_yaml(name = dac, chip = chipID)
+                        else:
+                            fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+                            TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chipID)
+                            TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chipID)
+                            TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chipID)
+                            TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chipID)
+
+    def on_Savebutton_default_to_chip(self, event):
+        #check if process is running
+        if GUI.get_process_alive():
+            subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
+            return
+
+        chipID = self.chip_dac_edit.get_active_text()
+        #write values
+        for dac in self.dac_dict:
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict['default'][dac]['spinButton'].get_value_as_int()
+            self.full_dac_dict[chipID][dac]['spinButton'].set_value(self.full_dac_dict[chipID][dac]['value'])
+            if self.dac_dict[dac]['show']:
+                if dac != 'Vthreshold_combined':
+                    TPX3_datalogger.write_value(name = dac, value = self.full_dac_dict[chipID][dac]['value'], chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = dac, chip = chipID)
+                else:
+                    fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chipID)
+                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chipID)
+        
+    def on_chip_dac_edit_changed(self, chip_dac_edit):
+        self.grid.remove_column(2)
+        current_ID = chip_dac_edit.get_active_text()
+        
+        for chip in self.full_dac_dict:
+            if current_ID == chip:
+                for i, dac in enumerate(self.dac_dict):
+                    if self.dac_dict[dac]['show']:
+                        self.grid.attach(self.full_dac_dict[current_ID][dac]['spinButton'], 2, i, 1, 1)
+        self.Savebutton_Chip = Gtk.Button(label = 'Save to chip')
+        self.Savebutton_Chip.connect('clicked', self.on_Savebutton_clicked, current_ID)
+        
+        self.grid.attach(self.chip_dac_edit, 2, 20, 1, 1)
+        self.grid.attach(self.Savebutton_Chip, 2, 21, 1, 1)
+
+        self.show_all()
+
+
+    def DAC_set(self, event, dac, chipID):
+        if dac not in{'Vthreshold_fine', 'Vthreshold_coarse', 'Vthreshold_combined'}:
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+        elif dac == 'Vthreshold_combined':
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+            fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+            self.full_dac_dict[chipID]['Vthreshold_fine']['value'] = fine
+            self.full_dac_dict[chipID]['Vthreshold_fine']['spinButton'].set_value(fine)
+            self.full_dac_dict[chipID]['Vthreshold_coarse']['value'] = coarse
+            self.full_dac_dict[chipID]['Vthreshold_coarse']['spinButton'].set_value(coarse)
+        elif dac == 'Vthreshold_fine':
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.full_dac_dict[chipID][dac]['value'], self.full_dac_dict[chipID]['Vthreshold_coarse']['value'])
+            self.full_dac_dict[chipID]['Vthreshold_combined']['value'] = threshold
+            self.full_dac_dict[chipID]['Vthreshold_combined']['spinButton'].set_value(threshold)
+        elif dac == 'Vthreshold_coarse':
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.full_dac_dict[chipID]['Vthreshold_fine']['value'], self.full_dac_dict[chipID][dac]['value'])
+            self.full_dac_dict[chipID]['Vthreshold_combined']['value'] = threshold
+            self.full_dac_dict[chipID]['Vthreshold_combined']['spinButton'].set_value(threshold)
+
+    def on_Savebutton_clicked(self, widget, chipID):
         #check if process is running
         if GUI.get_process_alive():
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
@@ -1299,17 +1451,17 @@ class GUI_SetDAC(Gtk.Window):
 
         #write values
         for dac in self.dac_dict:
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
             if self.dac_dict[dac]['show']:
                 if dac != 'Vthreshold_combined':
-                    TPX3_datalogger.write_value(name = dac, value = self.dac_dict[dac]['value'])
-                    TPX3_datalogger.write_to_yaml(name = dac)
+                    TPX3_datalogger.write_value(name = dac, value = self.full_dac_dict[chipID][dac]['value'], chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = dac, chip = chipID)
                 else:
-                    fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
-                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine)
-                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine')
-                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse)
-                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse')
+                    fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chipID)
+                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chipID)
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -2787,8 +2939,8 @@ class GUI_Main(Gtk.Window):
         #get last backup
         data = file_logger.read_backup()
         TPX3_datalogger.set_data(data)
-        TPX3_datalogger.write_backup_to_yaml()
-        TPX3_datalogger.write_value(name = 'software_version', value = self.software_version)
+        #TPX3_datalogger.write_backup_to_yaml()
+        TPX3_datalogger.write_value(name = 'software_version', value = self.software_version, chip=None)
         conv_utils.setup_logging('INFO')
 
 
@@ -3320,7 +3472,7 @@ class GUI_Main(Gtk.Window):
             for n in range(0,3):
                 if n == 0 and Chip_List:
                     self.firmware_version = Chip_List.pop(0)
-                    TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)
+                    TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version, chip=None)
                     try:
                         self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
                                                     '\nFirmware version: ' + str(self.firmware_version) +
@@ -3332,13 +3484,13 @@ class GUI_Main(Gtk.Window):
                         self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
                                                     '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
                 elif n == 1 and Chip_List:
-                    TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0))
+                    TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0), chip=None)
                 elif Chip_List:
                     name = 'Chip' + str(n - 2) + '_name'
-                    TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
+                    TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0), chip=None)
                 else:
                     name = 'Chip' + str(n - 2) + '_name'
-                    TPX3_datalogger.write_value(name = name, value = [None])
+                    TPX3_datalogger.write_value(name = name, value = [None], chip=None)
             statusstring = 'Connected to '
             for n, Chipname in enumerate(TPX3_datalogger.get_chipnames()):
                 number_of_links = TPX3_datalogger.get_links(chipname = Chipname)
