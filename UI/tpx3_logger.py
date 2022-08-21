@@ -22,7 +22,8 @@ class mask_logger(object):
             print('not implemented')
 
         if filename == None:
-            filename = Chip + '_mask_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+            #filename = Chip + '_mask_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+            filename = 'mask_' + time.strftime('%Y-%m-%d_%H-%M-%S')
         if os.path.isfile(user_path + os.sep + filename + '.h5') == False:
             full_path = user_path + os.sep + filename + ".h5"
             return full_path
@@ -195,7 +196,8 @@ class file_logger(object):
             print('not implemented')
 
         if filename == None:
-            filename = Chip + '_backup_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.TPX3'
+            #filename = Chip + '_backup_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.TPX3'
+            filename = 'backup_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.TPX3'
         if os.path.isdir(user_path) == False:
             os.mkdir(user_path)
             if os.path.isfile(user_path + os.sep + filename) == False:
@@ -308,7 +310,7 @@ class file_logger(object):
 
         if file_tmp != None and file != None:
             if os.path.getctime(file) < os.path.getctime(file_tmp):
-                return filetmp
+                return file_tmp
             elif os.path.getctime(file) >= os.path.getctime(file_tmp):
                 return file
         elif not file == None:
@@ -546,14 +548,14 @@ class TPX3_data_logger(object):
 
     def change_link_status(self, link, status):
         for i in range (0,7):
-            name = 'Chip' + str(i) +'_name'
+            name       = 'Chip' + str(i) +'_name'
             value_list = self.data[name]
             if not value_list == [None]:
                 self.final_list = [value_list[0]]
                 for n in range(1, len(value_list)):
                     element_list = value_list[n]
-                    chip_link = element_list[1]
-                    link_status = element_list[5]
+                    chip_link    = element_list[1]
+                    link_status  = element_list[5]
                     if chip_link == link:
                         if status == 0: #disable
                             if int(link_status) in [1, 3, 5, 7]:
@@ -577,8 +579,8 @@ class TPX3_data_logger(object):
             if not value_list == [None]:
                 for n in range(1, len(value_list)):
                     element_list = value_list[n]
-                    chip_link = element_list[1]
-                    link_status = element_list[5]
+                    chip_link    = element_list[1]
+                    link_status  = element_list[5]
                     if chip_link == link:
                         return int(link_status)
             else:
@@ -603,7 +605,7 @@ class TPX3_data_logger(object):
 
                         Chipname = value_list[0]
                         wafer_number = ''
-                        chip_coord2 = ''
+                        chip_coord2  = ''
                         for i in range (1, len(Chipname)):
                             if Chipname[i] == '-':
                                 start_chipname = i
@@ -614,29 +616,29 @@ class TPX3_data_logger(object):
                             chip_coord2 = chip_coord2 + Chipname[i]
 
                         wafer_number = int(wafer_number)
-                        chip_coord1 = ord(chip_coord1.lower()) - ord('a') + 1
-                        chip_coord2 = int(chip_coord2)
+                        chip_coord1  = ord(chip_coord1.lower()) - ord('a') + 1
+                        chip_coord2  = int(chip_coord2)
 
                         Chip_ID = (wafer_number << 8) | (chip_coord2 << 4) | chip_coord1
 
                         for n in range(1, len(value_list)):
                             element_list = value_list[n]
-                            element = 'RX' + str(element_list[0])
-                            fpga_link = element_list[0]
-                            chip_link = element_list[1]
-                            data_delay = element_list[2]
-                            data_invert = element_list[3]
-                            data_edge = element_list[4]
-                            link_status = element_list[5]
+                            element      = 'RX' + str(element_list[0])
+                            fpga_link    = element_list[0]
+                            chip_link    = element_list[1]
+                            data_delay   = element_list[2]
+                            data_invert  = element_list[3]
+                            data_edge    = element_list[4]
+                            link_status  = element_list[5]
 
                             for register in yaml_data['registers']:
                                 if register['name'] == element:
-                                    register['fpga-link'] = fpga_link
-                                    register['chip-link'] = chip_link
-                                    register['chip-id'] = Chip_ID
-                                    register['data-delay'] = data_delay
+                                    register['fpga-link']   = fpga_link
+                                    register['chip-link']   = chip_link
+                                    register['chip-id']     = Chip_ID
+                                    register['data-delay']  = data_delay
                                     register['data-invert'] = data_invert
-                                    register['data-edge'] = data_edge
+                                    register['data-edge']   = data_edge
                                     register['link-status'] = link_status
 
             with open(yaml_file, 'w') as file:
@@ -700,9 +702,9 @@ class TPX3_data_logger(object):
                     yaml_data = yaml.load(file, Loader=yaml.FullLoader)
                 value_list = self.data[key]
                 if not value_list == [None]:
-                    Chipname = value_list[0]
+                    Chipname     = value_list[0]
                     wafer_number = ''
-                    chip_coord2 = ''
+                    chip_coord2  = ''
                     for i in range (1, len(Chipname)):
                         if Chipname[i] == '-':
                             start_chipname = i
@@ -713,19 +715,19 @@ class TPX3_data_logger(object):
                         chip_coord2 = chip_coord2 + Chipname[i]
 
                     wafer_number = int(wafer_number)
-                    chip_coord1 = ord(chip_coord1.lower()) - ord('a') + 1
-                    chip_coord2 = int(chip_coord2)
+                    chip_coord1  = ord(chip_coord1.lower()) - ord('a') + 1
+                    chip_coord2  = int(chip_coord2)
 
                     Chip_ID = (wafer_number << 8) | (chip_coord2 << 4) | chip_coord1
 
                     for n in range(1, len(value_list)):
                         element_list = value_list[n]
-                        element = 'RX' + str(element_list[0])
-                        fpga_link = element_list[0]
-                        chip_link = element_list[1]
-                        data_delay = element_list[2]
-                        data_invert = element_list[3]
-                        data_edge = element_list[4]
+                        element      = 'RX' + str(element_list[0])
+                        fpga_link    = element_list[0]
+                        chip_link    = element_list[1]
+                        data_delay   = element_list[2]
+                        data_invert  = element_list[3]
+                        data_edge    = element_list[4]
                         # try except for compatibility with backups without link_status
                         try:
                             link_status = element_list[5]
@@ -734,12 +736,12 @@ class TPX3_data_logger(object):
 
                         for register in yaml_data['registers']:
                             if register['name'] == element:
-                                register['fpga-link'] = fpga_link
-                                register['chip-link'] = chip_link
-                                register['chip-id'] = Chip_ID
-                                register['data-delay'] = data_delay
+                                register['fpga-link']   = fpga_link
+                                register['chip-link']   = chip_link
+                                register['chip-id']     = Chip_ID
+                                register['data-delay']  = data_delay
                                 register['data-invert'] = data_invert
-                                register['data-edge'] = data_edge
+                                register['data-edge']   = data_edge
                                 register['link-status'] = link_status
 
                 with open(yaml_file, 'w') as file:

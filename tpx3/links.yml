@@ -16,12 +16,12 @@ registers:
   link-status: 6
   name: RX1
 - chip-id: 0
-  chip-link: 0
+  chip-link: 2
   data-delay: 15
   data-edge: 0
   data-invert: 0
   fpga-link: 2
-  link-status: 0
+  link-status: 8
   name: RX2
 - chip-id: 4731
   chip-link: 3

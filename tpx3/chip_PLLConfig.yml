@@ -143,3 +143,387 @@ chips:
     size: 5
     default: 0
     value: 0
+- chip_ID: 460567
+  chip_ID_decoded: W1799-G1
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0
+- chip_ID: 748321
+  chip_ID_decoded: W2923-A2
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0
+- chip_ID: 995130
+  chip_ID_decoded: W3887-J3
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0
+- chip_ID: 466928
+  chip_ID_decoded: W1823-`15
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0
+- chip_ID: 24672
+  chip_ID_decoded: W96-`6
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0
+- chip_ID: 460551
+  chip_ID_decoded: W1799-G0
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0
+- chip_ID: 286816
+  chip_ID_decoded: W1120-`6
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0
+- chip_ID: 18206
+  chip_ID_decoded: W71-N1
+  registers:
+  - name: bypass
+    description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
+    address: 0
+    size: 1
+    default: 1
+    value: 1
+  - name: reset
+    description: With 0 the PLL is Reset while with 1 it is running
+    address: 1
+    size: 1
+    default: 0
+    value: 1
+  - name: selectVctl
+    description: Selects the Vcntrl for the martix VCOs from DAC (0) or PLL (1)
+    address: 2
+    size: 1
+    default: 1
+    value: 1
+  - name: dualedge
+    description: Selects if the clock generator logic is single edge (0) or dual edge
+      (1)
+    address: 3
+    size: 1
+    default: 1
+    value: 1
+  - name: clkphasediv
+    description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2
+      (11)
+    address: 4
+    size: 2
+    default: 1
+    value: 1
+  - name: clkphasenum
+    description: Configures the number of clock phases for the pixel column to 1 (000),
+      2 (001), 4 (010), 8 (011) or 16 (100)
+    address: 6
+    size: 3
+    default: 0
+    value: 4
+  - name: PLLOutConfig
+    description: Selects the output of the PLLOut Pad
+    address: 9
+    size: 5
+    default: 0
+    value: 0

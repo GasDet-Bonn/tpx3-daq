@@ -50,12 +50,13 @@ class DataTake(ScanBase):
 
         system_exit = False
 
-        # Disable test pulses, set the mode to ToT/ToA and write the configuration to the Timepix3
-        self.chip._configs["TP_en"] = 0
-        self.chip.write_general_config()
+        for chip in self.chips[1:]:
+            # Disable test pulses, set the mode to ToT/ToA and write the configuration to the Timepix3
+            chip._configs["TP_en"] = 0
+            self.chips[0].write(chip.write_general_config(write=False))
 
-        # Initialize data-driven readout
-        self.chip.read_pixel_matrix_datadriven()
+            # Initialize data-driven readout
+            self.chips[0].write(chip.read_pixel_matrix_datadriven(write=False))
 
         # Start the run
         self.logger.info('Starting data taking...')
@@ -74,7 +75,7 @@ class DataTake(ScanBase):
             time.sleep(0.1)
 
             # Reset the Timepix3 timer and start the ToA Extension on the FPGA
-            self.chip.toggle_pin("TO_SYNC")
+            self.chips[0].toggle_pin("TO_SYNC")
 
             # Open the shutter and take data
             with self.shutter():
@@ -115,7 +116,7 @@ class DataTake(ScanBase):
                         self.stop_scan = True
                         system_exit = True
 
-            self.chip['PULSE_GEN'].reset()
+            self.chips[0].Dut_layer['PULSE_GEN'].reset()
 
         if scan_timeout != 0 and progress == None:
             # Close the progress bar

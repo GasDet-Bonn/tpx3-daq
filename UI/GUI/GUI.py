@@ -25,7 +25,7 @@ from UI.GUI.sim_producer.producer_sim_manager import ProducerSimManager
 
 
 class GUI_Plot1(Gtk.Window):
-    def __init__(self, data_queue, startet_from = 'GUI', plottype = None, integration_length = None, color_depth = None, colorsteps = None):
+    def __init__(self, data_queue, chip_links = None, startet_from = 'GUI', plottype = None, integration_length = None, color_depth = None, colorsteps = None):
         self.active = 'False'
         Gtk.Window.__init__(self, title = 'Plot')
         self.connect('delete-event', self.window_destroy)
@@ -38,6 +38,7 @@ class GUI_Plot1(Gtk.Window):
         self.add(self.box)
 
         self.plotwidget = plotwidget(data_queue = data_queue)
+        self.plotwidget.init_figure(chip_links)
         self.plotbox = Gtk.EventBox()
         self.plotbox.add(self.plotwidget.canvas)
         self.plotbox.connect('button_press_event', self.plot_right_clicked)
@@ -1490,6 +1491,31 @@ class GUI_Additional_Settings(Gtk.Window):
         self.Space3 = Gtk.Label()
         self.Space3.set_text("")
 
+        # Import settings from yaml
+        # Open the link yaml file
+        proj_dir         = os.path.dirname(os.path.dirname((os.path.dirname(os.path.abspath(__file__)))))
+        yaml_file        = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_GeneralConfiguration.yml')
+        yaml_default     = os.path.join(proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+        yaml_PLL         = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_outputBlock.yml')
+        yaml_PLL_default = os.path.join(proj_dir, 'tpx3' + os.sep + 'outputBlock.yml')
+
+        with open(yaml_file, 'r') as file:
+            dict_yaml    = yaml.load(file, Loader=yaml.FullLoader)
+        with open(yaml_default, 'r') as file:
+            self.dict_default = yaml.load(file, Loader=yaml.FullLoader)
+
+        self.chips_dict  = dict_yaml['chips']
+
+        with open(yaml_PLL, 'r') as file:
+            dict_PLL = yaml.load(file, Loader=yaml.FullLoader)
+        with open(yaml_PLL_default, 'r') as file:
+            self.PLL_default = yaml.load(file, Loader=yaml.FullLoader)
+        
+        self.chips_PLL = dict_PLL['chips']
+
+        # Make list of available chipIDs
+        chip_ID_list = ['default'] + [chip['chip_ID_decoded'] for chip in dict_yaml['chips']]
+
         #Button for polarity select
         self.polarity_value = TPX3_datalogger.read_value('Polarity')
         self.set_polarity_button = Gtk.ToggleButton()
@@ -1519,20 +1545,20 @@ class GUI_Additional_Settings(Gtk.Window):
 
         #Buttons for number of operation mode
         self.op_mode_value = TPX3_datalogger.read_value('Op_mode')
-        Op_mode_button1 = Gtk.RadioButton.new_with_label_from_widget(None, 'ToT and ToA')
-        Op_mode_button2 = Gtk.RadioButton.new_with_label_from_widget( Op_mode_button1, 'Only ToA')
-        Op_mode_button3 = Gtk.RadioButton.new_with_label_from_widget( Op_mode_button1, 'Event Count & Integral ToT')
+        self.Op_mode_button1 = Gtk.RadioButton.new_with_label_from_widget(None, 'ToT and ToA')
+        self.Op_mode_button2 = Gtk.RadioButton.new_with_label_from_widget( self.Op_mode_button1, 'Only ToA')
+        self.Op_mode_button3 = Gtk.RadioButton.new_with_label_from_widget( self.Op_mode_button1, 'Event Count & Integral ToT')
         if self.op_mode_value == 0:
-            Op_mode_button1.set_active(True)
+            self.Op_mode_button1.set_active(True)
         elif self.op_mode_value == 1:
-            Op_mode_button2.set_active(True)
+            self.Op_mode_button2.set_active(True)
         else:
-            Op_mode_button3.set_active(True)
-        Op_mode_button1.connect('toggled', self.Op_mode_button_toggled, '0')
-        Op_mode_button2.connect('toggled', self.Op_mode_button_toggled, '1')
-        Op_mode_button3.connect('toggled', self.Op_mode_button_toggled, '2')
-        Op_mode_label = Gtk.Label()
-        Op_mode_label.set_text('     Operation mode     ')
+            self.Op_mode_button3.set_active(True)
+        self.Op_mode_button1.connect('toggled', self.Op_mode_button_toggled, '0')
+        self.Op_mode_button2.connect('toggled', self.Op_mode_button_toggled, '1')
+        self.Op_mode_button3.connect('toggled', self.Op_mode_button_toggled, '2')
+        self.Op_mode_label = Gtk.Label()
+        self.Op_mode_label.set_text('     Operation mode     ')
 
         #TP_Period setting
         self.TP_Period_value = TPX3_datalogger.read_value(name = 'TP_Period')
@@ -1613,17 +1639,32 @@ class GUI_Additional_Settings(Gtk.Window):
         self.dropdown_label = Gtk.Label()
         self.dropdown_label.set_text('Sense DAC')
 
+        # Create dropdown menu, where we select a chip, the dac values
+        # are loaded and displayed to be edited
+        self.chip_settings_edit = Gtk.ComboBoxText()
+        self.chip_settings_edit.connect('changed', self.on_chip_settings_edit_changed)
+        
+        for id in chip_ID_list:
+            self.chip_settings_edit.append_text(id)
+        
+        self.chip_settings_edit.set_active(0)
+        grid.attach(self.chip_settings_edit, 5, 1, 1, 1)
+
         #Link_Toggle
-        self.Link_label = Gtk.Label()
+        self.Link_label         = Gtk.Label()
         self.Link_label.set_text('Chip links')
-        self.hardware_links = TPX3_datalogger.read_value('hardware_links')
-        self.link_label = []
-        self.link_enable = []
+        self.hardware_links     = TPX3_datalogger.read_value('hardware_links')
+        self.link_label         = []
+        #self.chip_label         = []
+        self.link_enable        = []
         self.link_enable_button = []
         for link_number in range(self.hardware_links):
             temp_link_label = Gtk.Label()
+            temp_chip_label = Gtk.Label()
             temp_link_label.set_text(str(link_number))
+            #temp_chip_label.set_text(str(TPX3_datalogger.data[f'Chip{link_number}_name']))
             self.link_label.append(temp_link_label)
+            #self.chip_label.append(temp_chip_label)
             if TPX3_datalogger.get_link_status(link_number) in [1, 3, 5, 7]:
                 self.link_enable.append(1)
             else:
@@ -1647,10 +1688,10 @@ class GUI_Additional_Settings(Gtk.Window):
         grid.attach(self.expert_checkbox, 5, 0, 1, 1)
         grid.attach(Fast_IO_button_label, 0, 1, 2, 1)
         grid.attach(self.Fast_IO_button, 2, 1, 2, 1)
-        grid.attach(Op_mode_label, 0, 2, 2, 1)
-        grid.attach(Op_mode_button1, 2, 2, 4, 1)
-        grid.attach(Op_mode_button2, 2, 3, 4, 1)
-        grid.attach(Op_mode_button3, 2, 4, 4, 1)
+        grid.attach(self.Op_mode_label, 0, 2, 2, 1)
+        grid.attach(self.Op_mode_button1, 2, 2, 4, 1)
+        grid.attach(self.Op_mode_button2, 2, 3, 4, 1)
+        grid.attach(self.Op_mode_button3, 2, 4, 4, 1)
         grid.attach(TP_Period_label, 0, 5, 2, 1)
         grid.attach(self.TP_Period, 2, 5, 2, 1)
         grid.attach(Readout_Speed_entry_label, 0, 6, 2, 1)
@@ -1669,6 +1710,7 @@ class GUI_Additional_Settings(Gtk.Window):
         for link_number in range(self.hardware_links):
             grid.attach(self.link_label[link_number], link_number % 8, 14 + (2 * (link_number // 8)), 1, 1)
             grid.attach(self.link_enable_button[link_number], link_number % 8, 15 + (2 * (link_number // 8)), 1, 1)
+            #grid.attach(self.chip_label[link_number], link_number % 8, 16 + (2 * (link_number // 8)), 1, 1)
         grid.attach(self.Space3, 0, 16 + 2 * ((self.hardware_links - 1) // 8), 3, 1)
         grid.attach(self.Savebutton, 8, 17 + 2 * ((self.hardware_links - 1) // 8), 1, 1)
 
@@ -1800,6 +1842,8 @@ class GUI_Additional_Settings(Gtk.Window):
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
             return
 
+        current_ID = self.chip_settings_edit.get_active_text()
+
         # get values
         self.TP_Period_value = self.TP_Period.get_value_as_int()
         try:
@@ -1809,24 +1853,116 @@ class GUI_Additional_Settings(Gtk.Window):
             return
 
         # write values
-        TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
-        TPX3_datalogger.write_to_yaml(name = 'Polarity')
-        TPX3_datalogger.write_value(name = 'Fast_Io_en', value = self.Fast_IO_en_value)
-        TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en')
-        TPX3_datalogger.write_value(name = 'Op_mode', value = self.op_mode_value)
-        TPX3_datalogger.write_to_yaml(name = 'Op_mode')
-        TPX3_datalogger.write_value(name = 'AckCommand_en', value = self.AckCommand_en_value)
-        TPX3_datalogger.write_to_yaml(name = 'AckCommand_en')
-        TPX3_datalogger.write_value(name = 'SelectTP_Ext_Int', value = self.TP_Ext_Int_en_value)
-        TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int')
-        TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = self.ClkOut_frequency_src_value)
-        TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src')
-        TPX3_datalogger.write_value(name = 'Sense_DAC', value = self.sense_DAC_value)
-        TPX3_datalogger.write_to_yaml(name = 'Sense_DAC')
-        TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value)
-        TPX3_datalogger.write_value(name = 'TP_Period', value = self.TP_Period_value)
+        TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Polarity', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Fast_Io_en', value = self.Fast_IO_en_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Op_mode', value = self.op_mode_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Op_mode', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'AckCommand_en', value = self.AckCommand_en_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'AckCommand_en', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'SelectTP_Ext_Int', value = self.TP_Ext_Int_en_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = self.ClkOut_frequency_src_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Sense_DAC', value = self.sense_DAC_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Sense_DAC', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value, chip = current_ID)
+        TPX3_datalogger.write_value(name = 'TP_Period', value = self.TP_Period_value, chip = current_ID)
         for link_number in range(self.hardware_links):
             TPX3_datalogger.change_link_status(link_number, self.link_enable[link_number])
+
+    def on_chip_settings_edit_changed(self, chip_settings_edit):
+        current_ID = chip_settings_edit.get_active_text()
+        # Change labels of options according to yaml for chosen chip
+        if current_ID != 'default':
+            for chip in self.chips_dict:
+                if chip['chip_ID_decoded'] == current_ID:
+                    dict = chip['registers']
+        else:
+            dict = self.dict_default['registers']
+
+        for register in dict:
+            if register['name'] == 'Polarity':
+                self.polarity_value = register['value']
+                if self.polarity_value == 1:
+                    self.set_polarity_button.set_active(True)
+                    self.set_polarity_button.set_label('  NEG  ')
+                else:
+                    self.set_polarity_button.set_active(False)
+                    self.set_polarity_button.set_label('  POS  ')
+
+            elif register['name'] == 'Fast_Io_en':
+                self.Fast_IO_en_value = register['value']
+                if self.Fast_IO_en_value == 1:
+                    self.Fast_IO_button.set_active(True)
+                    self.Fast_IO_button.set_label('  ON  ')
+                else:
+                    self.Fast_IO_button.set_active(False)
+                    self.Fast_IO_button.set_label('  OFF  ')
+            
+            elif register['name'] == 'Op_mode':
+                self.op_mode_value = register['value']
+                if self.op_mode_value == 0:
+                    self.Op_mode_button1.set_active(True)
+                elif self.op_mode_value == 1:
+                    self.Op_mode_button2.set_active(True)
+                else:
+                    self.Op_mode_button3.set_active(True)
+                
+            elif register['name'] == 'AckCommand_en':
+                self.AckCommand_en_value = register['value']
+                if self.AckCommand_en_value == 1:
+                    self.AckCommand_en_button.set_active(True)
+                    self.AckCommand_en_button.set_label('  ON  ')
+                else:
+                    self.AckCommand_en_button.set_active(False)
+                    self.AckCommand_en_button.set_label('  OFF  ')
+
+            elif register['name'] == 'SelectTP_Ext_Int':
+                self.TP_Ext_Int_en_value = register['value']
+                if self.TP_Ext_Int_en_value == 1:
+                    self.TP_Ext_Int_button.set_active(True)
+                    self.TP_Ext_Int_button.set_label('  ON  ')
+                else:
+                    self.TP_Ext_Int_button.set_active(False)
+                    self.TP_Ext_Int_button.set_label('  OFF  ')
+
+            elif register['name'] == 'Sense_DAC':
+                self.sense_DAC_value = register['value']
+                if self.sense_DAC_value in range(19):
+                    self.dropdown.set_active(self.sense_DAC_value)
+                elif self.sense_DAC_value in range(28, 32):
+                    self.dropdown.set_active(self.sense_DAC_value - 9)
+                else:
+                    print('Error at set sense Dac')
+            
+            # That is a global variable, every chip should use the same Readout_Speed for a run.
+            #elif register['name'] == 'Readout_Speed':
+            #    self.Readout_Speed_value = float(TPX3_datalogger.read_value('Readout_Speed'))
+            #    self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
+            
+            # That is a global variable, every chip should use the same Readout_Speed for a run.
+            #elif register['name'] == 'TP_Period':
+            #    pass
+            else:
+                pass
+
+        if current_ID != 'default':
+            for chip in self.chips_PLL:
+                if chip['chip_ID_decoded'] == current_ID:
+                    dict = chip['registers']
+        else:
+            dict = self.PLL_default['registers']
+
+        # Take here from chip_outputBlock.yml
+        for register in dict:
+            if register['name'] == 'ClkOut_frequency_src':
+                self.ClkOut_frequency_src_value = register['value']
+                self.ClkOut_frequency_combo.set_active(self.ClkOut_frequency_src_value-1)
+                self.ClkOut_frequency_combo_label.set_text('ClkOut_frequency_src')
+                break
+        
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -3101,6 +3237,7 @@ class GUI_Main(Gtk.Window):
         self.page2.grid.attach(self.simulationbutton, 0, 1, 1, 1)
 
         self.plotwidget = plotwidget(data_queue = self.data_queue)
+        #self.plotwidget.init_figure(self.chip_links)
         self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
         self.page2.pack_end(self.page2.space, True, False, 0)
         self.page2.pack_end(self.page2.space1, True, False, 0)
@@ -3161,14 +3298,42 @@ class GUI_Main(Gtk.Window):
 
     def on_Startupbutton_clicked(self, widget):
         self.Status_window_call(function = 'InitHardware')
-        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware',
-                                                            results = self.hardware_scan_results,
-                                                            progress = GUI.get_progress_value_queue(),
-                                                            status = GUI.get_status_queue(),
+        new_process = TPX3_multiprocess_start.process_call(function    = 'ScanHardware',
+                                                            results    = self.hardware_scan_results,
+                                                            progress   = GUI.get_progress_value_queue(),
+                                                            status     = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         self.set_running_process(running_process = new_process)
         self.set_quit_scan_label()
         self.hardware_scan_idle = GLib.timeout_add(250, self.update_status)
+        '''
+        # TODO: Pull this into Datalogger
+        # Get link configuration
+        working_dir = os.path.dirname(os.path.dirname(os.path.dirname((os.path.abspath(__file__)))))
+        file_name   = os.path.join(working_dir, 'tpx3' + os.sep + 'links.yml')
+
+        with open(file_name, 'r') as file:
+            links_dict  = yaml.load(file, Loader = yaml.FullLoader)
+
+        chip_IDs = [register['chip-id'] for register in links_dict['registers']]
+
+        # Create dictionary of Chips and the links they are connected to
+        self.chip_links = {}
+    
+        for link, ID in enumerate(chip_IDs):
+            if ID not in self.chip_links:
+                self.chip_links[ID] = [link]
+            else:
+                self.chip_links[ID].append(link)
+        '''
+        #self.chip_links = {'W12-K7': [0,1,2,3], 'W13-K8': [4,5,6,7]}
+        #self.chip_links = {'W12-K7': [0,1], 'W13-K8': [2,3], 'W14-K9': [4,5], 'W15-K6': [6,7]}
+        self.chip_links = {'W12-K7': [0], 'W13-K8': [2], 'W14-K9': [4], 'W15-K6': [6],
+                            'W11-K1': [1], 'W16-K2': [3], 'W17-K3': [5], 'W18-K4': [7]}
+        # give chip_links to plotwidget here
+        #self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
+        self.plotwidget.init_figure(self.chip_links) # Give it a try!
+        #self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
 
     def on_Resetbutton_clicked(self, widget):
         if not self.get_process_alive():
@@ -3527,7 +3692,7 @@ class GUI_Main(Gtk.Window):
         if not self.plot1_window_open:
             self.plot1_window_open = True
             GLib.source_remove(self.Tag2)
-            self.plot1_window = GUI_Plot1(data_queue = self.data_queue)
+            self.plot1_window = GUI_Plot1(data_queue = self.data_queue, chip_links=self.chip_links)
 
     def on_simulationbutton_clicked(self, widget):
         if self.simulation_running == False:

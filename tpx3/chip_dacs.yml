@@ -37,13 +37,13 @@ chips:
     description: Fine control of Pixel Threshold
     name: Vthreshold_fine
     size: 9
-    value: 415
+    value: 360
   - address: 7
     default: 8
     description: Coarse Control of Pixel Threshold
     name: Vthreshold_coarse
     size: 4
-    value: 6
+    value: 4
   - address: 8
     default: 128
     description: Ibias_DiscS1 switched on
@@ -235,6 +235,942 @@ chips:
     value: 29
 - chip_ID: 1001563
   chip_ID_decoded: W3912-K5
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 460567
+  chip_ID_decoded: W1799-G1
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 748321
+  chip_ID_decoded: W2923-A2
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 995130
+  chip_ID_decoded: W3887-J3
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 466928
+  chip_ID_decoded: W1823-`15
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 24672
+  chip_ID_decoded: W96-`6
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 460551
+  chip_ID_decoded: W1799-G0
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 286816
+  chip_ID_decoded: W1120-`6
+  registers:
+  - address: 1
+    default: 128
+    description: Selects PreAmplifier Bias on
+    name: Ibias_Preamp_ON
+    size: 8
+    value: 150
+  - address: 2
+    default: 8
+    description: Sets PreAmplifier Bias off
+    name: Ibias_Preamp_OFF
+    size: 4
+    value: 8
+  - address: 3
+    default: 128
+    description: Sets the PreAmplifier voltage
+    name: VPreamp_NCAS
+    size: 8
+    value: 128
+  - address: 4
+    default: 128
+    description: Control of krum current
+    name: Ibias_Ikrum
+    size: 8
+    value: 5
+  - address: 5
+    default: 128
+    description: Vfbk
+    name: Vfbk
+    size: 8
+    value: 132
+  - address: 6
+    default: 256
+    description: Fine control of Pixel Threshold
+    name: Vthreshold_fine
+    size: 9
+    value: 415
+  - address: 7
+    default: 8
+    description: Coarse Control of Pixel Threshold
+    name: Vthreshold_coarse
+    size: 4
+    value: 6
+  - address: 8
+    default: 128
+    description: Ibias_DiscS1 switched on
+    name: Ibias_DiscS1_ON
+    size: 8
+    value: 100
+  - address: 9
+    default: 8
+    description: Ibias_DiscS1 switched OFF
+    name: Ibias_DiscS1_OFF
+    size: 4
+    value: 8
+  - address: 10
+    default: 128
+    description: SIbias_DiscS2 switched on
+    name: Ibias_DiscS2_ON
+    size: 8
+    value: 128
+  - address: 11
+    default: 8
+    description: Ibias_DiscS2 switched oFF
+    name: Ibias_DiscS2_OFF
+    size: 4
+    value: 8
+  - address: 12
+    default: 128
+    description: Ibias Pixel DAC value
+    name: Ibias_PixelDAC
+    size: 8
+    value: 120
+  - address: 13
+    default: 128
+    description: Test Pulse Buffer input
+    name: Ibias_TPbufferIn
+    size: 8
+    value: 128
+  - address: 14
+    default: 128
+    description: Test Pulse Buffer output
+    name: Ibias_TPbufferOut
+    size: 8
+    value: 128
+  - address: 15
+    default: 128
+    description: Coarse control of V TestPulse
+    name: VTP_coarse
+    size: 8
+    value: 100
+  - address: 16
+    default: 256
+    description: Fine control of V TestPulse
+    name: VTP_fine
+    size: 9
+    value: 300
+  - address: 17
+    default: 128
+    description: Ibias_CP_PLL value
+    name: Ibias_CP_PLL
+    size: 8
+    value: 128
+  - address: 18
+    default: 128
+    description: PLL voltage
+    name: PLL_Vcntrl
+    size: 8
+    value: 128
+  - address: 19
+    default: 29
+    description: Sense DAC output selection
+    name: Sense_DAC
+    size: 5
+    value: 29
+- chip_ID: 18206
+  chip_ID_decoded: W71-N1
   registers:
   - address: 1
     default: 128

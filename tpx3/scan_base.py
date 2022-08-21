@@ -119,6 +119,10 @@ class RunConfig_NoiseScan(RunConfig_General):
     thrfile          = tb.StringCol(128)
     maskfile         = tb.StringCol(128)
 
+class RunConfig_DataTake(RunConfig_General):
+    thrfile  = tb.StringCol(128)
+    maskfile = tb.StringCol(128)
+
 
 RunConfigTables = {
     'EqualisationCharge': RunConfig_EqualisationCharge,
@@ -128,7 +132,8 @@ RunConfigTables = {
     'ThresholdScan'     : RunConfig_ThresholdScan,
     'ThresholdCalib'    : RunConfig_ThresholdCalib,
     'NoiseScan'         : RunConfig_NoiseScan,
-    'ToTCalib'          : RunConfig_ToTCalib
+    'ToTCalib'          : RunConfig_ToTCalib,
+    'DataTake'          : RunConfig_DataTake
 }
 
 
@@ -243,7 +248,7 @@ class ScanBase(object):
         Dut_layer = Dut(dut_conf)
         Dut_layer.init()
 
-        # Initialize the chip
+        # Initialize the chip communication
         if no_chip == False:
             chip = TPX3()
             chip.init(inter_layer=Dut_layer)
@@ -1043,32 +1048,32 @@ class ScanBase(object):
                 out_file.remove_node(out_file.root.mask_matrix)
             except NoSuchNodeError:
                 self.logger.debug('Specified maskfile does not include a mask_matrix yet!')
-            #for chip in self.chips[1:]:
-            out_file.create_carray(out_file.root,
-                                name='mask_matrix',
-                                title='Matrix mask',
-                                obj=self.chips[1].mask_matrix)
+            for chip in self.chips[1:]:
+                out_file.create_carray(out_file.root,
+                                       name  = f'mask_matrix_W{chip.wafer_number}_{chip.x_postition}{chip.y_position}',
+                                       title = 'Matrix mask',
+                                       obj   = chip.mask_matrix)
             self.logger.info('Closing mask file: %s' % (self.maskfile))
 
     def save_thr_mask(self, eq_matrix, chip_wafer, chip_x ,chip_y):
         '''
             Write the pixel threshold matrix to file
         '''
-        # TODO: Save the matrix for each chip, make seperate table
         self.logger.info('Writing equalisation matrix to file...')
         if not self.thrfile:
-            self.thrfile = os.path.join(get_equal_path(), 'W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_equal_' + self.timestamp + '.h5')
+            #self.thrfile = os.path.join(get_equal_path(), 'W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_equal_' + self.timestamp + '.h5')
+            self.thrfile = os.path.join(get_equal_path(), 'equal_' + self.timestamp + '.h5')
 
         with tb.open_file(self.thrfile, 'a') as out_file:
             try:
                 out_file.remove_node(out_file.root.thr_matrix)
             except NoSuchNodeError:
                 self.logger.debug('Specified thrfile does not include a thr_mask yet!')
-
-            out_file.create_carray(out_file.root,
-                                       name='thr_matrix',
-                                       title='Matrix Threshold',
-                                       obj=eq_matrix)
+            for chip in self.chips[1:]:
+                out_file.create_carray(out_file.root,
+                                       name  = f'thr_matrix_W{chip.wafer_number}_{chip.x_postition}{chip.y_position}',
+                                       title = 'Matrix Threshold',
+                                       obj   = eq_matrix)
             self.logger.info('Closing thr_matrix file: %s' % (self.thrfile))
 
 
@@ -1082,7 +1087,9 @@ class ScanBase(object):
             self.logger.info('Loading mask_matrix file: %s' % (self.maskfile))
             try:
                 with tb.open_file(self.maskfile, 'r') as infile:
-                    self.chips[1].mask_matrix = infile.root.mask_matrix[:]
+                    for chip in self.chips[1:]:
+                        table_name       = f'infile.root.mask_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}[:]'
+                        chip.mask_matrix = eval(table_name)
             except NoSuchNodeError:
                 self.logger.debug('Specified maskfile does not include a mask_matrix!')
                 pass
@@ -1091,13 +1098,13 @@ class ScanBase(object):
         '''
             Load the pixel threshold matrix
         '''
-        # TODO load threshold matrix for each chip. For now every chip gets
-        # the same matrices
         if self.thrfile:
             self.logger.info('Loading thr_matrix file: %s' % (self.thrfile))
             try:
                 with tb.open_file(self.thrfile, 'r') as infile:
-                    self.chips[1].thr_matrix = infile.root.thr_matrix[:]
+                    for chip in self.chips[1:]:
+                        table_name      = f'infile.root.mask_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}[:]'
+                        chip.thr_matrix = eval(table_name)
             except NoSuchNodeError:
                 self.logger.debug('Specified thrfile does not include a thr_matrix!')
                 pass

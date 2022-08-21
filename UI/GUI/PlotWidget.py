@@ -8,36 +8,69 @@ from matplotlib.colors import ListedColormap
 
 class plotwidget(object):
     def __init__(self, data_queue):
-        self.plottype = 'normal'
-        self.fig = Figure(figsize = (5, 5), dpi = 100)
-        self.ax = self.fig.add_subplot(111, aspect='equal')
-        self.ax.set_xlabel('X', size = 12)
-        self.ax.set_ylabel('Y', size = 12)
-        #self.ax.yaxis.set_label_coords()
-        self.fig.subplots_adjust(left = 0.15, top = 0.85)
-        self.ax.axis([0, 255, 0, 255])
-        self.x_vals = np.empty(0, np.uint16)
-        self.y_vals = np.empty(0, np.uint16)
-        self.t_vals = np.empty(0, np.uint16)
-        self.intensity = np.empty(0, np.uint16)
-        self.length = np.empty(0, np.uint16)
-        self.i = 0
-        self.occupancy_array = np.array([[0, 0, 0]])
-        self.occ_length = []
-        self.j = 0
-        self.old_elements = np.array([[0, 0]])
-        self.occupancy = []
+        self.plottype           = 'normal'
+        self.fig                = Figure(figsize = (5, 5), dpi = 100)
+        self.cmap               = self.fading_colormap(5)
         self.integration_length = 500
-        self.color_depth = 10
-        cmap = self.fading_colormap(5)
-        self.data_queue = data_queue
-
-        self.scatter = self.ax.scatter(self.x_vals, self.y_vals, c = [], s = 1, marker = 's', cmap = cmap, vmin = 0, vmax = 1)
-
-        self.canvas = FigureCanvas(self.fig)
+        self.color_depth        = 10
+        self.data_queue         = data_queue
+        self.canvas             = FigureCanvas(self.fig)
         self.canvas.set_size_request(500, 500)
+        self.num_plots          = 0
 
-        self.ax.plot()
+    def init_figure(self, chip_links):
+        # Since InitHardware can be pressed multiple times and triggers init_figure
+        # we simply surpress this function, if plots already exist
+        if self.num_plots != 0:
+            for axis in self.plots:
+                axis.remove()
+            for scatter in self.scatter:
+                scatter.remove()
+
+        self.num_plots = len(chip_links)
+        self.chip_list = [chip for chip in chip_links]
+        self.plots     = []
+        self.scatter   = []
+        
+        # Adjust size of figures depending on the number of plots
+        if self.num_plots > 4:
+            self.num_rows = 3
+            self.fig.set_size_inches(10., 10., forward=True)
+            self.canvas.set_size_request(1000, 1000)
+        elif self.num_plots > 1:
+            self.num_rows = 2
+            self.fig.set_size_inches(9., 9., forward=True)
+            self.canvas.set_size_request(900, 900)
+        else:
+            self.num_rows = 1
+            self.canvas.set_size_request(550, 500)
+
+        self.x_vals             = [np.empty(0, np.uint16)]*self.num_plots
+        self.y_vals             = [np.empty(0, np.uint16)]*self.num_plots
+        self.t_vals             = [np.empty(0, np.uint16)]*self.num_plots
+        self.intensity          = [np.empty(0, np.uint16)]*self.num_plots
+        self.length             = [np.empty(0, np.uint16)]*self.num_plots
+        self.i                  = 0
+        self.occupancy_array    = [np.array([[0, 0, 0]])]*self.num_plots
+        self.occ_length         = [0]*self.num_plots
+        self.j                  = 0
+        self.old_elements       = [np.array([[0, 0]])]*self.num_plots
+        self.occupancy          = [[]]*self.num_plots
+
+        for chip in range(self.num_plots):
+            ax = self.fig.add_subplot(eval(f'{self.num_rows}{self.num_rows}{chip+1}'), aspect='equal')
+            ax.set_xlabel('X', size = 8)
+            ax.set_ylabel('Y', size = 8)
+            ax.set_title(f'Chip: {self.chip_list[chip]}', size = 8)
+            ax.axis([0, 255, 0, 255])
+            scatter_plot = ax.scatter(self.x_vals[chip], self.y_vals[chip], c = [], s = 1, marker = 's', cmap = self.cmap, vmin = 0, vmax = 1)
+
+            self.plots.append(ax)
+            self.scatter.append(scatter_plot)
+            self.plots[chip].plot()
+        
+        self.fig.subplots_adjust(left = 0.05, top = 0.95)
+        
 
     def fading_colormap(self, steps = 5):
         # This creates a fading colormap of 'steps' steps. Each step is more transparent,
@@ -63,57 +96,81 @@ class plotwidget(object):
         #Get values from Chip
         #t need to between 0 and 1 then the calculation 1 - (t / self.colorsteps) needs
         #to be done in order to distribute is correctly over the colormap
-        x = np.empty(0, np.uint16)
-        y = np.empty(0, np.uint16)
-        t = np.empty(0, np.uint16)
+        x         = [np.empty(0, np.uint16)]*self.num_plots
+        y         = [np.empty(0, np.uint16)]*self.num_plots
+        t         = [np.empty(0, np.uint16)]*self.num_plots
+        x_new     = [[]]*self.num_plots
+        y_new     = [[]]*self.num_plots
+        t_new     = [[]]*self.num_plots
+
+        max_value = [0]*self.num_plots
 
         if not self.data_queue.empty():
-            x_new, y_new, t_new = self.data_queue.get()
-            x = np.append(x, x_new)
-            y = np.append(y, y_new)
-            t = np.append(t, t_new)
-        if len(t) > 0:
-            self.t_vals = np.append(self.t_vals, t)
-            max_value = np.amax(self.t_vals) # This has to be changed to a more general way
-            t = t/max_value
+            pixeldata = self.data_queue.get()
+            for chip, chip_data in enumerate(pixeldata):
+                x_new[chip] = chip_data[0]
+                y_new[chip] = chip_data[1]
+                t_new[chip] = chip_data[2]
+
+            for chip in range(self.num_plots):
+                x[chip] = np.append(x[chip], x_new[chip])
+                y[chip] = np.append(y[chip], y_new[chip])
+                t[chip] = np.append(t[chip], t_new[chip])
+        
+        for chip in range(self.num_plots):
+            if len(t[chip]) > 0:
+                self.t_vals[chip] = np.append(self.t_vals[chip], t[chip])
+                max_value[chip]   = np.amax(self.t_vals[chip]) # This has to be changed to a more general way
+                t[chip]           = t[chip]/max_value[chip]
 
         return x, y, t
 
     def update_plot(self):
+        if self.num_plots == 0:
+            return
+
+        pixeldata = self.get_new_vals()
+        new_xvals = pixeldata[0]
+        new_yvals = pixeldata[1]
+        new_tvals = pixeldata[2]
+
         #Plot the fading plot with new data.
-        new_xvals, new_yvals, new_tvals = self.get_new_vals()
-        self.x_vals = np.append(self.x_vals, new_xvals)
-        self.y_vals = np.append(self.y_vals, new_yvals)
-        self.length = np.append(self.length, new_xvals.size)
+        for chip in range(self.num_plots):
+            self.x_vals[chip] = np.append(self.x_vals[chip], new_xvals[chip])
+            self.y_vals[chip] = np.append(self.y_vals[chip], new_yvals[chip])
+            self.length[chip] = np.append(self.length[chip], new_xvals[chip].size)
 
         #Cut plotting arrays to n_colorsteps Timeblocks
         if self.i < (self.colorsteps):
             self.i = self.i + 1
 
         elif self.i == (self.colorsteps):
-            number = np.arange(self.length[0])
-            self.length = np.delete(self.length, 0)
-            self.x_vals = np.delete(self.x_vals, number)
-            self.y_vals = np.delete(self.y_vals, number)
-            self.t_vals = np.delete(self.t_vals, number)
-            self.intensity = np.delete(self.intensity, number)
+            for chip in range(self.num_plots):
+                number               = np.arange(self.length[chip][0])
+                self.length[chip]    = np.delete(self.length[chip], 0)
+                self.x_vals[chip]    = np.delete(self.x_vals[chip], number)
+                self.y_vals[chip]    = np.delete(self.y_vals[chip], number)
+                self.t_vals[chip]    = np.delete(self.t_vals[chip], number)
+                self.intensity[chip] = np.delete(self.intensity[chip], number)
 
         elif self.i > (self.colorsteps):
             while self.i >= (self.colorsteps):
-                number = np.arange(self.length[0])
-                self.length = np.delete(self.length, 0)
-                self.x_vals = np.delete(self.x_vals, number)
-                self.y_vals = np.delete(self.y_vals, number)
-                self.t_vals = np.delete(self.t_vals, number)
-                self.intensity = np.delete(self.intensity, number)
+                for chip in range(self.num_plots):
+                    number               = np.arange(self.length[chip][0])
+                    self.length[chip]    = np.delete(self.length[chip], 0)
+                    self.x_vals[chip]    = np.delete(self.x_vals[chip], number)
+                    self.y_vals[chip]    = np.delete(self.y_vals[chip], number)
+                    self.t_vals[chip]    = np.delete(self.t_vals[chip], number)
+                    self.intensity[chip] = np.delete(self.intensity[chip], number)
                 self.i = self.i-1
 
-        if np.c_[self.x_vals, self.y_vals].size != 0:
-            self.scatter.set_offsets(np.c_[self.x_vals, self.y_vals])
-            self.intensity = np.concatenate((np.array(self.intensity) - (1 / self.colorsteps), new_tvals))
-            self.scatter.set_array(self.intensity)
-
-            self.canvas.draw()
+        for chip in range(self.num_plots):
+            if np.c_[self.x_vals[chip], self.y_vals[chip]].size != 0:
+                self.scatter[chip].set_offsets(np.c_[self.x_vals[chip], self.y_vals[chip]])
+                self.intensity[chip] = np.concatenate((np.array(self.intensity[chip]) - (1 / self.colorsteps), new_tvals[chip]))
+                self.scatter[chip].set_array(self.intensity[chip])
+        
+        self.canvas.draw()
 
         return True
 
@@ -201,21 +258,23 @@ class plotwidget(object):
         return True
 
     def change_colormap(self, colormap, vmin = 0, vmax = 1):
-        x_vals = []
-        y_vals = []
-        cmap = colormap
-        vmin = vmin
-        vmax = vmax
+        
+        self.cmap = colormap
+        vmin      = vmin
+        vmax      = vmax
         if self.plottype == 'occupancy':
             self.color_depth = vmax
 
-        self.ax.remove()
-        self.ax = self.fig.add_subplot(111, aspect='equal')
-        self.ax.set_xlabel('X', size = 12)
-        self.ax.set_ylabel('Y', size = 12)
-        self.ax.axis([0, 255, 0, 255])
-        self.scatter = self.ax.scatter(x_vals, y_vals, c = [], s = 1, marker = 's', cmap = cmap, vmin = vmin, vmax = vmax)
-        self.ax.plot()
+        for chip in range(self.num_plots):
+            x_vals    = []
+            y_vals    = []
+            self.plots[chip].remove()
+            self.plots[chip] = self.fig.add_subplot(111, aspect='equal')
+            self.plots[chip].set_xlabel('X', size = 12)
+            self.plots[chip].set_ylabel('Y', size = 12)
+            self.plots[chip].axis([0, 255, 0, 255])
+            self.scatter[chip] = self.plots[chip].scatter(x_vals, y_vals, c = [], s = 1, marker = 's', cmap = self.cmap, vmin = vmin, vmax = vmax)
+            self.plots[chip].plot()
 
         return True
 

@@ -44,21 +44,23 @@ class Transceiver(multiprocessing.Process):
         The verbosity level for the logging (e.g. INFO, WARNING)
     '''
 
-    def __init__(self, frontend, kind, data_queue, symbol_pipe, name='Undefined',
+    def __init__(self, frontend, kind, data_queue, symbol_pipe, chip_links, name='Undefined',
                  max_buffer=None, loglevel='INFO', **kwarg):
         multiprocessing.Process.__init__(self)
 
-        self.kind = kind  # kind of transeiver (e.g. forwarder)
+        self.kind             = kind  # kind of transeiver (e.g. forwarder)
         self.frontend_address = frontend  # socket facing a data publisher
         # Maximum number of input messages buffered, otherwise data omitted
-        self.max_buffer = max_buffer
-        self.name = name  # name of the DAQ/device
+        self.max_buffer       = max_buffer
+        self.name             = name  # name of the DAQ/device
         # Std. setting is unidirectional frondend communication
         self.frontend_socket_type = zmq.SUB
 
-        self.data_queue = data_queue
-        self.symbol_pipe = symbol_pipe
+        self.data_queue            = data_queue
+        self.symbol_pipe           = symbol_pipe
         self.run_data_queue_symbol = True
+
+        self.chip_links = chip_links
 
         if 'max_cpu_load' in kwarg:
             logging.warning('The parameter max_cpu_load is deprecated! Use max_buffer!')

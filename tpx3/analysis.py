@@ -422,9 +422,7 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
         chunk_len = 0
         # Get link-sorted data packages and combine the 32 bit words
         for link in range(links):
-            #print(link)
             link_filter = (raw_data & 0xfe000000) >> 25 == link
-            #print(link_filter)
             chunk_len+=np.sum(link_filter)
             if np.sum(link_filter) == 0:
                 continue
@@ -433,9 +431,7 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
                 #logger.info("len(link_filter) before correction: "+str(len(link_filter)))
                 #continue
             link_raw_data = raw_data[link_filter]
-            #print(link_raw_data)
             link_indices  = np.where(link_filter)[0]
-            #print(link_indices)
             link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
             if leftoverpackage_pot!=None:
                 leftoverpackage.append(leftoverpackage_pot)

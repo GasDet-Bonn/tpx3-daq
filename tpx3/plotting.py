@@ -283,7 +283,7 @@ class Plotting(object):
 
             if 'thrfile' in list(self.run_config.keys()) and self.run_config['thrfile'][chip] is not None and not self.run_config['thrfile'][chip] == b'None':
                 ax.text(0.01, -0.05, 'Equalisation:\n%s' %
-                        (self.run_config[b'thrfile'][chip]).decode(), fontsize=6)
+                        (self.run_config['thrfile'][chip]).decode(), fontsize=6)
 
             if 'maskfile' in list(self.run_config.keys()) and self.run_config['maskfile'][chip] is not None and not self.run_config['maskfile'][chip] == b'None':
                 ax.text(0.01, -0.11, 'Maskfile:\n%s' %
