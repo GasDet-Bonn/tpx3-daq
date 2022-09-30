@@ -60,7 +60,8 @@ module tpx3_ml605 (
     );
 
     
-    wire RX_READY, ETH_STATUS_OK;
+    wire [7:0] RX_READY;
+    wire ETH_STATUS_OK;
     
     tpx3_sfp tpx3_sfp (
         .CLK200_P               (CLK200_P               ),
@@ -105,11 +106,11 @@ module tpx3_ml605 (
         
         );
 
-    assign FMC_LED =  {RX_READY, 3'b0};
-    assign LINKUP[0] = RX_READY; 
+	 wire RX_READY_OR;
+	 assign RX_READY_OR = RX_READY[0] | RX_READY[1] | RX_READY[2] | RX_READY[3] | RX_READY[4] | RX_READY[5] | RX_READY[6] | RX_READY[7];
+    assign FMC_LED =  {ETH_STATUS_OK, RX_READY_OR,2'b0};
+    assign LINKUP[0] = ETH_STATUS_OK; 
     
-    assign LED[0] = ETH_STATUS_OK;
-    assign LED[1] = RX_READY;
-    assign LED[7:2] = 0;
+    assign LED = RX_READY;
     
 endmodule

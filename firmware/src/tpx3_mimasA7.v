@@ -433,7 +433,7 @@ module tpx3_daq (input wire CLK100_SYS,
 
     // ---
 
-    wire RX_READY;
+    wire [7:0] RX_READY;
 
     tpx3_core #(.RX_CH_NO(1)) tpx3_core( 
     .BUS_CLK        (BUS_CLK),
@@ -493,16 +493,6 @@ module tpx3_daq (input wire CLK100_SYS,
     //wire CLK40_OUT;
     //ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC")) ODDR_inst_CLK40_OUT (.Q(CLK40_OUT), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
     
-    wire BLINK;
-    clock_divider #(
-        .DIVISOR(100000000)
-    ) clock_divisor (
-        .CLK(CLK_PHY125TX),
-        .RESET(1'b0),
-        .CE(),
-        .CLOCK(BLINK)
-    );
-    
-    assign LED = {RX_READY, {7{BLINK}}};
+    assign LED = RX_READY;
 
 endmodule

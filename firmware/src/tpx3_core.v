@@ -61,7 +61,7 @@ module tpx3_core (
         input  wire [7:0]  RX_DATA,
 
         output wire [7:0]  LED,
-        output wire        RX_READY
+        output wire [7:0]  RX_READY
 
 
     );
@@ -186,6 +186,24 @@ module tpx3_core (
     wire [7:0] TPX_FIFO_EMPTY;
     wire [31:0] TPX_FIFO_DATA [7:0];
     wire [7:0] RX_READY_RX;
+	 
+	 reg BLINK_REG;
+	 wire BLINK;
+	 assign BLINK = BLINK_REG;
+	 
+	 reg [26:0] CNT_BLINK;
+	 initial CNT_BLINK = 0;
+	 always@(posedge BUS_CLK)
+        if(CNT_BLINK == 100000000)
+            CNT_BLINK <= 0;
+		  else
+		      CNT_BLINK <= CNT_BLINK + 1;
+				
+	 always@(posedge BUS_CLK)
+	     if(CNT_BLINK < 50000000)
+            BLINK_REG <= 0;
+		  else
+		      BLINK_REG <= 1;
     
     genvar ch;
     generate
@@ -221,14 +239,14 @@ module tpx3_core (
                     .BUS_RD              ( BUS_RD          ),
                     .BUS_WR              ( BUS_WR          )
                 );
+					 assign RX_READY[ch] = RX_READY_RX[ch];
             end else begin
                 assign TPX_FIFO_EMPTY[ch] = 1;
+					 assign RX_READY[ch] = BLINK;
             end
 
     end
     endgenerate
-
-    assign RX_READY = RX_READY_RX[0];
     
     wire PULSE;
     pulse_gen_sbus
