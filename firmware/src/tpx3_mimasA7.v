@@ -435,7 +435,7 @@ module tpx3_daq (input wire CLK100_SYS,
 
     wire [7:0] RX_READY;
 
-    tpx3_core #(.RX_CH_NO(1)) tpx3_core( 
+    tpx3_core #(.RX_CH_NO(2)) tpx3_core( 
     .BUS_CLK        (BUS_CLK),
     .BUS_RST        (BUS_RST),
     .BUS_ADD        (BUS_ADD),
