@@ -78,7 +78,11 @@ class ScanHardware(object):
             data = self.chip.write_outputBlock_config()
 
             for fpga_link_number, fpga_link in enumerate(rx_list_objects):
+                fpga_link.reset()
+                fpga_link.enable = 1
+                time.sleep(0.01)
                 rx_map[chip_link][fpga_link_number] = fpga_link.is_ready
+                fpga_link.enable = 0
 
         status_map = np.sum(rx_map, axis = 0)
         status_map = np.clip(status_map, 0, 1)
