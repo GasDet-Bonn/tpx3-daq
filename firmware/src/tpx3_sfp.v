@@ -102,7 +102,7 @@ module tpx3_sfp (
         input wire [7:0] TPX3_1_DataOut_N, TPX3_1_DataOut_P,
 
         output wire       ETH_STATUS_OK,
-        output wire       RX_READY,
+        output wire [7:0] RX_READY,
 
         output wire Data_MUX_select
     
