@@ -18,7 +18,7 @@ def get_software_version(git = True):
     '''
     if git:
         try:
-            rev = get_git_commit()
+            rev    = get_git_commit()
             branch = get_git_branch()
             return branch + '@' + rev
         except:
@@ -50,7 +50,7 @@ def toByteList(obj, bitwise=False):
     if len(obj) % 8 != 0:
         raise ValueError("""Cannot convert to array of bytes, if number of
         bits not a multiple of a byte""")
-    nbytes = len(obj) // 8
+    nbytes   = len(obj) // 8
     byteList = []
 
     # range from 0 to 40, reversed to get MSB first
@@ -68,20 +68,20 @@ def bitword_to_byte_list(data, string=False):
     """
     Given a 32 bit word, convert it to a list of bytes using BitLogic
     """
-    result = BitLogic(32)
+    result       = BitLogic(32)
     result[31:0] = int(data)
-    result = toByteList(result, string)
+    result       = toByteList(result, string)
     return result
 
 def threshold_compose(fine, coarse):
     """
     Returns the composed threshold based on the fine and the coarse threshold DACs
     """
-    fine *= 0.5
-    coarse *= 80
+    fine     *= 0.5
+    coarse   *= 80
     threshold = (fine + coarse) / 0.5
 
-    return threshold
+    return int(threshold)
 
 def threshold_decompose(threshold):
     """
@@ -89,13 +89,13 @@ def threshold_decompose(threshold):
     """
     if(threshold <= 511):
         coarse_threshold = 0
-        fine_threshold = threshold
+        fine_threshold   = threshold
     else:
         relative_fine_threshold = (threshold - 512) % 160
-        coarse_threshold = (((threshold - 512) - relative_fine_threshold) // 160) + 1
-        fine_threshold = relative_fine_threshold + 352
+        coarse_threshold        = (((threshold - 512) - relative_fine_threshold) // 160) + 1
+        fine_threshold          = relative_fine_threshold + 352
     
-    return fine_threshold, coarse_threshold
+    return int(fine_threshold), int(coarse_threshold)
 
 def number_of_possible_thresholds(threshold):
     '''
@@ -104,7 +104,7 @@ def number_of_possible_thresholds(threshold):
     '''
     # Calculate the highest and lowest possible coarse threshold
     higher_coarse = (threshold / 2) // 80
-    lower_coarse = (threshold / 2 - 256) // 80 + 1
+    lower_coarse  = (threshold / 2 - 256) // 80 + 1
 
     # The coarse threshold can not be bigger than 15 and smaller than 0
     if higher_coarse > 15:
@@ -138,20 +138,20 @@ def get_range_thresholds(start, stop):
     '''
     # Get the list of possible thresholds for start and stop
     start_coarses, start_fines = get_possible_thresholds(start)
-    stop_coarses, stop_fines = get_possible_thresholds(stop)
+    stop_coarses, stop_fines   = get_possible_thresholds(stop)
 
     # Get the thresholds with the highest coarse for start
     start_coarse = start_coarses[len(start_coarses) - 1]
-    start_fine = start_fines[len(start_fines) - 1]
+    start_fine   = start_fines[len(start_fines) - 1]
 
     # Get the thresholds with the lowest coarse for stop
     stop_coarse = stop_coarses[0]
-    stop_fine = stop_fines[0]
+    stop_fine   = stop_fines[0]
 
     # Catch the case that the lowest possible stop coarse is smaller than the highest possible start coarse
     if stop_coarse <= start_coarse:
         stop_coarse = start_coarse
-        stop_fine = stop_fines[np.where(stop_coarses == stop_coarse)][0]
+        stop_fine   = stop_fines[np.where(stop_coarses == stop_coarse)][0]
 
     return start_coarse, start_fine, stop_coarse, stop_fine
 
@@ -171,7 +171,7 @@ def recursive_jumps(target_coarse, current_coarse, current_fine, direction, star
         if direction == 'up':
             # In up direction the next coarse threshold should be as high as possible
             start_coarse = start_coarses[len(start_coarses) - 1]
-            start_fine = start_fines[len(start_fines) - 1]
+            start_fine   = start_fines[len(start_fines) - 1]
 
             # If the coarse threshold is at maximum no further recursion is needed
             if start_coarse == 15:
@@ -182,7 +182,7 @@ def recursive_jumps(target_coarse, current_coarse, current_fine, direction, star
 
             # Get all possible threshold combinations for the new coarse threshold and calculate the jumps recursively
             coarses, fines = get_possible_thresholds((start_coarse * 80 + 255.5) * 2)
-            new = recursive_jumps(target_coarse, start_coarse, 511, 'up', coarses, fines)
+            new            = recursive_jumps(target_coarse, start_coarse, 511, 'up', coarses, fines)
 
             # Combine the existing and the new results in the right order
             start = [current_coarse, current_fine, start_coarse, start_fine]
@@ -190,7 +190,7 @@ def recursive_jumps(target_coarse, current_coarse, current_fine, direction, star
         elif direction == 'down':
             # In down direction the next coarse threshold should be as low as possible
             start_coarse = start_coarses[0]
-            start_fine = start_fines[0]
+            start_fine   = start_fines[0]
 
             # If the coarse threshold is at minimum no further recursion is needed
             if start_coarse == 0:
@@ -201,7 +201,7 @@ def recursive_jumps(target_coarse, current_coarse, current_fine, direction, star
 
             # Get all possible threshold combinations for the new coarse threshold and calculate the jumps recursively
             coarses, fines = get_possible_thresholds((start_coarse * 80) * 2)
-            new = recursive_jumps(target_coarse, start_coarse, 0, 'down', coarses, fines)
+            new            = recursive_jumps(target_coarse, start_coarse, 0, 'down', coarses, fines)
 
             # Combine the existing and the new results in the right order
             start = new
@@ -232,14 +232,14 @@ def get_coarse_jumps(start, stop):
         return [start_coarse, start_fine, stop_coarse, stop_fine]
 
     # Get the optimal coarse threshold for the middle of the range
-    mid_threshold = int((start + stop) / 2)
+    mid_threshold          = int((start + stop) / 2)
     mid_coarses, mid_fines = get_possible_thresholds(mid_threshold)
-    index = np.where(np.absolute(mid_fines - 256) == np.min(np.absolute(mid_fines - 256)))[0][0]
-    mid_coarse = mid_coarses[index]
+    index                  = np.where(np.absolute(mid_fines - 256) == np.min(np.absolute(mid_fines - 256)))[0][0]
+    mid_coarse             = mid_coarses[index]
 
     # Get all possible coarse/fine thresholds for the start and end value of the middle coarse threshold
     mid_start_thresholds_coarse, mid_start_thresholds_fine = get_possible_thresholds((mid_coarse * 80) * 2)
-    mid_end_thresholds_coarse, mid_end_thresholds_fine = get_possible_thresholds((mid_coarse * 80 + 255.5) * 2)
+    mid_end_thresholds_coarse, mid_end_thresholds_fine     = get_possible_thresholds((mid_coarse * 80 + 255.5) * 2)
 
     # Generate the list of coarse jumps between the start and the lower end of the middle range
     jump_down = recursive_jumps(start_coarse, mid_coarse, 0, 'down', mid_start_thresholds_coarse, mid_start_thresholds_fine)
@@ -267,19 +267,19 @@ def create_threshold_list(jump_list):
         and fine thresholds to cover the range.
     '''
     # Split the jump_list in fine and coarse thresholds
-    fine_thresholds = jump_list[1::2]
+    fine_thresholds   = jump_list[1::2]
     coarse_thresholds = jump_list[0::2]
-    coarse_list = []
-    fine_list = []
+    coarse_list       = []
+    fine_list         = []
 
     # Go through the list of jumps
     for i in range(1, len(fine_thresholds), 2):
         # In the last step the fine threshold range must be 1 bigger to cover the full range
         if i == len(fine_thresholds) - 1:
-            step_fine_list = np.arange(fine_thresholds[i-1], fine_thresholds[i]+1, dtype=np.uint16)
+            step_fine_list   = np.arange(fine_thresholds[i-1], fine_thresholds[i]+1, dtype=np.uint16)
             step_coarse_list = np.full(len(step_fine_list), coarse_thresholds[i], dtype=np.uint8)
         else:
-            step_fine_list = np.arange(fine_thresholds[i-1], fine_thresholds[i], dtype=np.uint16)
+            step_fine_list   = np.arange(fine_thresholds[i-1], fine_thresholds[i], dtype=np.uint16)
             step_coarse_list = np.full(len(step_fine_list), coarse_thresholds[i], dtype=np.uint8)
     
         # Extend the existing the coarse and fine lists with the list of the current step
@@ -287,10 +287,10 @@ def create_threshold_list(jump_list):
         fine_list.extend(step_fine_list)
 
     # Create threshold list array
-    threshold_list = np.empty((2, len(coarse_list)))
+    threshold_list    = np.empty((2, len(coarse_list)))
     threshold_list[0] = coarse_list
     threshold_list[1] = fine_list
-    threshold_list = threshold_list.T
+    threshold_list    = threshold_list.T
     return threshold_list
 
 def print_nice(f):

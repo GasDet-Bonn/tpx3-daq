@@ -356,11 +356,11 @@ class ScanHardware(object):
                                     chip.append([register['fpga-link'], 0, 0, 0, 0, register['link-status']])
                     break
 
+        print(Chip_List)
         if status != None:
             status.put("iteration_finish_symbol")
 
         if results == None:
-            print(Chip_List)
             return Chip_List
         else:
             results.put([self.chip.fw_version] + [len(rx_list_objects)] + Chip_List)

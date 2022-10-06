@@ -242,16 +242,6 @@ class Plotting(object):
         FigureCanvas(fig)
         ax  = fig.add_subplot(111)
         ax.axis('off')
-        '''
-        scan_id = self.run_config[b'scan_id'].decode()
-        run_name = self.run_config[b'run_name'].decode()
-        chip_wafer = self.run_config[b'chip_wafer'].decode()
-        chip_x = self.run_config[b'chip_x'].decode()
-        chip_y = self.run_config[b'chip_y'].decode()
-        sw_ver = self.run_config[b'software_version'].decode()
-        board_name = self.run_config[b'board_name'].decode()
-        fw_ver = self.run_config[b'firmware_version'].decode()
-        '''
         tb_dict = OrderedDict(sorted(self.dacs.items()))
         #print(tb_dict)
         # remove unnecessary keys

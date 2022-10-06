@@ -43,7 +43,7 @@ class plotwidget(object):
             self.canvas.set_size_request(900, 900)
         else:
             self.num_rows = 1
-            self.canvas.set_size_request(550, 500)
+            self.canvas.set_size_request(600, 600)
 
         self.x_vals             = [np.empty(0, np.uint16)]*self.num_plots
         self.y_vals             = [np.empty(0, np.uint16)]*self.num_plots
@@ -69,7 +69,7 @@ class plotwidget(object):
             self.scatter.append(scatter_plot)
             self.plots[chip].plot()
         
-        self.fig.subplots_adjust(left = 0.05, top = 0.95)
+        self.fig.subplots_adjust(left = 0.1, top = 0.90)
         
 
     def fading_colormap(self, steps = 5):
