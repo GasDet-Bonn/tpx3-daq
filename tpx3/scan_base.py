@@ -1071,7 +1071,7 @@ class ScanBase(object):
                 self.logger.debug('Specified thrfile does not include a thr_mask yet!')
             for chip in self.chips[1:]:
                 out_file.create_carray(out_file.root,
-                                       name  = f'thr_matrix_W{chip.wafer_number}_{chip.x_postition}{chip.y_position}',
+                                       name  = f'thr_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}',
                                        title = 'Matrix Threshold',
                                        obj   = eq_matrix)
             self.logger.info('Closing thr_matrix file: %s' % (self.thrfile))

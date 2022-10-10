@@ -187,7 +187,7 @@ class ThresholdScan(ScanBase):
 
             self.logger.info('Interpret raw data...')
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
-            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, self.chip_links, meta_data, progress = progress)
+            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, kwargs['chip_link'], meta_data, progress = progress)
             raw_data = None
 
             # Read needed configuration parameters
@@ -199,7 +199,7 @@ class ThresholdScan(ScanBase):
             for chip in self.chips[1:]:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
-                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                chip_num = [number for number, ID in enumerate(kwargs['chip_link']) if ID==chip.chipId_decoded][0]
                 # Get current chipID
                 #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                 chipID   = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
@@ -226,7 +226,7 @@ class ThresholdScan(ScanBase):
 
                 # Fit S-Curves to the histograms for all pixels
                 param_range = list(range(Vthreshold_start, Vthreshold_stop + 1))
-                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=False, progress = progress)
+                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=chip.configs['Polarity'], progress = progress)
 
                 h5_file.create_carray(chip_group, name='HistSCurve', obj=scurve)
                 h5_file.create_carray(chip_group, name='Chi2Map', obj=chi2ndf2D.T)

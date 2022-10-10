@@ -228,17 +228,17 @@ class EqualisationCharge(ScanBase):
             #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
             # Get link configuration
-            link_config = h5_file.root.configuration.links[:]
-            chip_IDs    = link_config['chip_id']
+            #link_config = h5_file.root.configuration.links[:]
+            #chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
-            self.chip_links = {}
+            #self.chip_links = {}
     
-            for link, ID in enumerate(chip_IDs):
-                if ID not in self.chip_links:
-                    self.chip_links[ID] = [link]
-                else:
-                    self.chip_links[ID].append(link)
+            #for link, ID in enumerate(chip_IDs):
+            #    if ID not in self.chip_links:
+            #        self.chip_links[ID] = [link]
+            #    else:
+            #        self.chip_links[ID].append(link)
 
             # Create group to save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
@@ -251,7 +251,7 @@ class EqualisationCharge(ScanBase):
             meta_data_th0      = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
 
             # THR = 15
-            meta_data_th15   = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
+            meta_data_th15     = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
 
             # shift indices so that they start with zero
             start                         = meta_data_th15['index_start'][0]
@@ -261,12 +261,12 @@ class EqualisationCharge(ScanBase):
             self.logger.info('THR = 0')
             #THR = 0
             raw_data_thr0 = h5_file.root.raw_data[:meta_data_th0['index_stop'][-1]]
-            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, self.chip_links, meta_data_th0, progress = progress)
+            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, kwargs['chip_link'], meta_data_th0, progress = progress)
 
             self.logger.info('THR = 15')
             #THR = 15
             raw_data_thr15 = h5_file.root.raw_data[meta_data_th0['index_stop'][-1]:]
-            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, self.chip_links, meta_data_th15, progress = progress)
+            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, kwargs['chip_link'], meta_data_th15, progress = progress)
 
             # Read needed configuration parameters
             Vthreshold_start = run_config.col('Vthreshold_start')[0]
@@ -277,7 +277,7 @@ class EqualisationCharge(ScanBase):
             for chip in self.chips[1:]:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
-                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                chip_num = [number for number, ID in enumerate(kwargs['chip_link']) if ID==chip.chipId_decoded][0]
                 # Get chipID in desirable formatting for HDF5 files (without '-')
                 #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                 chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
@@ -307,11 +307,11 @@ class EqualisationCharge(ScanBase):
 
                 # Fit S-Curves to the histograms for all pixels
                 self.logger.info('Fit the scurves for all pixels...')
-                thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=False, progress = progress)
+                thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=chip.configs['Polarity'], progress = progress)
                 h5_file.create_carray(chip_group, name='HistSCurve_th0', obj=scurve_th0)
                 h5_file.create_carray(chip_group, name='ThresholdMap_th0', obj=thr2D_th0.T)
                 scurve_th0 = None
-                thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=False, progress = progress)
+                thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=chip.configs['Polarity'], progress = progress)
                 h5_file.create_carray(chip_group, name='HistSCurve_th15', obj=scurve_th15)
                 h5_file.create_carray(chip_group, name='ThresholdMap_th15', obj=thr2D_th15.T)
                 scurve_th15 = None

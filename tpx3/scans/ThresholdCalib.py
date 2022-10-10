@@ -89,7 +89,7 @@ class ThresholdCalib(ScanBase):
             self.scan_iteration(iteration, progress = progress, status = status, **args)
 
             # Analyse the data of the current iteration
-            opt_results = self.analyze_iteration(iteration, progress = progress, status = status)
+            opt_results = self.analyze_iteration(iteration, progress = progress, status = status, chip_link = kwargs['chip_link'])
 
         # Create the plots for the full calibration
         self.plot(status = status, plot_queue = plot_queue)
@@ -191,7 +191,7 @@ class ThresholdCalib(ScanBase):
 
         self.logger.info('Iteration %i finished', iteration)
 
-    def analyze_iteration(self, iteration, progress = None, status = None):
+    def analyze_iteration(self, iteration, chip_link, progress = None, status = None):
         '''
             Analyze the data of the iteration
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
@@ -221,32 +221,32 @@ class ThresholdCalib(ScanBase):
             #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
             # Get link configuration
-            link_config = h5_file.root.configuration.links[:]
+            #link_config = h5_file.root.configuration.links[:]
             #print(link_config)
-            chip_IDs    = link_config['chip_id']
+            #chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
-            self.chip_links = {}
+            #self.chip_links = {}
     
-            for link, ID in enumerate(chip_IDs):
-                if ID not in self.chip_links:
-                    self.chip_links[ID] = [link]
-                else:
-                    self.chip_links[ID].append(link)
+            #for link, ID in enumerate(chip_IDs):
+            #    if ID not in self.chip_links:
+            #        self.chip_links[ID] = [link]
+            #    else:
+            #        self.chip_links[ID].append(link)
 
             # Create group to save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, f'interpreted_{iteration}', 'Interpreted Data')
 
             self.logger.info('Interpret raw data...')
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
-            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, self.chip_links, meta_data, progress = progress)
+            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, chip_link, meta_data, progress = progress)
             raw_data = None
 
             #for chip in range(self.num_of_chips):
             for chip in self.chips[1:]:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
-                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                chip_num = [number for number, ID in enumerate(chip_link) if ID==chip.chipId_decoded][0]
                 # Get chipID in desirable formatting for HDF5 files (without '-')
                 #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                 chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
@@ -281,7 +281,7 @@ class ThresholdCalib(ScanBase):
 
                 # Fit S-Curves to the histograms for all pixels
                 param_range             = list(range(Vthreshold_start, Vthreshold_stop + 1))
-                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=False, progress = progress)
+                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=chip.configs['Polarity'], progress = progress)
 
                 h5_file.create_carray(chip_group, name='HistSCurve', obj=scurve)
                 h5_file.create_carray(chip_group, name='Chi2Map', obj=chi2ndf2D.T)

@@ -170,24 +170,24 @@ class TestpulseScan(ScanBase):
             #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
             # Get link configuration
-            link_config = h5_file.root.configuration.links[:]
-            chip_IDs    = link_config['chip_id']
+            #link_config = h5_file.root.configuration.links[:]
+            #chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
-            self.chip_links = {}
-    
-            for link, ID in enumerate(chip_IDs):
-                if ID not in self.chip_links:
-                    self.chip_links[ID] = [link]
-                else:
-                    self.chip_links[ID].append(link)
+            #self.chip_links = {}
+            
+            #for link, ID in enumerate(chip_IDs):
+            #    if ID not in self.chip_links:
+            #        self.chip_links[ID] = [link]
+            #    else:
+            #        self.chip_links[ID].append(link)
 
             # Create a group to save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
             self.logger.info('Interpret raw data...')
             # Interpret the raw data (2x 32 bit to 1x 48 bit)
-            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, self.chip_links, meta_data, progress = progress)
+            hit_data = analysis.interpret_raw_data(raw_data, op_mode, vco, kwargs['chip_link'], meta_data, progress = progress)
             raw_data = None
 
             # Read needed configuration parameters
@@ -199,7 +199,7 @@ class TestpulseScan(ScanBase):
             for chip in self.chips[1:]:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
-                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                chip_num = [number for number, ID in enumerate(kwargs['chip_link']) if ID == chip.chipId_decoded][0]
                 
                 # Get current chipID
                 #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
@@ -227,7 +227,7 @@ class TestpulseScan(ScanBase):
 
                 # Fit S-Curves to the histograms for all pixels
                 param_range             = list(range(VTP_fine_start, VTP_fine_stop + 1))
-                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, progress = progress, invert_x=False)
+                thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, progress = progress, invert_x=chip.configs['Polarity'])
 
                 h5_file.create_carray(chip_group, name='HistSCurve', obj=scurve)
                 h5_file.create_carray(chip_group, name='Chi2Map', obj=chi2ndf2D.T)

@@ -170,23 +170,23 @@ class ToTCalib(ScanBase):
             #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
             # Get link configuration
-            link_config = h5_file.root.configuration.links[:]
+            #link_config = h5_file.root.configuration.links[:]
             #print(link_config)
-            chip_IDs    = link_config['chip_id']
+            #chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
-            self.chip_links = {}
+            #self.chip_links = {}
     
-            for link, ID in enumerate(chip_IDs):
-                if ID not in self.chip_links:
-                    self.chip_links[ID] = [link]
-                else:
-                    self.chip_links[ID].append(link)
+            #for link, ID in enumerate(chip_IDs):
+            #    if ID not in self.chip_links:
+            #        self.chip_links[ID] = [link]
+            #    else:
+            #        self.chip_links[ID].append(link)
             #print('Chip links: ' + str(self.chip_links))
 
             # Get the number of chips
             #self.num_of_chips = len(self.chip_links)
-            self.num_of_chips = len(self.chips[1:])
+            #self.num_of_chips = len(self.chips[1:])
             # Create group to save all data and histograms to the HDF file
             try:
                 h5_file.remove_node(h5_file.root.interpreted, recursive=True)
@@ -213,13 +213,13 @@ class ToTCalib(ScanBase):
                 stop_index   = meta_data[meta_data['scan_param_id'] == param_id]
                 # Interpret the raw data (2x 32 bit to 1x 48 bit)
                 raw_data_tmp = h5_file.root.raw_data[start_index['index_start'][0]:stop_index['index_stop'][-1]]
-                hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, self.chip_links, progress = progress)
+                hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, kwargs['chip_link'], progress = progress)
 
                 #for chip in range(self.num_of_chips):
                 for chip in self.chips[1:]:
                     # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                     # the hit_data of the chip is.
-                    chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                    chip_num = [number for number, ID in enumerate(kwargs['chip_link']) if ID==chip.chipId_decoded][0]
 
                     # Select only data which is hit data
                     hit_data_chip = hit_data_tmp[chip_num][hit_data_tmp[chip_num]['data_header'] == 1]
@@ -253,7 +253,7 @@ class ToTCalib(ScanBase):
             for chip in self.chips[1:]:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
-                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                chip_num = [number for number, ID in enumerate(kwargs['chip_link']) if ID==chip.chipId_decoded][0]
                 # Get chipID in desirable formatting for HDF5 files (without '-')
                 #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                 chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'

@@ -18,7 +18,7 @@ from UI.GUI.converter import utils
 from UI.GUI.converter.tpx3_inter import Tpx3
 
 class ConverterManager(object):
-    def __init__(self, configuration, data_queue, symbol_pipe, loglevel='INFO'):
+    def __init__(self, configuration, data_queue, symbol_pipe, chip_links, loglevel='INFO'):
         self.data_queue = data_queue
         self.symbol_pipe = symbol_pipe
         utils.setup_logging(loglevel)
@@ -28,8 +28,8 @@ class ConverterManager(object):
         # set up chip_links dictionary, TODO: maybe replace later with values from data_logger
 
         # Get link configuration
-        working_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        file_name   = os.path.join(working_dir, 'tpx3' + os.sep + 'links.yml')
+        #working_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        #file_name   = os.path.join(working_dir, 'tpx3' + os.sep + 'links.yml')
         '''
         with open(file_name, 'r') as file:
             links_dict  = yaml.load(file, Loader = yaml.FullLoader)
@@ -47,8 +47,9 @@ class ConverterManager(object):
         '''
         #self.chip_links = {'W12-K7': [0,1,2,3], 'W13-K8': [4,5,6,7]}
         #self.chip_links = {'W12-K7': [0,1], 'W13-K8': [2,3], 'W14-K9': [4,5], 'W15-K6': [6,7]}
-        self.chip_links = {'W12-K7': [0], 'W13-K8': [2], 'W14-K9': [4], 'W15-K6': [6],
-                            'W11-K1': [1], 'W16-K2': [3], 'W17-K3': [5], 'W18-K4': [7]}
+        #self.chip_links = {'W12-K7': [0], 'W13-K8': [2], 'W14-K9': [4], 'W15-K6': [6],
+        #                    'W11-K1': [1], 'W16-K2': [3], 'W17-K3': [5], 'W18-K4': [7]}
+        self.chip_links = chip_links
 
     def start(self):
         try:

@@ -336,6 +336,7 @@ class GUI_ToT_Calib(Gtk.Window):
                                                             tp_period      = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile        = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile       = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link      = TPX3_datalogger.data['chip_links'],
                                                             progress       = GUI.get_progress_value_queue(),
                                                             status         = GUI.get_status_queue(),
                                                             plot_queue     = GUI.plot_queue)
@@ -484,6 +485,7 @@ class GUI_Threshold_Scan(Gtk.Window):
                                                             tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile          = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link        = TPX3_datalogger.data['chip_links'],
                                                             progress         = GUI.get_progress_value_queue(),
                                                             status           = GUI.get_status_queue(),
                                                             plot_queue       = GUI.plot_queue)
@@ -650,6 +652,7 @@ class GUI_Threshold_Calib(Gtk.Window):
                                                             n_pulse_heights  = self.n_pulse_heights_value,
                                                             thrfile          = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link        = TPX3_datalogger.data['chip_links'],
                                                             progress         = GUI.get_progress_value_queue(),
                                                             status           = GUI.get_status_queue(),
                                                             plot_queue       = GUI.plot_queue)
@@ -797,6 +800,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
                                                             tp_period      = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile        = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile       = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link      = TPX3_datalogger.data['chip_links'],
                                                             progress       = GUI.get_progress_value_queue(),
                                                             status         = GUI.get_status_queue(),
                                                             plot_queue     = GUI.plot_queue)
@@ -926,6 +930,7 @@ class GUI_Noise_Scan(Gtk.Window):
                                                             shutter          = self.shutter_time,
                                                             thrfile          = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link        = TPX3_datalogger.data['chip_links'],
                                                             progress         = GUI.get_progress_value_queue(),
                                                             status           = GUI.get_status_queue(),
                                                             plot_queue       = GUI.plot_queue)
@@ -1068,6 +1073,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
                                                             pixeldac         = 127,
                                                             tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link        = TPX3_datalogger.data['chip_links'],
                                                             progress         = GUI.get_progress_value_queue(),
                                                             status           = GUI.get_status_queue(),
                                                             result           = GUI.pixeldac_result,
@@ -1198,6 +1204,7 @@ class GUI_Run_Datataking(Gtk.Window):
                                                             scan_timeout     = self.Datataking_Time_value,
                                                             thrfile          = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link        = TPX3_datalogger.data['chip_links'],
                                                             progress         = GUI.get_progress_value_queue(),
                                                             status           = GUI.get_status_queue(),
                                                             plot_queue       = GUI.plot_queue,
@@ -1722,6 +1729,7 @@ class GUI_Additional_Settings(Gtk.Window):
             for link_number in range(self.hardware_links):
                 self.link_label[link_number].hide()
                 self.link_enable_button[link_number].hide()
+                self.chip_label[link_number].show()
             self.resize(1,1)
 
     def readout_speed_entered(self, widget):
@@ -2026,6 +2034,7 @@ class GUI_Equalisation(Gtk.Window):
                                                                 Vthreshold_stop  = self.Threshold_stop_value,
                                                                 mask_step        = self.Number_of_Iterations,
                                                                 maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                                chip_link        = TPX3_datalogger.data['chip_links'],
                                                                 progress         = GUI.get_progress_value_queue(),
                                                                 status           = GUI.get_status_queue(),
                                                                 result_path      = GUI.eq_result_path,
@@ -2038,6 +2047,7 @@ class GUI_Equalisation(Gtk.Window):
                                                                 mask_step        = self.Number_of_Iterations,
                                                                 maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                                 tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                                chip_link        = TPX3_datalogger.data['chip_links'],
                                                                 progress         = GUI.get_progress_value_queue(),
                                                                 status           = GUI.get_status_queue(),
                                                                 result_path      = GUI.eq_result_path,
@@ -3167,7 +3177,7 @@ class GUI_Main(Gtk.Window):
         self.page2.grid.attach(self.simulationbutton, 0, 1, 1, 1)
 
         self.plotwidget = plotwidget(data_queue = self.data_queue)
-        #self.plotwidget.init_figure(self.chip_links)
+        #self.plotwidget.init_figure(self.chip_links) -> init in update_status
         self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
         self.page2.pack_end(self.page2.space, True, False, 0)
         self.page2.pack_end(self.page2.space1, True, False, 0)
@@ -3588,8 +3598,10 @@ class GUI_Main(Gtk.Window):
         
     def update_scan(self):
         if not self.pixeldac_result.empty():
-            TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = self.pixeldac_result.get())
-            TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
+            results = self.pixeldac_result.get()
+            for chipID in results:
+                TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = results[chipID]['pixeldac'], chip=chipID)
+                TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC', chip=chipID)
         if not self.eq_result_path.empty():
             TPX3_datalogger.write_value(name = 'Equalisation_path', value = self.eq_result_path.get())
         while not self.plot_queue.empty():
@@ -3674,7 +3686,9 @@ class GUI_Main(Gtk.Window):
 
     def start_converter(self):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        cm = ConverterManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn)
+        cm = ConverterManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml',
+                              data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn,
+                              chip_links = TPX3_datalogger.data['chip_links'])
         self.converter_process = Process(target = cm.start)
         self.pipe_source_conn.send(True)
         self.converter_process.start()

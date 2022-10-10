@@ -107,7 +107,7 @@ class PixelDACopt(ScanBase):
         print("Chips to be optimized: " + str([chip.chipId_decoded for chip in self.chips_not_optimized]))
 
         # Start parameters for the optimization
-        iteration      = 0
+        iteration  = 0
 
         # Create the masks for all steps for the scan at 0 and at 15
         mask_cmds  = self.create_scan_masks(16, pixel_threshold = 0, number = 1, append_datadriven = False, progress = progress)
@@ -152,10 +152,10 @@ class PixelDACopt(ScanBase):
                 self.dump_configuration(iteration = iteration, **args)
 
             # Analyse the data of the current iteration
-            opt_results   = self.analyze_iteration(iteration, progress = progress, status = status)
+            opt_results   = self.analyze_iteration(iteration, chip_links = kwargs['chip_link'], progress = progress, status = status)
 
             # Get DAC YAML file path
-            dac_yaml = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
+            # dac_yaml = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
 
             # Check, if the chips are optimized 
             for chip in self.chips_not_optimized:
@@ -167,22 +167,22 @@ class PixelDACopt(ScanBase):
                     pass
                 else:
                     # If optimized, write new pixeldac to chip_dacs YAML file
-                    with open(dac_yaml, 'r') as f:
-                        doc = yaml.load(f, Loader=yaml.FullLoader)
+                    #with open(dac_yaml, 'r') as f:
+                    #    doc = yaml.load(f, Loader=yaml.FullLoader)
 
                     # Traverse YAML file
-                    for yaml_chip in doc['chips']:
+                    #for yaml_chip in doc['chips']:
                         # Select current chip
-                        if yaml_chip['chip_ID'] == chip.chipId_int:
-                            for register in yaml_chip['registers']:
+                    #   if yaml_chip['chip_ID'] == chip.chipId_int:
+                    #        for register in yaml_chip['registers']:
                                 # Select Ibias_PixelDAC register
-                                if register['name'] == 'Ibias_PixelDAC':
+                    #            if register['name'] == 'Ibias_PixelDAC':
                                     # Write out new value
-                                    register['value'] = int(self.optimization_params[chip.chipId_decoded]['last_pixeldac'])
+                     #               register['value'] = int(self.optimization_params[chip.chipId_decoded]['last_pixeldac'])
                     
                     # Save new settings
-                    with open(dac_yaml, 'w') as f:
-                        yaml.dump(doc, f)
+                    #with open(dac_yaml, 'w') as f:
+                    #    yaml.dump(doc, f)
                     
                     # and remove chip from list
                     self.chips_not_optimized.remove(chip)
@@ -199,6 +199,9 @@ class PixelDACopt(ScanBase):
             row['value']     = iteration
             row.append()
             iterations_table.flush()
+
+        # Write results off
+        result.put(self.optimization_params)
     
 
     def scan_iteration(self, pixeldac = 127, last_pixeldac = 127, last_delta = 127, Vthreshold_start=1500, Vthreshold_stop=2500, n_injections=100, tp_period = 1, offset=0, mask_cmds = None, mask_cmds2 = None, progress = None, status = None, **kwargs):
@@ -346,7 +349,7 @@ class PixelDACopt(ScanBase):
 
         self.logger.info('Scan finished')
 
-    def analyze_iteration(self, iteration = 0, progress = None, status = None):
+    def analyze_iteration(self, iteration = 0, chip_links = None, progress = None, status = None):
         '''
             Analyze the data of the iteration and calculate the new Ibias_PixelDAC value.
             In the last iteration the data is also used to calculate an equalisation matrix.
@@ -375,17 +378,17 @@ class PixelDACopt(ScanBase):
             #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
 
             # Get link configuration
-            link_config = h5_file.root.configuration.links[:]
-            chip_IDs    = link_config['chip_id']
+            #link_config = h5_file.root.configuration.links[:]
+            #chip_IDs    = link_config['chip_id']
 
             # Create dictionary of Chips and the links they are connected to
-            self.chip_links = {}
+            #self.chip_links = {}
     
-            for link, ID in enumerate(chip_IDs):
-                if ID not in self.chip_links:
-                    self.chip_links[ID] = [link]
-                else:
-                    self.chip_links[ID].append(link)
+            #for link, ID in enumerate(chip_IDs):
+            #    if ID not in self.chip_links:
+            #        self.chip_links[ID] = [link]
+            #    else:
+            #       self.chip_links[ID].append(link)
 
             self.logger.info('Interpret raw data...')
 
@@ -405,12 +408,12 @@ class PixelDACopt(ScanBase):
             self.logger.info('THR = 0')
             #THR = 0
             raw_data_thr0 = eval(f'h5_file.root.raw_data_{iteration}[:{meta_data_th0_index_stop}]')
-            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, self.chip_links, meta_data_th0, progress = progress)
+            hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, chip_links, meta_data_th0, progress = progress)
 
             self.logger.info('THR = 15')
             #THR = 15
             raw_data_thr15 = eval(f'h5_file.root.raw_data_{iteration}[{meta_data_th0_index_stop}:]')
-            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, self.chip_links, meta_data_th15, progress = progress)
+            hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, chip_links, meta_data_th15, progress = progress)
 
             # Read needed configuration parameters
             Vthreshold_start = run_config.col('Vthreshold_start')[0]
@@ -423,7 +426,7 @@ class PixelDACopt(ScanBase):
             for chip in self.chips_not_optimized:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
-                chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
+                chip_num = [number for number, ID in enumerate(chip_links) if ID==chip.chipId_decoded][0]
                 # Get chipID in desirable formatting for HDF5 files (without '-')
                 chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
                 
@@ -449,11 +452,11 @@ class PixelDACopt(ScanBase):
 
                 # Fit S-Curves to the histograms for all pixels
                 self.logger.info('Fit the scurves for all pixels...')
-                thr2D_th0, _, _  = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=False, progress = progress)
+                thr2D_th0, _, _  = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=chip.configs['Polarity'], progress = progress)
                 h5_file.create_carray(chip_group, name='HistSCurve_th0', obj=scurve_th0)
                 h5_file.create_carray(chip_group, name='ThresholdMap_th0', obj=thr2D_th0.T)
                 scurve_th0       = None
-                thr2D_th15, _, _ = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=False, progress = progress)
+                thr2D_th15, _, _ = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=chip.configs['Polarity'], progress = progress)
                 h5_file.create_carray(chip_group, name='HistSCurve_th15', obj=scurve_th15)
                 h5_file.create_carray(chip_group, name='ThresholdMap_th15', obj=thr2D_th15.T)
                 scurve_th15      = None

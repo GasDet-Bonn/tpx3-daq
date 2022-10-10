@@ -401,9 +401,10 @@ class TPX3_data_logger(object):
                            'Link_5': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX5'},
                            'Link_6': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX6'},
                            'Link_7': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX7'}}, 
-                'chip_links': {}, # active chip links configuration for analysing data
-                'chip_dacs' : {'default': # settings for chips and defaults
-                                {'Ibias_Preamp_ON'      : 150,
+                'chip_links'   : {}, # active chip links configuration for analysing data
+                'chip_polarity': {}, # convinience dict for analysis -> s/z-curve fit
+                'chip_dacs'    : {'default': # settings for chips and defaults
+                                 {'Ibias_Preamp_ON'      : 150,
                                  'VPreamp_NCAS'         : 128,
                                  'Ibias_Ikrum'          : 5,
                                  'Vfbk'                 : 132,
@@ -457,7 +458,7 @@ class TPX3_data_logger(object):
         return False
 
     def update_chip_links(self):
-        new_config = {}
+        new_config  = {}
         link_config = self.data['links']
 
         for n, info in enumerate(link_config):
@@ -491,6 +492,11 @@ class TPX3_data_logger(object):
             self.data['links'][label]['link-status'] = link_status
         
         self.update_chip_links()
+
+    def update_polarity(self):
+        for chip in self.data['chip_dacs']:
+            self.data['chip_polarity'][chip] = self.data['chip_dacs'][chip]['Polarity']
+        print(self.data['chip_polarity'])
 
     def write_value(self, name, value, chip=None):
         if self.name_valid(name) == True:
@@ -539,10 +545,7 @@ class TPX3_data_logger(object):
                         self.write_to_yaml(name = 'init')
                     
                     return True
-                              
-            #elif name in ['Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']: #For multichip upgrade
-            #    self.update_links(value)
-            #    self.data[name] = value
+            
             else:
                 if name in self.general_config_keys:
                     self.data[name] = value
@@ -551,7 +554,11 @@ class TPX3_data_logger(object):
                         self.data['chip_dacs']['default'][name] = value
                     else:
                         self.data['chip_dacs'][chip][name] = value
+                
+                if name == 'Polarity':
+                    self.update_polarity()
                 return True
+            
         print('Error: Unknown data name')
         return False
 
@@ -700,6 +707,7 @@ class TPX3_data_logger(object):
                 for register in chip['registers']:
                     if register['name'] in self.config_keys:
                         self.data['chip_dacs'][chip_name][register['name']] = register['value']
+        self.update_polarity()
 
 
     def write_to_yaml(self, name, chip='default'):
