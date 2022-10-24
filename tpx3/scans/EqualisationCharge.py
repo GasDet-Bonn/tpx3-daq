@@ -331,9 +331,10 @@ class EqualisationCharge(ScanBase):
                 mask_matrix[:, :] = 0
 
                 # Write the equalisation matrix to a new HDF5 file
-                self.save_thr_mask(eq_matrix, chip.wafer_number, chip.x_position, chip.y_position)
-                if result_path != None:
-                    result_path.put(self.thrfile)
+                path = self.save_thr_mask(eq_matrix, chip)
+                #if result_path != None:
+                #    result_path.put(self.thrfile)
+                result_path.put([path, chip.chipId_decoded])
 
     def plot(self, status = None, plot_queue = None, **kwargs):
         '''

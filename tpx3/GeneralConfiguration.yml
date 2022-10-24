@@ -4,7 +4,7 @@ registers:
   address: 0
   size: 1
   default: 1
-  value: 0
+  value: 1
 - name: Op_mode
   description: Sets pixel operation mode (0b00 = ToA and ToT, 0b01 = ToA, 0b10 = Event
     and iToT)

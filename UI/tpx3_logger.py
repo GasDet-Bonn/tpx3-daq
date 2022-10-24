@@ -6,6 +6,7 @@ import yaml
 import numpy as np
 import tables as tb
 from copy import deepcopy
+from datetime import datetime, date
 from tpx3.utils import check_user_folders
 
 class mask_logger(object):
@@ -110,9 +111,10 @@ class mask_logger(object):
             with tb.open_file(path, 'a') as out_file:
                 out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
 
-    def write_full_mask(full_mask, mask = None):
+    def write_full_mask(full_mask, chipID=None, file_name=None):
         '''
             This overwrites the complete mask, so a proper mask has to be given via full_mask
+        '''
         '''
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
@@ -124,35 +126,42 @@ class mask_logger(object):
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
             path = user_path + os.sep + mask + '.h5'
+        '''
+        mask_folder = os.path.join(os.path.join(os.path.expanduser('~'), 'Timepix3'), 'masks')
+
+        if file_name == 'New':
+            now        = datetime.now()
+            today      = date.today()
+            time_stamp = f'{today}_{now.hour:02d}-{now.minute:02d}-{now.second:02d}'
+            file_name  = f'{chipID}_mask_{time_stamp}'
+            full_path  = f'{mask_folder}{os.sep}{chipID}{os.sep}{file_name}.h5'
+        else:
+            full_path  = f'{mask_folder}{os.sep}{chipID}{os.sep}{file_name}'
 
         #delete last mask
-        if os.path.isfile(path):
-            with tb.open_file(path, 'a') as infile:
+        if os.path.isfile(full_path):
+            with tb.open_file(full_path, 'a') as infile:
                 infile.remove_node(infile.root.mask_matrix)
 
         #Saving the final matrix
-        with tb.open_file(path, 'a') as out_file:
+        with tb.open_file(full_path, 'a') as out_file:
             out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=full_mask)
         return True
 
-    def get_mask(mask = None):
+    def get_mask(path = None):
         '''
             This returns the mask matrix as a list.
         '''
-        if mask == None:
-            path = TPX3_datalogger.read_value(name = 'Mask_path')
-            if path == None:
-                print('No mask set')
-                return False
+        if path == None:
+            # return zeros
+            mask_matrix = np.zeros((256*256, ), dtype=bool)
+            #print('returning default mask (zeros)')
+            
         else:
-            user_path = os.path.expanduser('~')
-            user_path = os.path.join(user_path, 'Timepix3')
-            user_path = os.path.join(user_path, 'masks')
-            path = user_path + os.sep + mask + '.h5'
-
-        with tb.open_file(path, 'r') as infile:
-            mask_matrix = infile.root.mask_matrix[:]
-            return mask_matrix
+            with tb.open_file(path, 'r') as infile:
+                mask_matrix = infile.root.mask_matrix[:]
+        
+        return mask_matrix
 
 class equal_logger(object):
     '''
@@ -187,14 +196,14 @@ class file_logger(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
-        Chipnames = TPX3_datalogger.get_chipnames()
-        if len(Chipnames) == 0:
-            Chip = 'W?_??'
-        elif len(Chipnames) == 1:
-            Chip = Chipnames[0]
-        else:
-            Chip = 'Multi_chip'
-            print('not implemented')
+        #Chipnames = TPX3_datalogger.get_chipnames()
+        #if len(Chipnames) == 0:
+        #    Chip = 'W?_??'
+        #elif len(Chipnames) == 1:
+        #    Chip = Chipnames[0]
+        #else:
+        #    Chip = 'Multi_chip'
+        #    print('not implemented')
 
         if filename == None:
             #filename = Chip + '_backup_' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.TPX3'
@@ -266,9 +275,12 @@ class file_logger(object):
         user_path = os.path.join(user_path, 'backups')
         if file == None:
             #Get most recent file
-            file = file_logger.get_newest_backup_file()
-            data = json.load(open(file, 'r'))
-            return data
+            try:
+                file = file_logger.get_newest_backup_file()
+                data = json.load(open(file, 'r'))
+                return data
+            except:
+                return None
         else:
             file = file
             if os.path.isfile(user_path + os.sep + file) == True:
@@ -276,7 +288,8 @@ class file_logger(object):
                 return data
             else:
                 print('Error: File does not exist')
-                return False
+                print('... read from yamls ...')
+                return None
 
     def get_newest_backup_file():
         '''
@@ -333,9 +346,10 @@ class file_logger(object):
         if os.path.isdir(user_path) == False:
             os.mkdir(user_path)
         default_file = open(user_path + os.sep + filename, "w")
-        json.dump(TPX3_datalogger.default_config(), default_file)
+        json.dump(TPX3_datalogger.config(), default_file)
         file = user_path + os.sep + filename
         return file
+
 
     def get_backup_value(name, file = None):
         '''
@@ -387,22 +401,21 @@ class TPX3_data_logger(object):
                 'colorsteps'         : 50,
                 'integration_length' : 500,
                 'color_depth'        : 10,
-                'Equalisation_path'  : None,
-                'Mask_path'          : None,
+                'Equalisation_path'  : {},
+                'Mask_path'          : {},
                 'Run_name'           : None,
                 'Readout_Speed'      : 0.1,
                 'TP_Period'          : 3,
                 # to be filled after initialization of hardware
-                'links' : {'Link_0': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX0'},
-                           'Link_1': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX1'},
-                           'Link_2': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX2'},
-                           'Link_3': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX3'},
-                           'Link_4': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX4'},
-                           'Link_5': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX5'},
-                           'Link_6': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX6'},
-                           'Link_7': {'chip-id': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX7'}}, 
+                'links' : {'Link_0': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX0'},
+                           'Link_1': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX1'},
+                           'Link_2': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX2'},
+                           'Link_3': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX3'},
+                           'Link_4': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX4'},
+                           'Link_5': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX5'},
+                           'Link_6': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX6'},
+                           'Link_7': {'chip-id': None, 'chip-id-decoded': None, 'chip-link': 0, 'fpga-link': 0, 'data-delay': 0, 'data-invert': 0, 'data-edge': 0, 'link-status': 0, 'name': 'RX7'}}, 
                 'chip_links'   : {}, # active chip links configuration for analysing data
-                'chip_polarity': {}, # convinience dict for analysis -> s/z-curve fit
                 'chip_dacs'    : {'default': # settings for chips and defaults
                                  {'Ibias_Preamp_ON'      : 150,
                                  'VPreamp_NCAS'         : 128,
@@ -462,18 +475,17 @@ class TPX3_data_logger(object):
         link_config = self.data['links']
 
         for n, info in enumerate(link_config):
-            if link_config[info]['chip-id'] not in new_config:
-                new_config[link_config[info]['chip-id']] = [n]
+            if link_config[info]['chip-id-decoded'] not in new_config:
+                new_config[link_config[info]['chip-id-decoded']] = [n]
             else:
-                new_config[link_config[info]['chip-id']].append(n)
+                new_config[link_config[info]['chip-id-decoded']].append(n)
             
         self.data['chip_links'] = new_config
-        #print('self.data[chip_links]')
-        #print(self.data['chip_links'])
 
     def update_links(self, link_config):
-        chip_name = link_config[0]
-        configs   = link_config[1:]
+        chip_name         = link_config[0][0]
+        chip_name_decoded = link_config[0][1]
+        configs           = link_config[1:]
         
         for link in configs:
             chip_link   = int(link[1])
@@ -483,27 +495,23 @@ class TPX3_data_logger(object):
             data_invert = int(link[3])
             data_edge   = int(link[4])
             label       = f'Link_{fpga_link}'
-            self.data['links'][label]['chip-id']     = chip_name
-            self.data['links'][label]['chip-link']   = chip_link
-            self.data['links'][label]['fpga-link']   = fpga_link
-            self.data['links'][label]['data-delay']  = data_delay
-            self.data['links'][label]['data-invert'] = data_invert
-            self.data['links'][label]['data-edge']   = data_edge
-            self.data['links'][label]['link-status'] = link_status
+            self.data['links'][label]['chip-id']         = chip_name
+            self.data['links'][label]['chip-id-decoded'] = chip_name_decoded
+            self.data['links'][label]['chip-link']       = chip_link
+            self.data['links'][label]['fpga-link']       = fpga_link
+            self.data['links'][label]['data-delay']      = data_delay
+            self.data['links'][label]['data-invert']     = data_invert
+            self.data['links'][label]['data-edge']       = data_edge
+            self.data['links'][label]['link-status']     = link_status
         
         self.update_chip_links()
-
-    def update_polarity(self):
-        for chip in self.data['chip_dacs']:
-            self.data['chip_polarity'][chip] = self.data['chip_dacs'][chip]['Polarity']
-        print(self.data['chip_polarity'])
+        
 
     def write_value(self, name, value, chip=None):
         if self.name_valid(name) == True:
             if name in ['Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name',
                         'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name']:
                 value_list = self.data[name]
-                self.update_links(value)
                 if value == value_list:
                     return True
                 elif value_list == [None]:
@@ -511,6 +519,8 @@ class TPX3_data_logger(object):
                     return True
                 elif value_list[0] != value[0]:
                     self.data[name] = value
+                    if value != [None]:
+                        self.update_links(value)
                     return True
                 else:
                     self.final_list = [value[0]]
@@ -543,20 +553,27 @@ class TPX3_data_logger(object):
                         self.final_list.append([new_element_list[0], new_element_list[1], new_element_list[2], new_element_list[3], new_element_list[4], new_link_status])
                         self.data[name] = self.final_list
                         self.write_to_yaml(name = 'init')
-                    
+                    self.update_links(value)
                     return True
             
             else:
                 if name in self.general_config_keys:
-                    self.data[name] = value
+                    if name in ['Equalisation_path', 'Mask_path']:
+                        # In this case value is a list with two elements: 0 - path, 1 - chipID
+                        # The logger logs a list of files
+                        if self.data[name][value[1]] == None:
+                            self.data[name][value[1]]['available'] = [value[0]]
+                        else:
+                            self.data[name][value[1]]['available'].append(value[0])
+                        self.data[name][value[1]]['active'] = value[0]
+                    else:
+                        self.data[name] = value
                 else:
                     if chip == None:
                         self.data['chip_dacs']['default'][name] = value
                     else:
                         self.data['chip_dacs'][chip][name] = value
                 
-                if name == 'Polarity':
-                    self.update_polarity()
                 return True
             
         print('Error: Unknown data name')
@@ -592,26 +609,34 @@ class TPX3_data_logger(object):
         return self.data
 
     def set_data(self, config):
-        if self.is_valid(config):
+        #if self.is_valid(config):
+        #    self.data = config
+        #    return True
+        #print('Error: Corrupted data')
+        #return False
+
+        # Write something to validate the data, if the structure is correct
+        try:
             self.data = config
             return True
-        print('Error: Corrupted data')
-        return False
+        except:
+            print('Error: Corrupted data')
+            return False
 
     def get_chipnames(self):
         chiplist = []
-        for i in range (0,7):
+        for i in range(8):
             name       = 'Chip' + str(i) +'_name'
             value_list = self.data[name]
             if not value_list == [None]:
-                chiplist = chiplist + [value_list[0]]
+                chiplist = chiplist + [value_list[0][1]]
         return chiplist
 
     def get_links(self, chipname):
         for i in range (0,7):
             name       = 'Chip' + str(i) +'_name'
             value_list = self.data[name]
-            if value_list[0] == chipname:
+            if value_list[0][1] == chipname:
                 number_of_links = 0
                 for i in range(1, len(value_list)):
                     if value_list[i][5] in [1, 3, 5, 7]:
@@ -663,28 +688,9 @@ class TPX3_data_logger(object):
         except:
             print('No link data, run Init')
             return False
-        '''    
-        for i in range (0,7):
-            name       = 'Chip' + str(i) +'_name'
-            value_list = self.data[name]
-            if not value_list == [None]:
-                for n in range(1, len(value_list)):
-                    element_list = value_list[n]
-                    chip_link    = element_list[1]
-                    link_status  = element_list[5]
-                    if chip_link == link:
-                        return int(link_status)
-            else:
-                print('Error: Unknown link status')
-                return False
-    
-        else:
-            print('No link data, run Init')
-            return False
-        '''
 
 
-    def get_dacs_from_yaml(self):
+    def get_dacs_from_yaml(self, chipID = None):
         '''
             This function writes DAC configuarions from chip_dacs.yml, chip_GeneralConfiguration.yml,
             chip_outputBlock.yml and chip_PLLConfig.yml, to the dataloggers data.chip_dacs-dictionary
@@ -696,9 +702,15 @@ class TPX3_data_logger(object):
 
             with open(yaml_file) as f:
                 yaml_data = yaml.load(f, Loader=yaml.FullLoader)
-
+            
             for chip in yaml_data['chips']:
-                chip_name = chip['chip_ID_decoded']
+                if chipID == None:
+                    chip_name = chip['chip_ID_decoded']
+                else:
+                    if chip['chip_ID_decoded'] in chipID:
+                        chip_name = chip['chip_ID_decoded']
+                    else:
+                        continue
 
                 if chip_name not in self.data['chip_dacs']:
                     # create dict for chip, if not existing yet
@@ -707,7 +719,6 @@ class TPX3_data_logger(object):
                 for register in chip['registers']:
                     if register['name'] in self.config_keys:
                         self.data['chip_dacs'][chip_name][register['name']] = register['value']
-        self.update_polarity()
 
 
     def write_to_yaml(self, name, chip='default'):
@@ -721,50 +732,6 @@ class TPX3_data_logger(object):
                 label = f'Link_{i}'
                 yaml_data['registers'][i] = self.data['links'][label]
 
-                '''
-                for i in range (0,7):
-                    name = 'Chip' + str(i) +'_name'
-                    value_list = self.data[name]
-                    if not value_list == [None]:
-
-                        Chipname     = value_list[0]
-                        wafer_number = ''
-                        chip_coord2  = ''
-                        for i in range (1, len(Chipname)):
-                            if Chipname[i] == '-':
-                                start_chipname = i
-                        for i in range (1, start_chipname):
-                            wafer_number = wafer_number + Chipname[i]
-                        chip_coord1 = Chipname[start_chipname+1]
-                        for i in range (start_chipname+2, len(Chipname)):
-                            chip_coord2 = chip_coord2 + Chipname[i]
-
-                        wafer_number = int(wafer_number)
-                        chip_coord1  = ord(chip_coord1.lower()) - ord('a') + 1
-                        chip_coord2  = int(chip_coord2)
-
-                        Chip_ID = (wafer_number << 8) | (chip_coord2 << 4) | chip_coord1
-
-                        for n in range(1, len(value_list)):
-                            element_list = value_list[n]
-                            element      = 'RX' + str(element_list[0])
-                            fpga_link    = element_list[0]
-                            chip_link    = element_list[1]
-                            data_delay   = element_list[2]
-                            data_invert  = element_list[3]
-                            data_edge    = element_list[4]
-                            link_status  = element_list[5]
-
-                            for register in yaml_data['registers']:
-                                if register['name'] == element:
-                                    register['fpga-link']   = fpga_link
-                                    register['chip-link']   = chip_link
-                                    register['chip-id']     = Chip_ID
-                                    register['data-delay']  = data_delay
-                                    register['data-invert'] = data_invert
-                                    register['data-edge']   = data_edge
-                                    register['link-status'] = link_status
-                '''
             with open(yaml_file, 'w') as file:
                 yaml.dump(yaml_data, file)
             return True
@@ -818,7 +785,6 @@ class TPX3_data_logger(object):
                 return False
 
     def write_backup_to_yaml(self):
-
         dac_keys = ['Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk',
                     'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON',
                     'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse',
@@ -828,8 +794,8 @@ class TPX3_data_logger(object):
         PLLConfig_keys     = ['clkphasediv', 'clkphasenum', 'PLLOutConfig']
 
         key_list          = [dac_keys, outputBlock_keys, generalConfig_keys, PLLConfig_keys]
-        default_file_list = ['dacs.yml', 'outputBlock.yml', 'generalConfiguration.yml', 'PLLConfiguration.yml']
-        chip_file_list    = ['chip_dacs.yml', 'chip_outputBlock.yml', 'chip_generalConfiguration.yml', 'chip_PLLConfiguration.yml']
+        default_file_list = ['dacs.yml', 'outputBlock.yml', 'GeneralConfiguration.yml', 'PLLConfig.yml']
+        chip_file_list    = ['chip_dacs.yml', 'chip_outputBlock.yml', 'chip_GeneralConfiguration.yml', 'chip_PLLConfig.yml']
 
         # Save links
         yaml_file = os.path.join(self.current_path, 'tpx3' + os.sep + 'links.yml')
@@ -839,7 +805,7 @@ class TPX3_data_logger(object):
 
         for i in range(8):
             label                     = f'Link_{i}'
-            yaml_data['registers'][i] = self.data['Links'][label]
+            yaml_data['registers'][i] = self.data['links'][label]
         
         with open(yaml_file, 'w') as file:
             yaml.dump(yaml_data, file)
@@ -870,85 +836,74 @@ class TPX3_data_logger(object):
                 yaml.dump(default_data, file)
             with open(chip_file, 'w') as file:
                 yaml.dump(chip_data, file)
-
+    
+    def check_mask_equal(self):
+        '''
+            A helper function, which checks, if there are folders created for mask
+            and equalisation files for all chips, which are currently in the logger.
+        '''
+        user_path  = os.path.expanduser('~')
+        user_path  = os.path.join(user_path, 'Timepix3')
+        equal_path = os.path.join(user_path, 'equalisations')
+        mask_path  = os.path.join(user_path, 'masks')
         
-        '''
-        for key in self.data:
-            if key in {'Chip0_name', 'Chip1_name', 'Chip2_name', 'Chip3_name', 'Chip4_name', 'Chip5_name', 'Chip6_name', 'Chip7_name'}:
-                yaml_file = os.path.join(self.current_path, 'tpx3' + os.sep + 'links.yml')
-                with open(yaml_file) as file:
-                    yaml_data = yaml.load(file, Loader=yaml.FullLoader)
-                value_list = self.data[key]
-                if not value_list == [None]:
-                    Chipname     = value_list[0]
-                    wafer_number = ''
-                    chip_coord2  = ''
-                    for i in range (1, len(Chipname)):
-                        if Chipname[i] == '-':
-                            start_chipname = i
-                    for i in range (1, start_chipname):
-                        wafer_number = wafer_number + Chipname[i]
-                    chip_coord1 = Chipname[start_chipname+1]
-                    for i in range (start_chipname+2, len(Chipname)):
-                        chip_coord2 = chip_coord2 + Chipname[i]
+        # Get list of chips
+        chip_list = list(self.data['chip_dacs'])
+    
+        for chip in chip_list:
+            chip_equal_path = os.path.join(equal_path, chip)
+            chip_mask_path  = os.path.join(mask_path, chip)
 
-                    wafer_number = int(wafer_number)
-                    chip_coord1  = ord(chip_coord1.lower()) - ord('a') + 1
-                    chip_coord2  = int(chip_coord2)
+            # Check, if folders are created
+            if os.path.isdir(chip_equal_path) == False:
+                os.mkdir(chip_equal_path)
+            if os.path.isdir(chip_mask_path) == False:
+                os.mkdir(chip_mask_path)
 
-                    Chip_ID = (wafer_number << 8) | (chip_coord2 << 4) | chip_coord1
+            # Create a list of files
+            equal_file_list = os.listdir(chip_equal_path)  
+            mask_file_list  = os.listdir(chip_mask_path)
 
-                    for n in range(1, len(value_list)):
-                        element_list = value_list[n]
-                        element      = 'RX' + str(element_list[0])
-                        fpga_link    = element_list[0]
-                        chip_link    = element_list[1]
-                        data_delay   = element_list[2]
-                        data_invert  = element_list[3]
-                        data_edge    = element_list[4]
-                        # try except for compatibility with backups without link_status
-                        try:
-                            link_status = element_list[5]
-                        except:
-                            link_status = 0
-
-                        for register in yaml_data['registers']:
-                            if register['name'] == element:
-                                register['fpga-link']   = fpga_link
-                                register['chip-link']   = chip_link
-                                register['chip-id']     = Chip_ID
-                                register['data-delay']  = data_delay
-                                register['data-invert'] = data_invert
-                                register['data-edge']   = data_edge
-                                register['link-status'] = link_status
-
-                with open(yaml_file, 'w') as file:
-                    yaml.dump(yaml_data, file)
-
+            # Put the lists in the logger
+            if equal_file_list == []:
+                self.data['Equalisation_path'][chip] = {'available': ['None'], 'active': 'None'}
             else:
-                if key in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Vthreshold_fine', 'Vthreshold_coarse', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'VTP_fine', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Sense_DAC'}:
-                    yaml_file = os.path.join(self.current_path, 'tpx3' + os.sep + 'dacs.yml')
-
-                elif key in {'clk_fast_out', 'ClkOut_frequency_src'}:
-                    yaml_file = os.path.join(self.current_path, 'tpx3' + os.sep + 'outputBlock.yml')
-
-                elif key in {'Polarity', 'Op_mode', 'Fast_Io_en', 'AckCommand_en', 'SelectTP_Ext_Int'}:
-                    yaml_file = os.path.join(self.current_path, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
-
-                elif key in {'clkphasediv', 'clkphasenum', 'PLLOutConfig'}:
-                    yaml_file = os.path.join(self.current_path, 'tpx3' + os.sep + 'PLLConfig.yml')
+                # Append full path to files
+                for n, file in enumerate(equal_file_list):
+                    equal_file_list[n] = os.path.join(chip_equal_path, file)
+                equal_file_list.append('None')
+                # If the chip is not in list, create new entry with first file as active
+                if chip not in list(self.data['Equalisation_path']):
+                    self.data['Equalisation_path'][chip] = {'available': equal_file_list, 'active': equal_file_list[0]}
                 else:
-                    yaml_file = None
+                    for file in equal_file_list:
+                        # only append to 'available', active should be the same
+                        if file not in self.data['Equalisation_path'][chip]['available']:
+                            self.data['Equalisation_path'][chip]['available'].append(file)
+                        # if active file is not in directory anymore, set to None
+                        if self.data['Equalisation_path'][chip]['active'] not in equal_file_list:
+                            self.data['Equalisation_path'][chip]['active'] = 'None'
+                    # Set 'None' as last item
+                    self.data['Equalisation_path'][chip]['available'].remove('None')
+                    self.data['Equalisation_path'][chip]['available'].append('None')      
 
-                if not yaml_file == None:
-                    with open(yaml_file) as file:
-                        yaml_data = yaml.load(file, Loader=yaml.FullLoader)
-                    for register in yaml_data['registers']:
-                        if register['name'] == key:
-                            register['value'] = self.data[key]
-                    with open(yaml_file, 'w') as file:
-                        yaml.dump(yaml_data, file)
-        '''
+
+            if mask_file_list == []:
+                self.data['Mask_path'][chip] = {'available': ['None'], 'active': 'None'}
+            else:
+                for n, file in enumerate(mask_file_list):
+                    mask_file_list[n] = os.path.join(chip_mask_path, file)
+                mask_file_list.append('None')
+                if chip not in list(self.data['Mask_path']):
+                    self.data['Mask_path'][chip] = {'available': mask_file_list, 'active': mask_file_list[0]}
+                else:
+                    for file in mask_file_list:
+                        if file not in self.data['Mask_path'][chip]['available']:
+                            self.data['Mask_path'][chip]['available'].append(file)
+                        if self.data['Mask_path'][chip]['active'] not in mask_file_list:
+                            self.data['Mask_path'][chip]['active'] = 'None'
+                    self.data['Mask_path'][chip]['available'].remove('None')
+                    self.data['Mask_path'][chip]['available'].append('None')             
 
 
 TPX3_datalogger = TPX3_data_logger()

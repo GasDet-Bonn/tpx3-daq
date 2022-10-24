@@ -43,7 +43,6 @@ class ScanHardware(object):
 
         self.chip = TPX3()
         self.chip.init(inter_layer=Dut_layer)
-        #print('I am here!')
 
         invert = 0
         # For the MIMAS A7 readout board the output data must be inverted
@@ -226,7 +225,7 @@ class ScanHardware(object):
             x_position   = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
             y_position   = bit_id[7:4].tovalue()
             ID           = 'W' + str(wafer_number) + '-' + x_position + str(y_position)
-            print(register['chip-id'], ID_List)
+
             # Write new Chip-ID to the list
             if [register['chip-id'], ID] not in ID_List:
                 ID_List.append([register['chip-id'], ID])
@@ -236,102 +235,42 @@ class ScanHardware(object):
         PLL_default_file           = os.path.join(proj_dir, 'tpx3' + os.sep + 'PLLConfig.yml')
         outputBlock_default_file   = os.path.join(proj_dir, 'tpx3' + os.sep + 'outputBlock.yml')
         GeneralConfig_default_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
-        
-        # Load default yamls
-        with open(dacs_default_file, 'r') as file:
-            dacs_default          = yaml.load(file, Loader = yaml.FullLoader)
-        with open(PLL_default_file, 'r') as file:
-            PLL_default           = yaml.load(file, Loader = yaml.FullLoader)
-        with open(outputBlock_default_file, 'r') as file:
-            outputBlock_default   = yaml.load(file, Loader = yaml.FullLoader)
-        with open(GeneralConfig_default_file, 'r') as file:
-            GeneralConfig_default = yaml.load(file, Loader = yaml.FullLoader)
 
+        # Get chip yamls
         dacs_chip_file          = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
         PLL_chip_file           = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_PLLConfig.yml')
         outputBlock_chip_file   = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_outputBlock.yml')
         GeneralConfig_chip_file = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_GeneralConfiguration.yml')
-        
+
+        default_files = [dacs_default_file, PLL_default_file, outputBlock_default_file, GeneralConfig_default_file]
+        chip_files    = [dacs_chip_file, PLL_chip_file, outputBlock_chip_file, GeneralConfig_chip_file]
+
         # Write default values into new chip yamls, if settings for a chip are not
         # in the file yet.  Don't overwrite settings for already existing entries
-        # TODO: Write this in functions, so we don't have this here four times
-        with open(dacs_chip_file, 'r+') as file:
-            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
-        
-        try:
-            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
-            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
-        except:
-            chip_list      = []
-            full_chip_dict = []
+        for i in range(4):
+            # Load default yaml
+            with open(default_files[i], 'r') as file:
+                default_values = yaml.load(file, Loader = yaml.FullLoader)
+            # Load chip yaml
+            with open(chip_files[i], 'r+') as file:
+                chip_values = yaml.load(file, Loader = yaml.FullLoader)
 
-        for chip in range(len(ID_List)):
-            # check if chip is already in YAML
-            if ID_List[chip][0] not in chip_list:
-                print(ID_List[chip][0], chip_list)
-                # If chip is not in list, make a new entry
-                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(dacs_default['registers'])}
-                full_chip_dict.append(chip_dict)
-        
-        with open(dacs_chip_file, 'w') as file:
-            yaml.dump({'chips': full_chip_dict}, file)
-        
+            try:
+                chip_list      = [chip['chip_ID'] for chip in chip_values['chips']]
+                full_chip_dict = [chip_registers for chip_registers in chip_values['chips']]
+            except:
+                chip_list      = []
+                full_chip_dict = []
 
-        with open(PLL_chip_file, 'r+') as file:
-            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
-        
-        try:
-            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
-            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
-        except:
-            chip_list      = []
-            full_chip_dict = []
-
-        for chip in range(len(ID_List)):
-            if ID_List[chip][0] not in chip_list:
-                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(PLL_default['registers'])}
-                full_chip_dict.append(chip_dict)
-    
-        with open(PLL_chip_file, 'w') as file:
-            yaml.dump({'chips': full_chip_dict}, file)
-
-
-        with open(outputBlock_chip_file, 'r+') as file:
-            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
+            for chip in range(len(ID_List)):
+                # check, if chip is already in YAML
+                if ID_List[chip][0] not in chip_list:
+                    # make a new entry with defaults
+                    chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(default_values['registers'])}
+                    full_chip_dict.append(chip_dict)
             
-        try:
-            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
-            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
-        except:
-            chip_list      = []
-            full_chip_dict = []
-
-        for chip in range(len(ID_List)):
-            if ID_List[chip][0] not in chip_list:
-                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(outputBlock_default['registers'])}
-                full_chip_dict.append(chip_dict)
-    
-        with open(outputBlock_chip_file, 'w') as file:
-            yaml.dump({'chips': full_chip_dict}, file)
-        
-
-        with open(GeneralConfig_chip_file, 'r+') as file:
-            old_file_yaml  = yaml.load(file, Loader = yaml.FullLoader)
-            
-        try:
-            chip_list      = [chip['chip_ID'] for chip in old_file_yaml['chips']]
-            full_chip_dict = [chip_registers for chip_registers in old_file_yaml['chips']]
-        except:
-            chip_list      = []
-            full_chip_dict = []
-
-        for chip in range(len(ID_List)):
-            if ID_List[chip][0] not in chip_list:
-                chip_dict = {'chip_ID': ID_List[chip][0], 'chip_ID_decoded': ID_List[chip][1], 'registers': deepcopy(GeneralConfig_default['registers'])}
-                full_chip_dict.append(chip_dict)
-    
-        with open(GeneralConfig_chip_file, 'w') as file:
-            yaml.dump({'chips': full_chip_dict}, file)
+            with open(chip_files[i], 'w') as file:
+                yaml.dump({'chips': full_chip_dict}, file)
 
         # Create a list of Chips with all link settings for the specific chip
         Chip_List = []
@@ -340,23 +279,22 @@ class ScanHardware(object):
             for ID in ID_List:
                 if ID[0] == register['chip-id']:
                     # If the list is empty or the current chip is not in the list add it with its settings
-                    if len(Chip_List) == 0 or ID[1] not in Chip_List[:][0]:
+                    if Chip_List == [] or ID[1] != Chip_List[:][0][0][1]:
                         if register['link-status'] != 0:
-                            Chip_List.append([ID[1], [register['fpga-link'], register['chip-link'], register['data-delay'], register['data-invert'], register['data-edge'], register['link-status']]])
+                            Chip_List.append([[ID[0], ID[1]], [register['fpga-link'], register['chip-link'], register['data-delay'], register['data-invert'], register['data-edge'], register['link-status']]])
                         else:
-                            Chip_List.append([ID[1], [register['fpga-link'], 0, 0, 0, 0, register['link-status']]])
+                            Chip_List.append([[ID[0], ID[1]], [register['fpga-link'], 0, 0, 0, 0, register['link-status']]])
 
                     # If the Chip is already in the list just add the link settings to it
                     else:
                         for chip in Chip_List:
-                            if ID[1] == chip[0]:
+                            if ID[1] == chip[0][1]:
                                 if register['link-status'] != 0:
                                     chip.append([register['fpga-link'], register['chip-link'], register['data-delay'], register['data-invert'], register['data-edge'], register['link-status']])
                                 else:
                                     chip.append([register['fpga-link'], 0, 0, 0, 0, register['link-status']])
                     break
 
-        print(Chip_List)
         if status != None:
             status.put("iteration_finish_symbol")
 

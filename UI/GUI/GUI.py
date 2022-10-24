@@ -4,7 +4,7 @@ import os
 import time
 import cairo
 from shutil import copy
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject, GLib
 import matplotlib.cm as cm
 from matplotlib.figure import Figure
@@ -1625,7 +1625,7 @@ class GUI_Additional_Settings(Gtk.Window):
             temp_link_label = Gtk.Label()
             temp_chip_label = Gtk.Label()
             temp_link_label.set_text(str(link_number))
-            temp_chip_label.set_text(str(TPX3_datalogger.data['links'][f'Link_{link_number}']['chip-id']))
+            temp_chip_label.set_text(str(TPX3_datalogger.data['links'][f'Link_{link_number}']['chip-id-decoded']))
             self.link_label.append(temp_link_label)
             self.chip_label.append(temp_chip_label)
             if TPX3_datalogger.get_link_status(link_number) in [1, 3, 5, 7]:
@@ -1729,7 +1729,7 @@ class GUI_Additional_Settings(Gtk.Window):
             for link_number in range(self.hardware_links):
                 self.link_label[link_number].hide()
                 self.link_enable_button[link_number].hide()
-                self.chip_label[link_number].show()
+                self.chip_label[link_number].hide()
             self.resize(1,1)
 
     def readout_speed_entered(self, widget):
@@ -2178,11 +2178,25 @@ class GUI_Set_Mask(Gtk.Window):
         self.connect("key-press-event", self.on_key_pressed)
         self.coord_window = None
 
-        if  isinstance(mask_logger.get_mask(), bool):
+        self.mask_folder = os.path.join(os.path.join(os.path.expanduser('~'), 'Timepix3'), 'masks')
+
+        if isinstance(mask_logger.get_mask(), bool):
             self.np_mask_list = np.zeros((256 * 256, ), dtype = bool)
         else:
             current_mask = mask_logger.get_mask()
             self.np_mask_list = current_mask.reshape((256 * 256))
+
+        chip_list = list(TPX3_datalogger.data['chip_dacs'])
+        
+        self.chip_select = Gtk.ComboBoxText()
+        self.mask_select = Gtk.ComboBoxText()
+        self.chip_select.set_size_request(300,30)
+        self.mask_select.set_size_request(300,30)
+        for name in chip_list:
+            self.chip_select.append_text(name)
+        self.chip_select.connect('changed', self.on_chip_select_changed)
+        self.chip_select.set_active(0) # Here the mask_select is initialised
+        self.mask_select.connect('changed', self.on_mask_select_changed)
 
         grid = Gtk.Grid()
         grid.set_row_spacing(0)
@@ -2192,11 +2206,11 @@ class GUI_Set_Mask(Gtk.Window):
         grid.set_row_homogeneous(False)
         self.add(grid)
 
-        self.np_row_list = np.zeros((256, ), dtype = bool)
+        self.np_row_list    = np.zeros((256, ), dtype = bool)
         self.np_column_list = np.zeros((256, ), dtype = bool)
 
         self.surface = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 2610)
-        self.cr = cairo.Context(self.surface)
+        self.cr      = cairo.Context(self.surface)
         self.cr.rectangle(0, 0, 2610, 2610)
         self.cr.set_source_rgb(1, 1, 1)
         self.cr.fill()
@@ -2204,7 +2218,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.cr.set_font_size(9)
 
         self.row_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 21, 2610)
-        self.row_num = cairo.Context(self.row_numbers)
+        self.row_num     = cairo.Context(self.row_numbers)
         self.row_num.rectangle(0, 0, 21, 2610)
         self.row_num.set_source_rgb(1, 1, 1)
         self.row_num.fill()
@@ -2212,7 +2226,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.row_num.set_font_size(9)
 
         self.column_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 21)
-        self.column_num = cairo.Context(self.column_numbers)
+        self.column_num     = cairo.Context(self.column_numbers)
         self.column_num.rectangle(0, 0, 2610, 21)
         self.column_num.set_source_rgb(1, 1, 1)
         self.column_num.fill()
@@ -2269,13 +2283,13 @@ class GUI_Set_Mask(Gtk.Window):
         self.surface.write_to_png(user_path + os.sep + 'chip_mask.png')
 
         self.map_area = Gtk.EventBox()
-        self.mapview = Gtk.ScrolledWindow()
+        self.mapview  = Gtk.ScrolledWindow()
         self.mapview.set_property('width-request', 700)
         self.mapview.set_property('height-request', 700)
         self.mapview.set_border_width(0)
         self.mapview.set_policy(Gtk.PolicyType.ALWAYS, Gtk.PolicyType.ALWAYS)
         self.mapview.add_events(Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.BUTTON1_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK)
-        self.map = Gtk.Image()
+        self.map    = Gtk.Image()
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'chip_mask.png')
         self.map.set_from_pixbuf(self.pixbuf)
 
@@ -2284,7 +2298,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.columnview.set_property('height-request', 21)
         self.columnview.set_border_width(0)
         self.columnview.set_policy(Gtk.PolicyType.ALWAYS, Gtk.PolicyType.NEVER)
-        self.column = Gtk.Image()
+        self.column        = Gtk.Image()
         self.column_pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'column_number.png')
         self.column.set_from_pixbuf(self.column_pixbuf)
         self.columnview.add(self.column)
@@ -2317,12 +2331,40 @@ class GUI_Set_Mask(Gtk.Window):
         grid.attach(self.mapview, 0, 0, 20, 20)
         grid.attach(self.columnview, 0, 20, 20, 2)
         grid.attach(self.rowview, 20, 0, 2, 20)
-        grid.attach(self.Savebutton, 23, 21, 2, 1)
+        grid.attach(self.Savebutton, 23, 2, 3, 1)
+        grid.attach(self.chip_select, 23, 0, 3, 1)
+        grid.attach(self.mask_select, 23, 1, 3, 1)
 
         self.rowview.set_vadjustment(self.mapview.get_vadjustment())
         self.columnview.set_hadjustment(self.mapview.get_hadjustment())
 
         self.show_all()
+
+    def on_chip_select_changed(self, widget):
+        chip_ID       = self.chip_select.get_active_text()
+        chip_mask_dir = os.path.join(self.mask_folder, chip_ID)
+        mask_files    = os.listdir(chip_mask_dir)
+        
+        self.mask_select.remove_all()
+        for file in mask_files:
+            self.mask_select.append_text(file)
+        self.mask_select.append_text('New')
+        self.mask_select.set_active(0)
+
+    def on_mask_select_changed(self, widget):
+        chip_ID   = self.chip_select.get_active_text()
+        mask_file = self.mask_select.get_active_text()
+
+        # Get mask from file
+        if mask_file not in ['New', 'None', None]:
+            mask_file_path    = os.path.join(self.mask_folder, f'{chip_ID}{os.sep}{mask_file}')
+            current_mask      = mask_logger.get_mask(path = mask_file_path)
+            self.np_mask_list = current_mask.reshape((256 * 256))
+        else:
+            self.np_mask_list = np.zeros((256 * 256, ), dtype = bool)
+
+        # Draw self.np_mask_list to the screen
+        self.draw_clicked()
 
     def draw_clicked(self):
         user_path = os.path.expanduser('~')
@@ -2403,9 +2445,9 @@ class GUI_Set_Mask(Gtk.Window):
                     self.np_mask_list[x_y_entry] = True
                 self.draw_clicked()
         elif event.button == 3:
-            x_coord = (int(event.x / 10) - 4)
-            y_coord = 255 - (int(event.y / 10) - 4)
-            coord_string = ('x=' + str(x_coord) + ', y=' + str(y_coord))
+            x_coord           = (int(event.x / 10) - 4)
+            y_coord           = 255 - (int(event.y / 10) - 4)
+            coord_string      = ('x=' + str(x_coord) + ', y=' + str(y_coord))
             self.coord_window = GUI_Set_Mask_Coord_Window(coord_string)
 
     def on_drawing_area_button_release(self, widget, event):
@@ -2417,16 +2459,18 @@ class GUI_Set_Mask(Gtk.Window):
             entry_window = GUI_Mask_Entry_Window(self.np_mask_list, self.np_column_list, self.np_row_list)
 
     def set_new_values(self, mask_list, column_list, row_list):
-        self.np_mask_list = mask_list
+        self.np_mask_list   = mask_list
         self.np_column_list = column_list
-        self.np_row_list = row_list
+        self.np_row_list    = row_list
         self.draw_clicked()
 
     def on_Savebutton_clicked(self, widget):
+        chip_ID    = self.chip_select.get_active_text()
+        mask_file  = self.mask_select.get_active_text()
         mask_array = self.np_mask_list.reshape((256,256))
-        mask_logger.write_full_mask(full_mask = mask_array)
-
+        mask_logger.write_full_mask(full_mask = mask_array, file_name=mask_file, chipID=chip_ID)
         self.destroy()
+
     def window_destroy(self, widget, event):
         self.destroy()
 
@@ -2463,29 +2507,35 @@ class GUI_Set_Run_Name(Gtk.Window):
 
 class GUI_Additional_Information(Gtk.Window):
     def __init__(self):
+
+        # Check folders for equalisation and mask files
+        TPX3_datalogger.check_mask_equal()
+
+        self.equal_chips = list(TPX3_datalogger.data['Equalisation_path'])
+        self.mask_chips  = list(TPX3_datalogger.data['Mask_path'])
+        self.chips_list  = self.equal_chips
+        for id in self.mask_chips:
+            if id not in self.chips_list:
+                self.chips_list.append(id)
+
+        self.chip_settings       = Gtk.ComboBoxText()
+        self.chip_equal_settings = Gtk.ComboBoxText()
+        self.chip_mask_settings  = Gtk.ComboBoxText()
+        self.chip_settings.set_size_request(300, 30)
+        
+        for id in self.chips_list:
+            self.chip_settings.append_text(id)
+
+        self.chip_settings.connect('changed', self.on_chip_settings_changed)
+        self.chip_settings.set_active(0)
+        
         Gtk.Window.__init__(self, title = 'Info')
         self.connect('delete-event', self.window_destroy)
-
-        try:
-            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.equalisation_file = 'None'
-            else:
-                self.equalisation_file = 'Corrupt Data'
-
-        try:
-            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.mask_file = 'None'
-            else:
-                self.mask_file = 'Corrupt Data'
 
         self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
 
         grid = Gtk.Grid()
-        grid.set_row_spacing(2)
+        grid.set_row_spacing(10)
         grid.set_column_spacing(10)
         grid.set_border_width(20)
         self.add(grid)
@@ -2493,38 +2543,95 @@ class GUI_Additional_Information(Gtk.Window):
         Space = Gtk.Label()
         Space.set_text("")
 
-        self.Backup_File_label = Gtk.Label()
-        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
+        chip_label     = Gtk.Label()
+        equal_label    = Gtk.Label()
+        mask_label     = Gtk.Label()
+        run_label      = Gtk.Label()
+        run_name_label = Gtk.Label()
 
-        self.refresh_button = Gtk.Button(label = "Refresh")
+        chip_label.set_text('Chip')
+        equal_label.set_text('Current equalisation file')
+        mask_label.set_text('Current mask file')
+        run_label.set_text('Proposed run name')
+        run_name_label.set_text(str(self.run_name))
+
+        self.refresh_button = Gtk.Button(label = 'Save')
         self.refresh_button.connect("clicked", self.on_refresh_button_clicked)
 
-        grid.attach(self.Backup_File_label, 0, 0, 2, 3)
-        grid.attach(Space, 0, 4, 2, 1)
-        grid.attach(self.refresh_button, 2, 5, 1, 1)
+        grid.attach(self.refresh_button, 1, 8, 1, 1)
+        grid.attach(chip_label, 0, 0, 1, 1)
+        grid.attach(equal_label, 0, 2, 1, 1)
+        grid.attach(mask_label, 0, 4, 1, 1)
+        grid.attach(run_label, 0, 6, 1, 1)
+        grid.attach(self.chip_settings, 0, 1, 1, 1)
+        grid.attach(self.chip_equal_settings, 0, 3, 1, 1)
+        grid.attach(self.chip_mask_settings, 0, 5, 1, 1)
+        grid.attach(run_name_label, 0, 7, 1, 1)
 
         self.show_all()
 
+    def on_chip_settings_changed(self, widget):
+        
+        chipID = self.chip_settings.get_active_text()
+        self.chip_equal_settings.remove_all()
+        self.chip_mask_settings.remove_all()
+        
+        try:
+            if TPX3_datalogger.data['Equalisation_path'][chipID]['active'] == 'None':
+                self.chip_equal_settings.append_text('None')
+            else:
+                # Insert active file as first item
+                self.chip_equal_settings.insert(0, None,  os.path.split(TPX3_datalogger.data['Equalisation_path'][chipID]['active'])[1])
+
+            for file in TPX3_datalogger.data['Equalisation_path'][chipID]['available']:
+                if file != TPX3_datalogger.data['Equalisation_path'][chipID]['active']:
+                    if file != 'None':
+                        self.chip_equal_settings.append_text(os.path.split(file)[1])
+                    else:
+                        self.chip_equal_settings.append_text('None')
+            self.chip_equal_settings.set_active(0)
+        except:
+            self.chip_equal_settings.append_text('None')
+            self.chip_equal_settings.set_active(0)
+
+        try:
+            if TPX3_datalogger.data['Mask_path'][chipID]['active'] == 'None':
+                self.chip_mask_settings.append_text('None')
+            else:
+                # Insert active file as first item
+                self.chip_mask_settings.insert(0, None, os.path.split(TPX3_datalogger.data['Mask_path'][chipID]['active'])[1])
+
+            for file in TPX3_datalogger.data['Mask_path'][chipID]['available']:
+                if file != TPX3_datalogger.data['Mask_path'][chipID]['active']:
+                    if file != 'None':
+                        self.chip_mask_settings.append_text(os.path.split(file)[1])
+                    else:
+                        self.chip_mask_settings.append_text('None')
+            self.chip_mask_settings.set_active(0)
+        except:
+            self.chip_mask_settings.append_text('None')
+            self.chip_mask_settings.set_active(0)
+                
+
     def on_refresh_button_clicked(self, clicked):
-        try:
-            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.equalisation_file = 'None'
-            else:
-                self.equalisation_file = 'Corrupt Data'
+        
+        chipID      = self.chip_settings.get_active_text()
+        home_dir    = os.path.expanduser('~')
+        timepix_dir = os.path.join(home_dir, 'Timepix3')
 
-        try:
-            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.mask_file = 'None'
-            else:
-                self.mask_file = 'Corrupt Data'
-
-        self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
-
-        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
+        if self.chip_equal_settings.get_active_text() == 'None':
+            TPX3_datalogger.data['Equalisation_path'][chipID]['active'] = 'None'
+        else:
+            equal_path = os.path.join(timepix_dir, 'equalisations')
+            chip_dir   = os.path.join(equal_path, chipID)
+            TPX3_datalogger.data['Equalisation_path'][chipID]['active'] = os.path.join(chip_dir, self.chip_equal_settings.get_active_text())
+        
+        if self.chip_mask_settings.get_active_text() == 'None':
+            TPX3_datalogger.data['Mask_path'][chipID]['active'] = 'None'
+        else:
+            mask_path = os.path.join(timepix_dir, 'masks')
+            chip_dir  = os.path.join(mask_path, chipID)
+            TPX3_datalogger.data['Mask_path'][chipID]['active'] = os.path.join(chip_dir, self.chip_mask_settings.get_active_text())
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -2963,9 +3070,9 @@ class GUI_Plot_Box(Gtk.Window):
 
 class GUI_Main(Gtk.Window):
     def __init__(self):
-        self.open = False
+        self.open    = False
         current_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        png_path = os.path.join(current_path, 'UI' + os.sep + 'GUI' + os.sep + 'icon.png')
+        png_path     = os.path.join(current_path, 'UI' + os.sep + 'GUI' + os.sep + 'icon.png')
         Gtk.Window.__init__(self, title = 'TPX3 control')
 
         self.set_icon_from_file(png_path)
@@ -2997,7 +3104,7 @@ class GUI_Main(Gtk.Window):
         self.grid = Gtk.Grid()
         self.add(self.grid)
 
-        self.statusbar = Gtk.Statusbar()
+        self.statusbar  = Gtk.Statusbar()
         self.context_id = self.statusbar.get_context_id('Status Main')
         self.statusbar.push(self.context_id, 'Please initialize the hardware with "Hardware Init".')
 
@@ -3013,9 +3120,12 @@ class GUI_Main(Gtk.Window):
         self.statusstring1 = ''
 
         #get last backup
-        #data = file_logger.read_backup()
-        #TPX3_datalogger.set_data(data)
-        #TPX3_datalogger.write_backup_to_yaml()
+        data = file_logger.read_backup()
+        if data != None:
+            TPX3_datalogger.set_data(data)
+        else:
+            TPX3_datalogger.get_dacs_from_yaml()
+        TPX3_datalogger.write_backup_to_yaml()
         TPX3_datalogger.write_value(name = 'software_version', value = self.software_version, chip=None)
         conv_utils.setup_logging('INFO')
 
@@ -3154,8 +3264,8 @@ class GUI_Main(Gtk.Window):
 
     #######################################################################################################
         ### Page 2
-        ChipName = 'Chip1'
-        self.page2 = Gtk.Box()
+        ChipName    = 'Chip1'
+        self.page2  = Gtk.Box()
         page2_label = Gtk.Label()
         page2_label.set_text(ChipName)
         self.notebook.append_page(self.page2, page2_label)
@@ -3169,7 +3279,7 @@ class GUI_Main(Gtk.Window):
         self.page2.space1 = Gtk.Label()
         self.page2.space1.set_text('    ')
 
-        self.plotbutton = Gtk.Button(label = 'Show Plot')
+        self.plotbutton       = Gtk.Button(label = 'Show Plot')
         self.simulationbutton = Gtk.Button(label = 'Start Simulation')
         self.plotbutton.connect('clicked', self.on_plotbutton_clicked)
         self.simulationbutton.connect('clicked', self.on_simulationbutton_clicked)
@@ -3246,13 +3356,11 @@ class GUI_Main(Gtk.Window):
         self.set_running_process(running_process = new_process)
         self.set_quit_scan_label()
         self.hardware_scan_idle = GLib.timeout_add(250, self.update_status)
-        #self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
+        self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
         
         # Initialization of event display in update_status
         
         self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
-        
-        
 
     def on_Resetbutton_clicked(self, widget):
         if not self.get_process_alive():
@@ -3551,6 +3659,7 @@ class GUI_Main(Gtk.Window):
         return True
 
     def update_status(self):
+        Chip_Id = []
         if not self.hardware_scan_results.empty():
             Chip_List = self.hardware_scan_results.get()
             for n in range(0,len(Chip_List)): # Go now over all recognised list elements
@@ -3570,18 +3679,22 @@ class GUI_Main(Gtk.Window):
                 elif n == 1 and Chip_List:
                     TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0), chip=None)
                 elif Chip_List:
+                    Chip_Id.append(Chip_List[0][0])
                     name = 'Chip' + str(n - 2) + '_name'
                     TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0), chip=None)
-                #else:
-                #    name = 'Chip' + str(n - 2) + '_name'
-                #    TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0), chip=None)        
+
+                if len(Chip_List) < 10 and len(Chip_List) > 2:
+                    for n in range(len(Chip_List)+1, 10, 1):
+                        name = f'Chip{n-2}_name'
+                        TPX3_datalogger.write_value(name=name, value = [None], chip=None)
+
             statusstring = 'Connected to '
             for n, Chipname in enumerate(TPX3_datalogger.get_chipnames()):
                 number_of_links = TPX3_datalogger.get_links(chipname = Chipname)
                 if number_of_links == 1:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' active link) '
+                    statusstring += f'{Chipname} ({number_of_links} active link), '
                 else:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' active links) '
+                    statusstring += f'{Chipname} ({number_of_links} active links), '
                 if n == 0:
                     self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)
@@ -3591,9 +3704,13 @@ class GUI_Main(Gtk.Window):
         
         # Initialize event display
         self.plotwidget.init_figure(TPX3_datalogger.data['chip_links'])
-        # Get DAC settings for data logger from YAMLs
-        TPX3_datalogger.get_dacs_from_yaml()
-
+        
+        if Chip_Id != []:
+            TPX3_datalogger.get_dacs_from_yaml()
+        
+        # Check for folders for pixel mask and equalisation files
+        TPX3_datalogger.check_mask_equal()
+        
         return True
         
     def update_scan(self):
