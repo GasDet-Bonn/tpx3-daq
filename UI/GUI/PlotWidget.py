@@ -52,7 +52,7 @@ class plotwidget(object):
         self.length             = [np.empty(0, np.uint16)]*self.num_plots
         self.i                  = 0
         self.occupancy_array    = [np.array([[0, 0, 0]])]*self.num_plots
-        self.occ_length         = [0]*self.num_plots
+        self.occ_length         = [[]]*self.num_plots
         self.j                  = 0
         self.old_elements       = [np.array([[0, 0]])]*self.num_plots
         self.occupancy          = [[]]*self.num_plots
@@ -176,84 +176,89 @@ class plotwidget(object):
 
     def update_occupancy_plot(self):
         new_xvals, new_yvals, new_tvals = self.get_new_vals()
-        new_elements = np.c_[new_xvals, new_yvals]
-        self.occ_length.append(new_elements.shape[0])
-        self.old_elements = np.append(self.old_elements, new_elements, axis = 0)
+        new_elements                    = [[]]*self.num_plots
+        for chip in range(self.num_plots):
+            new_elements[chip]      = np.c_[new_xvals[chip], new_yvals[chip]]
+            self.occ_length[chip].append(new_elements[chip].shape[0])
+            self.old_elements[chip] = np.append(self.old_elements[chip], new_elements[chip], axis = 0)
 
         #count hited pixel
-        for new_element in new_elements:
-            pos = np.argwhere(np.all(self.occupancy_array[ : , :2] == new_element, axis = 1) == True)
-            if pos.size == 0:
-                # add new element
-                self.occupancy_array = np.append(self.occupancy_array, [np.append(new_element, 1)], axis = 0)
+        for chip in range(self.num_plots):
+            for new_element in new_elements[chip]:
+                pos = np.argwhere(np.all(self.occupancy_array[chip][ : , :2] == new_element, axis = 1) == True)
+                if pos.size == 0:
+                    # add new element
+                    self.occupancy_array[chip] = np.append(self.occupancy_array[chip], [np.append(new_element, 1)], axis = 0)
 
-            elif pos.size == 1:
-                #increment element at pos
-                x = pos[0, 0]
-                self.occupancy_array[pos[0, 0], 2] = (self.occupancy_array[pos[0, 0], 2] + 1)
+                elif pos.size == 1:
+                    #increment element at pos
+                    x = pos[0, 0]
+                    self.occupancy_array[chip][pos[0, 0], 2] = (self.occupancy_array[chip][pos[0, 0], 2] + 1)
 
-            else:
-                print('Error')
+                else:
+                    print('Error')
 
         #remove hitted pixel
         if self.j <= (self.integration_length):
             self.j = self.j + 1
 
         elif self.j == (self.integration_length + 1):
-            number = self.occ_length[0]
-            self.occ_length.pop(0)
-            k = 0
-            while k < number:
-                k = k + 1
-                pos = np.argwhere(np.all(self.occupancy_array[ : , :2] == self.old_elements[1], axis = 1) == True)
-                self.old_elements = np.delete(self.old_elements, 1, axis = 0)
-                if self.occupancy_array[pos[0, 0], 2] == 1:
-                    #Remove item if no count left
-                    self.occupancy_array = np.delete(self.occupancy_array, pos[0, 0], axis = 0)
-
-                elif self.occupancy_array[pos[0, 0], 2] > 1:
-                    #decrement element at pos
-                    self.occupancy_array[pos[0, 0], 2] = (self.occupancy_array[pos[0, 0], 2] - 1)
-
-                else:
-                    print('Error')
-
-        elif self.j > (self.integration_length + 1):
-            while self.j > (self.integration_length + 1):
-                number = self.occ_length[0]
-                self.occ_length.pop(0)
+            for chip in range(self.num_plots):
+                number = self.occ_length[chip][0]
+                self.occ_length[chip].pop(0)
                 k = 0
                 while k < number:
-                    k = k + 1
-                    pos = np.argwhere(np.all(self.occupancy_array[ : , :2] == self.old_elements[1], axis = 1) == True)
-                    self.old_elements = np.delete(self.old_elements, 1, axis = 0)
-                    if self.occupancy_array[pos[0, 0], 2] == 1:
+                    k                       = k + 1
+                    pos                     = np.argwhere(np.all(self.occupancy_array[chip][ : , :2] == self.old_elements[chip][1], axis = 1) == True)
+                    self.old_elements[chip] = np.delete(self.old_elements[chip], 1, axis = 0)
+                    if self.occupancy_array[chip][pos[0, 0], 2] == 1:
                         #Remove item if no count left
-                        self.occupancy_array = np.delete(self.occupancy_array,pos[0, 0], axis = 0)
+                        self.occupancy_array[chip] = np.delete(self.occupancy_array[chip], pos[0, 0], axis = 0)
 
-                    elif self.occupancy_array[pos[0, 0], 2] > 1:
-                        #Decrement element at pos
-                        self.occupancy_array[pos[0, 0], 2] = (self.occupancy_array[pos[0, 0], 2] - 1)
+                    elif self.occupancy_array[chip][pos[0, 0], 2] > 1:
+                        #decrement element at pos
+                        self.occupancy_array[chip][pos[0, 0], 2] = (self.occupancy_array[chip][pos[0, 0], 2] - 1)
 
                     else:
                         print('Error')
 
-                self.j = self.j - 1
+        elif self.j > (self.integration_length + 1):
+            while self.j > (self.integration_length + 1):
+                for chip in range(self.num_plots):
+                    number = self.occ_length[chip][0]
+                    self.occ_length[chip].pop(0)
+                    k = 0
+                    while k < number:
+                        k                       = k + 1
+                        pos                     = np.argwhere(np.all(self.occupancy_array[chip][ : , :2] == self.old_elements[chip][1], axis = 1) == True)
+                        self.old_elements[chip] = np.delete(self.old_elements[chip], 1, axis = 0)
+                        if self.occupancy_array[chip][pos[0, 0], 2] == 1:
+                            #Remove item if no count left
+                            self.occupancy_array[chip] = np.delete(self.occupancy_array[chip],pos[0, 0], axis = 0)
 
-        if self.occupancy_array.size > 3:
-            self.scatter.set_offsets(self.occupancy_array[ : , :2])
-            self.occupancy = self.occupancy_array[ : , 2: ]
-            self.scatter.set_array(np.squeeze(self.occupancy))
-            self.canvas.draw()
+                        elif self.occupancy_array[chip][pos[0, 0], 2] > 1:
+                            #Decrement element at pos
+                            self.occupancy_array[chip][pos[0, 0], 2] = (self.occupancy_array[chip][pos[0, 0], 2] - 1)
+
+                        else:
+                            print('Error')
+
+                    self.j = self.j - 1
+        for chip in range(self.num_plots):
+            if self.occupancy_array[chip].size > 3:
+                self.scatter[chip].set_offsets(self.occupancy_array[chip][ : , :2])
+                self.occupancy[chip] = self.occupancy_array[chip][ : , 2: ]
+                self.scatter[chip].set_array(np.squeeze(self.occupancy[chip]))
+        self.canvas.draw()
 
         return True
 
     def reset_occupancy(self):
-        self.occupancy_array = np.array([[0, 0, 0]])
-        self.occ_length = []
-        self.j = 0
-        self.old_elements = np.array([[0, 0]])
-        self.occupancy = []
+        self.occupancy_array = [np.array([[0, 0, 0]])]*self.num_plots
+        self.occ_length      = [[]]*self.num_plots
+        self.j               = 0
+        self.old_elements    = [np.array([[0, 0]])]*self.num_plots
+        self.occupancy       = [[]]*self.num_plots
 
         return True
 
@@ -269,9 +274,10 @@ class plotwidget(object):
             x_vals    = []
             y_vals    = []
             self.plots[chip].remove()
-            self.plots[chip] = self.fig.add_subplot(111, aspect='equal')
-            self.plots[chip].set_xlabel('X', size = 12)
-            self.plots[chip].set_ylabel('Y', size = 12)
+            self.plots[chip] = self.fig.add_subplot(eval(f'{self.num_rows}{self.num_rows}{chip+1}'), aspect='equal')
+            self.plots[chip].set_title(f'Chip {self.chip_list[chip]}', size = 8)
+            self.plots[chip].set_xlabel('X', size = 8)
+            self.plots[chip].set_ylabel('Y', size = 8)
             self.plots[chip].axis([0, 255, 0, 255])
             self.scatter[chip] = self.plots[chip].scatter(x_vals, y_vals, c = [], s = 1, marker = 's', cmap = self.cmap, vmin = vmin, vmax = vmax)
             self.plots[chip].plot()

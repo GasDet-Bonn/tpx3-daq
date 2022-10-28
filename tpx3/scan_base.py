@@ -384,7 +384,6 @@ class ScanBase(object):
                 self.chips[0].Dut_layer[register2['name']].reset()
 
             if register['link-status'] in [1, 3, 5]:
-                print(register['name'])
                 # Activate the current fpga link and set all its settings
                 self.chips[0].Dut_layer[register['name']].ENABLE        = 1
                 self.chips[0].Dut_layer[register['name']].DATA_DELAY    = register['data-delay']
@@ -619,7 +618,6 @@ class ScanBase(object):
                 if append_datadriven == True:
                     # Append the command for initializing a data driven readout
                     mask_step_cmd.append(chip.read_pixel_matrix_datadriven(write=False))
-                #print(mask_step_cmd)
             mask_cmds.append(mask_step_cmd)
 
         return mask_cmds
@@ -1141,7 +1139,6 @@ class ScanBase(object):
                     with tb.open_file(thrfile, 'r') as infile:
                         table_name      = f'infile.root.thr_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}[:]'
                         chip.thr_matrix = eval(table_name)
-                        print(f'Threshold matrix (subset): {chip.thr_matrix[:10]}')
                 except NoSuchNodeError:
                     self.logger.debug('Specified thrfile does not include a thr_matrix!')
                     pass

@@ -2505,7 +2505,8 @@ class GUI_Set_Run_Name(Gtk.Window):
     def window_destroy(self, widget, event = True):
         self.destroy()
 
-class GUI_Additional_Information(Gtk.Window):
+#class GUI_Additional_Information(Gtk.Window):
+class GUI_Set_MaskEqual_Files(Gtk.Window):
     def __init__(self):
 
         # Check folders for equalisation and mask files
@@ -2521,7 +2522,7 @@ class GUI_Additional_Information(Gtk.Window):
         self.chip_settings       = Gtk.ComboBoxText()
         self.chip_equal_settings = Gtk.ComboBoxText()
         self.chip_mask_settings  = Gtk.ComboBoxText()
-        self.chip_settings.set_size_request(300, 30)
+        self.chip_settings.set_size_request(330, 30)
         
         for id in self.chips_list:
             self.chip_settings.append_text(id)
@@ -2529,7 +2530,9 @@ class GUI_Additional_Information(Gtk.Window):
         self.chip_settings.connect('changed', self.on_chip_settings_changed)
         self.chip_settings.set_active(0)
         
-        Gtk.Window.__init__(self, title = 'Info')
+        #Gtk.Window.__init__(self, title = 'Info')
+        Gtk.Window.__init__(self, title = 'Set Mask/Equal. Files')
+        
         self.connect('delete-event', self.window_destroy)
 
         self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
@@ -2546,14 +2549,14 @@ class GUI_Additional_Information(Gtk.Window):
         chip_label     = Gtk.Label()
         equal_label    = Gtk.Label()
         mask_label     = Gtk.Label()
-        run_label      = Gtk.Label()
-        run_name_label = Gtk.Label()
+        #run_label      = Gtk.Label()
+        #run_name_label = Gtk.Label()
 
         chip_label.set_text('Chip')
         equal_label.set_text('Current equalisation file')
         mask_label.set_text('Current mask file')
-        run_label.set_text('Proposed run name')
-        run_name_label.set_text(str(self.run_name))
+        #run_label.set_text('Proposed run name')
+        #run_name_label.set_text(str(self.run_name))
 
         self.refresh_button = Gtk.Button(label = 'Save')
         self.refresh_button.connect("clicked", self.on_refresh_button_clicked)
@@ -2562,11 +2565,11 @@ class GUI_Additional_Information(Gtk.Window):
         grid.attach(chip_label, 0, 0, 1, 1)
         grid.attach(equal_label, 0, 2, 1, 1)
         grid.attach(mask_label, 0, 4, 1, 1)
-        grid.attach(run_label, 0, 6, 1, 1)
+        #grid.attach(run_label, 0, 6, 1, 1)
         grid.attach(self.chip_settings, 0, 1, 1, 1)
         grid.attach(self.chip_equal_settings, 0, 3, 1, 1)
         grid.attach(self.chip_mask_settings, 0, 5, 1, 1)
-        grid.attach(run_name_label, 0, 7, 1, 1)
+        #grid.attach(run_name_label, 0, 7, 1, 1)
 
         self.show_all()
 
@@ -2807,6 +2810,106 @@ class GUI_Main_Settings(Gtk.Window):
         GUI.set_destroyed()
         if self.input_window is not None:
             self.input_window.window_destroy(widget)
+        self.destroy()
+
+class GUI_General_Information(Gtk.Window):
+
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'General information')
+        self.connect('delete-event', self.window_destroy)
+
+        #self.resize(900, 600)
+        self.set_default_size(900, 250)
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(20)
+        grid.set_column_spacing(20)
+        grid.set_border_width(35)
+        self.add(grid)
+
+        ##### Chip Information #####
+
+        chip_labels         = []
+        equalisation_labels = []
+        mask_labels         = []
+        link_labels         = []
+        
+        #chip_list = list(TPX3_datalogger.data['chip_dacs'])
+        #chip_list.remove('default')
+        chip_list  = list(TPX3_datalogger.data['chip_links'])
+        chip_list_length = len(chip_list)
+        
+        chip_title_label   = Gtk.Label()
+        equalisation_label = Gtk.Label()
+        mask_title_label   = Gtk.Label()
+        link_title_label   = Gtk.Label()
+
+        chip_title_label.set_size_request(80, 30)
+        equalisation_label.set_size_request(320, 30)
+        mask_title_label.set_size_request(320, 30)
+        link_title_label.set_size_request(100, 30)
+        
+        chip_title_label.set_markup('<b>Chip</b>')
+        equalisation_label.set_markup('<b>Current equalisation file</b>')
+        mask_title_label.set_markup('<b>Current mask file</b>')
+        link_title_label.set_markup('<b>Links</b>')
+        
+        for chip in chip_list:
+            chip_label  = Gtk.Label()
+            equal_label = Gtk.Label()
+            mask_label  = Gtk.Label()
+            link_label  = Gtk.Label()
+
+            chip_label.set_text(chip)
+            equal_file = os.path.split(TPX3_datalogger.data['Equalisation_path'][chip]['active'])[1]
+            mask_file  = os.path.split(TPX3_datalogger.data['Mask_path'][chip]['active'])[1]
+
+            if equal_file in ['None', None]:
+                equal_label.set_text('-')
+            else:
+                equal_label.set_text(equal_file)
+
+            if mask_file in ['None', None]:
+                mask_label.set_text('-')
+            else:
+                mask_label.set_text(mask_file)
+
+            try:
+                chip_links = str(TPX3_datalogger.data['chip_links'][chip])
+                link_label.set_text(chip_links[1:-1])
+            except:
+                link_label.set_text('-')                    
+                
+            chip_labels.append(chip_label)
+            equalisation_labels.append(equal_label)
+            mask_labels.append(mask_label)
+            link_labels.append(link_label)
+
+        for number, chip in enumerate(chip_list):
+            grid.attach(chip_labels[number], 0, number + 1, 1, 1)
+            grid.attach(equalisation_labels[number], 1, number + 1, 1, 1)
+            grid.attach(mask_labels[number], 2, number + 1, 1, 1)
+            grid.attach(link_labels[number], 3, number + 1, 1, 1)
+         
+        grid.attach(chip_title_label, 0, 0, 1, 1)
+        grid.attach(equalisation_label, 1, 0, 1, 1)
+        grid.attach(mask_title_label, 2, 0, 1, 1)
+        grid.attach(link_title_label, 3, 0, 1, 1)
+
+        ##### General Information #####
+
+        run_label      = Gtk.Label()
+        run_name_label = Gtk.Label()
+        
+        run_label.set_markup('<b>Run name</b>')
+        run_name_label.set_text(str(TPX3_datalogger.data['Run_name']))
+
+        grid.attach(run_label, 1, chip_list_length + 1, 1, 1)
+        grid.attach(run_name_label, 1, chip_list_length + 2, 1, 1)
+
+        self.show_all()
+
+    def window_destroy(self, widget, event = True):
         self.destroy()
 
 class GUI_Main_Save_Backup_Input(Gtk.Window):
@@ -3177,6 +3280,9 @@ class GUI_Main(Gtk.Window):
         self.Resetbutton = Gtk.Button(label = 'Default')
         self.Resetbutton.connect('clicked', self.on_Resetbutton_clicked)
 
+        self.GeneralInfobutton = Gtk.Button(label = 'General Information')
+        self.GeneralInfobutton.connect('clicked', self.on_GeneralInfobutton_clicked)
+
         self.SetDACbutton = Gtk.Button(label = 'Set DACs')
         self.SetDACbutton.connect('clicked', self.on_SetDACbutton_clicked)
 
@@ -3186,8 +3292,12 @@ class GUI_Main(Gtk.Window):
         self.SetMaskbutton = Gtk.Button(label = 'Set Mask')
         self.SetMaskbutton.connect('clicked', self.on_SetMaskbutton_clicked)
 
-        self.Infobutton = Gtk.Button(label = 'Info')
-        self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
+        #self.Infobutton = Gtk.Button(label = 'Info')
+        #self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
+
+        self.Infobutton = Gtk.Button(label = 'Set Mask/Equal. Files')
+        self.Infobutton.connect('clicked', self.on_Set_MaskEqual_Files_clicked)
+
 
         self.Run_Name_button = Gtk.Button(label = 'Run Name')
         self.Run_Name_button.connect('clicked', self.on_Run_Name_button_clicked)
@@ -3259,6 +3369,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.Infobutton, 14, 5, 3, 1)
         page1.grid.attach(self.Run_Name_button, 14, 6, 3, 1)
         page1.grid.attach(self.SetMaskbutton, 14, 7, 3, 1)
+        page1.grid.attach(self.GeneralInfobutton, 14, 8, 3, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
 
@@ -3384,6 +3495,9 @@ class GUI_Main(Gtk.Window):
         else:
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
 
+    def on_GeneralInfobutton_clicked(self, widget):
+        subw = GUI_General_Information()
+
     def on_SetDACbutton_clicked(self, widget):
         subw = GUI_SetDAC()
 
@@ -3394,8 +3508,12 @@ class GUI_Main(Gtk.Window):
         global mask_window
         mask_window = GUI_Set_Mask()
 
-    def on_Infobutton_clicked(self, widget):
-        Info_subw = GUI_Additional_Information()
+    #def on_Infobutton_clicked(self, widget):
+    #    Info_subw = GUI_Additional_Information()
+
+    def on_Set_MaskEqual_Files_clicked(self, widget):
+        Info_subw = GUI_Set_MaskEqual_Files()
+
 
     def on_Run_Name_button_clicked(self, widget):
         Info_subw = GUI_Set_Run_Name()
@@ -3736,8 +3854,8 @@ class GUI_Main(Gtk.Window):
         if not self.plot1_window_open:
             self.plot1_window_open = True
             GLib.source_remove(self.Tag2)
-            self.plot1_window = GUI_Plot1(data_queue = self.data_queue, chip_links=self.chip_links)
-
+            self.plot1_window = GUI_Plot1(data_queue = self.data_queue, chip_links=TPX3_datalogger.data['chip_links'])
+                 
     def on_simulationbutton_clicked(self, widget):
         if self.simulation_running == False:
             if self.get_process_alive():
