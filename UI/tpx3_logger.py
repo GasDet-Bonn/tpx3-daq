@@ -32,29 +32,19 @@ class mask_logger(object):
         elif os.path.isfile(user_path + os.sep + filename + '.h5') == True:
             print('File exists already')
 
-    def write_mask(mask_element, mask = None):
+    def write_mask(mask_element, mask = None, file_path = None, chip = None):
         '''
             This will mask the 'pixel', 'row' or 'column' given to it via mask_element.
             Additionally the mask file to change can be given via mask.
         '''
+        
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
-        if mask == None:
-            path = TPX3_datalogger.read_value(name = 'Mask_path')
-            if path == None:
-                path = mask_logger.create_file()
-                TPX3_datalogger.write_value(name = 'Mask_path', value = path, chip=None)
-        else:
-            user_path = os.path.expanduser('~')
-            user_path = os.path.join(user_path, 'Timepix3')
-            user_path = os.path.join(user_path, 'masks')
-            path = user_path + os.sep + mask + '.h5'
-
+        
         #open file if existing and writing set data to mask_matrix
-        if os.path.isfile(path):
-            with tb.open_file(path, 'a') as infile:
+        if os.path.isfile(file_path):
+            with tb.open_file(file_path, 'a') as infile:
                 mask_matrix = infile.root.mask_matrix[:]
                 infile.remove_node(infile.root.mask_matrix)
-
         #manipulate mask matrix
         if mask_element[0] == 'all':
             mask_matrix = np.ones((256, 256), dtype=np.bool)
@@ -68,15 +58,21 @@ class mask_logger(object):
             print('Error: Unknown mask element')
 
         #Saving the final matrix
-        with tb.open_file(path, 'a') as out_file:
+        with tb.open_file(file_path, 'a') as out_file:
             out_file.create_carray(out_file.root, name='mask_matrix', title='Matrix mask', obj=mask_matrix)
+        
+        # update data logger
+        TPX3_datalogger.check_mask_equal()
+        print(TPX3_datalogger.data['Mask_path'])
 
-    def delete_mask(mask_element, mask = None):
+    def delete_mask(mask_element, mask = None, file_path = None, chip = None):
         '''
             This will unmask the 'pixel', 'row' or 'column' given to it via mask_element.
             Additionally the mask file to change can be given via mask.
         '''
         mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        path = file_path
+        '''
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
             if path == None:
@@ -86,7 +82,7 @@ class mask_logger(object):
             user_path = os.path.join(user_path, 'Timepix3')
             user_path = os.path.join(user_path, 'masks')
             path = user_path + os.sep + mask + '.h5'
-
+        '''
         #open file if existing and writing set data to mask_matrix
         if os.path.isfile(path):
             with tb.open_file(path, 'a') as infile:
@@ -168,17 +164,17 @@ class equal_logger(object):
         The equal logger takes care of the equalisation file
     '''
 
-    def write_full_equal(full_equal, path):
+    def write_full_equal(full_equal, path, chip = 'default'):
         '''
             This overwrites the complete equal, so a proper mask has to be given via full_equal
         '''
-        TPX3_datalogger.write_value(name = 'Equalisation_path', value = path, chip = None)
-
+        TPX3_datalogger.write_value(name = 'Equalisation_path', value = [path,chip])
+        '''
         #delete last equal
         if os.path.isfile(path):
             with tb.open_file(path, 'a') as infile:
                 infile.remove_node(infile.root.thr_matrix)
-
+        '''
         #Saving the final equal
         with tb.open_file(path, 'a') as out_file:
             out_file.create_carray(out_file.root, name='thr_matrix', title='Matrix Threshold', obj=full_equal)

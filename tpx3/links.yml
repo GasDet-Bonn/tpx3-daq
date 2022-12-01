@@ -11,20 +11,20 @@ registers:
 - chip-id: 4731
   chip-id-decoded: W18-K7
   chip-link: 1
-  data-delay: 15
+  data-delay: 7
   data-edge: 0
   data-invert: 0
   fpga-link: 1
-  link-status: 6
+  link-status: 1
   name: RX1
-- chip-id: 0
-  chip-id-decoded: W0-`0
+- chip-id: 4731
+  chip-id-decoded: W18-K7
   chip-link: 2
-  data-delay: 15
+  data-delay: 7
   data-edge: 0
   data-invert: 0
   fpga-link: 2
-  link-status: 8
+  link-status: 1
   name: RX2
 - chip-id: 4731
   chip-id-decoded: W18-K7
