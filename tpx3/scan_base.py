@@ -268,8 +268,6 @@ class ScanBase(object):
             # Test if the link configuration is valid
             if self.test_links() == True:
                 self.logger.info("Validity check of link configuration successful")
-                #self.logger.info("Create more chip objects!")
-                #print(self.chipIds)
                 # If link config is valid, initialize more chips via chipId from links.yml
                 # create list of chipIds, no duplicates
                 # from this list create list of chip objects 
@@ -277,7 +275,6 @@ class ScanBase(object):
                     # Convert chipId to 4 byte representation: [0x--, 0x--, 0x--, 0x--]
                     Id_binary = '{:032b}'.format(chipId)
                     Id_bytes  = [int(Id_binary[:8],2),int(Id_binary[8:16],2) ,int(Id_binary[16:24],2) ,int(Id_binary[24:],2)]
-
                     bit_id    = BitLogic.from_value(chipId)
 
                     # Decode the Chip-ID
@@ -1085,7 +1082,7 @@ class ScanBase(object):
                 self.logger.debug('Specified thrfile does not include a thr_mask yet!')
                 
             out_file.create_carray(out_file.root,
-                                name  = f'thr_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}',
+                                name  = f'thr_matrix',
                                 title = 'Matrix Threshold',
                                 obj   = eq_matrix)
             self.logger.info('Closing thr_matrix file: %s' % (thrfile))
@@ -1108,7 +1105,7 @@ class ScanBase(object):
             except:
                 maskfile = None
             
-            if maskfile:
+            if not maskfile in [None, 'None']:
                 self.logger.info(f'Loading mask_matrix file: {maskfile} for chip {chip.chipId_decoded}')
                 try:
                     with tb.open_file(maskfile, 'r') as infile:
@@ -1130,14 +1127,15 @@ class ScanBase(object):
         for chip in self.chips[1:]:
             try:
                 thrfile = thrfiles[chip.chipId_decoded]['active']
+                print(f'Used threshold file: {thrfile}')
             except:
                 thrfile = None
 
-            if thrfile:
+            if not thrfile in [None, 'None']:
                 self.logger.info(f'Loading thr_matrix file: {thrfile} for chip {chip.chipId_decoded}')
                 try:
                     with tb.open_file(thrfile, 'r') as infile:
-                        table_name      = f'infile.root.thr_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}[:]'
+                        table_name      = f'infile.root.thr_matrix[:]'
                         chip.thr_matrix = eval(table_name)
                 except NoSuchNodeError:
                     self.logger.debug('Specified thrfile does not include a thr_matrix!')

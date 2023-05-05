@@ -44,10 +44,7 @@ class IterationTable(tb.IsDescription):
 
 class PixelDACopt(ScanBase):
 
-    scan_id      = "PixelDACopt"
-    wafer_number = 0
-    y_position   = 0
-    x_position   = 'A'
+    scan_id = "PixelDACopt"
 
     def __init__(self, dut_conf=None, no_chip=False, run_name=None):
         super().__init__(dut_conf, no_chip, run_name)
@@ -67,7 +64,6 @@ class PixelDACopt(ScanBase):
             with open(dac_yaml, 'r') as f:
                 doc = yaml.load(f, Loader=yaml.FullLoader)
 
-            # Traverse YAML file -> Write this part as a seperate function
             for yaml_chip in doc['chips']:
                 # Select current chip
                 if yaml_chip['chip_ID'] == chip.chipId_int:
@@ -114,10 +110,8 @@ class PixelDACopt(ScanBase):
         mask_cmds2 = self.create_scan_masks(16, pixel_threshold = 15, number = 1, append_datadriven = False, progress = progress)
 
         # Repeat until optimization for all chips is done
-        #while last_delta < last_rms_delta - 2 or last_delta > last_rms_delta + 2:
         while len(self.chips_not_optimized) > 0:
 
-            # Use real chipID like 'W12-C7'
             if status != None:
                 for chip in self.chips_not_optimized:
                     status.put(f"Linear regression step number {iteration + 1} for chip {chip.chipId_decoded} with pixeldac {self.optimization_params[chip.chipId_decoded]['pixeldac']}")
@@ -152,39 +146,16 @@ class PixelDACopt(ScanBase):
                 self.dump_configuration(iteration = iteration, **args)
 
             # Analyse the data of the current iteration
-            opt_results   = self.analyze_iteration(iteration, chip_links = kwargs['chip_link'], progress = progress, status = status)
-
-            # Get DAC YAML file path
-            # dac_yaml = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'chip_dacs.yml')
+            opt_results = self.analyze_iteration(iteration, chip_links = kwargs['chip_link'], progress = progress, status = status)
 
             # Check, if the chips are optimized 
             for chip in self.chips_not_optimized:
                 last_delta     = self.optimization_params[chip.chipId_decoded]['last_delta']
                 last_rms_delta = self.optimization_params[chip.chipId_decoded]['last_rms_delta']
-                #print(f'last delta: {last_delta}, last_rms_delta: {last_rms_delta}')
                 
                 if (last_delta < last_rms_delta - 2) or (last_delta > last_rms_delta + 2):
                     pass
                 else:
-                    # If optimized, write new pixeldac to chip_dacs YAML file
-                    #with open(dac_yaml, 'r') as f:
-                    #    doc = yaml.load(f, Loader=yaml.FullLoader)
-
-                    # Traverse YAML file
-                    #for yaml_chip in doc['chips']:
-                        # Select current chip
-                    #   if yaml_chip['chip_ID'] == chip.chipId_int:
-                    #        for register in yaml_chip['registers']:
-                                # Select Ibias_PixelDAC register
-                    #            if register['name'] == 'Ibias_PixelDAC':
-                                    # Write out new value
-                     #               register['value'] = int(self.optimization_params[chip.chipId_decoded]['last_pixeldac'])
-                    
-                    # Save new settings
-                    #with open(dac_yaml, 'w') as f:
-                    #    yaml.dump(doc, f)
-                    
-                    # and remove chip from list
                     self.chips_not_optimized.remove(chip)
                     
             iteration += 1
@@ -210,8 +181,6 @@ class PixelDACopt(ScanBase):
             If progress is None a tqdm progress bar is used else progress should be a Multiprocess Queue which stores the progress as fraction of 1
             If there is a status queue information about the status of the scan are put into it
         '''
-        # TODO: look at which functions REALLY need to be called with local header.
-        # Most settings are the same for all chips, so a lot is really overkill.
         # Set general configuration registers of the Timepix3
         for chip in self.chips_not_optimized:
             self.chips[0].write(chip.write_general_config(write=False))
@@ -232,7 +201,6 @@ class PixelDACopt(ScanBase):
         # Get the shutter sleep time
         sleep_time = self.get_shutter_sleep_time(tp_period = tp_period, n_injections = n_injections)
 
-        #self.logger.info('Scan with Pixeldac %i', pixeldac)
         self.logger.info('Preparing injection masks...')
         if status != None:
             status.put("Preparing injection masks")
@@ -268,7 +236,7 @@ class PixelDACopt(ScanBase):
 
             with self.readout(scan_param_id=scan_param_id):
                 for chip in self.chips_not_optimized:
-                    self.chips[0].write(chip.read_pixel_matrix_datadriven(write=False)) # should change back to broadcast
+                    self.chips[0].write(chip.read_pixel_matrix_datadriven(write=False))
 
                 # Open the shutter, take data and update the progress bar
                 with self.shutter():
@@ -371,24 +339,6 @@ class PixelDACopt(ScanBase):
             general_config = h5_file.root.configuration.generalConfig
             op_mode        = general_config.col('Op_mode')[0]
             vco            = general_config.col('Fast_Io_en')[0]
-
-            # 'Simulate' more chips, in this case, just work on one
-            #chip_IDs_new = [b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7',b'W18-K7', b'W18-K7',b'W18-K7', b'W18-K7']
-            #for new_Id in range(8):
-            #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
-
-            # Get link configuration
-            #link_config = h5_file.root.configuration.links[:]
-            #chip_IDs    = link_config['chip_id']
-
-            # Create dictionary of Chips and the links they are connected to
-            #self.chip_links = {}
-    
-            #for link, ID in enumerate(chip_IDs):
-            #    if ID not in self.chip_links:
-            #        self.chip_links[ID] = [link]
-            #    else:
-            #       self.chip_links[ID].append(link)
 
             self.logger.info('Interpret raw data...')
 
@@ -514,7 +464,6 @@ class PixelDACopt(ScanBase):
                 p.plot_parameter_page()
 
                 for iteration in range(iterations):
-                    
                     pixelDAC_table = eval(f'h5_file.root.configuration.run_config_{iteration}')
                     
                     # Get chipIDs for current iteration
@@ -529,7 +478,6 @@ class PixelDACopt(ScanBase):
                         # Get chipID in desirable formatting for HDF5 files (without '-')
                         chipID = chip_h5[index]
                         dac    = chip_dac[index]
-                        print(f'Dac value: {dac}')
 
                         # get group for current chip
                         chip_group      = eval(f'h5_file.root.interpreted_{iteration}._f_get_child(chipID)')
@@ -544,7 +492,7 @@ class PixelDACopt(ScanBase):
 
                         # Plot the threshold distribution based on the S-Curve fits
                         hist_th0 = np.ma.masked_array(chip_group.ThresholdMap_th0[:], mask)
-                        p.plot_distribution(hist_th0, chip, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop+0.5, 1), x_axis_title='Vthreshold', title=f'Threshold distribution - PixelDAC 0 - IBias_PixelDAC {dac}', suffix='threshold_distribution_th0', plot_queue=plot_queue)
+                        p.plot_distribution(hist_th0, chip, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop+0.5, 1), y_axis_title='# of pixels', x_axis_title='Vthreshold', title=f'Threshold distribution - PixelDAC 0 - IBias_PixelDAC {dac}', suffix='threshold_distribution_th0', plot_queue=plot_queue)
 
                         # Plot the S-Curve histogram
                         scurve_th15_hist = chip_group.HistSCurve_th15[:].T
@@ -553,7 +501,7 @@ class PixelDACopt(ScanBase):
 
                         # Plot the threshold distribution based on the S-Curve fits
                         hist_th15 = np.ma.masked_array(chip_group.ThresholdMap_th15[:], mask)
-                        p.plot_distribution(hist_th15, chip, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop+0.5, 1), x_axis_title='Vthreshold', title=f'Threshold distribution - PixelDAC 15 - IBias_PixelDAC {dac}', suffix='threshold_distribution_th15', plot_queue=plot_queue)
+                        p.plot_distribution(hist_th15, chip, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop+0.5, 1), y_axis_title='# of pixels', x_axis_title='Vthreshold', title=f'Threshold distribution - PixelDAC 15 - IBias_PixelDAC {dac}', suffix='threshold_distribution_th15', plot_queue=plot_queue)
 
 if __name__ == "__main__":
     scan = PixelDACopt()

@@ -34,10 +34,7 @@ local_configuration = {
 class NoiseScan(ScanBase):
 
     scan_id      = "NoiseScan"
-    wafer_number = 0
-    y_position   = 0
-    x_position   = 'A'
-
+    
     def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, shutter=0.01, progress = None, status = None, **kwargs):
         '''
             Takes data for threshold scan in a range of thresholds.
@@ -87,8 +84,7 @@ class NoiseScan(ScanBase):
         if status != None:
             status.put("iteration_symbol")
         thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
-        #print('Thresholds: ' + str(thresholds))
-
+        
         if progress == None:
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds) * len(thresholds))
@@ -159,26 +155,6 @@ class NoiseScan(ScanBase):
             op_mode        = general_config.col('Op_mode')[0]
             vco            = general_config.col('Fast_Io_en')[0]
             
-            # 'Simulate' more chips
-            #chip_IDs_new = [b'W12-C7',b'W12-C7',b'W13-D8',b'W13-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
-            #for new_Id in range(8):
-            #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
-
-            #chip_IDs_links = link_config['chip_id']
-
-            # Get link configuration
-            #link_config = h5_file.root.configuration.links[:]
-            #chip_IDs    = link_config['chip_id']
-
-            # Create dictionary of chips and the links they are connected to
-            #self.chip_links = {}
-            #self.chip_links = chip_link
-            #for link, ID in enumerate(chip_IDs):
-            #    if ID not in self.chip_links:
-            #        self.chip_links[ID] = [link]
-            #    else:
-            #        self.chip_links[ID].append(link)
-            
             pix_occ  = []
             hist_occ = []
 
@@ -198,17 +174,13 @@ class NoiseScan(ScanBase):
             Vthreshold_stop  = run_config.col('Vthreshold_stop')[0]
 
             # for now create tables and histograms for each chip
-            # for chip in range(self.num_of_chips):
             for chip in self.chips[1:]:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
-                # chip_num = [number for number, ID in enumerate(self.chip_links) if ID.decode()==chip.chipId_decoded][0]
                 chip_num = [number for number, ID in enumerate(kwargs['chip_link']) if ID == chip.chipId_decoded][0]
                 
                 # Get chipID in desirable formatting for HDF5 files (without '-')
-                # chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                 chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
-
                 # Create group for current chip
                 h5_file.create_group(h5_file.root.interpreted, name = chipID)
                 # Get the group as an object
@@ -222,7 +194,6 @@ class NoiseScan(ScanBase):
                 hist_occ = np.reshape(pix_occ, (256, 256)).T
                 h5_file.create_carray(chip_group, name='HistOcc', obj=hist_occ)
 
-                #meta_data   = None
                 pix_occ     = None
                 hist_occ    = None
 
@@ -253,27 +224,25 @@ class NoiseScan(ScanBase):
                 # Plot a page with all parameters
                 p.plot_parameter_page()
 
-                #for chip in range(self.num_of_chips):
                 for chip in self.chips[1:]:
                     # Get chipID in desirable formatting for HDF5 files (with '_' instead of '-')
-                    #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                     chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
+                
                     # Get the group of the chip in the HDF5-file
                     chip_group  = h5_file.root.interpreted._f_get_child(chipID)
                     
                     # Plot the equalisation bits histograms
                     thr_matrix_call = eval(f'h5_file.root.configuration.thr_matrix_{chipID}[:]')
-                    thr_matrix = thr_matrix_call
-                    p.plot_distribution(thr_matrix, chipID, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
+                    thr_matrix      = thr_matrix_call
+                    p.plot_distribution(thr_matrix, chip.chipId_decoded, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
                 
                     # Plot noise pixels histogram
                     noise_curve_pixel = chip_group.NoiseCurvePixel[:]
-                    p._plot_1d_hist(noise_curve_pixel, chipID, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise pixel per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Number of active pixels', log_y=True, plot_queue=plot_queue)
+                    p._plot_1d_hist(noise_curve_pixel, chip.chipId_decoded, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise pixel per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Number of active pixels', log_y=True, plot_queue=plot_queue)
 
                     # Plot noise hits histogram
                     noise_curve_hits = chip_group.NoiseCurveHits[:]
-                    p._plot_1d_hist(noise_curve_hits, chipID, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise hits per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Total number of hits', log_y=True, plot_queue=plot_queue)
-
+                    p._plot_1d_hist(noise_curve_hits, chip.chipId_decoded, plot_range = list(range(Vthreshold_start, Vthreshold_stop+1)), title='Noise hits per threshold', suffix='noise_pixel_per_threshold', x_axis_title='Threshold', y_axis_title='Total number of hits', log_y=True, plot_queue=plot_queue)                    
 
 if __name__ == "__main__":
     scan = NoiseScan()

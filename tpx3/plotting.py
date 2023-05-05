@@ -59,7 +59,6 @@ class ConfigDict(dict):
     def __init__(self, config_table):
        # get column names
        config_col_names = config_table.coldescrs.keys()
-       #print(config_col_names)
        # get tuple of column name (key) and its value to build dictionary
        config_args      = [(key, [value for value in config_table.col(key)]) for key in config_col_names]
 
@@ -113,20 +112,16 @@ class Plotting(object):
             return
 
         if iteration == None:
-            #self.run_config = ConfigDict(root.configuration.run_config[:])
             self.run_config = ConfigDict(root.configuration.run_config)
         else:
-            #run_config_call = ('root.' + 'configuration.run_config_' + str(iteration) + '[:]')
             run_config_call = ('root.' + 'configuration.run_config_' + str(iteration))
             self.run_config = ConfigDict(eval(run_config_call))
         
 
         try:
             if iteration == None:
-                #self.dacs = ConfigDict(root.configuration.dacs[:])
                 self.dacs = ConfigDict(root.configuration.dacs)
             else:
-                #dacs_call = ('root.' + 'configuration.dacs_' + str(iteration) + '[:]')
                 dacs_call = ('root.' + 'configuration.dacs_' + str(iteration))
                 self.dacs = ConfigDict(eval(dacs_call))
         except tb.NoSuchNodeError:
@@ -186,21 +181,13 @@ class Plotting(object):
         fig.subplots_adjust(top=0.85)
         y_coord = 0.92
         if self.qualitative:
-            fig.text(0.1, y_coord, 'Timepix3 qualitative',
-                     fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+            fig.text(0.1, y_coord, 'Timepix3 qualitative', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
             if chip_ID is not None:
-            #if chip_object is not None:
-                fig.text(0.7, y_coord, f'Chip: {chip_ID}',
-                         fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-                #fig.text(0.7, y_coord, f'Chip: {chip_object}', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                fig.text(0.7, y_coord, f'Chip: {chip_ID}', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)         
         else:
-            fig.text(0.1, y_coord, 'Timepix3 %s' %
-                     (self.level), fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+            fig.text(0.1, y_coord, f'Timepix3 {self.level}', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
             if chip_ID is not None:
-            #if chip_object is not None:
-                fig.text(0.7, y_coord, f'Chip: {chip_ID}',
-                         fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
-                #fig.text(0.7, y_coord, f'Chip: {chip_object}', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
+                fig.text(0.7, y_coord, f'Chip: {chip_ID}', fontsize=12, color=OVERTEXT_COLOR, transform=fig.transFigure)
         if self.internal:
             fig.text(0.1, 1, 'Timepix3 Internal', fontsize=16, color='r', rotation=45, bbox=dict(
                 boxstyle='round', facecolor='white', edgecolor='red', alpha=0.7), transform=fig.transFigure)
@@ -243,7 +230,6 @@ class Plotting(object):
         ax  = fig.add_subplot(111)
         ax.axis('off')
         tb_dict = OrderedDict(sorted(self.dacs.items()))
-        #print(tb_dict)
         # remove unnecessary keys
         del tb_dict['x_position']
         del tb_dict['y_position']
@@ -280,7 +266,6 @@ class Plotting(object):
                         (self.run_config['maskfile'][chip]).decode(), fontsize=6)
 
             for key, value in six.iteritems(self.run_config):
-                print(key, value)
                 if key in ['scan_id', 'run_name', 'wafer_number', 'x_position', 'y_position', 'software_version',
                            'board_name', 'firmware_version', 'disable', 'thrfile', 'maskfile']:
                     continue
@@ -883,7 +868,6 @@ class Plotting(object):
         self._save_plots(fig, suffix='scurves', plot_queue=plot_queue)
 
     def plot_distribution(self, data, chip_ID, fit=True, plot_range=None, x_axis_title=None, electron_axis=False, use_electron_offset=True, y_axis_title='# of hits', title=None, suffix=None, plot_queue=None):
-        #print('In plot_distribution...')
         if plot_range is None:
             diff = np.amax(data) - np.amin(data)
             if (np.amax(data)) > np.median(data) * 5:
@@ -893,12 +877,8 @@ class Plotting(object):
                 plot_range = np.arange(np.amin(data), np.amax(
                     data) + diff / 100., diff / 100.)
 
-        tick_size = np.diff(plot_range)[0]
-
-        hist, bins = np.histogram(np.ravel(data), bins=plot_range)
-        #print('Give histogram and bins....')
-        #print(hist, bins)
-
+        tick_size   = np.diff(plot_range)[0]
+        hist, bins  = np.histogram(np.ravel(data), bins=plot_range)
         bin_centres = (bins[:-1] + bins[1:]) / 2.0
 
         p0 = (np.amax(hist), np.mean(data), np.std(data))
@@ -961,7 +941,7 @@ class Plotting(object):
             ax.yaxis.set_minor_formatter(plt.NullFormatter())
 
         self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)
-        #print(coeff, errors)
+        
         if coeff is not None:
             return coeff, errors
         else:
@@ -1125,9 +1105,10 @@ class Plotting(object):
         self._add_text(fig, chip_object)
 
         ax.errorbar(x1, y1, y1_err, label = label_1, ls = 'None', marker = '.', ms = 4, alpha = 0.8, zorder=0)
-        ax.plot(x2, y2, label = label_2, alpha=0.8, zorder=1)
+        ax.plot(x2, y2, color='orange', label = label_2, alpha=0.8, zorder=1)
 
         ax.set_ylim(0, 1.5*max(y1))
+        ax.set_xlim(0, 320)
 
         if title:
             ax.set_title(title, color=TITLE_COLOR)

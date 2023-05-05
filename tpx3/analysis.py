@@ -169,17 +169,12 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
 def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extension = None):
     data_type = {'names': ['data_header', 'header', 'hit_index', 'x',     'y',     'TOA',    'TOT',    'EventCounter', 'HitCounter', 'FTOA',  'scan_param_id', 'chunk_start_time', 'iTOT',   'TOA_Extension', 'TOA_Combined'],
                'formats': ['uint8',       'uint8',  'uint64', 'uint8', 'uint8', 'uint16', 'uint16', 'uint16',       'uint8',      'uint8', 'uint16',        'float',            'uint16', 'uint64',        'uint64']}
-    #print('Now in _interpret_raw_data')
     num_of_chips = num_of_chips
     
     # For each chip create a list of pix_data
-    #print('Data chunk of link 1: ' + str(data[0]))
     pix_data = [[]]*num_of_chips
     for chip in range(num_of_chips):
         pix_data[chip] = np.recarray(len(data[chip]), dtype=data_type)
-
-    #print('created array for each chip')
-    #print(data[:5])
     
     n47 = np.uint64(47)
     n44 = np.uint64(44)
@@ -192,15 +187,11 @@ def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extens
     nf    = np.uint64(0xf)
 
     for chip in range(num_of_chips):
-        #print('Chip number %d' %chip)
         pixel       = [(data_chunk >> n28) & np.uint64(0b111) for data_chunk in data[chip]]
         super_pixel = [(data_chunk >> np.uint64(28 + 3)) & np.uint64(0x3f) for data_chunk in data[chip]]
         right_col   = [item > 3 for item in pixel]
         eoc         = [(data_chunk >> np.uint64(28 + 9)) & np.uint64(0x7f) for data_chunk in data[chip]]
-        #print(len(data[chip]))
         for i in range(len(data[chip])):
-            #if i%10000 == 0:
-            #    print('Data chunk %d of %d' %(i, len(data[chip])))
             pix_data[chip][i]['data_header'] = data[chip][i] >> n47
             pix_data[chip][i]['header']      = data[chip][i] >> n44
             pix_data[chip][i]['y']           = (super_pixel[i] * 4) + (pixel[i] - right_col[i] * 4)
@@ -255,8 +246,6 @@ def _interpret_raw_data(num_of_chips, data, op_mode = 0, vco = False, ToA_Extens
             pix_data[chip]['TOA']           = np.zeros(len(data[chip]))
             pix_data[chip]['TOA_Extension'] = np.zeros(len(data[chip]))
             pix_data[chip]['TOA_Combined']  = np.zeros(len(data[chip]))
-
-    #print(pix_data[:5])
 
     return pix_data
 
@@ -337,7 +326,7 @@ def save_and_correct_timer(raw_data, indices):
 
 def raw_data_to_dut_old(raw_data, indices):
     '''
-    2x 32 bit to 1x 47 bit
+    2x 32 bit to 1x 48 bit
     '''
     raw_data, indices, num = save_and_correct(raw_data, indices)
     if num != 0:
@@ -511,7 +500,6 @@ def raw_data_to_dut(chip_links, raw_data, last_timestamp, next_to_last_timestamp
             num += len(timestamp_splits[j])
 
         # Iterate over the smaller arrays and put chip data with wrong fpga overlap in the previous array
-        #for i in range(len(timestamp_splits)-1,0,-1):
         for i in range(1,len(timestamp_splits)):
             if len(timestamp_splits[i]) < 2:
                 continue

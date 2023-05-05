@@ -36,9 +36,6 @@ local_configuration = {
 class ThresholdScan(ScanBase):
 
     scan_id      = "ThresholdScan"
-    wafer_number = 0
-    y_position   = 0
-    x_position   = 'A'
 
     def scan(self, Vthreshold_start=0, Vthreshold_stop=2911, n_injections=100, tp_period = 1, mask_step=16, progress = None, status = None, **kwargs):
         '''
@@ -163,24 +160,6 @@ class ThresholdScan(ScanBase):
             general_config = h5_file.root.configuration.generalConfig
             op_mode        = general_config.col('Op_mode')[0]
             vco            = general_config.col('Fast_Io_en')[0]
-            
-            # 'Simulate' more chips
-            #chip_IDs_new = [b'W18-K7',b'W18-K7',b'W17-D8',b'W17-D8',b'W14-E9', b'W14-E9',b'W15-C5', b'W15-C5']
-            #for new_Id in range(8):
-            #    h5_file.root.configuration.links.cols.chip_id[new_Id] = chip_IDs_new[new_Id]
-
-            # Get link configuration
-            link_config = h5_file.root.configuration.links[:]
-            chip_IDs    = link_config['chip_id']
-
-            # Create dictionary of Chips and the links they are connected to
-            self.chip_links = {}
-    
-            for link, ID in enumerate(chip_IDs):
-                if ID not in self.chip_links:
-                    self.chip_links[ID] = [link]
-                else:
-                    self.chip_links[ID].append(link)
 
             # Create group to save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
@@ -195,13 +174,11 @@ class ThresholdScan(ScanBase):
             Vthreshold_start = run_config.col('Vthreshold_start')[0]
             Vthreshold_stop  = run_config.col('Vthreshold_stop')[0]
 
-            #for chip in range(self.num_of_chips):
             for chip in self.chips[1:]:
                 # Get the index of current chip in regards to the chip_links dictionary. This is the index, where
                 # the hit_data of the chip is.
                 chip_num = [number for number, ID in enumerate(kwargs['chip_link']) if ID==chip.chipId_decoded][0]
                 # Get current chipID
-                #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                 chipID   = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
 
                 # create group for current chip
@@ -256,10 +233,8 @@ class ThresholdScan(ScanBase):
                 # Plot a page with all parameters
                 p.plot_parameter_page()
       
-                #for chip in range(self.num_of_chips):
                 for chip in self.chips[1:]:
                     # get chipID of current chip
-                    #chipID = str([ID for number, ID in enumerate(self.chip_links) if chip == number])[3:-2]
                     chipID = f'W{chip.wafer_number}_{chip.x_position}{chip.y_position}'
                 
                     # get group of current chip in H5 file
@@ -268,19 +243,19 @@ class ThresholdScan(ScanBase):
                     # Plot the equalisation bits histograms
                     thr_matrix_call = f'h5_file.root.configuration.thr_matrix_{chipID}[:]'
                     thr_matrix      = eval(thr_matrix_call)
-                    p.plot_distribution(thr_matrix, chipID, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
+                    p.plot_distribution(thr_matrix, chip.chipId_decoded, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of pixels', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
                     mask_call = f'h5_file.root.configuration.mask_matrix_{chipID}[:].T'
                     mask      = eval(mask_call) 
 
                     # Plot the occupancy matrix
                     occ_masked  = np.ma.masked_array(chip_group.HistOcc[:], mask)
-                    p.plot_occupancy(occ_masked, chipID, title='Integrated Occupancy', z_max='median', suffix='occupancy', plot_queue=plot_queue)
+                    p.plot_occupancy(occ_masked, chip.chipId_decoded, title='Integrated Occupancy', z_max='median', suffix='occupancy', plot_queue=plot_queue)
                         
                     # Plot the S-Curve histogram, put title for plot
                     scurve_hist = chip_group.HistSCurve[:].T
                     max_occ     = n_injections * 5
-                    p.plot_scurves(scurve_hist, chipID, list(range(Vthreshold_start, Vthreshold_stop+1)), scan_parameter_name="Vthreshold", max_occ=max_occ, plot_queue=plot_queue)
+                    p.plot_scurves(scurve_hist, chip.chipId_decoded, list(range(Vthreshold_start, Vthreshold_stop+1)), scan_parameter_name="Vthreshold", max_occ=max_occ, plot_queue=plot_queue)
 
                     # Do not plot pixels with converged  S-Curve fits 
                     chi2_sel        = chip_group.Chi2Map[:] > 0.  # Mask not converged fits (chi2 = 0)
@@ -288,15 +263,15 @@ class ThresholdScan(ScanBase):
 
                     # Plot the threshold distribution based on the S-Curve fits
                     hist = np.ma.masked_array(chip_group.ThresholdMap[:], mask)
-                    p.plot_distribution(hist, chipID, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop+0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution', plot_queue=plot_queue)
+                    p.plot_distribution(hist, chip.chipId_decoded, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop+0.5, 1), x_axis_title='Vthreshold', y_axis_title = '# of pixels', title='Threshold distribution', suffix='threshold_distribution', plot_queue=plot_queue)
 
                     # Plot the occupancy
-                    p.plot_occupancy(hist, chipID, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=Vthreshold_start, z_max=Vthreshold_stop, plot_queue=plot_queue)
+                    p.plot_occupancy(hist, chip.chipId_decoded, z_label='Threshold', title='Threshold', show_sum=False, suffix='threshold_map', z_min=Vthreshold_start, z_max=Vthreshold_stop, plot_queue=plot_queue)
 
                     # Plot the noise map
                     hist = np.ma.masked_array(chip_group.NoiseMap[:], mask)
-                    p.plot_distribution(hist, chipID, plot_range=np.arange(0.1, 20, 0.1), title='Noise distribution', suffix='noise_distribution', plot_queue=plot_queue)
-                    p.plot_occupancy(hist, chipID, z_label='Noise', title='Noise', show_sum=False, suffix='noise_map', z_min=0.1, z_max=20.0, plot_queue=plot_queue)
+                    p.plot_distribution(hist, chip.chipId_decoded, plot_range=np.arange(0.1, 20, 0.1), title='Noise distribution', x_axis_title='Noise hits', y_axis_title = '# of pixels', suffix='noise_distribution', plot_queue=plot_queue)
+                    p.plot_occupancy(hist, chip.chipId_decoded, z_label='Noise', title='Noise', show_sum=False, suffix='noise_map', z_min=0.1, z_max=20.0, plot_queue=plot_queue)
 
 
 if __name__ == "__main__":

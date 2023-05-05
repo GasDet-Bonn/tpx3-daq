@@ -63,7 +63,6 @@ class mask_logger(object):
         
         # update data logger
         TPX3_datalogger.check_mask_equal()
-        print(TPX3_datalogger.data['Mask_path'])
 
     def delete_mask(mask_element, mask = None, file_path = None, chip = None):
         '''
