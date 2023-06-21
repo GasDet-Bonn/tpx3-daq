@@ -230,3 +230,36 @@ chips:
     size: 3
     default: 2
     value: 2
+- chip_ID: 730927
+  chip_ID_decoded: W2855-O2
+  registers:
+  - name: chan_mask
+    description: Sets the mask for the output channels. All combinations are possible.
+    address: 0
+    size: 8
+    default: 1
+    value: 1
+  - name: clk_readout_src
+    description: Selects the frequency of the readout clock
+    address: 8
+    size: 3
+    default: 1
+    value: 2
+  - name: 8b_10b_en
+    description: Enables the 8b to 10b data clock encoding
+    address: 11
+    size: 1
+    default: 1
+    value: 1
+  - name: clk_fast_out
+    description: Enables the ClkOutData pad
+    address: 12
+    size: 1
+    default: 1
+    value: 1
+  - name: ClkOut_frequency_src
+    description: Selects the frequency of the Clock Out
+    address: 13
+    size: 3
+    default: 2
+    value: 2

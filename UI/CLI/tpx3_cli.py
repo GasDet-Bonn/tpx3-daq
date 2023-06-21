@@ -106,24 +106,6 @@ def expert_completer(text, state):
     except IndexError:
         return None
 
-def Set_DAC_chip(chip, DAC_Name, DAC_value):
-    if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON',
-                    'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut',
-                    'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Vthreshold_coarse', 'Vthreshold_fine', 'VTP_fine'}:
-        TPX3_datalogger.write_value(name = DAC_Name, value = DAC_value, chip = chip)
-        TPX3_datalogger.write_to_yaml(name = DAC_Name, chip = chip)
-        print(f'> Set {DAC_Name} to value {DAC_value}.')
-    elif DAC_Name in {'Vthreshold_combined'}:
-        fine, coarse = threshold_decompose(DAC_value)
-        TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chip)
-        TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chip)
-        TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chip)
-        TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chip)
-        print(f'> Set {DAC_Name} to value {DAC_value}.')
-        print(f'> This corresponds to Vthreshold_fine {fine} and Vthreshold_coarse {coarse}.')
-    else:
-        print(f'{DAC_Name}: Unknown DAC name.')
-
 
 def Set_DAC_value(DAC_Name):
     if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON', 'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut', 'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl'}:
@@ -301,7 +283,7 @@ class TPX3_CLI_function_call(object):
                                                            VTP_fine_start = VTP_fine_start,
                                                            VTP_fine_stop  = VTP_fine_stop,
                                                            mask_step      = mask_step,
-                                                           tp_period      = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           #tp_period      = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            thrfile        = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                            maskfile       = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                            chip_link      = TPX3_datalogger.data['chip_links'])
@@ -360,7 +342,7 @@ class TPX3_CLI_function_call(object):
                                                            Vthreshold_stop  = Vthreshold_stop,
                                                            n_injections     = n_injections,
                                                            mask_step        = mask_step,
-                                                           tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           #tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            thrfile          = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                            maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                            chip_link        = TPX3_datalogger.data['chip_links'])
@@ -431,7 +413,7 @@ class TPX3_CLI_function_call(object):
                                                            Vthreshold_stop  = Vthreshold_stop,
                                                            n_injections     = n_injections,
                                                            mask_step        = mask_step,
-                                                           tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           #tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            n_pulse_heights  = n_pulse_heights,
                                                            thrfile          = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                            maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
@@ -491,7 +473,7 @@ class TPX3_CLI_function_call(object):
                                                            VTP_fine_stop  = VTP_fine_stop,
                                                            n_injections   = n_injections,
                                                            mask_step      = mask_step,
-                                                           tp_period      = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           #tp_period      = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            thrfile        = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                            maskfile       = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                            chip_link      = TPX3_datalogger.data['chip_links'])
@@ -549,7 +531,7 @@ class TPX3_CLI_function_call(object):
                                                            iteration        = 0,
                                                            Vthreshold_start = Vthreshold_start,
                                                            Vthreshold_stop  = Vthreshold_stop,
-                                                           tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           #tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            n_injections     = n_injections,
                                                            offset           = offset,
                                                            result           = pixeldac_result,
@@ -613,7 +595,7 @@ class TPX3_CLI_function_call(object):
                                                            Vthreshold_stop  = Vthreshold_stop,
                                                            n_injections     = n_injections,
                                                            mask_step        = mask_step,
-                                                           tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           #tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            result_path      = result_path,
                                                            maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                            chip_link        = TPX3_datalogger.data['chip_links'])
@@ -661,7 +643,7 @@ class TPX3_CLI_function_call(object):
                                                            Vthreshold_start = Vthreshold_start,
                                                            Vthreshold_stop  = Vthreshold_stop,
                                                            shutter          = shutter,
-                                                           tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           #tp_period        = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                            thrfile          = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                            maskfile         = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                            chip_link        = TPX3_datalogger.data['chip_links'])
@@ -678,15 +660,15 @@ class TPX3_CLI_function_call(object):
                 DAC_Name  = Set_DAC_name()
                 DAC_value = Set_DAC_value(DAC_Name)
                 for chip in chip_selection:
-                    Set_DAC_chip(chip, DAC_Name, DAC_value)  
+                    self.Set_DAC_chip(chip, DAC_Name, DAC_value)  
             elif same_value in ['no', 'n', '0']:
                 print('Iterate over all chips and select DAC values individually.')
                 for chip in chip_selection:
                     DAC_Name  = Set_DAC_name()
                     DAC_value = Set_DAC_value(DAC_Name)
-                    Set_DAC_chip(chip, DAC_Name, DAC_value)
+                    self.Set_DAC_chip(chip, DAC_Name, DAC_value)
             else:
-                print('I don\t understand, go to the beginning')
+                print('I don\'t understand, go to the beginning')
             
             valid = 1
             while valid:
@@ -703,15 +685,33 @@ class TPX3_CLI_function_call(object):
                 elif continue_menu in ['yes', 'y', '1']:
                     pass
 
-    def set_advanced_DAC(object, chip_selection=None, DAC_name=None, DAC_value=None):
+    def Set_DAC_chip(object, chip, DAC_Name, DAC_value):
+        if DAC_Name in {'Ibias_Preamp_ON', 'VPreamp_NCAS', 'Ibias_Ikrum', 'Vfbk', 'Ibias_DiscS1_ON',
+                        'Ibias_DiscS2_ON', 'Ibias_PixelDAC', 'Ibias_TPbufferIn', 'Ibias_TPbufferOut',
+                        'VTP_coarse', 'Ibias_CP_PLL', 'PLL_Vcntrl', 'Vthreshold_coarse', 'Vthreshold_fine', 'VTP_fine'}:
+            TPX3_datalogger.write_value(name = DAC_Name, value = DAC_value, chip = chip)
+            TPX3_datalogger.write_to_yaml(name = DAC_Name, chip = chip)
+            print(f'> Set {DAC_Name} to value {DAC_value}.')
+        elif DAC_Name in {'Vthreshold_combined'}:
+            fine, coarse = threshold_decompose(DAC_value)
+            TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chip)
+            TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chip)
+            TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chip)
+            TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chip)
+            print(f'> Set {DAC_Name} to value {DAC_value}.')
+            print(f'> This corresponds to Vthreshold_fine {fine} and Vthreshold_coarse {coarse}.')
+        else:
+            print(f'{DAC_Name}: Unknown DAC name.')
+
+    def set_advanced_DAC(object, chip_list=None, DAC_name=None, DAC_value=None):
         all  = 1
         menu = 1
         while(menu):
             print('In set_advanced_DAC function ...')
-            print(f'Selected chips: {chip_selection}')
+            print(f'Selected chips: {chip_list}')
             print(f'Selected DAC: {DAC_name}')
             print(f'Current values: ')
-            for chip in chip_selection:
+            for chip in chip_list:
                 a = 'chip_dacs'
                 print(f'{chip}\t{TPX3_datalogger.data[a][chip][DAC_name]}')
             
@@ -812,7 +812,7 @@ class TPX3_CLI_function_call(object):
         print('Select from available files:')
         for num, f in enumerate(available_files):
             print(f'{num}\t{available_files[num]}')
-        while(1):
+        while(True):
             selection = input('>> ')
             try:
                 TPX3_datalogger.data['Equalisation_path'][chip]['active'] = available_files[int(selection)]
@@ -820,25 +820,6 @@ class TPX3_CLI_function_call(object):
                 break
             except:
                 print(f'This option does not exist! Try again or press ctrl-c ...')
-
-        '''
-        user_path = os.path.expanduser('~')
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'equalisations')
-
-        if equal_path == None:
-            print('> Please enter the name of the equalisation you like to load (must be in ~/Timepix3/equalisations):')
-            equal_path = input('>> ')
-        try:
-            #look if path exists
-            full_path = user_path + os.sep + equal_path
-            if os.path.isfile(full_path) == True:
-                TPX3_datalogger.write_value(name = 'Equalisation_path', value = full_path)
-        except:
-            print('Path does not exist')
-        else:
-            print('> Loaded equalisation ' + full_path)
-        '''
 
     def Save_Equalisation(object, file_name = None):
         user_path = os.path.expanduser('~')
@@ -1085,7 +1066,7 @@ class TPX3_CLI_function_call(object):
         print('Select from available files:')
         for num, f in enumerate(available_files):
             print(f'{num}\t{available_files[num]}')
-        while(1):
+        while(True):
             selection = input('>> ')
             try:
                 TPX3_datalogger.data['Mask_path'][chip]['active'] = available_files[int(selection)]
@@ -1094,25 +1075,6 @@ class TPX3_CLI_function_call(object):
             except:
                 print(f'This option does not exist! Try again or press ctrl-c ...')
 
-        '''
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'masks')
-
-        if mask_path == None:
-            print('> Please enter the name of the mask file you like to load (must be in ~/Timepix3/masks):')
-            mask_path = input('>> ')
-        try:
-            #look if path exists
-            full_path = user_path + os.sep + mask_path
-            if os.path.isfile(full_path) == True:
-                TPX3_datalogger.write_value(name = 'Mask_path', value = full_path)
-        except:
-            print('Path does not exist')
-        else:
-            print('Loaded mask ' + full_path)
-        '''
 
     def Get_link_configuration(object):
         # Create a dict, from where we can print out the important information beautifully
@@ -1217,7 +1179,6 @@ class TPX3_CLI_function_call(object):
             else:
                 for link in TPX3_datalogger.data['chip_links'][chip]:
                     TPX3_datalogger.change_link_status(link, 1)
-
                             
         print('\nEnabled chip/s:')
         for chip in selected_chips:
@@ -1706,98 +1667,106 @@ class TPX3_CLI_TOP(object):
                             print('User quit')
                     else:
                         if inputlist[1] in {'Help', 'help', 'h', '-h'}:
-                            print('This is the Set DAC function. As arguments you can give the DAC-name/DAC-number and the new value.\n The following DACs are aviable:\n     1.) Ibias_Preamp_ON (0-255)\n     2.) VPreamp_NCAS (0-255)\n     3.) Ibias_Ikrum (0-255)\n     4.) Vfbk (0-255)\n     5.) Vthreshold_fine (0-511)\n     6.) Vthreshold_coarse (0-15)\n     7.) Vthreshold_combined (0-2911)\n     8.) Ibias_DiscS1_ON (0-255)\n     9.) Ibias_DiscS2_ON (0-255)\n    10.) Ibias_PixelDAC (0-255)\n    11.) Ibias_TPbufferIn (0-255)\n    12.) Ibias_TPbufferOut (0-255)\n    13.) VTP_coarse (0-255)\n    14.) VTP_fine (0-511)\n    15.) Ibias_CP_PLL (0-255)\n    16.) PLL_Vcntrl (0-255)')
-                        elif len(inputlist) < 3:
+                            print('This is the Set DAC function. As arguments you can give the chip ID, the DAC-name/DAC-number and the new value.\n The following DACs are aviable:\n     1.) Ibias_Preamp_ON (0-255)\n     2.) VPreamp_NCAS (0-255)\n     3.) Ibias_Ikrum (0-255)\n     4.) Vfbk (0-255)\n     5.) Vthreshold_fine (0-511)\n     6.) Vthreshold_coarse (0-15)\n     7.) Vthreshold_combined (0-2911)\n     8.) Ibias_DiscS1_ON (0-255)\n     9.) Ibias_DiscS2_ON (0-255)\n    10.) Ibias_PixelDAC (0-255)\n    11.) Ibias_TPbufferIn (0-255)\n    12.) Ibias_TPbufferOut (0-255)\n    13.) VTP_coarse (0-255)\n    14.) VTP_fine (0-511)\n    15.) Ibias_CP_PLL (0-255)\n    16.) PLL_Vcntrl (0-255)')
+                            print('\n Following chips are available: ')
+                            for chip in self.chip_list:
+                                if chip == 'default':
+                                    continue
+                                if chip in self.connected_chips:
+                                    print(f'    {chip}\tconnected')
+                                else:
+                                    print(f'    {chip}')
+                        elif len(inputlist) < 4:
                             print('Incomplete set of parameters:')
                             try:
                                 function_call.Set_DAC()
                             except KeyboardInterrupt:
                                 print('User quit')
-                        elif len(inputlist) == 3:
-                            if inputlist[1] in {'1', 'Ibias_Preamp_ON'}:
+                        elif len(inputlist) == 4:
+                            if inputlist[2] in {'1', 'Ibias_Preamp_ON'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_Preamp_ON', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_Preamp_ON', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'2', 'VPreamp_NCAS'}:
+                            elif inputlist[2] in {'2', 'VPreamp_NCAS'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'VPreamp_NCAS', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'VPreamp_NCAS', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'3', 'Ibias_Ikrum'}:
+                            elif inputlist[2] in {'3', 'Ibias_Ikrum'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_Ikrum', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_Ikrum', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'4', 'Vfbk'}:
+                            elif inputlist[2] in {'4', 'Vfbk'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Vfbk', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Vfbk', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'5', 'Vthreshold_fine'}:
+                            elif inputlist[2] in {'5', 'Vthreshold_fine'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Vthreshold_fine', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Vthreshold_fine', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'6', 'Vthreshold_coarse'}:
+                            elif inputlist[2] in {'6', 'Vthreshold_coarse'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Vthreshold_coarse', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Vthreshold_coarse', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'7', 'Vthreshold_combined'}:
+                            elif inputlist[2] in {'7', 'Vthreshold_combined'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Vthreshold_combined', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Vthreshold_combined', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'8', 'Ibias_DiscS1_ON'}:
+                            elif inputlist[2] in {'8', 'Ibias_DiscS1_ON'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_DiscS1_ON', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_DiscS1_ON', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'9', 'Ibias_DiscS2_ON'}:
+                            elif inputlist[2] in {'9', 'Ibias_DiscS2_ON'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_DiscS2_ON', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_DiscS2_ON', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'10', 'Ibias_PixelDAC'}:
+                            elif inputlist[2] in {'10', 'Ibias_PixelDAC'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_PixelDAC', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_PixelDAC', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'11', 'Ibias_TPbufferIn'}:
+                            elif inputlist[2] in {'11', 'Ibias_TPbufferIn'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_TPbufferIn', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_TPbufferIn', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'12', 'Ibias_TPbufferOut'}:
+                            elif inputlist[2] in {'12', 'Ibias_TPbufferOut'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_TPbufferOut', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_TPbufferOut', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'13', 'VTP_coarse'}:
+                            elif inputlist[2] in {'13', 'VTP_coarse'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'VTP_coarse', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'VTP_coarse', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'14', 'VTP_fine'}:
+                            elif inputlist[2] in {'14', 'VTP_fine'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'VTP_fine', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'VTP_fine', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'15', 'Ibias_CP_PLL'}:
+                            elif inputlist[2] in {'15', 'Ibias_CP_PLL'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'Ibias_CP_PLL', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'Ibias_CP_PLL', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
-                            elif inputlist[1] in {'16', 'PLL_Vcntrl'}:
+                            elif inputlist[2] in {'16', 'PLL_Vcntrl'}:
                                 try:
-                                    function_call.Set_DAC(DAC_Name = 'PLL_Vcntrl', DAC_value = int(inputlist[2]))
+                                    function_call.Set_DAC_chip(chip = inputlist[1], DAC_Name = 'PLL_Vcntrl', DAC_value = int(inputlist[3]))
                                 except KeyboardInterrupt:
                                     print('User quit')
                             else:
                                 print('Unknown DAC-name')
-                        elif len(inputlist) > 3:
-                            print('To many parameters! The given function takes only two parameters:\n The DAC-name and its value.')
+                        elif len(inputlist) > 4:
+                            print('To many parameters! The given function takes only three parameters:\n The chip ID, the DAC-name and its value.')
 
                 #Data taking
                 elif inputlist[0] in {'Run_Datataking', 'Run', 'Datataking', 'R', 'run_datataking', 'run', 'datataking', 'r'}:
