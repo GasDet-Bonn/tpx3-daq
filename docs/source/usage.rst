@@ -10,25 +10,22 @@ Installation of the software:
 
 .. code-block:: bash
 
+   sudo apt update
+   sudo apt upgrade
+   sudo apt install curl libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0
    mkdir miniconda
    curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
    bash miniconda.sh -u -b -p miniconda
-   export PATH=~/miniconda/bin:$PATH
+   export PATH=<PATH_TO_MINICONDA>/miniconda/bin:$PATH
    conda update --yes conda
    conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
    pip install basil_daq==3.2.0
+   pip install pycairo
+   pip install PyGObject
    mkdir tpx3-daq
    git clone https://github.com/SiLab-Bonn/tpx3-daq.git tpx3-daq/
    cd tpx3-daq
-   python setup.py develop
-
-Additional steps for using the GUI:
-
-.. code-block:: bash
-
-   sudo apt install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0
-   pip install pycairo
-   pip install PyGObject
+   pip install -e .
 
 If there are problems with the online monitor try:
 

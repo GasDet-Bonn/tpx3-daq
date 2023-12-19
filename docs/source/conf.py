@@ -3,7 +3,7 @@
 # -- Project information
 
 project = 'tpx3-daq'
-copyright = '2022, GasDet Bonn'
+copyright = '2024, GasDet Bonn'
 author = 'Markus Gruber'
 
 release = '0.1'
