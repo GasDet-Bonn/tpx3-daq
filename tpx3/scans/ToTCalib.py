@@ -298,10 +298,12 @@ class ToTCalib(ScanBase):
 
                 mean['tot']
                 mean['tot_error']
-                points = np.linspace(t*1.001, len(mean['tot']), 500)
+
+                # factor of 2.5 to have the x-axis in mV instead of DAC values
+                points = np.linspace(t*1.001, len(mean['tot'])*2.5, 500)
                 fit = analysis.totcurve(points, a, b, c, t)
 
-                p.plot_two_functions(range(len(mean['tot'])), mean['tot'], range(len(mean['tot'])), mean['tot_error'], points, fit, y_plot_range = [0, np.amax(fit[1])], label_1 = 'mean ToT', label_2='fit with \na=(%.2f+/-%.2f), \nb=(%.2f+/-%.2f), \nc=(%.2f+/-%.2f), \nt=(%.2f+/-%.2f)'%(a, ac, b, bc, c, cc, t ,tc), x_axis_title='VTP [2.5 mV]', y_axis_title='ToT Clock Cycles [25 ns]', title='ToT fit', suffix='ToT fit', plot_queue=plot_queue )
+                p.plot_two_functions(np.arange(0, len(mean['tot'])*2.5, 2.5), mean['tot'], 0, mean['tot_error'], points, fit, y_plot_range = [0, np.amax(fit[1])], label_1 = 'mean ToT', label_2='fit with \na=(%.2f+/-%.2f) CC/mV, \nb=(%.2f+/-%.2f) CC, \nc=(%.2f+/-%.2f) CC*mV, \nt=(%.2f+/-%.2f) mV'%(a, ac, b, bc, c, cc, t ,tc), x_axis_title='VTP [mV]', y_axis_title='ToT Clock Cycles [25 ns]', title='ToT fit', suffix='ToT fit', plot_queue=plot_queue )
 
 
 if __name__ == "__main__":

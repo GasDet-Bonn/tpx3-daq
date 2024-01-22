@@ -1030,7 +1030,8 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
     totcurve_std[active_pixels < 0.4 * 256 * 256] = 0
 
     # use only data which contains tot data
-    x = np.where(totcurve_mean>0)[0]
+    # factor of 2.5 to have the x-axis in mV instead of DAC values
+    x = np.where(totcurve_mean>0)[0] * 2.5
     y = totcurve_mean[totcurve_mean > 0]
     y_err = totcurve_std[totcurve_mean > 0]
 
