@@ -6,7 +6,6 @@ from setuptools import find_packages
 
 import tpx3
 from tpx3.utils import check_user_folders
-from symbol import except_clause
 
 import os
 
@@ -17,7 +16,7 @@ author_email = ''
 
 # Requirements
 install_requires = ['basil-daq==3.2.0', 'bitarray>=2.0.0', 'matplotlib',
-                    'numpy', 'online_monitor>=0.4.0<0.5',
+                    'numpy', 'online_monitor>=0.6',
                     'pixel_clusterizer==3.1.3', 'tables', 'pyyaml', 'pyzmq',
                     'scipy', 'numba', 'tqdm']
 setup(
@@ -34,7 +33,7 @@ setup(
     install_requires=install_requires,
     python_requires=">=3.0",
     packages=find_packages(),
-    setup_requires=['online_monitor>=0.4.0<0.5'],
+    setup_requires=['online_monitor>=0.6'],
     include_package_data=True,
     platforms='any',
     entry_points={
