@@ -289,6 +289,13 @@ class TPX3(Dut):
             # read all 3 YAML files for config registers, DACS and the output block configuration
             self.read_yaml(getattr(self, var_name), dict_type)
 
+        # The ML605 runs with a 320 MHz PLL input and thus the PLL is bypassed. Other boards get
+        # a 40 MHz input as reference for the PLL and thus the PLL is not bypassed.
+        if self.board_version == 'ML605':
+            self._PLLConfigs["bypass"] = 1
+        else:
+            self._PLLConfigs["bypass"] = 0
+
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
         """
