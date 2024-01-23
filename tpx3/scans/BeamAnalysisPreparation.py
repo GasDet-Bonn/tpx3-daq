@@ -331,7 +331,7 @@ class BeamAnalysisPreparation():
         data_type = {'names': ['trigger_number', 'trigger_timestamp'],
             'formats': ['int64', 'float64']}
         trigger = np.recarray((np.sum(select)), dtype=data_type)
-        trigger['trigger_timestamp'] = np.array(hist_toa_m,dtype=np.float64)[select]
+        trigger['trigger_timestamp'] = np.array(hist_toa_m,dtype=float)[select]
         trigger.sort(order="trigger_timestamp")
         trigger['trigger_number'] = range(np.sum(select))
 

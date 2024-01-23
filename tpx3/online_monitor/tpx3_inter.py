@@ -221,6 +221,6 @@ class Tpx3(Transceiver):
         # Readout number
         self.readout = 0
 
-        self.hist_occ = np.zeros((256,256), dtype=np.float64)
-        self.hist_tot = np.zeros((1024), dtype=np.float64)
-        self.hist_hit_count = np.zeros((256*256), dtype=np.float64)
+        self.hist_occ = np.zeros((256,256), dtype=float)
+        self.hist_tot = np.zeros((1024), dtype=float)
+        self.hist_hit_count = np.zeros((256*256), dtype=float)

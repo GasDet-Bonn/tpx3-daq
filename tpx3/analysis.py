@@ -747,8 +747,8 @@ def get_threshold(x, y, n_injections, invert_x=False):
     if not np.all(np.diff(x) == d):
         raise NotImplementedError('Threshold can only be calculated for equidistant x values!')
     if invert_x:
-        return x.min() + (d * M).astype(np.float) / n_injections
-    return x.max() - (d * M).astype(np.float) / n_injections
+        return x.min() + (d * M).astype(float) / n_injections
+    return x.max() - (d * M).astype(float) / n_injections
 
 
 def get_noise(x, y, n_injections, invert_x=False):
@@ -774,7 +774,7 @@ def get_noise(x, y, n_injections, invert_x=False):
         mu1 = y[x < mu].sum()
         mu2 = (n_injections - y[x > mu]).sum()
 
-    return d * (mu1 + mu2).astype(np.float) / n_injections * np.sqrt(np.pi / 2.)
+    return d * (mu1 + mu2).astype(float) / n_injections * np.sqrt(np.pi / 2.)
 
 
 def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
@@ -786,7 +786,7 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
             (mu, sigma, chi2/ndf)
     '''
 
-    scurve_data = np.array(scurve_data, dtype=np.float)
+    scurve_data = np.array(scurve_data, dtype=float)
 
     # Deselect masked values (== nan)
     x = scan_param_range[~np.isnan(scurve_data)]
@@ -799,7 +799,7 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
         return (0., 0., 0.)
 
     # Calculate data errors, Binomial errors
-    yerr = np.sqrt(y * (1. - y.astype(np.float) / n_injections))
+    yerr = np.sqrt(y * (1. - y.astype(float) / n_injections))
     # Set minimum error != 0, needed for fit minimizers
     # Set arbitrarily to error of 0.5 injections
     min_err = np.sqrt(0.5 - 0.5 / n_injections)
@@ -953,7 +953,7 @@ def fit_ToT(tot_data, scan_param_range, t_est):
             (a, b, c, t, chi2/ndf)
     '''
 
-    tot_data = np.array(tot_data, dtype=np.float)
+    tot_data = np.array(tot_data, dtype=float)
 
     # Deselect masked values (== nan)
     x = np.where(np.all([tot_data != 0, ~np.isnan(tot_data)], axis = 0))[0]
