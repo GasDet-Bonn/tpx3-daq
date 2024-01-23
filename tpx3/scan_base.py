@@ -325,7 +325,7 @@ class ScanBase(object):
             # Initailize counter for progress
             step_counter = 0
 
-        temp_mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        temp_mask_matrix = np.zeros((256, 256), dtype=bool)
         if self.maskfile:
             with tb.open_file(self.maskfile, 'r') as infile:
                 temp_mask_matrix = infile.root.mask_matrix[:]
@@ -403,7 +403,7 @@ class ScanBase(object):
         '''
         mask_cmds = []
 
-        temp_mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        temp_mask_matrix = np.zeros((256, 256), dtype=bool)
         if self.maskfile:
             with tb.open_file(self.maskfile, 'r') as infile:
                 temp_mask_matrix = infile.root.mask_matrix[:]

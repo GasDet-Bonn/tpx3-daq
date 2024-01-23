@@ -265,7 +265,7 @@ class EqualisationNoise(ScanBase):
         eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop)
 
         # Don't mask any pixels in the mask file
-        mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        mask_matrix = np.zeros((256, 256), dtype=bool)
         mask_matrix[:, :] = 0
 
         # Write the equalisation matrix to a new HDF5 file

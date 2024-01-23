@@ -302,7 +302,7 @@ class TPX3(Dut):
             self.thr_matrix = np.full((256, 256), dtype=np.uint8, fill_value=8)
         # set the mask matrix with zeros for all pixels
         if mask:
-            self.mask_matrix = np.zeros((256, 256), dtype=np.bool)
+            self.mask_matrix = np.zeros((256, 256), dtype=bool)
         # matrix storing ToT (= Time over Threshold) values of this Tpx3
         # 8 bit values
         if tot:

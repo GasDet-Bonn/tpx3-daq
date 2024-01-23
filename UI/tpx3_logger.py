@@ -34,7 +34,7 @@ class mask_logger(object):
             This will mask the 'pixel', 'row' or 'column' given to it via mask_element.
             Additionally the mask file to change can be given via mask.
         '''
-        mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        mask_matrix = np.zeros((256, 256), dtype=bool)
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
             if path == None:
@@ -54,7 +54,7 @@ class mask_logger(object):
 
         #manipulate mask matrix
         if mask_element[0] == 'all':
-            mask_matrix = np.ones((256, 256), dtype=np.bool)
+            mask_matrix = np.ones((256, 256), dtype=bool)
         elif mask_element[0] == 'row':
             mask_matrix[ : , int(mask_element[1])] = 1
         elif mask_element[0] == 'column':
@@ -73,7 +73,7 @@ class mask_logger(object):
             This will unmask the 'pixel', 'row' or 'column' given to it via mask_element.
             Additionally the mask file to change can be given via mask.
         '''
-        mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        mask_matrix = np.zeros((256, 256), dtype=bool)
         if mask == None:
             path = TPX3_datalogger.read_value(name = 'Mask_path')
             if path == None:
@@ -92,7 +92,7 @@ class mask_logger(object):
 
         #manipulate mask matrix
             if mask_element[0] == 'all':
-                mask_matrix = np.zeros((256, 256), dtype=np.bool)
+                mask_matrix = np.zeros((256, 256), dtype=bool)
             elif mask_element[0] == 'row':
                 mask_matrix[ : , int(mask_element[1])] = 0
             elif mask_element[0] == 'column':
@@ -100,7 +100,7 @@ class mask_logger(object):
             elif mask_element[0] == 'pixel':
                 mask_matrix[int(mask_element[1]), int(mask_element[2])] = 0
             elif mask_element[0] == 'all':
-                mask_matrix = np.zeros((256, 256), dtype=np.bool)
+                mask_matrix = np.zeros((256, 256), dtype=bool)
             else:
                 print('Error: Unknown mask element')
 
