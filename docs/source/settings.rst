@@ -3,10 +3,10 @@ Chip and Readout settings
 
 Via the CLI and the GUI it is possible to change several settings of the Timepix3 ASICs,
 
+.. _generalsettings:
+
 General settings
 ----------------
-
-.. _general-settings:
 
 There are the following general settings:
 

@@ -20,7 +20,7 @@ the connected chip) you can see an event display for this chip. A click on
 With a click on the `Settings` button a window opens for general settings of
 the chip and the readout system. Within this window some additional settings
 are accessible by checking the `expert` box. An overview of the available
-settings is shown here: :ref:`general-settings`. At the lower end of the window
+settings is shown :ref:`here <generalsettings>`. At the lower end of the window
 there are additional buttons to switch off individual data links of the chip.
 After changes to the settings are done they should be saved by a click on the
 `Save` button.
