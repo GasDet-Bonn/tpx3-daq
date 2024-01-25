@@ -16,3 +16,4 @@ Contents
    usage
    scans
    settings
+   ui

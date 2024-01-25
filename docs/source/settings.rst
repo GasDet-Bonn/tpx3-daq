@@ -6,6 +6,8 @@ Via the CLI and the GUI it is possible to change several settings of the Timepix
 General settings
 ----------------
 
+.. _general-settings:
+
 There are the following general settings:
 
   * Polarity: selects if either positive or negative charge is collected by the
