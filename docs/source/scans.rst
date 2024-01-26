@@ -30,6 +30,20 @@ the following parameters are checked at set for operation:
     8. Link connected, inactive but problems during reading the ChipID
     9. Link not implemented in firmware
 
+The expected amount of available links depends on the readout board and the
+used intermediate and carrier boards (nc = not compatible):
+
+.. table:: Expected links
+    :align: center
+
+    =======================  ======================  ================  ===============
+    Expected links per chip  Single Chip IB/Carrier  SPIDR IB/Carrier  IAXO Kapton PCB
+    =======================  ======================  ================  ===============
+    **MIMAS A7**             2                       nc                2              
+    **SRS v6**               8                       nc                2              
+    **ML605**                nc                      8                 nc             
+    =======================  ======================  ================  ===============
+
 
 PixelDAC
 --------
