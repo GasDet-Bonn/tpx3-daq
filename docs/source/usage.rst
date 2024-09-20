@@ -8,17 +8,19 @@ Installation
 
 Installation of the software:
 
+First download the latest Miniforge3 release for your platform on https://conda-forge.org/miniforge/#latest-release and rename
+the script to `miniforge.sh`. Continue in the shell with these commands:
+
 .. code-block:: bash
 
    sudo apt update
    sudo apt upgrade
    sudo apt install curl libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0
-   mkdir miniconda
-   curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda.sh
-   bash miniconda.sh -u -b -p miniconda
-   export PATH=<PATH_TO_MINICONDA>/miniconda/bin:$PATH
-   conda update --yes conda
-   conda install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
+   mkdir miniforge
+   bash miniforge.sh -u -b -p miniforge
+   export PATH=<PATH_TO_MINIFORGE>/miniforge/bin:$PATH
+   mamba update --yes mamba
+   mamba install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
    pip install basil_daq==3.2.0
    pip install pycairo
    pip install PyGObject
