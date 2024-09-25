@@ -15,7 +15,7 @@ author = ''
 author_email = ''
 
 # Requirements
-install_requires = ['basil-daq==3.2.0', 'bitarray>=2.0.0', 'matplotlib',
+install_requires = ['basil-daq>=3.2.0', 'bitarray>=2.0.0', 'matplotlib',
                     'numpy', 'online_monitor>=0.6',
                     'pixel_clusterizer==3.1.3', 'tables', 'pyyaml', 'pyzmq',
                     'scipy', 'numba', 'tqdm']

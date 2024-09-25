@@ -160,7 +160,7 @@ class NoiseScan(ScanBase):
             # Select only data which is hit data
             hit_data = hit_data[hit_data['data_header'] == 1]
             h5_file.create_table(h5_file.root.interpreted, 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
-            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
+            pix_occ = np.bincount(hit_data['x'].astype(np.uint32) * 256 + hit_data['y'].astype(np.uint32), minlength=256 * 256)
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(h5_file.root.interpreted, name='HistOcc', obj=hist_occ)
             param_range = np.unique(meta_data['scan_param_id'])

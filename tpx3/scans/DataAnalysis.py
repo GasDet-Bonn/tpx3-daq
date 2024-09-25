@@ -401,7 +401,7 @@ class DataAnalysis(ScanBase):
                 # Plot general hit properties
 
                 # Plot the occupancy matrix
-                pix_occ = np.bincount(hit_data_x * 256 + hit_data_y, minlength=256 * 256).astype(np.uint32)
+                pix_occ = np.bincount(hit_data_x.astype(np.uint32) * 256 + hit_data_y.astype(np.uint32), minlength=256 * 256)
                 hist_occ = np.reshape(pix_occ, (256, 256)).T
                 p.plot_occupancy(hist_occ, title='Integrated Occupancy', z_max='maximum', suffix='occupancy')
 

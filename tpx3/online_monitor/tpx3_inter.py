@@ -171,7 +171,7 @@ class Tpx3(Transceiver):
 
         header, x, y, tot = interpret_raw_data(data[0][1])
 
-        pix_occ = np.bincount(x[header == 1] * 256 + y[header == 1], minlength=256*256).astype(np.uint32)
+        pix_occ = np.bincount(x[header == 1].astype(np.uint32) * 256 + y[header == 1].astype(np.uint32), minlength=256*256)
         hist_occ = np.reshape(pix_occ, (256, 256))
 
         hit_count = np.count_nonzero(hist_occ.flat)
