@@ -21,7 +21,7 @@ the script to `miniforge.sh`. Continue in the shell with these commands:
    export PATH=<PATH_TO_MINIFORGE>/miniforge/bin:$PATH
    mamba update --yes mamba
    mamba install --yes numpy bitarray pytest pytest-cov pyyaml scipy numba pytables pyqt matplotlib tqdm pyzmq blosc psutil setuptools
-   pip install basil_daq==3.2.0
+   pip install git+https://github.com/magruber/basil.git@master
    pip install pycairo
    pip install PyGObject
    mkdir tpx3-daq
