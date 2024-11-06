@@ -8,9 +8,9 @@
 '''
     Script to convert raw data
 '''
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+import print_function
+import absolute_import
+import division
 import numpy as np
 from basil.utils.BitLogic import BitLogic
 import logging
@@ -79,6 +79,35 @@ def noise_pixel_count(hit_data, param_range, Vthreshold_start):
         pixel_list[x * 256 + y, p + Vthreshold_start] += 1
 
     return noise_curve_pixel, noise_curve_hits
+
+def Chi_square(x_values, y_values, sigma, function, function_parameters, chi_red = True):
+#This function calculates the chi² value for a given function and data input.
+#It either returns the reduced chi² (default) or the chi² and the degrees of freedom.
+
+	#check inputs
+	if len(x_values) != len(y_values) or len(x_values) != len(sigma):
+		raise ValueError("The length of the arrays for x, y and sigma have a length mismatch")	
+		
+	if type(chi_red) != bool:
+		raise TypeError("Input chi_red needs to be boolean")
+	
+	if function.__defaults__ is not None:
+		needed_args = function.__code__.co_argcount - len(myfunction.__defaults__)
+	else:
+		needed_args = function.__code__.co_argcount
+	if (needed_args-1) != len(function_parameters):
+		raise TypeError(len(function_parameters) ," function parameters where given, but the function needs ", needed_args-1, " parameters!")
+	
+	#calculate chi² and chi² reduced
+	chi2 = np.sum(((y_values - function(x_values, *function_parameters)) ** 2)/(sigma**2))
+	degrees_of_freedome = len(y_values)-len(function_parameters)
+	chi2_reduced = chi2/degrees_of_freedome
+	
+	if chi_red == True:
+		return chi2_reduced, degrees_of_freedome
+	else:
+		return chi2, degrees_of_freedome
+
 
 def vths(scurves, param_range, Vthreshold_start):
     vths = np.zeros((256, 256), dtype=np.uint16)
@@ -821,13 +850,13 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
             popt = curve_fit(f=zcurve, xdata=x,
                              ydata=y, p0=p0, sigma=yerr,
                              absolute_sigma=True if np.any(yerr) else False)[0]
-            chi2 = np.sum((y - zcurve(x, *popt)) ** 2)
+            chi2 , ndof= Chi_square(x_values = x, y_values = y, sigma = yerr, function = zcurve, function_parameters = popt, chi_red = True)
         else:
             popt = curve_fit(f=scurve, xdata=x,
                              ydata=y, p0=p0, sigma=yerr,
                              absolute_sigma=True if np.any(yerr) else False,
                              method='lm')[0]
-            chi2 = np.sum((y - scurve(x, *popt)) ** 2)
+            chi2, ndof = Chi_square(x_values = x, y_values = y, sigma = yerr, function = scurve, function_parameters = popt, chi_red = True)
     except RuntimeError:  # fit failed
         return (0., 0., 0.)
 
@@ -837,7 +866,7 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
     if popt[2] <= 0 or not min_threshold < popt[1] < max_threshold:
         return (0., 0., 0.)
 
-    return (popt[1], popt[2], chi2 / (y.shape[0] - 3 - 1))
+    return (popt[1], popt[2], chi2)
 
 
 def imap_bar(func, args, n_processes=None, progress = None):
@@ -974,13 +1003,13 @@ def fit_ToT(tot_data, scan_param_range, t_est):
 
     try:
         popt = curve_fit(f=totcurve, xdata=x, ydata=y, p0=p0)[0]
-        chi2 = np.sum((y - totcurve(x, *popt)) ** 2)
+        chi2, ndof = Chi_square(x_values = x, y_values = y, sigma = np.sqrt(y), function = totcurve, function_parameters = popt, chi_red = True)
     except RuntimeError:  # fit failed
         return (0., 0., 0., 0., 0.)
     except ValueError:  # fit failed
         return (0., 0., 0., 0., 0.)
 
-    return (popt[0], popt[1], popt[2], popt[3], chi2 / (y.shape[0] - 3 - 1))
+    return (popt[0], popt[1], popt[2], popt[3], chi2)
 
 
 def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
