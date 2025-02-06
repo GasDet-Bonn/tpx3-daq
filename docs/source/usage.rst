@@ -25,7 +25,7 @@ the script to `miniforge.sh`. Continue in the shell with these commands:
    pip install pycairo
    pip install PyGObject
    mkdir tpx3-daq
-   git clone https://github.com/SiLab-Bonn/tpx3-daq.git tpx3-daq/
+   git clone https://github.com/GasDet-Bonn/tpx3-daq.git tpx3-daq/
    cd tpx3-daq
    pip install -e .
 
