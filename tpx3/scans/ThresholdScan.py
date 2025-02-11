@@ -159,6 +159,12 @@ class ThresholdScan(ScanBase):
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
+
+            # Create group to save all data and histograms to the HDF file
+            try:
+                h5_file.remove_node(h5_file.root.interpreted, recursive=True)
+            except:
+                pass
             # Create group to save all data and histograms to the HDF file
             h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
 
@@ -186,10 +192,11 @@ class ThresholdScan(ScanBase):
             n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
             Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            neg_polarity = [int(item[1]) for item in general_config if item[0] == b'Polarity'][0] == 1
 
             # Fit S-Curves to the histograms for all pixels
             param_range = list(range(Vthreshold_start, Vthreshold_stop + 1))
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=neg_polarity, progress = progress)
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve', obj=scurve)
             h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)
