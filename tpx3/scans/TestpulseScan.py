@@ -185,10 +185,11 @@ class TestpulseScan(ScanBase):
             n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
             VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
             VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
+            neg_polarity = [int(item[1]) for item in general_config if item[0] == b'Polarity'][0] == 1
 
             # Fit S-Curves to the histograms for all pixels
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, progress = progress)
+            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, progress = progress, invert_x=not neg_polarity)
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve', obj=scurve)
             h5_file.create_carray(h5_file.root.interpreted, name='Chi2Map', obj=chi2ndf2D.T)

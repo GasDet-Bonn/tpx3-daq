@@ -271,13 +271,16 @@ class EqualisationCharge(ScanBase):
             scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
             hit_data_thr15 = None
 
+            # Get the polarity to spcify if s or z curve is fitted
+            neg_polarity = [int(item[1]) for item in general_config if item[0] == b'Polarity'][0] == 1
+
             # Fit S-Curves to the histograms for all pixels
             self.logger.info('Fit the scurves for all pixels...')
-            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=neg_polarity, progress = progress)
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th0', obj=scurve_th0)
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th0', obj=thr2D_th0.T)
             scurve_th0 = None
-            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=True, progress = progress)
+            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=neg_polarity, progress = progress)
             h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th15', obj=scurve_th15)
             h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th15', obj=thr2D_th15.T)
             scurve_th15 = None
