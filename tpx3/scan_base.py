@@ -551,13 +551,13 @@ class ScanBase(object):
 
         # Save the mask and the pixel threshold matrices
         # In scans with multiple iterations only for the first iteration
-        if iteration == None or iteration == 1:
+        if iteration == None or iteration == 0:
             self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix', title='Mask Matrix', obj=self.chip.mask_matrix)
             self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix', title='Threshold Matrix', obj=self.chip.thr_matrix)
 
         # save the link configuration
         # In scans with multiple iterations only for the first iteration
-        if iteration == None or iteration == 1:
+        if iteration == None or iteration == 0:
             link_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='links', title='Links', description=Links)
 
             # Open the link yaml file
