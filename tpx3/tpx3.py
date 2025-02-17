@@ -293,8 +293,10 @@ class TPX3(Dut):
         # a 40 MHz input as reference for the PLL and thus the PLL is not bypassed.
         if self.board_version == 'ML605':
             self._PLLConfigs["bypass"] = 1
+            logger.info("Set PLL bypass on")
         else:
             self._PLLConfigs["bypass"] = 0
+            logger.info("Set PLL bypass off")
 
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
