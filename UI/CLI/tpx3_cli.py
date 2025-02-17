@@ -15,6 +15,7 @@ from tpx3.scans.EqualisationCharge import EqualisationCharge
 from tpx3.scans.EqualisationNoise import EqualisationNoise
 from tpx3.scans.DataTake import DataTake
 from tpx3.scans.ThresholdCalib import ThresholdCalib
+from tpx3.scans.TimewalkCalib import TimewalkCalib
 from tpx3.scans.ScanHardware import ScanHardware
 from tpx3.scans.NoiseScan import NoiseScan
 from tpx3.scan_base import ConfigError
@@ -26,6 +27,7 @@ from tpx3.utils import get_software_version, get_git_branch, get_git_commit, get
 
 # In this part all callable normal function names should be in the list functions
 functions = ['ToT', 'ToT_Calibration', 'tot_Calibration', 'tot',
+                'Timewalk_Calibration', 'Timewalk', 'timewalk_calibration', 'timewalk',
                 'Threshold_Scan', 'THL_Scan', 'THL', 'threshold_scan', 'thl_scan', 'thl',
                 'Threshold_Calibration', 'THL_Calib', 'threshold_calibration', 'thl_calib',
                 'Pixel_DAC_Optimisation', 'Pixel_DAC', 'PDAC', 'pixel_dac_optimisation', 'pixel_dac', 'pdac',
@@ -73,8 +75,8 @@ expert_functions = ['Set_CLK_fast_mode', 'set_clk_fast_mode', 'CLK_fast_mode', '
                     'Enable_Link', 'enable_link', 'Disable_Link', 'disable_link']
 
 # In this list all functions are named which will be shown when the help command is used
-help_functions = ['ToT_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation', 'Noise_Scan',
-                    'Testpulse_Scan', 'Initialise_Hardware', 'Run_Datataking', 'Set_DAC', 'Load_Equalisation', 'Save_Equalisation',
+help_functions = ['ToT_Calibration', 'Timewalk_Calibration', 'Threshold_Scan', 'Threshold_Calibration', 'Pixel_DAC_Optimisation', 'Equalisation',
+                    'Noise_Scan', 'Testpulse_Scan', 'Initialise_Hardware', 'Run_Datataking', 'Set_DAC', 'Load_Equalisation', 'Save_Equalisation',
                     'Uniform_Equalisation', 'Save_Backup', 'Load_Backup', 'Set_Default', 'GUI', 'Set_Polarity', 'Set_Mask', 'Unset_Mask', 'Load_Mask',
                     'Save_Mask', 'TP_Period', 'Set_operation_mode', 'Set_Fast_Io', 'Set_Readout_Intervall', 'Set_Run_Name', 'Get_Run_Name',
                     'Plot', 'Stop_Plot', 'Chip_names', 'Mask_name', 'Equalisation_name','Get_DAC_Values', 'About', 'Help', 'Quit']
@@ -206,6 +208,51 @@ class TPX3_CLI_function_call(object):
                                                            VTP_fine_stop = VTP_fine_stop,
                                                            mask_step = mask_step,
                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                           thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                           maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
+        new_process.join()
+
+    def Timewalk_Calibration(object, VTP_fine_start = None, VTP_fine_stop = None, mask_step = None):
+        if VTP_fine_start == None:
+            print('> Please enter the VTP_fine_start value (1-511)[200]:')
+            while(1):
+                VTP_fine_start = input('>> ')
+                try:
+                    VTP_fine_start = int(VTP_fine_start)
+                    break
+                except:
+                    if VTP_fine_start in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            print('> Please enter the VTP_fine_stop value (1-511)[500]:')
+            while(1):
+                VTP_fine_stop = input('>> ')
+                try:
+                    VTP_fine_stop = int(VTP_fine_stop)
+                    break
+                except:
+                    if VTP_fine_stop in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+            print('> Please enter the number of steps(4, 16, 64, 256)[64]:')
+            while(1):
+                mask_step = input('>> ')
+                try:
+                    mask_step = int(mask_step)
+                    break
+                except:
+                    if mask_step in exit_list:
+                        return
+                    else:
+                        print('Input needs to be a number!')
+        
+        print('Timewalk calibration with VTP_fine_start =', VTP_fine_start, 'VTP_fine_stop =', VTP_fine_stop, 'mask_step =', mask_step)
+        new_process = TPX3_multiprocess_start.process_call(function = 'TimewalkCalib',
+                                                           VTP_fine_start = VTP_fine_start,
+                                                           VTP_fine_stop = VTP_fine_stop,
+                                                           mask_step = mask_step,
                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'))
         new_process.join()
@@ -1288,6 +1335,31 @@ class TPX3_CLI_TOP(object):
                                 print('User quit')
                         elif len(inputlist) > 4:
                             print('To many parameters! The given function takes only three parameters:\n start testpulse value (0-511),\n stop testpulse value (0-511),\n number of steps (4, 16, 64, 256).')
+
+                #Timewalk_Calibration
+                elif inputlist[0] in {'Timewalk_Calibration', 'Timewalk', 'timewalk_calibration', 'timewalk'}:
+                    if len(inputlist) == 1:
+                        print('Timewalk_calibration')
+                        try:
+                            function_call.Timewalk_Calibration()
+                        except KeyboardInterrupt:
+                            print('User quit')
+                    else:
+                        if inputlist[1] in {'Help', 'help', 'h', '-h'}:
+                            print('This is the ToT calibration. As arguments you can give the start testpulse value (1-511), the stop testpulse value (1-511) and the number of steps (4, 16, 64, 256).')
+                        elif len(inputlist) < 4:
+                            print('Incomplete set of parameters:')
+                            try:
+                                function_call.Timewalk_Calibration()
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) == 4:
+                            try:
+                                function_call.Timewalk_Calibration(VTP_fine_start = int(inputlist[1]), VTP_fine_stop = int(inputlist[2]), mask_step = int(inputlist[3]))
+                            except KeyboardInterrupt:
+                                print('User quit')
+                        elif len(inputlist) > 4:
+                            print('To many parameters! The given function takes only three parameters:\n start testpulse value (1-511),\n stop testpulse value (1-511),\n number of steps (4, 16, 64, 256).')
 
                 #Threshold_Scan
                 elif inputlist[0] in {'Threshold_Scan', 'THL_Scan', 'THL', 'threshold_scan', 'thl_scan', 'thl'}:
