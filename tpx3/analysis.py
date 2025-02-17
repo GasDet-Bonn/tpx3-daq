@@ -134,6 +134,33 @@ def vth_hist(vths, Vthreshold_stop):
                 hist[int(vths[x, y])] += 1
     return hist
 
+def toas(data, mask):
+    ftoas = np.zeros((256, 256), dtype=np.uint8)
+    toas = np.zeros((256, 256), dtype=float)
+    full_toa = np.zeros((256, 256), dtype=float)
+    tots = np.zeros((256, 256), dtype=float)
+    for hit in data:
+        if ftoas[hit['x'], hit['y']] == 0:
+            ftoas[hit['x'], hit['y']] = hit['FTOA']
+        if toas[hit['x'], hit['y']] == 0:
+            toas[hit['x'], hit['y']] = (hit['TOA_Combined'] * 25) - (hit['Shutter_Timer'] * 1.5625)
+        if full_toa[hit['x'], hit['y']] == 0:
+            offset = (((hit['x'] - 2) // 2) % 16) * 1.5625
+            full_toa[hit['x'], hit['y']] = ((hit['TOA_Combined'] * 25) - (hit['FTOA'] * 1.5625) + offset) - (hit['Shutter_Timer'] * 1.5625)
+        if tots[hit['x'], hit['y']] == 0:
+            tots[hit['x'], hit['y']] = hit['TOT']
+    toas[np.where(full_toa > 10000)] -= 409600
+    full_toa[np.where(full_toa > 10000)] -= 409600
+    full_toa[np.where(full_toa < 5000)] = np.nan
+    full_toa[np.where(mask == 1)] = np.nan
+    mean_full_toa = np.nanmean(full_toa)
+    std_full_toa = np.nanstd(full_toa)
+    tots[np.where(full_toa < 5000)] = np.nan
+    tots[np.where(mask == 1)] = np.nan
+    mean_tot = np.nanmean(tots)
+    std_tot = np.nanstd(tots)
+    return ftoas, toas, full_toa, mean_full_toa, std_full_toa, tots, mean_tot, std_tot
+
 def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
     matrix = np.zeros((256, 256), dtype=np.uint8)
     means = th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop)

@@ -169,6 +169,14 @@ class Plotting(object):
         m, b = p
         return m * x + b
 
+    def _exp(self, x, *p):
+        a, b, c = p
+        return np.exp(a*x+b)+c
+
+    def _tot(self, x, *p):
+        a, b, c, t = p
+        return a*x + b - c / (x-t)
+
     def _add_text(self, fig):
         fig.subplots_adjust(top=0.85)
         y_coord = 0.92
@@ -926,29 +934,91 @@ class Plotting(object):
         if coeff is not None:
             return coeff, errors
 
-    def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, plot_queue=None):
-        m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
-        b = y[0] - m * x[0]
-        p0 = (m, b)
-        try:
-            coeff, cov = curve_fit(self._lin, x, y, sigma = y_err, p0=p0)
-        except:
+    def plot_datapoints(self, x, y, x_err = None, y_err = None, x_plot_range = None, y_plot_range = None, x_axis_title=None, y_axis_title=None, title=None, suffix=None, fit = 'lin', plot_queue=None, vtp_coarse = 0):
+        if fit == 'lin':
+            m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
+            b = y[0] - m * x[0]
+            p0 = (m, b)
+            try:
+                coeff, cov = curve_fit(self._lin, x, y, sigma = y_err, p0=p0)
+            except:
+                coeff = None
+                self.logger.warning('Linear fit failed!')
+        elif fit == 'exp':
+            y_log = np.log(y)
+            m = (y_log[len(y_log)-1]-y_log[0])/(x[-1]-x[0])
+            filter = np.where(y <= 1)[0]
+            x = np.array(x, dtype=float)
+            y_err = np.array(y_err, dtype=float)
+            x[filter] = 0
+            y_err[filter] = 0
+            y[filter] = 0
+            x = x[np.where(y>0)[0]]
+            y_err = y_err[y > 0]
+            if type(x_err) == np.ndarray:
+                x_err = np.array(x_err, dtype=float)
+                x_err[filter] = 0
+                x_err = x_err[y > 0]
+            y = y[y > 0]
+            if m < 0:
+                p0 = (-0.1, -10, 10)
+            else:
+                p0 = (0.01, 0, 10)
+            try:
+                coeff, cov = curve_fit(self._exp, x, y, sigma = y_err, p0=p0)
+            except Exception as e:
+                coeff = None
+                self.logger.warning('Exp fit failed!', e)
+        elif fit == 'tot':
+            m = (y[len(y)-1]-y[0])/(x[len(x)-1]-x[0])
+            b = y[0] - m * x[0]
+            p0 = (m, b)
+            popt, pcov = curve_fit(f=self._lin, xdata=x, ydata=y, p0=p0)
+            filter = np.where(y <= 1)[0]
+            x = np.array(x, dtype=float)
+            y_err = np.array(y_err, dtype=float)
+            x[filter] = 0
+            y_err[filter] = 0
+            y[filter] = 0
+            x = x[np.where(y>0)[0]]
+            x = (x-(vtp_coarse*2))*2.5
+            y_err = y_err[y > 0]
+            y = y[y > 0]
+            a = popt[0]
+            b = popt[1]
+            print(a, b)
+            c = 1000
+            t = -10
+            p0 = (a, b, c, t)
+            try:
+                coeff, cov = curve_fit(self._tot, x, y, sigma = y_err, p0=p0, maxfev= 10000)
+            except Exception as e:
+                coeff = None
+                self.logger.warning('ToT fit failed: ', e)
+        else:
             coeff = None
-            self.logger.warning('Linear fit failed!')
 
-        if coeff is not None:
+        if coeff is not None and fit == 'lin':
             errors = np.sqrt(np.diag(cov))
             points = np.linspace(min(x_plot_range), max(x_plot_range), 500)
             lin = self._lin(points, *coeff)
+        elif coeff is not None and fit == 'exp':
+            errors = np.sqrt(np.diag(cov))
+            points = np.linspace(min(x_plot_range), max(x_plot_range), 500)
+            lin = self._exp(points, *coeff)
+        elif coeff is not None and fit =='tot':
+            errors = np.sqrt(np.diag(cov))
+            points = np.linspace(min(x_plot_range), max(x_plot_range), 500)
+            lin = self._tot(points, *coeff)
 
         fig = Figure()
         FigureCanvas(fig)
         ax = fig.add_subplot(111)
         self._add_text(fig)
 
-        ax.errorbar(x, y, y_err, x_err, ls = 'None', marker = 'x', ms = 4)
+        ax.errorbar(x, y, y_err, x_err, ls = 'None', marker = 'x', ms = 4, zorder=0)
         if coeff is not None:
-            ax.plot(points, lin, "r-", label='Linear fit')
+            ax.plot(points, lin, "r-", label='Linear fit', zorder=1)
 
         ax.set_xlim((min(x_plot_range), max(x_plot_range)))
         ax.set_ylim((min(y_plot_range), max(y_plot_range)))
@@ -959,10 +1029,24 @@ class Plotting(object):
             ax.set_ylabel(y_axis_title)
         ax.grid(True)
 
-        if coeff is not None and not self.qualitative:
-            textright = '$m=%.3f \pm %.3f$\n$n=%.1f \pm %.1f$' % (abs(coeff[0]), abs(errors[0]), abs(coeff[1]), abs(errors[0]))
+        if coeff is not None and not self.qualitative and fit == 'lin':
+            textright = '$m=%.3f \pm %.3f$\n$n=%.3f \pm %.3f$' % (coeff[0], abs(errors[0]), coeff[1], abs(errors[1]))
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
             ax.text(0.05, 0.9, textright, transform=ax.transAxes,
+                    fontsize=8, verticalalignment='top', bbox=props)
+        elif coeff is not None and not self.qualitative and fit == 'exp':
+            textright = '$a=%.3f \pm %.3f$\n$b=%.3f \pm %.3f$\n$c=%.3f \pm %.3f$' % (coeff[0], abs(errors[0]), coeff[1], abs(errors[1]), coeff[2], abs(errors[2]))
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            if coeff[0] > 0:
+                ax.text(0.05, 0.9, textright, transform=ax.transAxes,
+                        fontsize=8, verticalalignment='top', bbox=props)
+            else:
+                ax.text(0.65, 0.9, textright, transform=ax.transAxes,
+                        fontsize=8, verticalalignment='top', bbox=props)
+        elif coeff is not None and not self.qualitative and fit =='tot':
+            textright = '$a=%.3f \pm %.3f$\n$b=%.3f \pm %.3f$\n$c=%.3f \pm %.3f$\n$t=%.3f \pm %.3f$' % (coeff[0], abs(errors[0]), coeff[1], abs(errors[1]), coeff[2], abs(errors[2]), coeff[3], abs(errors[3]))
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            ax.text(0.65, 0.9, textright, transform=ax.transAxes,
                     fontsize=8, verticalalignment='top', bbox=props)
 
         self._save_plots(fig, suffix=suffix, plot_queue=plot_queue)

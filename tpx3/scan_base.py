@@ -702,6 +702,9 @@ class ScanBase(object):
             self.chip._configs["Op_mode"] = 2
         elif self.scan_id == 'ToTCalib':
             self.chip._configs["Op_mode"] = 0
+        elif self.scan_id == 'TimewalkCalib':
+            self.chip._configs["Op_mode"] = 0
+            self.chip._configs["Fast_Io_en"] = 1
 
         # Setup HDF5 file
         filename = self.output_filename + '.h5'
