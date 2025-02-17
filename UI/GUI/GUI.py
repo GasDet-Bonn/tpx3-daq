@@ -343,6 +343,139 @@ class GUI_ToT_Calib(Gtk.Window):
     def window_destroy(self, widget, event):
         self.destroy()
 
+class GUI_Timewalk_Calib(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Timewalk Calibration')
+        self.connect('delete-event', self.window_destroy)
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+        self.add(grid)
+
+        Space = Gtk.Label()
+        Space.set_text('')
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text('')
+
+        #Testpuls range label
+        Testpulse_range_label = Gtk.Label()
+        Testpulse_range_label.set_text('Testpulse range')
+
+        #default values
+        self.Testpulse_range_start_value = 200
+        self.Testpulse_range_stop_value = 500
+
+        #Testpulse_range_start
+        Testpulse_range_start_adj = Gtk.Adjustment()
+        Testpulse_range_start_adj.configure(200, 1, self.Testpulse_range_stop_value, 1, 0, 0)
+        self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
+        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value)
+        self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
+        Testpulse_range_start_label = Gtk.Label()
+        Testpulse_range_start_label.set_text('Start ')
+
+        #Testpulse_range_stop
+        Testpulse_range_stop_adj = Gtk.Adjustment()
+        Testpulse_range_stop_adj.configure(500, self.Testpulse_range_start_value, 511, 1, 0, 0)
+        self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
+        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value)
+        self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
+        Testpulse_range_stop_label = Gtk.Label()
+        Testpulse_range_stop_label.set_text('Stop ')
+
+        #Buttons for number of iteration
+        self.Number_of_Iterations = 64
+        Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, '4')
+        Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, '16')
+        Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, '64')
+        Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, '256')
+        Iterationbutton3.set_active(True)
+        Iterationbutton1.connect('toggled', self.on_Iterationbutton_toggled, '4')
+        Iterationbutton2.connect('toggled', self.on_Iterationbutton_toggled, '16')
+        Iterationbutton3.connect('toggled', self.on_Iterationbutton_toggled, '64')
+        Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
+        Number_of_iteration_label = Gtk.Label()
+        Number_of_iteration_label.set_text('Number of mask steps')
+
+        #Startbutton
+        self.Startbutton = Gtk.Button(label = 'Start')
+        self.Startbutton.connect('clicked', self.on_Startbutton_clicked)
+
+
+        grid.attach(Testpulse_range_label, 0, 0, 6, 1)
+        grid.attach(Testpulse_range_start_label, 0, 1, 1, 1)
+        grid.attach(self.Testpulse_range_start, 1, 1, 2, 1)
+        grid.attach(Testpulse_range_stop_label, 3, 1, 1, 1)
+        grid.attach(self.Testpulse_range_stop, 4, 1, 2, 1)
+        grid.attach(Number_of_iteration_label, 1, 2, 4, 1)
+        grid.attach(Iterationbutton1, 1, 3, 1, 1)
+        grid.attach(Iterationbutton2, 2, 3, 1, 1)
+        grid.attach(Iterationbutton3, 3, 3, 1, 1)
+        grid.attach(Iterationbutton4, 4, 3, 1, 1)
+        grid.attach(Space, 0, 4, 1, 1)
+        grid.attach(self.other_process, 0, 5, 4, 1)
+        grid.attach(self.Startbutton, 4, 5, 2, 1)
+
+        self.show_all()
+
+    def Testpulse_range_start_set(self, event):
+        self.Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
+        temp_Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Testpulse_range_start_value, 511, 1, 0, 0)
+        self.Testpulse_range_stop.disconnect_by_func(self.Testpulse_range_stop_set)
+        self.Testpulse_range_stop.set_adjustment(adjustment = new_adjustment_start)
+        self.Testpulse_range_stop.set_value(temp_Testpulse_range_stop_value)
+        self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
+
+    def Testpulse_range_stop_set(self, event):
+        self.Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
+        temp_Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
+        self.Testpulse_range_start.disconnect_by_func(self.Testpulse_range_start_set)
+        self.Testpulse_range_start.set_adjustment(adjustment = new_adjustment_stop)
+        self.Testpulse_range_start.set_value(temp_Testpulse_range_start_value)
+        self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
+
+    def on_Iterationbutton_toggled(self, button, name):
+        self.Number_of_Iterations = int(name)
+
+    def on_Startbutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            self.other_process.set_text('Other process running')
+            return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text('Simulation running')
+            return
+
+        GUI.Status_window_call(function = 'Timewalk_Calib',
+                                lowerTHL = self.Testpulse_range_start_value,
+                                upperTHL = self.Testpulse_range_stop_value,
+                                iterations = self.Number_of_Iterations)
+        new_process = TPX3_multiprocess_start.process_call(function = 'TimewalkCalib',
+                                                            VTP_fine_start = self.Testpulse_range_start_value,
+                                                            VTP_fine_stop = self.Testpulse_range_stop_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            plot_queue = GUI.plot_queue)
+        GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
+
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
 class GUI_Threshold_Scan(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title = 'Threshold Scan')
@@ -2815,6 +2948,9 @@ class GUI_Main(Gtk.Window):
         self.TOTCalibbutton = Gtk.Button(label = 'TOT Calibration')
         self.TOTCalibbutton.connect('clicked', self.on_TOTCalibbutton_clicked)
 
+        self.Timewalkbutton = Gtk.Button(label = 'Timewalk Calibration')
+        self.Timewalkbutton.connect('clicked', self.on_TimewalkButton_clicked)
+
         self.THLCalibbutton = Gtk.Button(label = 'THL Calibration')
         self.THLCalibbutton.connect('clicked', self.on_THLCalibbutton_clicked)
 
@@ -2904,11 +3040,12 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.PixelDACbutton, 0, 1, 2, 1)
         page1.grid.attach(self.Equalbutton, 0, 2, 2, 1)
         page1.grid.attach(self.TOTCalibbutton, 0, 3, 2, 1)
-        page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
-        page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
-        page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
-        page1.grid.attach(self.NoiseScanbutton, 0, 7, 2, 1)
-        page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
+        page1.grid.attach(self.Timewalkbutton, 0, 4, 2, 1)
+        page1.grid.attach(self.THLCalibbutton, 0, 5, 2, 1)
+        page1.grid.attach(self.THLScanbutton, 0, 6, 2, 1)
+        page1.grid.attach(self.TestpulsScanbutton, 0, 7, 2, 1)
+        page1.grid.attach(self.NoiseScanbutton, 0, 8, 2, 1)
+        page1.grid.attach(self.Runbutton, 0, 9, 2, 2)
         page1.grid.attach(Status, 2, 8, 12, 6)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
@@ -2988,6 +3125,9 @@ class GUI_Main(Gtk.Window):
 
     def on_TOTCalibbutton_clicked(self, widget):
         subw = GUI_ToT_Calib()
+
+    def on_TimewalkButton_clicked(self, widget):
+        subw = GUI_Timewalk_Calib()
 
     def on_THLCalibbutton_clicked(self, widget):
         subw = GUI_Threshold_Calib()
@@ -3152,6 +3292,15 @@ class GUI_Main(Gtk.Window):
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step')
             self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ToTCalib'))
+            self.statuslabel7.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
+            self.clear_statusstrings()
+        elif function == 'Timewalk_Calib':
+            self.statuslabel.set_markup('<big><b>Timewalk Calibration</b></big>')
+            self.progressbar.show()
+            self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step')
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'TimewalkCalib'))
             self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
