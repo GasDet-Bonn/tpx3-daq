@@ -240,7 +240,7 @@ class BeamAnalysisPreparation():
         for i in range(trigger_data.shape[0]):
             curr_cluster = first_cluster_index
             while curr_cluster < len(histtoa_mean) and (histtoa_mean[curr_cluster] < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                if np.abs(histtoa_mean[curr_cluster] - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+                if np.abs(histtoa_mean[curr_cluster] - trigger_data["trigger_timestamp"][i].astype('float')) < trigger_width:
                     if assigned[curr_cluster] == False:
                         assigned[curr_cluster] = True
                     hits_add = hits[hitindex[curr_cluster]]
@@ -329,7 +329,7 @@ class BeamAnalysisPreparation():
         select = (hist_size >= min_size) & (histch >= min_charge)
 
         data_type = {'names': ['trigger_number', 'trigger_timestamp'],
-            'formats': ['int64', 'float64']}
+            'formats': ['int64', 'float']}
         trigger = np.recarray((np.sum(select)), dtype=data_type)
         trigger['trigger_timestamp'] = np.array(hist_toa_m,dtype=float)[select]
         trigger.sort(order="trigger_timestamp")
