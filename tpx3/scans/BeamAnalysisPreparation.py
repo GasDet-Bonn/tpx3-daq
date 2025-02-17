@@ -113,7 +113,7 @@ class BeamAnalysisPreparation():
         for i in range(trigger_data.shape[0]):
             curr_hit_data = first_hit_data_index
             while curr_hit_data < len(hit_data) and (hit_data["TOA_Combined"][curr_hit_data] < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+                if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') - trigger_data["trigger_timestamp"][i].astype('float')) < trigger_width:
                     if assigned[curr_hit_data] == False:
                         hits["event_number"][curr_hit_data] = trigger_data["trigger_number"][i]
                         assigned[curr_hit_data] = True
