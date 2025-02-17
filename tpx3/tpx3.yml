@@ -33,6 +33,11 @@ hw_drivers:
     interface : intf
     base_addr : 0x4000
 
+  - name      : timestamp2
+    type      : timestamp
+    interface : intf
+    base_addr : 0x5000
+
   - name      : FIFO
     type      : sitcp_fifo
     interface : intf
