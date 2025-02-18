@@ -90,3 +90,16 @@ There are the following SenseDACs (The DACs can be additionally used as SenseDAC
     Ibias_dac_cas      Biasing DAC voltage cascode (950mV)
     SenseOFF           Deactivates DACOut pad
     =================  =================
+
+Mask
+----
+It is possible to mask individual pixels for example if they are noisy or broken.
+It can also used to scan only certain parts of the ASIC.
+
+Equalisation
+------------
+With the equalisation it possible to load pixel threshold files that define the
+threshold for each pixel individually. Normally it is used to get a uniform
+response of the ASIC but for testing it is also possible to set for example all
+pixel to the minimum or maximum pixel threshold. If no equalisation file is loaded
+all pixel are set by default to 8 (the range of pixel thresholds is from 0 to 15).
