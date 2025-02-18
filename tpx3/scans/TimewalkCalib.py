@@ -511,8 +511,14 @@ class TimewalkCalib(ScanBase):
             tot_means = np.zeros(len(amplitudes), dtype=float)
             tot_deviations = np.zeros(len(amplitudes), dtype=float)
 
+            param_range = np.unique(hit_data['scan_param_id'])
+            if progress == None:
+                pbar = tqdm(total = len(param_range))
+            else:
+                step_counter = 0
+
             # analyse timewalk for each amplitude step
-            for current_id in np.unique(hit_data['scan_param_id']):
+            for current_id in param_range:
                 current_data = hit_data[np.where(hit_data['scan_param_id'] == current_id)]
                 ftoas, toas, full_toas, mean_full_toa, std_full_toa, tots, mean_tot, std_tot = analysis.toas(current_data, mask)
                 name = 'ftoas_' + str(amplitudes[int(current_id)])
@@ -527,6 +533,16 @@ class TimewalkCalib(ScanBase):
                 deviations[current_id] = std_full_toa
                 tot_means[current_id] = mean_tot
                 tot_deviations[current_id] = std_tot
+
+                if progress == None:
+                    pbar.update(1)
+                else:
+                    step_counter += 1
+                    fraction = step_counter / (len(param_range))
+                    progress.put(fraction)
+
+            if progress == None:
+                pbar.close()
 
             data_type = {'names': ['mean', 'error'],
                         'formats': ['float32', 'float32']}
