@@ -129,6 +129,7 @@ module tpx3_sfp (
     wire CLK40_MMCM;
     wire CLK320_MMCM;
     wire CLK32_MMCM;
+	wire CLK640_MMCM;
     wire CLKBUS_MMCM;
 
     // MMCM instance
@@ -139,16 +140,16 @@ module tpx3_sfp (
     // Divide by 8 to get output frequency of 125 MHz
     MMCM_BASE #(
         .BANDWIDTH         ("OPTIMIZED"),
-        .CLKOUT0_DIVIDE_F  (3          ),
+        .CLKOUT0_DIVIDE_F  (2          ),
         .CLKOUT0_DUTY_CYCLE(0.5        ),
         .CLKOUT0_PHASE     (0          ),
-        .CLKOUT1_DIVIDE    (24         ),
+        .CLKOUT1_DIVIDE    (16         ),
         .CLKOUT1_DUTY_CYCLE(0.5        ),
         .CLKOUT1_PHASE     (0          ),
-        .CLKOUT2_DIVIDE    (30         ),
+        .CLKOUT2_DIVIDE    (20         ),
         .CLKOUT2_DUTY_CYCLE(0.5        ),
         .CLKOUT2_PHASE     (0          ),
-        .CLKOUT3_DIVIDE    (7          ),
+        .CLKOUT3_DIVIDE    (4          ),
         .CLKOUT3_DUTY_CYCLE(0.5        ),
         .CLKOUT3_PHASE     (0          ),
         .CLKOUT4_DIVIDE    (1          ),
@@ -160,7 +161,7 @@ module tpx3_sfp (
         .CLKOUT6_DIVIDE    (1          ),
         .CLKOUT6_DUTY_CYCLE(0.5        ),
         .CLKOUT6_PHASE     (0          ),
-        .CLKFBOUT_MULT_F   (24         ),
+        .CLKFBOUT_MULT_F   (16         ),
         .CLKFBOUT_PHASE    (0          ),
         .DIVCLK_DIVIDE     (5          ),
         .REF_JITTER1       (0.100      ),
@@ -181,7 +182,7 @@ module tpx3_sfp (
         .CLKOUT2B (            ),
         .CLKOUT3  ( CLKBUS_MMCM),
         .CLKOUT3B (            ),
-        .CLKOUT4  (            ),
+        .CLKOUT4  ( CLK640_MMCM),
         .CLKOUT5  (            ),
         .CLKOUT6  (            ),
         .CLKFBOUT ( mmcm_clkfb ),
@@ -189,7 +190,7 @@ module tpx3_sfp (
         .LOCKED   ( mmcm_locked)
     );
 
-    wire CLK40, CLK320, CLK32;
+    wire CLK40, CLK320, CLK32, CLK640;
     BUFG clk_40mhz_bufg_inst (
         .I(CLK40_MMCM),
         .O(CLK40     )
@@ -203,6 +204,11 @@ module tpx3_sfp (
     BUFG clk_64mhz_bufg_inst (
         .I(CLK32_MMCM),
         .O(CLK32     )
+    );
+	 
+	 BUFG clk_640mhz_bufg_inst (
+        .I(CLK640_MMCM),
+        .O(CLK640     )
     );
 
     wire BUS_CLK;
@@ -535,6 +541,7 @@ module tpx3_sfp (
         .CLK40          (CLK40                ),
         .CLK320         (CLK320               ),
         .CLK32          (CLK32                ),
+		.CLK640         (CLK640               ),
 
         .RX_DATA        (RX_DATA              ),
         .ExtTPulse      (TPX3_1_ExtTPulse     ),

@@ -32,7 +32,7 @@
 `include "../lib/tpx3_rx/decode_8b10b.v"
 `include "utils/flag_domain_crossing.v"
 
-`define FW_VERSION 3
+`define FW_VERSION 4
 
 module tpx3_core (
         input  wire        BUS_CLK,
@@ -47,7 +47,7 @@ module tpx3_core (
         output wire ARB_WRITE_OUT,
         output wire [31:0] ARB_DATA_OUT,
 
-        input wire CLK40, CLK32, CLK320,
+        input wire CLK40, CLK32, CLK320, CLK640,
 
         output wire        ExtTPulse,
         output wire        T0_Sync,
@@ -103,6 +103,9 @@ module tpx3_core (
 
     localparam TS_PULSE_BASEADDR = 16'h4000;
     localparam TS_PULSE_HIGHADDR = 16'h5000-1;
+	 
+	localparam TIMESTAMP2_BASEADDR = 16'h5000; 
+    localparam TIMESTAMP2_HIGHADDR = 16'h6000-1; 
 
     localparam RX_BASEADDR = 16'h6000;
     localparam RX_HIGHADDR = 16'h7000-1;
@@ -110,13 +113,13 @@ module tpx3_core (
     parameter RX_CH_NO = 8;
     parameter ABUSWIDTH = 16;
 
-    wire [7:0] GPIO_DATA_OUT, SPI_DATA_OUT, PG_DATA_OUT, TS_DATA_OUT;
+    wire [7:0] GPIO_DATA_OUT, SPI_DATA_OUT, PG_DATA_OUT, TS_DATA_OUT, TS2_DATA_OUT;
     wire [7:0] TPX3_DATA_OUT [7:0];
 
     wire [31:0] FIFO_DATA_OUT;
     wire [7:0]  TPX3_DATA_OUT_OR;
     assign TPX3_DATA_OUT_OR = TPX3_DATA_OUT[7] | TPX3_DATA_OUT[6] | TPX3_DATA_OUT[5] | TPX3_DATA_OUT[4] | TPX3_DATA_OUT[3] | TPX3_DATA_OUT[2] | TPX3_DATA_OUT[1] | TPX3_DATA_OUT[0] ;
-    assign BUS_DATA_OUT = {VER_DATA_OUT | GPIO_DATA_OUT | SPI_DATA_OUT | TPX3_DATA_OUT_OR | PG_DATA_OUT | TS_DATA_OUT} ;
+    assign BUS_DATA_OUT = {VER_DATA_OUT | GPIO_DATA_OUT | SPI_DATA_OUT | TPX3_DATA_OUT_OR | PG_DATA_OUT | TS_DATA_OUT | TS2_DATA_OUT} ;
 
     /////////////
     // MODULES //
@@ -298,6 +301,55 @@ module tpx3_core (
         .FIFO_EMPTY(TS_FIFO_EMPTY),
         .FIFO_DATA(TS_FIFO_DATA)
     );
+	wire TS2_FIFO_READ, TS2_FIFO_EMPTY;
+    wire [31:0] TS2_FIFO_DATA;
+	 
+	reg shutter_timer = 1'b0;
+	 
+	reg last_shutter = 0;
+    reg first_rising_edge = 0;
+
+    always @(posedge CLK40) begin
+        if (Shutter && !last_shutter) begin
+            if (!first_rising_edge) begin
+					 shutter_timer <= 1;
+                first_rising_edge <= 1;
+            end else begin
+					 shutter_timer <= 0;
+            end
+        end else begin
+				shutter_timer <= 0;
+            first_rising_edge <= 0;
+        end
+        last_shutter <= Shutter;
+    end
+
+    timestamp_sbus
+    #(
+        .BASEADDR(TIMESTAMP2_BASEADDR),
+        .HIGHADDR(TIMESTAMP2_HIGHADDR),
+        .ABUSWIDTH(ABUSWIDTH),
+        .IDENTIFIER(4'b0111)
+    ) timestamp2
+    (
+        .BUS_CLK(BUS_CLK),
+        .BUS_RST(T0_Sync),
+        .BUS_ADD(BUS_ADD),
+        .BUS_DATA_IN(BUS_DATA_IN[7:0]),
+        .BUS_DATA_OUT(TS2_DATA_OUT),
+        .BUS_RD(BUS_RD),
+        .BUS_WR(BUS_WR),
+
+        .CLK(CLK640),
+        .DI(shutter_timer),
+        //.EXT_TIMESTAMP(TIMESTAMP),
+        //.TIMESTAMP_OUT(TIMESTAMP_OUT),
+        .EXT_ENABLE(!T0_Sync),
+
+        .FIFO_READ(TS2_FIFO_READ),
+        .FIFO_EMPTY(TS2_FIFO_EMPTY),
+        .FIFO_DATA(TS2_FIFO_DATA)
+    );
 
     wire CNT_FIFO_READ;
     reg [31:0] CNT_FIFO_DATA;
@@ -308,17 +360,17 @@ module tpx3_core (
             CNT_FIFO_DATA <= CNT_FIFO_DATA + 1;
 
 
-    wire [9:0] READ_GRANT;
+    wire [10:0] READ_GRANT;
 
     rrp_arbiter #(
-        .WIDTH(10)
+        .WIDTH(11)
     ) rrp_arbiter (
         .RST       (BUS_RST                         ),
         .CLK       (BUS_CLK                         ),
 
-        .WRITE_REQ ({~TPX_FIFO_EMPTY, ~TS_FIFO_EMPTY, CNT_FIFO_EN}),
-        .HOLD_REQ  ({10'b0}                          ),
-        .DATA_IN   ({TPX_FIFO_DATA[7], TPX_FIFO_DATA[6], TPX_FIFO_DATA[5], TPX_FIFO_DATA[4], TPX_FIFO_DATA[3], TPX_FIFO_DATA[2], TPX_FIFO_DATA[1], TPX_FIFO_DATA[0], TS_FIFO_DATA, CNT_FIFO_DATA}),
+        .WRITE_REQ ({~TPX_FIFO_EMPTY, ~TS_FIFO_EMPTY, ~TS2_FIFO_EMPTY, CNT_FIFO_EN}),
+        .HOLD_REQ  ({11'b0}                          ),
+        .DATA_IN   ({TPX_FIFO_DATA[7], TPX_FIFO_DATA[6], TPX_FIFO_DATA[5], TPX_FIFO_DATA[4], TPX_FIFO_DATA[3], TPX_FIFO_DATA[2], TPX_FIFO_DATA[1], TPX_FIFO_DATA[0], TS_FIFO_DATA, TS2_FIFO_DATA, CNT_FIFO_DATA}),
         .READ_GRANT(READ_GRANT                      ),
 
         .READY_OUT (ARB_READY_OUT                   ),
@@ -327,8 +379,9 @@ module tpx3_core (
     );
 
     assign CNT_FIFO_READ = READ_GRANT[0];
-    assign TS_FIFO_READ = READ_GRANT[1];
-    assign TPX_FIFO_READ = READ_GRANT[9:2];
+    assign TS2_FIFO_READ = READ_GRANT[1];
+	assign TS_FIFO_READ = READ_GRANT[2];
+    assign TPX_FIFO_READ = READ_GRANT[10:3];
 
 
 endmodule
