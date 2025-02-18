@@ -629,7 +629,7 @@ class TimewalkCalib(ScanBase):
 
                 # Plot the calibration results
                 p.plot_datapoints(x=amplitudes[1:], y=timewalk['mean'][1:] - timewalk['mean'][0], y_err=timewalk['error'][1:], x_plot_range=amplitudes[1:], y_plot_range=range(0, 125, 1), x_axis_title='VTP_fine', y_axis_title='Timewalk [ns]', title='Timewalk mean', suffix='timewalk_mean', fit='exp', plot_queue=plot_queue)
-                p.plot_datapoints(x=amplitudes[1:], y=tot['mean'][1:], y_err=tot['error'][1:], x_plot_range=range(0, 500, 1), y_plot_range=range(0, 150, 1), x_axis_title='VTP_fine [2.5 mV]', y_axis_title='ToT [CC]', title='ToT mean', suffix='tot_mean', fit='tot', plot_queue=plot_queue, vtp_coarse=VTP_coarse)
+                p.plot_datapoints(x=amplitudes[1:], y=tot['mean'][1:], y_err=tot['error'][1:], x_plot_range=np.arange(0, (VTP_fine_stop * 2.5 - VTP_coarse * 5), 1), y_plot_range=range(0, 150, 1), x_axis_title='VTP_fine [mV]', y_axis_title='ToT [CC]', title='ToT mean', suffix='tot_mean', fit='tot', plot_queue=plot_queue, vtp_coarse=VTP_coarse)
                 p.plot_datapoints(x=tot['mean'][1:], x_err=tot['error'][1:], y=timewalk['mean'][1:] - timewalk['mean'][0], y_err=timewalk['error'][1:], x_plot_range=range(0, 150, 1), y_plot_range=range(0, 125, 1), x_axis_title='ToT [CC]', y_axis_title='Timewalk [ns]', title='Timewalk calibration', suffix='timewalk_calibration', fit='exp', plot_queue=plot_queue)
 
 
