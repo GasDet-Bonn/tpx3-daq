@@ -48,6 +48,11 @@ module tpx3_core (
         output wire [31:0] ARB_DATA_OUT,
 
         input wire CLK40, CLK32, CLK320, CLK640,
+		  
+		output wire        CH1,
+		output wire        CH2,
+		output wire        CH3,
+		output wire        CH4,
 
         output wire        ExtTPulse,
         output wire        T0_Sync,
@@ -301,6 +306,12 @@ module tpx3_core (
         .FIFO_EMPTY(TS_FIFO_EMPTY),
         .FIFO_DATA(TS_FIFO_DATA)
     );
+	 
+    assign CH1 = 1'b0;
+	assign CH2 = 1'b0;
+	assign CH3 = 1'b0;
+	assign CH4 = 1'b0;
+	 
 	wire TS2_FIFO_READ, TS2_FIFO_EMPTY;
     wire [31:0] TS2_FIFO_DATA;
 	 

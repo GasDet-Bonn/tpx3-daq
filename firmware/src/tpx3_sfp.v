@@ -73,6 +73,11 @@ module tpx3_sfp (
         input  wire       SFP_CLK_N,
 
         output wire       PHY_RESET_N,
+		  
+		output wire       CH1,
+		output wire       CH2,
+		output wire       CH3,
+		output wire       CH4,
 
         //input wire TPX3_1_PLLOut_N,
         //input wire TPX3_1_PLLOut_P,
@@ -551,6 +556,11 @@ module tpx3_sfp (
         .CLK320         (CLK320               ),
         .CLK32          (CLK32                ),
 		.CLK640         (CLK640               ),
+		  
+		.CH1            (CH1                  ),
+		.CH2            (CH2                  ),
+		.CH3            (CH3                  ),
+		.CH4            (CH4                  ),
 
         .RX_DATA        (RX_DATA              ),
         .ExtTPulse      (TPX3_1_ExtTPulse     ),
