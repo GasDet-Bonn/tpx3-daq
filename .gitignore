@@ -151,3 +151,6 @@ tests/sim_build/
 *.lpr
 *.xml
 *.edif
+*.dcp
+firmware/vivado/designs/tpx3-daq-mimasA7.runs
+firmware/vivado/output
