@@ -36,11 +36,11 @@ class CLI_Plot():
 
         self.start_converter()
 
-        self.Plot_window = GUI_Plot1(data_queue = self.data_queue, 
-                                        startet_from = 'CLI', 
-                                        plottype = self.plottype, 
-                                        integration_length = self.integration_length, 
-                                        color_depth = self.color_depth, 
+        self.Plot_window = GUI_Plot1(data_queue = self.data_queue,
+                                        startet_from = 'CLI',
+                                        plottype = self.plottype,
+                                        integration_length = self.integration_length,
+                                        color_depth = self.color_depth,
                                         colorsteps = self.colorsteps)
 
     def start_converter(self):

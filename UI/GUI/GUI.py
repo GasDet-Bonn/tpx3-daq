@@ -13,7 +13,7 @@ import numpy as np
 from multiprocessing import Process, Queue, Pipe
 
 from UI.GUI.PlotWidget import plotwidget
-from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger
+from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger, equal_logger
 from UI.CLI.tpx3_cli import TPX3_multiprocess_start
 import tpx3.utils as utils
 from UI.GUI.converter import utils as conv_utils
@@ -28,7 +28,7 @@ class GUI_Plot1(Gtk.Window):
         self.connect('delete-event', self.window_destroy)
 
         self.set_default_size(400, 400)
-        self.started_from = startet_from 
+        self.started_from = startet_from
         self.Tag = None
 
         self.box = Gtk.Box(spacing = 6, orientation = Gtk.Orientation.HORIZONTAL)
@@ -111,7 +111,7 @@ class GUI_Plot1(Gtk.Window):
 
     def stop_idle_job(self):
         GLib.source_remove(self.Tag)
-    
+
     def window_destroy(self, event, widget):
         if self.started_from == 'GUI':
             TPX3_datalogger.write_value(name = 'plottype', value = self.plotwidget.get_plottype())
@@ -119,9 +119,9 @@ class GUI_Plot1(Gtk.Window):
             TPX3_datalogger.write_value(name = 'integration_length', value = self.plotwidget.get_iteration_depth('occupancy'))
             TPX3_datalogger.write_value(name = 'color_depth', value = self.plotwidget.get_iteration_depth('occupancy.color'))
         if self.started_from == 'CLI':
-            print('plottype=' + str(self.plotwidget.get_plottype()) + 
-                    ' colorsteps=' + str(self.plotwidget.get_iteration_depth('normal')) + 
-                    ' integration_length=' + str(self.plotwidget.get_iteration_depth('occupancy')) + 
+            print('plottype=' + str(self.plotwidget.get_plottype()) +
+                    ' colorsteps=' + str(self.plotwidget.get_iteration_depth('normal')) +
+                    ' integration_length=' + str(self.plotwidget.get_iteration_depth('occupancy')) +
                     ' color_depth=' + str(self.plotwidget.get_iteration_depth('occupancy.color')))
         GLib.source_remove(self.Tag)
         if self.started_from == 'GUI':
@@ -160,7 +160,7 @@ class GUI_Plot_settings(Gtk.Window):
         plot_depth_adj = Gtk.Adjustment()
         plot_depth_adj.configure(nIteration, 0, 1000, 1, 0, 0)
         self.plot_depth = Gtk.SpinButton(adjustment = plot_depth_adj, climb_rate = 1, digits = 0)
-        self.plot_depth.set_value(self.plot_depth_value) 
+        self.plot_depth.set_value(self.plot_depth_value)
         self.plot_depth.connect('value-changed', self.plot_depth_set)
 
         #color depth
@@ -170,7 +170,7 @@ class GUI_Plot_settings(Gtk.Window):
         color_depth_adj = Gtk.Adjustment()
         color_depth_adj.configure(color_depth, 0, 255, 1, 0, 0)
         self.color_depth = Gtk.SpinButton(adjustment = color_depth_adj, climb_rate = 1, digits = 0)
-        self.color_depth.set_value(self.color_depth_value) 
+        self.color_depth.set_value(self.color_depth_value)
         self.color_depth.connect('value-changed', self.color_depth_set)
 
         grid.attach(plot_depth_label, 0, 0, 3, 1)
@@ -184,6 +184,8 @@ class GUI_Plot_settings(Gtk.Window):
         if self.plotwidget.get_plottype() == 'normal':
             color_depth_label.hide()
             self.color_depth.hide()
+
+        self.resize(1, 1)
 
     def plot_depth_set(self, event):
         self.plot_depth_value = self.plot_depth.get_value_as_int()
@@ -239,7 +241,7 @@ class GUI_ToT_Calib(Gtk.Window):
         Testpulse_range_start_adj = Gtk.Adjustment()
         Testpulse_range_start_adj.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
         self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
+        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value)
         self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
         Testpulse_range_start_label = Gtk.Label()
         Testpulse_range_start_label.set_text('Start ')
@@ -248,7 +250,7 @@ class GUI_ToT_Calib(Gtk.Window):
         Testpulse_range_stop_adj = Gtk.Adjustment()
         Testpulse_range_stop_adj.configure(500, self.Testpulse_range_start_value, 511, 1, 0, 0)
         self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
+        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value)
         self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
         Testpulse_range_stop_label = Gtk.Label()
         Testpulse_range_stop_label.set_text('Stop ')
@@ -265,7 +267,7 @@ class GUI_ToT_Calib(Gtk.Window):
         Iterationbutton3.connect('toggled', self.on_Iterationbutton_toggled, '64')
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
 
         #Startbutton
         self.Startbutton = Gtk.Button(label = 'Start')
@@ -319,18 +321,152 @@ class GUI_ToT_Calib(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'ToT_Calib', 
-                                lowerTHL = self.Testpulse_range_start_value, 
-                                upperTHL = self.Testpulse_range_stop_value, 
+        GUI.Status_window_call(function = 'ToT_Calib',
+                                lowerTHL = self.Testpulse_range_start_value,
+                                upperTHL = self.Testpulse_range_stop_value,
                                 iterations = self.Number_of_Iterations)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib', 
-                                                            VTP_fine_start = self.Testpulse_range_start_value, 
-                                                            VTP_fine_stop = self.Testpulse_range_stop_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ToTCalib',
+                                                            VTP_fine_start = self.Testpulse_range_start_value,
+                                                            VTP_fine_stop = self.Testpulse_range_stop_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            plot_queue = GUI.plot_queue)
+        GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
+
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
+class GUI_Timewalk_Calib(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Timewalk Calibration')
+        self.connect('delete-event', self.window_destroy)
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+        self.add(grid)
+
+        Space = Gtk.Label()
+        Space.set_text('')
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text('')
+
+        #Testpuls range label
+        Testpulse_range_label = Gtk.Label()
+        Testpulse_range_label.set_text('Testpulse range')
+
+        #default values
+        self.Testpulse_range_start_value = 200
+        self.Testpulse_range_stop_value = 500
+
+        #Testpulse_range_start
+        Testpulse_range_start_adj = Gtk.Adjustment()
+        Testpulse_range_start_adj.configure(200, 1, self.Testpulse_range_stop_value, 1, 0, 0)
+        self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
+        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value)
+        self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
+        Testpulse_range_start_label = Gtk.Label()
+        Testpulse_range_start_label.set_text('Start ')
+
+        #Testpulse_range_stop
+        Testpulse_range_stop_adj = Gtk.Adjustment()
+        Testpulse_range_stop_adj.configure(500, self.Testpulse_range_start_value, 511, 1, 0, 0)
+        self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
+        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value)
+        self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
+        Testpulse_range_stop_label = Gtk.Label()
+        Testpulse_range_stop_label.set_text('Stop ')
+
+        #Buttons for number of iteration
+        self.Number_of_Iterations = 64
+        Iterationbutton1 = Gtk.RadioButton.new_with_label_from_widget(None, '4')
+        Iterationbutton2 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, '16')
+        Iterationbutton3 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, '64')
+        Iterationbutton4 = Gtk.RadioButton.new_with_label_from_widget(Iterationbutton1, '256')
+        Iterationbutton3.set_active(True)
+        Iterationbutton1.connect('toggled', self.on_Iterationbutton_toggled, '4')
+        Iterationbutton2.connect('toggled', self.on_Iterationbutton_toggled, '16')
+        Iterationbutton3.connect('toggled', self.on_Iterationbutton_toggled, '64')
+        Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
+        Number_of_iteration_label = Gtk.Label()
+        Number_of_iteration_label.set_text('Number of mask steps')
+
+        #Startbutton
+        self.Startbutton = Gtk.Button(label = 'Start')
+        self.Startbutton.connect('clicked', self.on_Startbutton_clicked)
+
+
+        grid.attach(Testpulse_range_label, 0, 0, 6, 1)
+        grid.attach(Testpulse_range_start_label, 0, 1, 1, 1)
+        grid.attach(self.Testpulse_range_start, 1, 1, 2, 1)
+        grid.attach(Testpulse_range_stop_label, 3, 1, 1, 1)
+        grid.attach(self.Testpulse_range_stop, 4, 1, 2, 1)
+        grid.attach(Number_of_iteration_label, 1, 2, 4, 1)
+        grid.attach(Iterationbutton1, 1, 3, 1, 1)
+        grid.attach(Iterationbutton2, 2, 3, 1, 1)
+        grid.attach(Iterationbutton3, 3, 3, 1, 1)
+        grid.attach(Iterationbutton4, 4, 3, 1, 1)
+        grid.attach(Space, 0, 4, 1, 1)
+        grid.attach(self.other_process, 0, 5, 4, 1)
+        grid.attach(self.Startbutton, 4, 5, 2, 1)
+
+        self.show_all()
+
+    def Testpulse_range_start_set(self, event):
+        self.Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
+        temp_Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Testpulse_range_start_value, 511, 1, 0, 0)
+        self.Testpulse_range_stop.disconnect_by_func(self.Testpulse_range_stop_set)
+        self.Testpulse_range_stop.set_adjustment(adjustment = new_adjustment_start)
+        self.Testpulse_range_stop.set_value(temp_Testpulse_range_stop_value)
+        self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
+
+    def Testpulse_range_stop_set(self, event):
+        self.Testpulse_range_stop_value = self.Testpulse_range_stop.get_value_as_int()
+        temp_Testpulse_range_start_value = self.Testpulse_range_start.get_value_as_int()
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Testpulse_range_stop_value, 1, 0, 0)
+        self.Testpulse_range_start.disconnect_by_func(self.Testpulse_range_start_set)
+        self.Testpulse_range_start.set_adjustment(adjustment = new_adjustment_stop)
+        self.Testpulse_range_start.set_value(temp_Testpulse_range_start_value)
+        self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
+
+    def on_Iterationbutton_toggled(self, button, name):
+        self.Number_of_Iterations = int(name)
+
+    def on_Startbutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            self.other_process.set_text('Other process running')
+            return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text('Simulation running')
+            return
+
+        GUI.Status_window_call(function = 'Timewalk_Calib',
+                                lowerTHL = self.Testpulse_range_start_value,
+                                upperTHL = self.Testpulse_range_stop_value,
+                                iterations = self.Number_of_Iterations)
+        new_process = TPX3_multiprocess_start.process_call(function = 'TimewalkCalib',
+                                                            VTP_fine_start = self.Testpulse_range_start_value,
+                                                            VTP_fine_stop = self.Testpulse_range_stop_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -369,7 +505,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start ')
@@ -379,7 +515,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop ')
@@ -389,7 +525,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections ')
@@ -406,7 +542,7 @@ class GUI_Threshold_Scan(Gtk.Window):
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
 
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #Startbutton
@@ -464,20 +600,21 @@ class GUI_Threshold_Scan(Gtk.Window):
         elif GUI.get_simulation_alive():
             self.other_process.set_text('Simulation running')
             return
-        GUI.Status_window_call(function = 'ThresholdScan', 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
-                                iterations = self.Number_of_Iterations, 
+        GUI.Status_window_call(function = 'ThresholdScan',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
+                                iterations = self.Number_of_Iterations,
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan', 
-                                                            Vthreshold_start = self.Threshold_start_value, 
-                                                            Vthreshold_stop = self.Threshold_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdScan',
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -515,7 +652,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start ')
@@ -525,7 +662,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop ')
@@ -535,7 +672,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections ')
@@ -552,7 +689,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
 
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #n_pulse_heights
@@ -560,7 +697,7 @@ class GUI_Threshold_Calib(Gtk.Window):
         n_pulse_heights_adj = Gtk.Adjustment()
         n_pulse_heights_adj.configure(4, 2, 100, 1, 0, 0)
         self.n_pulse_heights = Gtk.SpinButton(adjustment = n_pulse_heights_adj, climb_rate = 1, digits = 0)
-        self.n_pulse_heights.set_value(self.n_pulse_heights_value) 
+        self.n_pulse_heights.set_value(self.n_pulse_heights_value)
         self.n_pulse_heights.connect('value-changed', self.n_pulse_heights_set)
         n_pulse_heights_label = Gtk.Label()
         n_pulse_heights_label.set_text('Pulse height steps ')
@@ -611,14 +748,12 @@ class GUI_Threshold_Calib(Gtk.Window):
 
     def n_injections_set(self, event):
         self.n_injections_value = self.n_injections.get_value_as_int()
-        
 
     def on_Iterationbutton_toggled(self, button, name):
         self.Number_of_Iterations = int(name)
 
     def n_pulse_heights_set(self, event):
         self.n_pulse_heights_value = self.n_pulse_heights.get_value_as_int()
-        
 
     def on_Startbutton_clicked(self, widget):
         if GUI.get_process_alive():
@@ -628,23 +763,24 @@ class GUI_Threshold_Calib(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'ThresholdCalib', 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
-                                iterations = self.Number_of_Iterations, 
-                                n_injections = self.n_injections_value, 
+        GUI.Status_window_call(function = 'ThresholdCalib',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
+                                iterations = self.Number_of_Iterations,
+                                n_injections = self.n_injections_value,
                                 n_pulse_heights = self.n_pulse_heights_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib', 
-                                                            iteration = 0, 
-                                                            Vthreshold_start = self.Threshold_start_value, 
-                                                            Vthreshold_stop = self.Threshold_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                            n_pulse_heights = self.n_pulse_heights_value, 
-                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ThresholdCalib',
+                                                            iteration = 0,
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                            n_pulse_heights = self.n_pulse_heights_value,
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -682,7 +818,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         Testpulse_range_start_adj = Gtk.Adjustment()
         Testpulse_range_start_adj.configure(200, 0, 511, 1, 0, 0)
         self.Testpulse_range_start = Gtk.SpinButton(adjustment = Testpulse_range_start_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value) 
+        self.Testpulse_range_start.set_value(self.Testpulse_range_start_value)
         self.Testpulse_range_start.connect('value-changed', self.Testpulse_range_start_set)
         Testpulse_range_start_label = Gtk.Label()
         Testpulse_range_start_label.set_text('Start ')
@@ -692,7 +828,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         Testpulse_range_stop_adj = Gtk.Adjustment()
         Testpulse_range_stop_adj.configure(500, 0, 511, 1, 0, 0)
         self.Testpulse_range_stop = Gtk.SpinButton(adjustment = Testpulse_range_stop_adj, climb_rate = 1, digits = 0)
-        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value) 
+        self.Testpulse_range_stop.set_value(self.Testpulse_range_stop_value)
         self.Testpulse_range_stop.connect('value-changed', self.Testpulse_range_stop_set)
         Testpulse_range_stop_label = Gtk.Label()
         Testpulse_range_stop_label.set_text('Stop ')
@@ -702,7 +838,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections ')
@@ -719,7 +855,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
 
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #Startbutton
@@ -777,20 +913,150 @@ class GUI_Testpulse_Scan(Gtk.Window):
         elif GUI.get_simulation_alive():
             self.other_process.set_text('Simulation running')
             return
-        GUI.Status_window_call(function = 'TestpulsScan', 
-                                lowerTHL = self.Testpulse_range_start_value, 
-                                upperTHL = self.Testpulse_range_stop_value, 
-                                iterations = self.Number_of_Iterations, 
+        GUI.Status_window_call(function = 'TestpulsScan',
+                                lowerTHL = self.Testpulse_range_start_value,
+                                upperTHL = self.Testpulse_range_stop_value,
+                                iterations = self.Number_of_Iterations,
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan', 
-            	                                            VTP_fine_start = self.Testpulse_range_start_value, 
-                                                            VTP_fine_stop = self.Testpulse_range_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            mask_step = self.Number_of_Iterations, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'TestpulseScan',
+                                                            VTP_fine_start = self.Testpulse_range_start_value,
+                                                            VTP_fine_stop = self.Testpulse_range_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            mask_step = self.Number_of_Iterations,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            plot_queue = GUI.plot_queue)
+        GUI.set_running_process(running_process = new_process)
+        GUI.set_quit_scan_label()
+
+        self.destroy()
+
+    def window_destroy(self, widget, event):
+        self.destroy()
+
+class GUI_Noise_Scan(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Noise Scan')
+        self.connect('delete-event', self.window_destroy)
+
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(10)
+        grid.set_column_homogeneous(True)
+        grid.set_row_homogeneous(True)
+        self.add(grid)
+
+        Space = Gtk.Label()
+        Space.set_text("")
+
+        Threshold_label = Gtk.Label()
+        Threshold_label.set_text('Threshold')
+
+        #other process running
+        self.other_process = Gtk.Label()
+        self.other_process.set_text('')
+
+        #Threshold_start
+        self.Threshold_start_value = 1400
+        Threshold_start_adj = Gtk.Adjustment()
+        Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
+        self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
+        self.Threshold_start.set_value(self.Threshold_start_value)
+        self.Threshold_start.connect('value-changed', self.Threshold_start_set)
+        Threshold_start_label = Gtk.Label()
+        Threshold_start_label.set_text('Start ')
+
+        #Threshold_stop
+        self.Threshold_stop_value = 2900
+        Threshold_stop_adj = Gtk.Adjustment()
+        Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
+        self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
+        self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
+        Threshold_stop_label = Gtk.Label()
+        Threshold_stop_label.set_text('Stop ')
+
+        #Shutter
+        self.shutter_entry = Gtk.Entry()
+        self.shutter_entry.set_text('0.01')
+        self.shutter_entry.connect('activate', self.shutter_entry_text, 'h')
+        self.shutter_entry.set_width_chars(8)
+        shutter_label = Gtk.Label()
+        shutter_label.set_text('Shutter time [seconds]')
+        self.shutter_time = 0.01
+
+        #Startbutton
+        self.Startbutton = Gtk.Button(label = 'Start')
+        self.Startbutton.connect('clicked', self.on_Startbutton_clicked)
+
+        grid.attach(Threshold_label, 0, 0, 6, 1)
+        grid.attach(Threshold_start_label, 0, 1, 1, 1)
+        grid.attach(self.Threshold_start, 1, 1, 2, 1)
+        grid.attach(Threshold_stop_label, 3, 1, 1, 1)
+        grid.attach(self.Threshold_stop, 4, 1, 2, 1)
+        grid.attach(shutter_label, 0, 2, 6, 1)
+        grid.attach(self.shutter_entry, 2, 3, 2, 1)
+        grid.attach(Space, 0, 4, 1, 1)
+        grid.attach(self.other_process, 0, 5, 4, 1)
+        grid.attach(self.Startbutton, 4, 5, 2, 1)
+
+        self.show_all()
+
+    def Threshold_start_set(self, event):
+        self.Threshold_start_value = self.Threshold_start.get_value_as_int()
+        temp_Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+        new_adjustment_start = Gtk.Adjustment()
+        new_adjustment_start.configure(200, self.Threshold_start_value,2911, 1, 0, 0)
+        self.Threshold_stop.disconnect_by_func(self.Threshold_stop_set)
+        self.Threshold_stop.set_adjustment(adjustment = new_adjustment_start)
+        self.Threshold_stop.set_value(temp_Threshold_stop_value)
+        self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
+
+    def Threshold_stop_set(self, event):
+        self.Threshold_stop_value = self.Threshold_stop.get_value_as_int()
+        temp_Threshold_start_value = self.Threshold_start.get_value_as_int()
+        new_adjustment_stop = Gtk.Adjustment()
+        new_adjustment_stop.configure(200, 0, self.Threshold_stop_value, 1, 0, 0)
+        self.Threshold_start.disconnect_by_func(self.Threshold_start_set)
+        self.Threshold_start.set_adjustment(adjustment = new_adjustment_stop)
+        self.Threshold_start.set_value(temp_Threshold_start_value)
+        self.Threshold_start.connect('value-changed', self.Threshold_start_set)
+
+    def shutter_entry_text(self, button, name):
+        non_float_input = False
+        try:
+            self.shutter_time = float(self.shutter_entry.get_text())
+            self.shutter_entry.set_text(str(self.shutter_time))
+        except ValueError:
+            self.shutter_entry.set_text('')
+            non_float_input = True
+        if non_float_input == True:
+            return
+
+    def on_Startbutton_clicked(self, widget):
+        if GUI.get_process_alive():
+            self.other_process.set_text('Other process running')
+            return
+        elif GUI.get_simulation_alive():
+            self.other_process.set_text('Simulation running')
+            return
+        GUI.Status_window_call(function = 'NoiseScan',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
+                                shutter = self.shutter_time)
+        new_process = TPX3_multiprocess_start.process_call(function = 'NoiseScan',
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            shutter = self.shutter_time,
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -828,7 +1094,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start ')
@@ -838,7 +1104,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop ')
@@ -848,7 +1114,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
         n_injections_adj = Gtk.Adjustment()
         n_injections_adj.configure(100, 1, 65535, 1, 0, 0)
         self.n_injections = Gtk.SpinButton(adjustment = n_injections_adj, climb_rate = 1, digits = 0)
-        self.n_injections.set_value(self.n_injections_value) 
+        self.n_injections.set_value(self.n_injections_value)
         self.n_injections.connect('value-changed', self.n_injections_set)
         n_injections_label = Gtk.Label()
         n_injections_label.set_text('Number of injections')
@@ -916,20 +1182,21 @@ class GUI_PixelDAC_opt(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'PixelDAC_opt', 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
+        GUI.Status_window_call(function = 'PixelDAC_opt',
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
                                 n_injections = self.n_injections_value)
-        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDAC_opt', 
-                                                            iteration = 0, 
-                                                            Vthreshold_start = self.Threshold_start_value, 
-                                                            Vthreshold_stop = self.Threshold_stop_value, 
-                                                            n_injections = self.n_injections_value, 
-                                                            offset = self.col_offset_value, 
-                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
-                                                            result = GUI.pixeldac_result, 
+        new_process = TPX3_multiprocess_start.process_call(function = 'PixelDACopt',
+                                                            iteration = 0,
+                                                            Vthreshold_start = self.Threshold_start_value,
+                                                            Vthreshold_stop = self.Threshold_stop_value,
+                                                            n_injections = self.n_injections_value,
+                                                            offset = self.col_offset_value,
+                                                            tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            result = GUI.pixeldac_result,
                                                             plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -1051,15 +1318,15 @@ class GUI_Run_Datataking(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function = 'Run', lowerTHL = self.Datataking_Time_value, 
+        GUI.Status_window_call(function = 'Run', lowerTHL = self.Datataking_Time_value,
                                 upperTHL = self.finish_str)
-        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake', 
-                                                            scan_timeout = self.Datataking_Time_value, 
-                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'), 
-                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'), 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
-                                                            plot_queue = GUI.plot_queue, 
+        new_process = TPX3_multiprocess_start.process_call(function = 'DataTake',
+                                                            scan_timeout = self.Datataking_Time_value,
+                                                            thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
+                                                            maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
+                                                            plot_queue = GUI.plot_queue,
                                                             readout_interval = TPX3_datalogger.read_value(name = 'Readout_Speed'))
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -1083,285 +1350,76 @@ class GUI_SetDAC(Gtk.Window):
         Space = Gtk.Label()
         Space.set_text("")
 
-        #Ibias_Preamp_ON
-        self.Ibias_Preamp_ON_value = TPX3_datalogger.read_value(name = 'Ibias_Preamp_ON')
-        Ibias_Preamp_ON_adj = Gtk.Adjustment()
-        Ibias_Preamp_ON_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_Preamp_ON = Gtk.SpinButton(adjustment = Ibias_Preamp_ON_adj, climb_rate = 1, digits=0)
-        self.Ibias_Preamp_ON.set_value(self.Ibias_Preamp_ON_value) 
-        self.Ibias_Preamp_ON.connect('value-changed', self.Ibias_Preamp_ON_set)
-        Ibias_Preamp_ON_label = Gtk.Label()
-        Ibias_Preamp_ON_label.set_text("Ibias_Preamp_ON ")
+        self.dac_dict = {'Ibias_Preamp_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_Preamp_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
+                         'VPreamp_NCAS':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_Ikrum':         {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vfbk':                {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vthreshold_fine':     {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vthreshold_coarse':   {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Vthreshold_combined': {"value" : 0, "default": 1375,"size" : 1911,"adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_DiscS1_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_DiscS1_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
+                         'Ibias_DiscS2_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_DiscS2_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
+                         'Ibias_PixelDAC':      {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_TPbufferIn':    {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_TPbufferOut':   {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'VTP_coarse':          {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'VTP_fine':            {"value" : 0, "default": 255, "size" : 511, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'Ibias_CP_PLL':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
+                         'PLL_Vcntrl':          {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True }}
 
-        #Ibias_Preamp_OFF
-        self.Ibias_Preamp_OFF_value = 7
-        Ibias_Preamp_OFF_adj = Gtk.Adjustment()
-        Ibias_Preamp_OFF_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Ibias_Preamp_OFF = Gtk.SpinButton(adjustment = Ibias_Preamp_OFF_adj, climb_rate = 1, digits = 0)
-        self.Ibias_Preamp_OFF.set_value(self.Ibias_Preamp_OFF_value) 
-        self.Ibias_Preamp_OFF.connect('value-changed', self.Ibias_Preamp_OFF_set)
-        Ibias_Preamp_OFF_label = Gtk.Label()
-        Ibias_Preamp_OFF_label.set_text('Ibias_Preamp_OFF ')
-
-        #VPreamp_NCAS
-        self.VPreamp_NCAS_value = TPX3_datalogger.read_value(name = 'VPreamp_NCAS')
-        VPreamp_NCAS_adj = Gtk.Adjustment()
-        VPreamp_NCAS_adj.configure(127, 0, 255, 1, 0, 0)
-        self.VPreamp_NCAS = Gtk.SpinButton(adjustment = VPreamp_NCAS_adj, climb_rate = 1, digits = 0)
-        self.VPreamp_NCAS.set_value(self.VPreamp_NCAS_value) 
-        self.VPreamp_NCAS.connect('value-changed', self.VPreamp_NCAS_set)
-        VPreamp_NCAS_label = Gtk.Label()
-        VPreamp_NCAS_label.set_text('VPreamp_NCAS ')
-
-        #Ibias_Ikrum
-        self.Ibias_Ikrum_value = TPX3_datalogger.read_value(name = 'Ibias_Ikrum')
-        Ibias_Ikrum_adj = Gtk.Adjustment()
-        Ibias_Ikrum_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_Ikrum = Gtk.SpinButton(adjustment = Ibias_Ikrum_adj, climb_rate = 1, digits = 0)
-        self.Ibias_Ikrum.set_value(self.Ibias_Ikrum_value) 
-        self.Ibias_Ikrum.connect('value-changed', self.Ibias_Ikrum_set)
-        Ibias_Ikrum_label = Gtk.Label()
-        Ibias_Ikrum_label.set_text('Ibias_Ikrum ')
-
-        #Vfbk
-        self.Vfbk_value = TPX3_datalogger.read_value(name = 'Vfbk')
-        Vfbk_adj = Gtk.Adjustment()
-        Vfbk_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Vfbk = Gtk.SpinButton(adjustment = Vfbk_adj, climb_rate = 1, digits = 0)
-        self.Vfbk.set_value(self.Vfbk_value) 
-        self.Vfbk.connect('value-changed', self.Vfbk_set)
-        Vfbk_label = Gtk.Label()
-        Vfbk_label.set_text('Vfbk ')
-
-        #Vthreshold_fine
-        self.Vthreshold_fine_value = TPX3_datalogger.read_value(name = 'Vthreshold_fine')
-        Vthreshold_fine_adj = Gtk.Adjustment()
-        Vthreshold_fine_adj.configure(255, 0, 511, 1, 0, 0)
-        self.Vthreshold_fine = Gtk.SpinButton(adjustment = Vthreshold_fine_adj, climb_rate = 1, digits = 0)
-        self.Vthreshold_fine.set_value(self.Vthreshold_fine_value) 
-        self.Vthreshold_fine.connect('value-changed', self.Vthreshold_fine_set)
-        Vthreshold_fine_label = Gtk.Label()
-        Vthreshold_fine_label.set_text('Vthreshold_fine ')
-
-        #Vthreshold_coarse
-        self.Vthreshold_coarse_value = TPX3_datalogger.read_value(name = 'Vthreshold_coarse')
-        Vthreshold_coarse_adj = Gtk.Adjustment()
-        Vthreshold_coarse_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Vthreshold_coarse = Gtk.SpinButton(adjustment = Vthreshold_coarse_adj, climb_rate = 1, digits = 0)
-        self.Vthreshold_coarse.set_value(self.Vthreshold_coarse_value) 
-        self.Vthreshold_coarse.connect('value-changed', self.Vthreshold_coarse_set)
-        Vthreshold_coarse_label = Gtk.Label()
-        Vthreshold_coarse_label.set_text('Vthreshold_coarse ')
-
-        #Ibias_DiscS1_ON
-        self.Ibias_DiscS1_ON_value = TPX3_datalogger.read_value(name = 'Ibias_DiscS1_ON')
-        Ibias_DiscS1_ON_adj = Gtk.Adjustment()
-        Ibias_DiscS1_ON_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_DiscS1_ON = Gtk.SpinButton(adjustment = Ibias_DiscS1_ON_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS1_ON.set_value(self.Ibias_DiscS1_ON_value) 
-        self.Ibias_DiscS1_ON.connect('value-changed', self.Ibias_DiscS1_ON_set)
-        Ibias_DiscS1_ON_label = Gtk.Label()
-        Ibias_DiscS1_ON_label.set_text('Ibias_DiscS1_ON ')
-
-        #Ibias_DiscS1_OFF
-        self.Ibias_DiscS1_OFF_value = 7
-        Ibias_DiscS1_OFF_adj = Gtk.Adjustment()
-        Ibias_DiscS1_OFF_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Ibias_DiscS1_OFF = Gtk.SpinButton(adjustment = Ibias_DiscS1_OFF_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS1_OFF.set_value(self.Ibias_DiscS1_OFF_value) 
-        self.Ibias_DiscS1_OFF.connect('value-changed', self.Ibias_DiscS1_OFF_set)
-        Ibias_DiscS1_OFF_label = Gtk.Label()
-        Ibias_DiscS1_OFF_label.set_text('Ibias_DiscS1_OFF ')
-
-        #Ibias_DiscS2_ON
-        self.Ibias_DiscS2_ON_value = TPX3_datalogger.read_value(name = 'Ibias_DiscS2_ON')
-        Ibias_DiscS2_ON_adj = Gtk.Adjustment()
-        Ibias_DiscS2_ON_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_DiscS2_ON = Gtk.SpinButton(adjustment = Ibias_DiscS2_ON_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS2_ON.set_value(self.Ibias_DiscS2_ON_value) 
-        self.Ibias_DiscS2_ON.connect('value-changed', self.Ibias_DiscS2_ON_set)
-        Ibias_DiscS2_ON_label = Gtk.Label()
-        Ibias_DiscS2_ON_label.set_text('Ibias_DiscS2_ON ')
-
-        #Ibias_DiscS2_OFF
-        self.Ibias_DiscS2_OFF_value = 7
-        Ibias_DiscS2_OFF_adj = Gtk.Adjustment()
-        Ibias_DiscS2_OFF_adj.configure(7, 0, 15, 1, 0, 0)
-        self.Ibias_DiscS2_OFF = Gtk.SpinButton(adjustment = Ibias_DiscS2_OFF_adj, climb_rate = 1, digits = 0)
-        self.Ibias_DiscS2_OFF.set_value(self.Ibias_DiscS2_OFF_value) 
-        self.Ibias_DiscS2_OFF.connect('value-changed', self.Ibias_DiscS2_OFF_set)
-        Ibias_DiscS2_OFF_label = Gtk.Label()
-        Ibias_DiscS2_OFF_label.set_text('Ibias_DiscS2_OFF ')
-
-        #Ibias_PixelDAC
-        self.Ibias_PixelDAC_value = TPX3_datalogger.read_value(name = 'Ibias_PixelDAC')
-        Ibias_PixelDAC_adj = Gtk.Adjustment()
-        Ibias_PixelDAC_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_PixelDAC = Gtk.SpinButton(adjustment = Ibias_PixelDAC_adj, climb_rate = 1, digits = 0)
-        self.Ibias_PixelDAC.set_value(self.Ibias_PixelDAC_value) 
-        self.Ibias_PixelDAC.connect('value-changed', self.Ibias_PixelDAC_set)
-        Ibias_PixelDAC_label = Gtk.Label()
-        Ibias_PixelDAC_label.set_text('Ibias_PixelDAC ')
-
-        #Ibias_TPbufferIn
-        self.Ibias_TPbufferIn_value = TPX3_datalogger.read_value(name = 'Ibias_TPbufferIn')
-        Ibias_TPbufferIn_adj = Gtk.Adjustment()
-        Ibias_TPbufferIn_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_TPbufferIn = Gtk.SpinButton(adjustment = Ibias_TPbufferIn_adj, climb_rate = 1, digits = 0)
-        self.Ibias_TPbufferIn.set_value(self.Ibias_TPbufferIn_value) 
-        self.Ibias_TPbufferIn.connect('value-changed', self.Ibias_TPbufferIn_set)
-        Ibias_TPbufferIn_label = Gtk.Label()
-        Ibias_TPbufferIn_label.set_text('Ibias_TPbufferIn ')
-
-        #Ibias_TPbufferOut
-        self.Ibias_TPbufferOut_value = TPX3_datalogger.read_value(name = 'Ibias_TPbufferOut')
-        Ibias_TPbufferOut_adj = Gtk.Adjustment()
-        Ibias_TPbufferOut_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_TPbufferOut = Gtk.SpinButton(adjustment = Ibias_TPbufferOut_adj, climb_rate = 1, digits = 0)
-        self.Ibias_TPbufferOut.set_value(self.Ibias_TPbufferOut_value) 
-        self.Ibias_TPbufferOut.connect('value-changed', self.Ibias_TPbufferOut_set)
-        Ibias_TPbufferOut_label = Gtk.Label()
-        Ibias_TPbufferOut_label.set_text('Ibias_TPbufferOut ')
-
-        #VTP_coarse
-        self.VTP_coarse_value = TPX3_datalogger.read_value(name = 'VTP_coarse')
-        VTP_coarse_adj = Gtk.Adjustment()
-        VTP_coarse_adj.configure(127, 0, 255, 1, 0, 0)
-        self.VTP_coarse = Gtk.SpinButton(adjustment = VTP_coarse_adj, climb_rate = 1, digits = 0)
-        self.VTP_coarse.set_value(self.VTP_coarse_value) 
-        self.VTP_coarse.connect('value-changed', self.VTP_coarse_set)
-        VTP_coarse_label = Gtk.Label()
-        VTP_coarse_label.set_text('VTP_coarse ')
-
-        #VTP_fine
-        self.VTP_fine_value = TPX3_datalogger.read_value(name = 'VTP_fine')
-        VTP_fine_adj = Gtk.Adjustment()
-        VTP_fine_adj.configure(255, 0, 511, 1, 0, 0)
-        self.VTP_fine = Gtk.SpinButton(adjustment = VTP_fine_adj, climb_rate = 1, digits = 0)
-        self.VTP_fine.set_value(self.VTP_fine_value) 
-        self.VTP_fine.connect('value-changed', self.VTP_fine_set)
-        VTP_fine_label = Gtk.Label()
-        VTP_fine_label.set_text('VTP_fine ')
-
-        #Ibias_CP_PLL
-        self.Ibias_CP_PLL_value = TPX3_datalogger.read_value(name = 'Ibias_CP_PLL')
-        Ibias_CP_PLL_adj = Gtk.Adjustment()
-        Ibias_CP_PLL_adj.configure(127, 0, 255, 1, 0, 0)
-        self.Ibias_CP_PLL = Gtk.SpinButton(adjustment = Ibias_CP_PLL_adj, climb_rate = 1, digits = 0)
-        self.Ibias_CP_PLL.set_value(self.Ibias_CP_PLL_value) 
-        self.Ibias_CP_PLL.connect('value-changed', self.Ibias_CP_PLL_set)
-        Ibias_CP_PLL_label = Gtk.Label()
-        Ibias_CP_PLL_label.set_text('Ibias_CP_PLL ')
-
-        #PLL_Vcntrl
-        self.PLL_Vcntrl_value = TPX3_datalogger.read_value(name = 'PLL_Vcntrl')
-        PLL_Vcntrl_adj = Gtk.Adjustment()
-        PLL_Vcntrl_adj.configure(127, 0, 255, 1, 0, 0)
-        self.PLL_Vcntrl = Gtk.SpinButton(adjustment = PLL_Vcntrl_adj, climb_rate = 1, digits = 0)
-        self.PLL_Vcntrl.set_value(self.PLL_Vcntrl_value) 
-        self.PLL_Vcntrl.connect('value-changed', self.PLL_Vcntrl_set)
-        PLL_Vcntrl_label = Gtk.Label()
-        PLL_Vcntrl_label.set_text('PLL_Vcntrl ')
+        for dac in self.dac_dict:
+            if self.dac_dict[dac]['show']:
+                if dac != 'Vthreshold_combined':
+                    self.dac_dict[dac]['value'] = TPX3_datalogger.read_value(name = dac)
+                else:
+                    self.dac_dict[dac]['value'] = utils.threshold_compose(TPX3_datalogger.read_value(name = 'Vthreshold_fine'), TPX3_datalogger.read_value(name = 'Vthreshold_coarse'))
+            else:
+                self.dac_dict[dac]['value'] = 7
+            self.dac_dict[dac]['adjust'] = Gtk.Adjustment()
+            self.dac_dict[dac]['adjust'].configure(self.dac_dict[dac]['default'], 0, self.dac_dict[dac]['size'], 1, 0, 0)
+            self.dac_dict[dac]['spinButton'] = Gtk.SpinButton(adjustment = self.dac_dict[dac]['adjust'], climb_rate = 1, digits=0)
+            self.dac_dict[dac]['spinButton'].set_value(self.dac_dict[dac]['value'])
+            self.dac_dict[dac]['spinButton'].connect('value-changed', self.DAC_set, dac)
+            self.dac_dict[dac]['label'] = Gtk.Label()
+            self.dac_dict[dac]['label'].set_text(dac + " ")
 
         #Save Button
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
 
+        for i, dac in enumerate(self.dac_dict):
+            if self.dac_dict[dac]['show']:
+                grid.attach(self.dac_dict[dac]['label'], 0, i, 1, 1)
+                grid.attach(self.dac_dict[dac]['spinButton'], 1, i, 1, 1)
 
-        grid.attach(Ibias_Preamp_ON_label, 0, 0, 1, 1)
-        grid.attach(self.Ibias_Preamp_ON, 1, 0, 1, 1)
-        #grid.attach(Ibias_Preamp_OFF_label, 0, 1, 1, 1)
-        #grid.attach(self.Ibias_Preamp_OFF, 1, 1, 1, 1)
-        grid.attach(VPreamp_NCAS_label, 0, 2, 1, 1)
-        grid.attach(self.VPreamp_NCAS, 1, 2, 1, 1)
-        grid.attach(Ibias_Ikrum_label, 0, 3, 1, 1)
-        grid.attach(self.Ibias_Ikrum, 1, 3, 1, 1)
-        grid.attach(Vfbk_label, 0, 4, 1, 1)
-        grid.attach(self.Vfbk, 1, 4, 1, 1)
-        grid.attach(Vthreshold_fine_label, 0, 5, 1, 1)
-        grid.attach(self.Vthreshold_fine, 1, 5, 1, 1)
-        grid.attach(Vthreshold_coarse_label, 0, 6, 1, 1)
-        grid.attach(self.Vthreshold_coarse, 1, 6, 1, 1)
-        grid.attach(Ibias_DiscS1_ON_label, 0, 7, 1, 1)
-        grid.attach(self.Ibias_DiscS1_ON, 1, 7, 1, 1)
-        #grid.attach(Ibias_DiscS1_OFF_label, 0, 8, 1, 1)
-        #grid.attach(self.Ibias_DiscS1_OFF, 1, 8, 1, 1)
-        grid.attach(Ibias_DiscS2_ON_label, 0, 9, 1, 1)
-        grid.attach(self.Ibias_DiscS2_ON, 1, 9, 1, 1)
-        #grid.attach(Ibias_DiscS2_OFF_label, 0, 10, 1 , 1)
-        #grid.attach(self.Ibias_DiscS2_OFF, 1, 10, 1 , 1)
-        grid.attach(Ibias_PixelDAC_label, 0, 11, 1, 1)
-        grid.attach(self.Ibias_PixelDAC, 1, 11, 1, 1)
-        grid.attach(Ibias_TPbufferIn_label, 0, 12, 1, 1)
-        grid.attach(self.Ibias_TPbufferIn, 1, 12, 1, 1)
-        grid.attach(Ibias_TPbufferOut_label, 0, 13, 1, 1)
-        grid.attach(self.Ibias_TPbufferOut, 1, 13, 1, 1)
-        grid.attach(VTP_coarse_label, 0, 14, 1, 1)
-        grid.attach(self.VTP_coarse, 1, 14, 1, 1)
-        grid.attach(VTP_fine_label, 0, 15, 1, 1)
-        grid.attach(self.VTP_fine, 1, 15, 1, 1)
-        grid.attach(Ibias_CP_PLL_label, 0, 16, 1, 1)
-        grid.attach(self.Ibias_CP_PLL, 1, 16, 1, 1)
-        grid.attach(PLL_Vcntrl_label, 0, 17, 1, 1)
-        grid.attach(self.PLL_Vcntrl, 1, 17, 1, 1)
         grid.attach(Space, 0, 18, 1, 1)
         grid.attach(self.Savebutton, 1, 19, 1, 1)
 
         self.show_all()
 
-    def Ibias_Preamp_ON_set(self, event):
-        self.Ibias_Preamp_ON_value = self.Ibias_Preamp_ON.get_value_as_int()
-
-    def Ibias_Preamp_OFF_set(self, event):
-        self.Ibias_Preamp_OFF_value = self.Ibias_Preamp_OFF.get_value_as_int()
-
-    def VPreamp_NCAS_set(self, event):
-        self.VPreamp_NCAS_value = self.VPreamp_NCAS.get_value_as_int()
-
-    def Ibias_Ikrum_set(self, event):
-        self.Ibias_Ikrum_value = self.Ibias_Ikrum.get_value_as_int()
-
-    def Vfbk_set(self, event):
-        self.Vfbk_value = self.Vfbk.get_value_as_int()
-
-    def Vthreshold_fine_set(self, event):
-        self.Vthreshold_fine_value = self.Vthreshold_fine.get_value_as_int()
-
-    def Vthreshold_coarse_set(self, event):
-        self.Vthreshold_coarse_value = self.Vthreshold_coarse.get_value_as_int()
-
-    def Ibias_DiscS1_ON_set(self, event):
-        self.Ibias_DiscS1_ON_value = self.Ibias_DiscS1_ON.get_value_as_int()
-
-    def Ibias_DiscS1_OFF_set(self, event):
-        self.Ibias_DiscS1_OFF_value = self.Ibias_DiscS1_OFF.get_value_as_int()
-
-    def Ibias_DiscS2_ON_set(self, event):
-        self.Ibias_DiscS2_ON_value = self.Ibias_DiscS2_ON.get_value_as_int()
-
-    def Ibias_DiscS2_OFF_set(self, event):
-        self.Ibias_DiscS2_OFF_value = self.Ibias_DiscS2_OFF.get_value_as_int()
-
-    def Ibias_PixelDAC_set(self, event):
-        self.Ibias_PixelDAC_value = self.Ibias_PixelDAC.get_value_as_int()
-
-    def Ibias_TPbufferIn_set(self, event):
-        self.Ibias_TPbufferIn_value = self.Ibias_TPbufferIn.get_value_as_int()
-
-    def Ibias_TPbufferOut_set(self, event):
-        self.Ibias_TPbufferOut_value = self.Ibias_TPbufferOut.get_value_as_int()
-
-    def VTP_coarse_set(self, event):
-        self.VTP_coarse_value = self.VTP_coarse.get_value_as_int()
-
-    def VTP_fine_set(self, event):
-        self.VTP_fine_value = self.VTP_fine.get_value_as_int()
-
-    def Ibias_CP_PLL_set(self, event):
-        self.Ibias_CP_PLL_value = self.Ibias_CP_PLL.get_value_as_int()
-
-    def PLL_Vcntrl_set(self, event):
-        self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
+    def DAC_set(self, event, dac):
+        if dac not in{'Vthreshold_fine', 'Vthreshold_coarse', 'Vthreshold_combined'}:
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+        elif dac == 'Vthreshold_combined':
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
+            self.dac_dict['Vthreshold_fine']['value'] = fine
+            self.dac_dict['Vthreshold_fine']['spinButton'].set_value(fine)
+            self.dac_dict['Vthreshold_coarse']['value'] = coarse
+            self.dac_dict['Vthreshold_coarse']['spinButton'].set_value(coarse)
+        elif dac == 'Vthreshold_fine':
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.dac_dict[dac]['value'], self.dac_dict['Vthreshold_coarse']['value'])
+            self.dac_dict['Vthreshold_combined']['value'] = threshold
+            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
+        elif dac == 'Vthreshold_coarse':
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.dac_dict['Vthreshold_fine']['value'], self.dac_dict[dac]['value'])
+            self.dac_dict['Vthreshold_combined']['value'] = threshold
+            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
 
     def on_Savebutton_clicked(self, widget):
         #check if process is running
@@ -1370,62 +1428,18 @@ class GUI_SetDAC(Gtk.Window):
             return
 
         #write values
-        self.Ibias_Preamp_ON_value = self.Ibias_Preamp_ON.get_value_as_int()
-        self.Ibias_Preamp_OFF_value = self.Ibias_Preamp_OFF.get_value_as_int()
-        self.VPreamp_NCAS_value = self.VPreamp_NCAS.get_value_as_int()
-        self.Ibias_Ikrum_value = self.Ibias_Ikrum.get_value_as_int()
-        self.Vfbk_value = self.Vfbk.get_value_as_int()
-        self.Vthreshold_fine_value = self.Vthreshold_fine.get_value_as_int()
-        self.Vthreshold_coarse_value = self.Vthreshold_coarse.get_value_as_int()
-        self.Ibias_DiscS1_ON_value = self.Ibias_DiscS1_ON.get_value_as_int()
-        self.Ibias_DiscS1_OFF_value = self.Ibias_DiscS1_OFF.get_value_as_int()
-        self.Ibias_DiscS2_ON_value = self.Ibias_DiscS2_ON.get_value_as_int()
-        self.Ibias_DiscS2_OFF_value = self.Ibias_DiscS2_OFF.get_value_as_int()
-        self.Ibias_PixelDAC_value = self.Ibias_PixelDAC.get_value_as_int()
-        self.Ibias_TPbufferIn_value = self.Ibias_TPbufferIn.get_value_as_int()
-        self.Ibias_TPbufferOut_value = self.Ibias_TPbufferOut.get_value_as_int()
-        self.VTP_coarse_value = self.VTP_coarse.get_value_as_int()
-        self.VTP_fine_value = self.VTP_fine.get_value_as_int()
-        self.Ibias_CP_PLL_value = self.Ibias_CP_PLL.get_value_as_int()
-        self.PLL_Vcntrl_value = self.PLL_Vcntrl.get_value_as_int()
-        
-        #write values to datalogger
-        TPX3_datalogger.write_value(name = 'Ibias_Preamp_ON', value = self.Ibias_Preamp_ON_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_ON')
-        #TPX3_datalogger.write_value(name = 'Ibias_Preamp_OFF', value = self.Ibias_Preamp_OFF_value)
-        #TPX3_datalogger.write_to_yaml(name = 'Ibias_Preamp_OFF')
-        TPX3_datalogger.write_value(name = 'VPreamp_NCAS', value = self.VPreamp_NCAS_value)
-        TPX3_datalogger.write_to_yaml(name = 'VPreamp_NCAS')
-        TPX3_datalogger.write_value(name = 'Ibias_Ikrum', value = self.Ibias_Ikrum_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_Ikrum')
-        TPX3_datalogger.write_value(name = 'Vfbk', value = self.Vfbk_value)
-        TPX3_datalogger.write_to_yaml(name = 'Vfbk')
-        TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = self.Vthreshold_fine_value)
-        TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine')
-        TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = self.Vthreshold_coarse_value)
-        TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse')
-        TPX3_datalogger.write_value(name = 'Ibias_DiscS1_ON', value = self.Ibias_DiscS1_ON_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS1_ON')
-        #TPX3_datalogger.write_value(name = 'Ibias_DiscS1_OFF', value = self.Ibias_DiscS1_OFF_value)
-        #TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS1_OFF')
-        TPX3_datalogger.write_value(name = 'Ibias_DiscS2_ON', value = self.Ibias_DiscS2_ON_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS2_ON')
-        #TPX3_datalogger.write_value(name = 'Ibias_DiscS2_OFF', value = self.Ibias_DiscS2_OFF_value)
-        #TPX3_datalogger.write_to_yaml(name = 'Ibias_DiscS2_OFF')
-        TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = self.Ibias_PixelDAC_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
-        TPX3_datalogger.write_value(name = 'Ibias_TPbufferIn', value = self.Ibias_TPbufferIn_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_TPbufferIn')
-        TPX3_datalogger.write_value(name = 'Ibias_TPbufferOut', value = self.Ibias_TPbufferOut_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_TPbufferOut')
-        TPX3_datalogger.write_value(name = 'VTP_coarse', value = self.VTP_coarse_value)
-        TPX3_datalogger.write_to_yaml(name = 'VTP_coarse')
-        TPX3_datalogger.write_value(name = 'VTP_fine', value = self.VTP_fine_value)
-        TPX3_datalogger.write_to_yaml(name = 'VTP_fine')
-        TPX3_datalogger.write_value(name = 'Ibias_CP_PLL', value = self.Ibias_CP_PLL_value)
-        TPX3_datalogger.write_to_yaml(name = 'Ibias_CP_PLL')
-        TPX3_datalogger.write_value(name = 'PLL_Vcntrl', value = self.PLL_Vcntrl_value)
-        TPX3_datalogger.write_to_yaml(name = 'PLL_Vcntrl')
+        for dac in self.dac_dict:
+            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            if self.dac_dict[dac]['show']:
+                if dac != 'Vthreshold_combined':
+                    TPX3_datalogger.write_value(name = dac, value = self.dac_dict[dac]['value'])
+                    TPX3_datalogger.write_to_yaml(name = dac)
+                else:
+                    fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
+                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine')
+                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse')
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -1435,8 +1449,8 @@ class GUI_Additional_Settings(Gtk.Window):
         Gtk.Window.__init__(self, title = 'Settings')
         self.connect('delete-event', self.window_destroy)
         self.expert_value = False
-        self.sense_DAC_dict = {'Off' : 0, 'Ibias_Preamp_ON' : 1, 'Ibias_Preamp_OFF' : 2, 'VPreamp_NCAS' : 3, 'Ibias_Ikrum' : 4, 'Vfbk' : 5, 
-                            'Vthreshold_fine' : 6, 'Vtreshold_corse' : 7, 'IBias_DiscS1_ON' : 8, 'IBias_DiscS1_OFF' : 9, 'IBias_DiscS2_ON' : 10, 
+        self.sense_DAC_dict = {'Off' : 0, 'Ibias_Preamp_ON' : 1, 'Ibias_Preamp_OFF' : 2, 'VPreamp_NCAS' : 3, 'Ibias_Ikrum' : 4, 'Vfbk' : 5,
+                            'Vthreshold_fine' : 6, 'Vtreshold_corse' : 7, 'IBias_DiscS1_ON' : 8, 'IBias_DiscS1_OFF' : 9, 'IBias_DiscS2_ON' : 10,
                             'IBias_DiscS2_OFF' : 11, 'IBias_PixelDAC' : 12, 'IBias_TPbufferIn' : 13, 'IBias_TPbufferOut' : 14, 'VTP_coarse' : 15,
                             'VTP_fine' : 16, 'Ibias_CP_PLL' : 17, 'PLL_Vcntrl' : 18, 'BandGap_output' : 28, 'BandGap_Temp' : 29,
                             'Ibias_dac' : 30, 'Ibias_dac_cas' : 31}
@@ -1451,6 +1465,8 @@ class GUI_Additional_Settings(Gtk.Window):
         Space.set_text("")
         self.Space2 = Gtk.Label()
         self.Space2.set_text("")
+        self.Space3 = Gtk.Label()
+        self.Space3.set_text("")
 
         #Button for polarity select
         self.polarity_value = TPX3_datalogger.read_value('Polarity')
@@ -1559,32 +1575,11 @@ class GUI_Additional_Settings(Gtk.Window):
         self.ClkOut_frequency_combo_label = Gtk.Label()
         self.ClkOut_frequency_combo_label.set_text('ClkOut_frequency_src')
 
-        #rop down for sense DAC
+        #Drop down for sense DAC
         self.sense_DAC_value = TPX3_datalogger.read_value('Sense_DAC')
         self.dropdown = Gtk.ComboBoxText()
-        self.dropdown.append_text('Off')
-        self.dropdown.append_text('Ibias_Preamp_ON')
-        self.dropdown.append_text('Ibias_Preamp_OFF')
-        self.dropdown.append_text('VPreamp_NCAS')
-        self.dropdown.append_text('Ibias_Ikrum')
-        self.dropdown.append_text('Vfbk')
-        self.dropdown.append_text('Vthreshold_fine')
-        self.dropdown.append_text('Vtreshold_corse')
-        self.dropdown.append_text('IBias_DiscS1_ON')
-        self.dropdown.append_text('IBias_DiscS1_OFF')
-        self.dropdown.append_text('IBias_DiscS2_ON')
-        self.dropdown.append_text('IBias_DiscS2_OFF')
-        self.dropdown.append_text('IBias_PixelDAC')
-        self.dropdown.append_text('IBias_TPbufferIn')
-        self.dropdown.append_text('IBias_TPbufferOut')
-        self.dropdown.append_text('VTP_coarse')
-        self.dropdown.append_text('VTP_fine')
-        self.dropdown.append_text('Ibias_CP_PLL')
-        self.dropdown.append_text('PLL_Vcntrl')
-        self.dropdown.append_text('BandGap_output')
-        self.dropdown.append_text('BandGap_Temp')
-        self.dropdown.append_text('Ibias_dac')
-        self.dropdown.append_text('Ibias_dac_cas')
+        for dac in self.sense_DAC_dict:
+            self.dropdown.append_text(dac)
 
         if self.sense_DAC_value in range(19):
             self.dropdown.set_active(self.sense_DAC_value)
@@ -1596,35 +1591,65 @@ class GUI_Additional_Settings(Gtk.Window):
         self.dropdown_label = Gtk.Label()
         self.dropdown_label.set_text('Sense DAC')
 
+        #Link_Toggle
+        self.Link_label = Gtk.Label()
+        self.Link_label.set_text('Chip links')
+        self.hardware_links = TPX3_datalogger.read_value('hardware_links')
+        self.link_label = []
+        self.link_enable = []
+        self.link_enable_button = []
+        for link_number in range(self.hardware_links):
+            temp_link_label = Gtk.Label()
+            temp_link_label.set_text(str(link_number))
+            self.link_label.append(temp_link_label)
+            if TPX3_datalogger.get_link_status(link_number) in [1, 3, 5, 7]:
+                self.link_enable.append(1)
+            else:
+                self.link_enable.append(0)
+            temp_link_enable_button = Gtk.ToggleButton()
+            self.link_enable_button.append(temp_link_enable_button)
+            if self.link_enable[link_number] == 1:
+                self.link_enable_button[link_number].set_active(True)
+                self.link_enable_button[link_number].set_label(' ON  ')
+            else:
+                self.link_enable_button[link_number].set_active(False)
+                self.link_enable_button[link_number].set_label(' OFF  ')
+            self.link_enable_button[link_number].connect('toggled', self.Link_enable_button_toggled, link_number)
+
         #Save Button
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
-        
+
         grid.attach(set_polarity_button_label, 0, 0, 2, 1)
-        grid.attach(self.set_polarity_button, 2, 0, 1, 1)
+        grid.attach(self.set_polarity_button, 2, 0, 2, 1)
         grid.attach(self.expert_checkbox, 5, 0, 1, 1)
         grid.attach(Fast_IO_button_label, 0, 1, 2, 1)
-        grid.attach(self.Fast_IO_button, 2, 1, 1, 1)
+        grid.attach(self.Fast_IO_button, 2, 1, 2, 1)
         grid.attach(Op_mode_label, 0, 2, 2, 1)
-        grid.attach(Op_mode_button1, 2, 2, 3, 1)
-        grid.attach(Op_mode_button2, 2, 3, 3, 1)
-        grid.attach(Op_mode_button3, 2, 4, 3, 1)
+        grid.attach(Op_mode_button1, 2, 2, 4, 1)
+        grid.attach(Op_mode_button2, 2, 3, 4, 1)
+        grid.attach(Op_mode_button3, 2, 4, 4, 1)
         grid.attach(TP_Period_label, 0, 5, 2, 1)
-        grid.attach(self.TP_Period, 2, 5, 1, 1)
+        grid.attach(self.TP_Period, 2, 5, 2, 1)
         grid.attach(Readout_Speed_entry_label, 0, 6, 2, 1)
         grid.attach(self.Readout_Speed_entry, 2, 6, 3, 1)
         grid.attach(Space, 0, 7, 3, 1)
         grid.attach(self.TP_Ext_Int_button_label, 0, 8, 2, 1)
-        grid.attach(self.TP_Ext_Int_button, 2, 8, 1, 1)
+        grid.attach(self.TP_Ext_Int_button, 2, 8, 2, 1)
         grid.attach(self.AckCommand_en_button_label, 0, 9, 2, 1)
-        grid.attach(self.AckCommand_en_button, 2, 9, 1, 1)
+        grid.attach(self.AckCommand_en_button, 2, 9, 2, 1)
         grid.attach(self.ClkOut_frequency_combo_label, 0, 10, 2, 1)
         grid.attach(self.ClkOut_frequency_combo, 2, 10, 3, 1)
         grid.attach(self.dropdown_label, 0, 11, 2, 1)
         grid.attach(self.dropdown, 2, 11, 3, 1)
         grid.attach(self.Space2, 0, 12, 3, 1)
-        grid.attach(self.Savebutton, 5, 13, 1, 1)
-        
+        grid.attach(self.Link_label, 0, 13, 7, 1)
+        for link_number in range(self.hardware_links):
+            grid.attach(self.link_label[link_number], link_number % 8, 14 + (2 * (link_number // 8)), 1, 1)
+            grid.attach(self.link_enable_button[link_number], link_number % 8, 15 + (2 * (link_number // 8)), 1, 1)
+        grid.attach(self.Space3, 0, 16 + 2 * ((self.hardware_links - 1) // 8), 3, 1)
+        grid.attach(self.Savebutton, 8, 17 + 2 * ((self.hardware_links - 1) // 8), 1, 1)
+
         self.show_all()
         self.TP_Ext_Int_button_label.hide()
         self.TP_Ext_Int_button.hide()
@@ -1635,6 +1660,10 @@ class GUI_Additional_Settings(Gtk.Window):
         self.dropdown_label.hide()
         self.dropdown.hide()
         self.Space2.hide()
+        self.Link_label.hide()
+        for link_number in range(self.hardware_links):
+            self.link_label[link_number].hide()
+            self.link_enable_button[link_number].hide()
         self.resize(1,1)
 
     def TP_Period_set(self, event):
@@ -1652,6 +1681,10 @@ class GUI_Additional_Settings(Gtk.Window):
             self.dropdown_label.show()
             self.dropdown.show()
             self.Space2.show()
+            self.Link_label.show()
+            for link_number in range(self.hardware_links):
+                self.link_label[link_number].show()
+                self.link_enable_button[link_number].show()
             self.resize(1,1)
         else:
             self.TP_Ext_Int_button_label.hide()
@@ -1663,10 +1696,14 @@ class GUI_Additional_Settings(Gtk.Window):
             self.dropdown_label.hide()
             self.dropdown.hide()
             self.Space2.hide()
+            self.Link_label.hide()
+            for link_number in range(self.hardware_links):
+                self.link_label[link_number].hide()
+                self.link_enable_button[link_number].hide()
             self.resize(1,1)
 
     def readout_speed_entered(self, widget):
-        try: 
+        try:
             self.Readout_Speed_value = float(self.Readout_Speed_entry.get_text())
         except:
             self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
@@ -1723,6 +1760,15 @@ class GUI_Additional_Settings(Gtk.Window):
         elif text == 'external':
             self.ClkOut_frequency_src_value = 5
 
+    def Link_enable_button_toggled(self, button, link_number):
+        if self.link_enable_button[link_number].get_active():
+            state = 1
+            self.link_enable_button[link_number].set_label(' ON  ')
+        else:
+            state = 0
+            self.link_enable_button[link_number].set_label(' OFF ')
+        self.link_enable[link_number] = state
+
     def dropdown_changed(self, widget):
         self.sense_DAC_value = self.sense_DAC_dict[self.dropdown.get_active_text()]
 
@@ -1734,12 +1780,12 @@ class GUI_Additional_Settings(Gtk.Window):
 
         # get values
         self.TP_Period_value = self.TP_Period.get_value_as_int()
-        try: 
+        try:
             self.Readout_Speed_value = float(self.Readout_Speed_entry.get_text())
         except:
             self.Readout_Speed_entry.set_text(str(self.Readout_Speed_value))
             return
-            
+
         # write values
         TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
         TPX3_datalogger.write_to_yaml(name = 'Polarity')
@@ -1757,6 +1803,8 @@ class GUI_Additional_Settings(Gtk.Window):
         TPX3_datalogger.write_to_yaml(name = 'Sense_DAC')
         TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value)
         TPX3_datalogger.write_value(name = 'TP_Period', value = self.TP_Period_value)
+        for link_number in range(self.hardware_links):
+            TPX3_datalogger.change_link_status(link_number, self.link_enable[link_number])
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -1794,7 +1842,7 @@ class GUI_Equalisation(Gtk.Window):
         Threshold_start_adj = Gtk.Adjustment()
         Threshold_start_adj.configure(1400, 0, 2911, 1, 0, 0)
         self.Threshold_start = Gtk.SpinButton(adjustment = Threshold_start_adj, climb_rate = 1, digits = 0)
-        self.Threshold_start.set_value(self.Threshold_start_value) 
+        self.Threshold_start.set_value(self.Threshold_start_value)
         self.Threshold_start.connect('value-changed', self.Threshold_start_set)
         Threshold_start_label = Gtk.Label()
         Threshold_start_label.set_text('Start')
@@ -1804,7 +1852,7 @@ class GUI_Equalisation(Gtk.Window):
         Threshold_stop_adj = Gtk.Adjustment()
         Threshold_stop_adj.configure(2900, 0, 2911, 1, 0, 0)
         self.Threshold_stop = Gtk.SpinButton(adjustment = Threshold_stop_adj, climb_rate = 1, digits = 0)
-        self.Threshold_stop.set_value(self.Threshold_stop_value) 
+        self.Threshold_stop.set_value(self.Threshold_stop_value)
         self.Threshold_stop.connect('value-changed', self.Threshold_stop_set)
         Threshold_stop_label = Gtk.Label()
         Threshold_stop_label.set_text('Stop')
@@ -1820,7 +1868,7 @@ class GUI_Equalisation(Gtk.Window):
         Iterationbutton3.connect('toggled', self.on_Iterationbutton_toggled, '64')
         Iterationbutton4.connect('toggled', self.on_Iterationbutton_toggled, '256')
         Number_of_iteration_label = Gtk.Label()
-        Number_of_iteration_label.set_text('Number of iterations')
+        Number_of_iteration_label.set_text('Number of mask steps')
         self.Number_of_Iterations = 16
 
         #Startbutton
@@ -1879,30 +1927,32 @@ class GUI_Equalisation(Gtk.Window):
             self.other_process.set_text('Simulation running')
             return
 
-        GUI.Status_window_call(function='Equalisation', 
-                                subtype = self.Equalisation_Type, 
-                                lowerTHL = self.Threshold_start_value, 
-                                upperTHL = self.Threshold_stop_value, 
+        GUI.Status_window_call(function='Equalisation',
+                                subtype = self.Equalisation_Type,
+                                lowerTHL = self.Threshold_start_value,
+                                upperTHL = self.Threshold_stop_value,
                                 iterations = self.Number_of_Iterations)
         if self.Equalisation_Type == 'Noise':
-            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation', 
-                                                                Vthreshold_start = self.Threshold_start_value, 
-                                                                Vthreshold_stop = self.Threshold_stop_value, 
-                                                                mask_step = self.Number_of_Iterations, 
-                                                                progress = GUI.get_progress_value_queue(), 
-                                                                status = GUI.get_status_queue(), 
-                                                                result_path = GUI.eq_result_path, 
+            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationNoise',
+                                                                Vthreshold_start = self.Threshold_start_value,
+                                                                Vthreshold_stop = self.Threshold_stop_value,
+                                                                mask_step = self.Number_of_Iterations,
+                                                                maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                                progress = GUI.get_progress_value_queue(),
+                                                                status = GUI.get_status_queue(),
+                                                                result_path = GUI.eq_result_path,
                                                                 plot_queue = GUI.plot_queue)
         elif self.Equalisation_Type == 'Testpulse':
-            new_process = TPX3_multiprocess_start.process_call(function = 'Equalisation_charge', 
-                                                                Vthreshold_start = self.Threshold_start_value, 
-                                                                Vthreshold_stop = self.Threshold_stop_value, 
-                                                                n_injections = 100, 
-                                                                mask_step = self.Number_of_Iterations, 
-                                                                tp_period = TPX3_datalogger.read_value(name = 'TP_Period'), 
-                                                                progress = GUI.get_progress_value_queue(), 
-                                                                status = GUI.get_status_queue(), 
-                                                                result_path = GUI.eq_result_path, 
+            new_process = TPX3_multiprocess_start.process_call(function = 'EqualisationCharge',
+                                                                Vthreshold_start = self.Threshold_start_value,
+                                                                Vthreshold_stop = self.Threshold_stop_value,
+                                                                n_injections = 100,
+                                                                mask_step = self.Number_of_Iterations,
+                                                                maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                                tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                                progress = GUI.get_progress_value_queue(),
+                                                                status = GUI.get_status_queue(),
+                                                                result_path = GUI.eq_result_path,
                                                                 plot_queue = GUI.plot_queue)
         GUI.set_running_process(running_process = new_process)
         GUI.set_quit_scan_label()
@@ -1955,7 +2005,7 @@ class GUI_Mask_Entry_Window(Gtk.Window):
 
         self.show_all()
 
-    def mask_entered(self, widget): 
+    def mask_entered(self, widget):
         mask_input = self.Mask_entry.get_text()
         if mask_input == '':
             return
@@ -2029,7 +2079,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.connect('delete-event', self.window_destroy)
         self.connect("key-press-event", self.on_key_pressed)
         self.coord_window = None
-        
+
         if  isinstance(mask_logger.get_mask(), bool):
             self.np_mask_list = np.zeros((256 * 256, ), dtype = bool)
         else:
@@ -2043,10 +2093,10 @@ class GUI_Set_Mask(Gtk.Window):
         grid.set_column_homogeneous(False)
         grid.set_row_homogeneous(False)
         self.add(grid)
-        
+
         self.np_row_list = np.zeros((256, ), dtype = bool)
         self.np_column_list = np.zeros((256, ), dtype = bool)
-        
+
         self.surface = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 2610)
         self.cr = cairo.Context(self.surface)
         self.cr.rectangle(0, 0, 2610, 2610)
@@ -2054,7 +2104,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.cr.fill()
         self.cr.select_font_face('Open Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self.cr.set_font_size(9)
-        
+
         self.row_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 21, 2610)
         self.row_num = cairo.Context(self.row_numbers)
         self.row_num.rectangle(0, 0, 21, 2610)
@@ -2062,7 +2112,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.row_num.fill()
         self.row_num.select_font_face('Open Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self.row_num.set_font_size(9)
-        
+
         self.column_numbers = cairo.ImageSurface(cairo.FORMAT_RGB24, 2610, 21)
         self.column_num = cairo.Context(self.column_numbers)
         self.column_num.rectangle(0, 0, 2610, 21)
@@ -2070,7 +2120,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.column_num.fill()
         self.column_num.select_font_face('Open Sans', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self.column_num.set_font_size(9)
-        
+
         for x in range(4, 260):
             self.cr.set_line_width(1)
             self.cr.set_source_rgb(0.4, 0.4, 0.4)
@@ -2080,7 +2130,7 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.show_text(str(x-4))
             self.cr.rotate(1.5708)
             self.cr.stroke()
-            
+
             self.column_num.set_line_width(1)
             self.column_num.set_source_rgb(0.4, 0.4, 0.4)
             self.column_num.rectangle(x * 10, 0, 10, 20)
@@ -2089,21 +2139,21 @@ class GUI_Set_Mask(Gtk.Window):
             self.column_num.show_text(str(x-4))
             self.column_num.rotate(1.5708)
             self.column_num.stroke()
-            
+
         for y in range(4, 260):
             self.cr.rectangle(10, y * 10, 20, 10)
             self.cr.move_to(11, ((y + 1) * 10) - 1)
             self.cr.show_text(str(255 - (y-4)))
             self.cr.stroke()  
-            
+
             self.row_num.set_line_width(1)
             self.row_num.set_source_rgb(0.4, 0.4, 0.4)
             self.row_num.rectangle(0, y * 10, 20, 10)
             self.row_num.move_to(1, ((y + 1) * 10) - 1)
             self.row_num.show_text(str(255 - (y-4)))
             self.row_num.stroke()
-            
-        for x in range(4, 260):            
+
+        for x in range(4, 260):
             for y in range(4, 260):
                 self.cr.rectangle(x * 10, y * 10, 10, 10)
                 self.cr.stroke()
@@ -2115,11 +2165,11 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.set_source_rgb(1, 0, 0)
             self.cr.rectangle(x_coord * 10, y_coord * 10, 10, 10)
             self.cr.fill()
-                
+
         self.row_numbers.write_to_png(user_path + os.sep + 'row_number.png')
         self.column_numbers.write_to_png(user_path + os.sep + 'column_number.png')
         self.surface.write_to_png(user_path + os.sep + 'chip_mask.png')
-        
+
         self.map_area = Gtk.EventBox()
         self.mapview = Gtk.ScrolledWindow()
         self.mapview.set_property('width-request', 700)
@@ -2130,7 +2180,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.map = Gtk.Image()
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'chip_mask.png')
         self.map.set_from_pixbuf(self.pixbuf)
-        
+
         self.columnview = Gtk.ScrolledWindow()
         self.columnview.set_property('width-request', 700)
         self.columnview.set_property('height-request', 21)
@@ -2140,7 +2190,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.column_pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'column_number.png')
         self.column.set_from_pixbuf(self.column_pixbuf)
         self.columnview.add(self.column)
-        
+
         self.rowview = Gtk.ScrolledWindow()
         self.rowview.set_property('width-request', 21)
         self.rowview.set_property('height-request', 700)
@@ -2153,29 +2203,29 @@ class GUI_Set_Mask(Gtk.Window):
         self.row_pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'row_number.png')
         self.row.set_from_pixbuf(self.row_pixbuf)
         self.rowview.add(self.row)
-        
+
         self.map_area.add(self.map)
         self.map_area.connect ('button-press-event', self.on_drawing_area_button_press)
         self.map_area.connect ('button-release-event', self.on_drawing_area_button_release)
         self.mapview.add(self.map_area)
-        
+
         Space = Gtk.Label()
         Space.set_text('') 
-        
+
         #Savebutton
         self.Savebutton = Gtk.Button(label = 'Save')
         self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
-        
+
         grid.attach(self.mapview, 0, 0, 20, 20)
         grid.attach(self.columnview, 0, 20, 20, 2)
         grid.attach(self.rowview, 20, 0, 2, 20)
         grid.attach(self.Savebutton, 23, 21, 2, 1)
-        
+
         self.rowview.set_vadjustment(self.mapview.get_vadjustment())
         self.columnview.set_hadjustment(self.mapview.get_hadjustment())
 
         self.show_all()
-        
+
     def draw_clicked(self):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
@@ -2196,8 +2246,8 @@ class GUI_Set_Mask(Gtk.Window):
             self.cr.rectangle(10, y * 10, 20, 10)
             self.cr.move_to(11, ((y + 1) * 10) - 1)
             self.cr.show_text(str(255 - (y-4)))
-            self.cr.stroke()    
-        for x in range(4, 260):            
+            self.cr.stroke()
+        for x in range(4, 260):
             for y in range(4, 260):
                 self.cr.rectangle(x * 10, y * 10, 10, 10)
                 self.cr.stroke()
@@ -2221,7 +2271,7 @@ class GUI_Set_Mask(Gtk.Window):
         self.surface.write_to_png(user_path + os.sep + 'chip_mask.png')
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(user_path + os.sep + 'chip_mask.png')
         self.map.set_from_pixbuf(self.pixbuf)
-                
+
     def on_drawing_area_button_press(self, widget, event):
         if event.button == 1:
             x_coord = (int(event.x / 10) - 4)
@@ -2235,7 +2285,7 @@ class GUI_Set_Mask(Gtk.Window):
                 else:
                     self.np_column_list[x_coord] = True
                     for y in range(256):
-                        self.np_mask_list[(x_coord * 256 + y)] = True 
+                        self.np_mask_list[(x_coord * 256 + y)] = True
                 self.draw_clicked()
             elif y_coord in range(256) and x_coord in [-3, -2]:
                 if self.np_row_list[y_coord]:
@@ -2245,7 +2295,7 @@ class GUI_Set_Mask(Gtk.Window):
                 else:
                     self.np_row_list[y_coord] = True
                     for x in range(256):
-                        self.np_mask_list[(x * 256 + y_coord)] = True 
+                        self.np_mask_list[(x * 256 + y_coord)] = True
                 self.draw_clicked()
             elif x_coord in range(256) and y_coord in range(256):
                 x_y_entry = x_coord * 256 + y_coord
@@ -2267,7 +2317,7 @@ class GUI_Set_Mask(Gtk.Window):
     def on_key_pressed(self, widget, event):
         if event.keyval == 65293:   # 65293 is the keyvalue for "Enter"
             entry_window = GUI_Mask_Entry_Window(self.np_mask_list, self.np_column_list, self.np_row_list)
-    
+
     def set_new_values(self, mask_list, column_list, row_list):
         self.np_mask_list = mask_list
         self.np_column_list = column_list
@@ -2277,8 +2327,107 @@ class GUI_Set_Mask(Gtk.Window):
     def on_Savebutton_clicked(self, widget):
         mask_array = self.np_mask_list.reshape((256,256))
         mask_logger.write_full_mask(full_mask = mask_array)
-        
+
         self.destroy()
+    def window_destroy(self, widget, event):
+        self.destroy()
+
+class GUI_Set_Run_Name(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Set Run Name')
+        self.connect('delete-event', self.window_destroy)
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        self.add(grid)
+
+        label = Gtk.Label()
+        label.set_text('Enter run name')
+
+        self.entry = Gtk.Entry()
+        self.entry.connect('activate', self.entered_text)
+
+        self.space = Gtk.Label()
+        self.space.set_text('')
+
+        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(self.entry, 0, 1, 1, 1)
+        grid.attach(self.space, 0, 2, 1, 1)
+
+        self.show_all()
+
+    def entered_text(self, widget):
+        run_name = self.entry.get_text()
+        TPX3_datalogger.write_value(name = 'Run_name', value = run_name)
+        self.destroy()
+
+    def window_destroy(self, widget, event = True):
+        self.destroy()
+
+class GUI_Additional_Information(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'Info')
+        self.connect('delete-event', self.window_destroy)
+
+        try:
+            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.equalisation_file = 'None'
+            else:
+                self.equalisation_file = 'Corrupt Data'
+
+        try:
+            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.mask_file = 'None'
+            else:
+                self.mask_file = 'Corrupt Data'
+
+        self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        grid.set_column_spacing(10)
+        grid.set_border_width(20)
+        self.add(grid)
+
+        Space = Gtk.Label()
+        Space.set_text("")
+
+        self.Backup_File_label = Gtk.Label()
+        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
+
+        self.refresh_button = Gtk.Button(label = "Refresh")
+        self.refresh_button.connect("clicked", self.on_refresh_button_clicked)
+
+        grid.attach(self.Backup_File_label, 0, 0, 2, 3)
+        grid.attach(Space, 0, 4, 2, 1)
+        grid.attach(self.refresh_button, 2, 5, 1, 1)
+
+        self.show_all()
+
+    def on_refresh_button_clicked(self, clicked):
+        try:
+            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.equalisation_file = 'None'
+            else:
+                self.equalisation_file = 'Corrupt Data'
+
+        try:
+            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
+        except:
+            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
+                self.mask_file = 'None'
+            else:
+                self.mask_file = 'Corrupt Data'
+
+        self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
+
+        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
+
     def window_destroy(self, widget, event):
         self.destroy()
 
@@ -2302,15 +2451,18 @@ class GUI_Main_Settings(Gtk.Window):
         self.load_Mask_button = Gtk.Button(label = 'Load Mask')
         self.load_Mask_button.connect('clicked', self.on_load_Mask_button_clicked)
 
+        self.set_uniform_Equalisation_button = Gtk.Button(label = 'Set Uniform Equalisation')
+        self.set_uniform_Equalisation_button.connect('clicked', self.on_set_uniform_Equalisation_button_clicked)
+
         self.load_default_Equalisation_button = Gtk.Button(label = 'Load Default Equalisation')
         self.load_default_Equalisation_button.connect('clicked', self.on_load_default_Equalisation_button_clicked)
-        
+
         self.load_default_Mask_button = Gtk.Button(label = 'Load Default Mask')
         self.load_default_Mask_button.connect('clicked', self.on_load_default_Mask_button_clicked)
-        
+
         self.save_Backup_button = Gtk.Button(label = 'Save Backup')
         self.save_Backup_button.connect('clicked', self.on_save_Backup_button_clicked)
-        
+
         self.save_Equalisation_button = Gtk.Button(label = 'Save Equalisation')
         self.save_Equalisation_button.connect('clicked', self.on_save_Equalisation_button_clicked)
 
@@ -2320,11 +2472,12 @@ class GUI_Main_Settings(Gtk.Window):
         grid.attach(self.load_Backup_button, 0, 0, 1, 1)
         grid.attach(self.load_Equalisation_button, 0, 1, 1, 1)
         grid.attach(self.load_Mask_button, 0, 2, 1, 1)
-        grid.attach(self.load_default_Equalisation_button, 0, 3, 1, 1)
-        grid.attach(self.load_default_Mask_button, 0, 4, 1, 1)
-        grid.attach(self.save_Backup_button, 0, 5, 1, 1)
-        grid.attach(self.save_Equalisation_button, 0, 6, 1, 1)
-        grid.attach(self.save_Mask_button, 0, 7, 1, 1)
+        grid.attach(self.set_uniform_Equalisation_button, 0, 3, 1, 1)
+        grid.attach(self.load_default_Equalisation_button, 0, 4, 1, 1)
+        grid.attach(self.load_default_Mask_button, 0, 5, 1, 1)
+        grid.attach(self.save_Backup_button, 0, 6, 1, 1)
+        grid.attach(self.save_Equalisation_button, 0, 7, 1, 1)
+        grid.attach(self.save_Mask_button, 0, 8, 1, 1)
 
         self.show_all()
 
@@ -2348,7 +2501,7 @@ class GUI_Main_Settings(Gtk.Window):
         backup_dialog.add_filter(filter_backup)
 
         backup_dialog.connect('current_folder_changed', change_folder)
-        
+
         response = backup_dialog.run()
 
         if response == Gtk.ResponseType.OK:
@@ -2408,14 +2561,18 @@ class GUI_Main_Settings(Gtk.Window):
         mask_dialog.add_filter(filter_mask)
 
         mask_dialog.connect('current_folder_changed', change_folder)
-        
+
         response = mask_dialog.run()
-        
+
         if response == Gtk.ResponseType.OK:
             TPX3_datalogger.write_value(name = 'Mask_path', value = mask_dialog.get_filename())
             GUI.statuslabel.set_text('Set mask from file.')
 
         mask_dialog.destroy()
+
+    def on_set_uniform_Equalisation_button_clicked(self, widget):
+        self.input_window = GUI_Main_Set_Uniform_Equalisation_Input()
+        self.input_window.connect('destroy', self.window_destroy)
 
     def on_load_default_Equalisation_button_clicked(self, widget):
         TPX3_datalogger.write_value(name = 'Equalisation_path', value = None)
@@ -2450,9 +2607,9 @@ class GUI_Main_Settings(Gtk.Window):
 class GUI_Main_Save_Backup_Input(Gtk.Window):
     def __init__(self):
 
-        user_path = os.path.expanduser('~')
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'backups')
+        self.user_path = os.path.expanduser('~')
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'backups')
 
         Gtk.Window.__init__(self, title = 'Save Backup')
         self.connect('delete-event', self.window_destroy)
@@ -2477,7 +2634,7 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
 
     def entered_text(self, widget):
         filename = self.entry.get_text()
-        full_path = user_path + os.sep + filename + '.TPX3'
+        full_path = self.user_path + os.sep + filename + '.TPX3'
         if os.path.isfile(full_path) == True:
             self.entry.set_text('')
             self.existing_label.set_text('File already exists')
@@ -2489,11 +2646,59 @@ class GUI_Main_Save_Backup_Input(Gtk.Window):
     def window_destroy(self, widget, event = True):
         self.destroy()
 
+class GUI_Main_Set_Uniform_Equalisation_Input(Gtk.Window):
+    def __init__(self):
+        self.user_path = os.path.expanduser('~')
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'equalisations')
+
+        Gtk.Window.__init__(self, title = 'Uniform Equalisation')
+        self.connect('delete-event', self.window_destroy)
+        grid = Gtk.Grid()
+        grid.set_row_spacing(2)
+        self.add(grid)
+
+        label = Gtk.Label()
+        label.set_text('Enter pixel threshold value')
+
+        self.pixel_threshold = 0
+        self.pixel_threshold_entry = Gtk.Entry()
+        self.pixel_threshold_entry.connect('activate', self.entered_text)
+
+        self.existing_label = Gtk.Label()
+        self.existing_label.set_text('')
+
+        grid.attach(label, 0, 0, 1, 1)
+        grid.attach(self.pixel_threshold_entry, 0, 1, 1, 1)
+        grid.attach(self.existing_label, 0, 2, 1, 1)
+
+        self.show_all()
+
+    def entered_text(self, widget):
+        non_int_input = False
+        try:
+            self.pixel_threshold = int(self.pixel_threshold_entry.get_text())
+            self.pixel_threshold_entry.set_text(str(self.pixel_threshold))
+            if self.pixel_threshold < 0 or self.pixel_threshold > 15:
+                raise ValueError
+        except ValueError:
+            self.pixel_threshold_entry.set_text('')
+            return
+        else:
+            uniform_equalisation_array = np.full((256, 256), dtype=np.uint8, fill_value=self.pixel_threshold)
+            full_path = self.user_path + os.sep + 'Uniform_thr_' + str(self.pixel_threshold) + '.h5'
+            equal_logger.write_full_equal(full_equal = uniform_equalisation_array, path = full_path)
+            GUI.statuslabel.set_text('Set equalisation to uniformly to ' + str(self.pixel_threshold) + '.')
+            self.destroy()
+
+    def window_destroy(self, widget, event = True):
+        self.destroy()
+
 class GUI_Main_Save_Equalisation_Input(Gtk.Window):
     def __init__(self):
-        user_path = os.path.expanduser('~')
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'equalisations')
+        self.user_path = os.path.expanduser('~')
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'equalisations')
 
         Gtk.Window.__init__(self, title = 'Save Equalisation')
         self.connect('delete-event', self.window_destroy)
@@ -2518,7 +2723,7 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
 
     def entered_text(self, widget):
         equal_path = self.entry.get_text()
-        full_path = user_path + os.sep + equal_path + '.h5'
+        full_path = self.user_path + os.sep + equal_path + '.h5'
         if os.path.isfile(full_path) == True:
             self.entry.set_text('')
             self.existing_label.set_text('File already exists')
@@ -2533,10 +2738,10 @@ class GUI_Main_Save_Equalisation_Input(Gtk.Window):
 class GUI_Main_Save_Mask_Input(Gtk.Window):
     def __init__(self):
 
-        user_path = '~'
-        user_path = os.path.expanduser(user_path)
-        user_path = os.path.join(user_path, 'Timepix3')
-        user_path = os.path.join(user_path, 'masks')
+        self.user_path = '~'
+        self.user_path = os.path.expanduser(self.user_path)
+        self.user_path = os.path.join(self.user_path, 'Timepix3')
+        self.user_path = os.path.join(self.user_path, 'masks')
 
         Gtk.Window.__init__(self, title = 'Save Mask')
         self.connect('delete-event', self.window_destroy)
@@ -2561,7 +2766,7 @@ class GUI_Main_Save_Mask_Input(Gtk.Window):
 
     def entered_text(self, widget):
         mask_path = self.entry.get_text()
-        full_path = user_path + os.sep + mask_path + '.h5'
+        full_path = self.user_path + os.sep + mask_path + '.h5'
         if os.path.isfile(full_path) == True:
             self.entry.set_text('')
             self.existing_label.set_text('File already exists.')
@@ -2656,7 +2861,7 @@ class GUI_Plot_Box(Gtk.Window):
             subw = GUI_Plot_Box_close_all()
 
     def window_destroy(self, widget, event = True):
-        self.destroy()        
+        self.destroy()
 
 class GUI_Main(Gtk.Window):
     def __init__(self):
@@ -2696,7 +2901,7 @@ class GUI_Main(Gtk.Window):
 
         self.statusbar = Gtk.Statusbar()
         self.context_id = self.statusbar.get_context_id('Status Main')
-        self.statusbar.push(self.context_id, 'Please initalize the hardware with "Hardware Init".')
+        self.statusbar.push(self.context_id, 'Please initialize the hardware with "Hardware Init".')
 
         self.notebook = Gtk.Notebook()
         self.grid.add(self.notebook)
@@ -2715,7 +2920,7 @@ class GUI_Main(Gtk.Window):
         TPX3_datalogger.write_backup_to_yaml()
         TPX3_datalogger.write_value(name = 'software_version', value = self.software_version)
         conv_utils.setup_logging('INFO')
-        
+
 
     #########################################################################################################
         ### Page 1
@@ -2742,6 +2947,9 @@ class GUI_Main(Gtk.Window):
 
         self.TOTCalibbutton = Gtk.Button(label = 'TOT Calibration')
         self.TOTCalibbutton.connect('clicked', self.on_TOTCalibbutton_clicked)
+
+        self.Timewalkbutton = Gtk.Button(label = 'Timewalk Calibration')
+        self.Timewalkbutton.connect('clicked', self.on_TimewalkButton_clicked)
 
         self.THLCalibbutton = Gtk.Button(label = 'THL Calibration')
         self.THLCalibbutton.connect('clicked', self.on_THLCalibbutton_clicked)
@@ -2773,6 +2981,12 @@ class GUI_Main(Gtk.Window):
         self.SetMaskbutton = Gtk.Button(label = 'Set Mask')
         self.SetMaskbutton.connect('clicked', self.on_SetMaskbutton_clicked)
 
+        self.Infobutton = Gtk.Button(label = 'Info')
+        self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
+
+        self.Run_Name_button = Gtk.Button(label = 'Run Name')
+        self.Run_Name_button.connect('clicked', self.on_Run_Name_button_clicked)
+
         self.QuitCurrentFunctionbutton = Gtk.Button(label = 'Quit')
         self.QuitCurrentFunctionbutton.connect('clicked', self.on_QuitCurrentFunctionbutton_clicked)
 
@@ -2783,10 +2997,10 @@ class GUI_Main(Gtk.Window):
                                         '\nGit branch: ' + str(utils.get_git_branch()) +
                                         '\nGit commit: ' + str(utils.get_git_commit()) +
                                         '\nGit date: ' + str(utils.get_git_date()) +
-                                        '\n<small>GasDet Bonn 2019-2021</small>')
+                                        '\n<small>GasDet Bonn 2018-2022</small>')
         except:
-            self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
-                                        '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+            self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
+                                        '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2018-2022</small>')
 
         Status = Gtk.Frame()
         self.Statusbox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL, spacing = 6)
@@ -2799,46 +3013,53 @@ class GUI_Main(Gtk.Window):
         self.statuslabel4 = Gtk.Label()
         self.statuslabel5 = Gtk.Label()
         self.statuslabel6 = Gtk.Label()
+        self.statuslabel7 = Gtk.Label()
         self.statuslabel.set_text('')
         self.statuslabel2.set_text('')
         self.statuslabel3.set_text('')
         self.statuslabel4.set_text('')
         self.statuslabel5.set_text('')
         self.statuslabel6.set_text('')
+        self.statuslabel7.set_text('')
         self.statuslabel2.set_justify(Gtk.Justification.LEFT)
         self.statuslabel3.set_justify(Gtk.Justification.LEFT)
         self.statuslabel4.set_justify(Gtk.Justification.LEFT)
         self.statuslabel5.set_justify(Gtk.Justification.LEFT)
         self.statuslabel6.set_justify(Gtk.Justification.LEFT)
+        self.statuslabel7.set_justify(Gtk.Justification.LEFT)
         self.Statusbox.add(self.statuslabel)
         self.Statusbox.add(self.statuslabel2)
         self.Statusbox.add(self.statuslabel3)
         self.Statusbox.add(self.statuslabel4)
         self.Statusbox.add(self.statuslabel5)
         self.Statusbox.add(self.statuslabel6)
+        self.Statusbox.add(self.statuslabel7)
         self.Statusbox.pack_end(self.progressbar, True, True, 5)
 
         page1.grid.attach(self.Startupbutton, 0, 0, 2, 1)
         page1.grid.attach(self.PixelDACbutton, 0, 1, 2, 1)
         page1.grid.attach(self.Equalbutton, 0, 2, 2, 1)
         page1.grid.attach(self.TOTCalibbutton, 0, 3, 2, 1)
-        page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
-        page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
-        page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
-        page1.grid.attach(self.NoiseScanbutton, 0, 7, 2, 1)
-        page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
-        page1.grid.attach(Status, 2, 8, 12, 5)
+        page1.grid.attach(self.Timewalkbutton, 0, 4, 2, 1)
+        page1.grid.attach(self.THLCalibbutton, 0, 5, 2, 1)
+        page1.grid.attach(self.THLScanbutton, 0, 6, 2, 1)
+        page1.grid.attach(self.TestpulsScanbutton, 0, 7, 2, 1)
+        page1.grid.attach(self.NoiseScanbutton, 0, 8, 2, 1)
+        page1.grid.attach(self.Runbutton, 0, 9, 2, 2)
+        page1.grid.attach(Status, 2, 8, 12, 6)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
         page1.grid.attach(self.about_label, 14, 0, 3, 3)
         page1.grid.attach(self.SetDACbutton, 14, 3, 3, 1)
         page1.grid.attach(self.AddSetbutton, 14, 4, 3, 1)
-        page1.grid.attach(self.SetMaskbutton, 14, 6, 3, 1)
+        page1.grid.attach(self.Infobutton, 14, 5, 3, 1)
+        page1.grid.attach(self.Run_Name_button, 14, 6, 3, 1)
+        page1.grid.attach(self.SetMaskbutton, 14, 7, 3, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
 
-    #######################################################################################################     
-        ### Page 2 
+    #######################################################################################################
+        ### Page 2
         ChipName = 'Chip1'
         self.page2 = Gtk.Box()
         page2_label = Gtk.Label()
@@ -2869,7 +3090,7 @@ class GUI_Main(Gtk.Window):
 
         self.init_done = True
 
-    ################################################################################################### 
+    ###################################################################################################
     ### Overall window event
 
     def window_on_button_press_event(self, widget, event):
@@ -2893,8 +3114,8 @@ class GUI_Main(Gtk.Window):
                 self.terminate_converter()
 
 
-    ####################################################################################################        
-    ### Functions Page 1    
+    ####################################################################################################
+    ### Functions Page 1
 
     def on_PixelDACbutton_clicked(self, widget):
         subw = GUI_PixelDAC_opt()
@@ -2904,6 +3125,9 @@ class GUI_Main(Gtk.Window):
 
     def on_TOTCalibbutton_clicked(self, widget):
         subw = GUI_ToT_Calib()
+
+    def on_TimewalkButton_clicked(self, widget):
+        subw = GUI_Timewalk_Calib()
 
     def on_THLCalibbutton_clicked(self, widget):
         subw = GUI_Threshold_Calib()
@@ -2915,17 +3139,17 @@ class GUI_Main(Gtk.Window):
         subw = GUI_Testpulse_Scan()
 
     def on_NoiseScanbutton_clicked(self, widget):
-        print('Function call: NoiseScan')
+        subw = GUI_Noise_Scan()
 
     def on_Runbutton_clicked(self, widget):
         subw = GUI_Run_Datataking()
 
     def on_Startupbutton_clicked(self, widget):
         self.Status_window_call(function = 'InitHardware')
-        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware', 
-                                                            results = self.hardware_scan_results, 
-                                                            progress = GUI.get_progress_value_queue(), 
-                                                            status = GUI.get_status_queue(), 
+        new_process = TPX3_multiprocess_start.process_call(function = 'ScanHardware',
+                                                            results = self.hardware_scan_results,
+                                                            progress = GUI.get_progress_value_queue(),
+                                                            status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
         self.set_running_process(running_process = new_process)
         self.set_quit_scan_label()
@@ -2942,6 +3166,7 @@ class GUI_Main(Gtk.Window):
             self.statuslabel4.set_text('')
             self.statuslabel5.set_text('')
             self.statuslabel6.set_text('')
+            self.statuslabel7.set_text('')
             self.statusstring4 = ''
             self.statusstring3 = ''
             self.statusstring2 = ''
@@ -2962,6 +3187,12 @@ class GUI_Main(Gtk.Window):
         global mask_window
         mask_window = GUI_Set_Mask()
 
+    def on_Infobutton_clicked(self, widget):
+        Info_subw = GUI_Additional_Information()
+
+    def on_Run_Name_button_clicked(self, widget):
+        Info_subw = GUI_Set_Run_Name()
+
     def on_QuitCurrentFunctionbutton_clicked(self, widget):
         self.progressbar.hide()
         self.statuslabel.set_text('')
@@ -2970,6 +3201,7 @@ class GUI_Main(Gtk.Window):
         self.statuslabel4.set_text('')
         self.statuslabel5.set_text('')
         self.statuslabel6.set_text('')
+        self.statuslabel7.set_text('')
         self.statusstring4 = ''
         self.statusstring3 = ''
         self.statusstring2 = ''
@@ -2977,13 +3209,12 @@ class GUI_Main(Gtk.Window):
         self.progressbar.set_fraction(0.0)
         self.progressbar.set_show_text(False)
         self.resize(1,1)
-        if self.running_process == None: 
+        if self.running_process == None:
             file_logger.write_backup(file = file_logger.create_file())
             self.terminate_simulator()
             self.terminate_converter()
             Gtk.main_quit()
         elif not self.running_process.is_alive():
-            self.terminate_converter()
             if not self.update_progress_idle == None:
                 GLib.source_remove(self.update_progress_idle)
                 self.update_progress_idle = None
@@ -3010,8 +3241,6 @@ class GUI_Main(Gtk.Window):
 
         else:
             self.running_process.terminate()
-            if self.plot1_window_open:
-                self.terminate_converter()
             if not self.update_progress_idle == None:
                 GLib.source_remove(self.update_progress_idle)
                 self.update_progress_idle = None
@@ -3036,102 +3265,103 @@ class GUI_Main(Gtk.Window):
             self.QuitCurrentFunctionbutton.set_label('Quit')
             self.running_process = None
 
-    def Status_window_call(self, function = 'default', subtype = '', lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, statusstring = '', progress = 0):
+    def Status_window_call(self, function = 'default', subtype = '', lowerTHL = 0, upperTHL = 0, iterations = 0, n_injections = 0, n_pulse_heights = 0, shutter = 0.01,statusstring = '', progress = 0):
         if function == 'PixelDAC_opt':
             self.statuslabel.set_markup('<big><b>PixelDAC Optimisation</b></big>')
             self.progressbar.show()
             self.progressbar.set_fraction(progress)
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'PixelDACopt'))
+            self.statuslabel7.set_text(statusstring)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'Equalisation':
             self.statuslabel.set_markup('<big><b>' + subtype + '-based Equalisation</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step')
-            self.statuslabel6.set_text(statusstring)
+            if subtype == 'Noise':
+                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'EqualisationNoise'))
+            elif subtype == 'Testpulse':
+                self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'EqualisationCharge'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'ToT_Calib':
             self.statuslabel.set_markup('<big><b>ToT Calibration</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ToTCalib'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
+        elif function == 'Timewalk_Calib':
+            self.statuslabel.set_markup('<big><b>Timewalk Calibration</b></big>')
+            self.progressbar.show()
+            self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step')
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'TimewalkCalib'))
+            self.statuslabel7.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
+            self.clear_statusstrings()
         elif function == 'ThresholdScan':
             self.statuslabel.set_markup('<big><b>Threshold Scan</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ThresholdScan'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'ThresholdCalib':
             self.statuslabel.set_markup('<big><b>Threshold Calibration</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('Scanning ' + str(n_pulse_heights) + ' puls heights from THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'ThresholdCalib'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'InitHardware':
             self.statuslabel.set_markup('<big><b>Hardware Initialization</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('Scanning over all FPGA and chip links.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'TestpulsScan':
             self.statuslabel.set_markup('<big><b>Testpuls Scan</b></big>')
             self.progressbar.show()
             self.statuslabel2.set_text('For testpulses ranging from ' + utils.print_nice(lowerTHL * 0.5) + '\u200AmV to ' + utils.print_nice(upperTHL * 0.5) + '\u200AmV with ' + str(iterations) + ' iterations per step using ' + str(n_injections) + ' testpulses.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'TestpulseScan'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = True
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
+        elif function == 'NoiseScan':
+            self.statuslabel.set_markup('<big><b>Noise Scan</b></big>')
+            self.progressbar.show()
+            self.statuslabel2.set_text('From THL\u200A=\u200A' + str(lowerTHL) + ' to THL\u200A=\u200A' + str(upperTHL) + ' with a ' + str(shutter) + ' s shutter.')
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'NoiseScan'))
+            self.statuslabel7.set_text(statusstring)
+            self.progressbar.set_fraction(progress)
+            self.show_progress_text = True
+            self.clear_statusstrings()
         elif function == 'Run':
             self.statuslabel.set_markup('<big><b>Run</b></big>')
             if upperTHL != 'Datataking ends on user quit.':
                 self.progressbar.show()
             self.statuslabel2.set_text('Run datataking for ' + str(lowerTHL) + '\u200As. ' + upperTHL + '.')
-            self.statuslabel6.set_text(statusstring)
+            self.statuslabel3.set_text('Data is saved to: ' + self.make_run_name(scan_type = 'DataTake'))
+            self.statuslabel7.set_text(statusstring)
             self.progressbar.set_fraction(progress)
             self.show_progress_text = False
-            self.statusstring4 = ''
-            self.statusstring3 = ''
-            self.statusstring2 = ''
-            self.statusstring1 = ''
+            self.clear_statusstrings()
         elif function == 'status':
             if statusstring == 'iteration_symbol':
                 self.iteration_symbol = True
-                self.statusstring4 = self.statusstring3
-                self.statusstring3 = self.statusstring2
-                self.statusstring2 = self.statusstring1
                 self.step_starttime = datetime.now()
                 runtime = datetime.now() - self.step_starttime
                 self.progressbar.set_text(str(int(0)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + 'xx:xx')
@@ -3150,16 +3380,22 @@ class GUI_Main(Gtk.Window):
                 runtime = datetime.now() - self.step_starttime
                 self.progressbar.set_show_text(self.show_progress_text)
                 self.progressbar.set_text(str(int(0)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + 'xx:xx')
-            self.statuslabel3.set_text(self.statusstring4)
-            self.statuslabel4.set_text(self.statusstring3)
-            self.statuslabel5.set_text(self.statusstring2)
-            self.statuslabel6.set_text(self.statusstring1)
+            self.statuslabel4.set_text(self.statusstring4)
+            self.statuslabel5.set_text(self.statusstring3)
+            self.statuslabel6.set_text(self.statusstring2)
+            self.statuslabel7.set_text(self.statusstring1)
         elif function == 'progress':
             self.progressbar.set_fraction(progress)
         elif function == 'default':
             self.statuslabel.set_text('Error: Call without functionname')
         else:
             self.statuslabel.set_text('Error: ' + function + ' is not known!')
+
+    def clear_statusstrings(self):
+        self.statusstring1 = ''
+        self.statusstring2 = ''
+        self.statusstring3 = ''
+        self.statusstring4 = ''
 
     def get_progress_bar(self):
         return self.progressbar
@@ -3208,7 +3444,7 @@ class GUI_Main(Gtk.Window):
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + utils.strfdelta(estimate, '%M:%S'))
             elif runtime.seconds >= 3600 and estimate.seconds < 3600:
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%H:%M:%S') + ' / ' + utils.strfdelta(estimate, '%M:%S'))
-            elif estimate.seconds >= 3600 and runtime.seconds < 3600: 
+            elif estimate.seconds >= 3600 and runtime.seconds < 3600:
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%M:%S') + ' / ' + utils.strfdelta(estimate, '%H:%M:%S'))
             else:
                 self.progressbar.set_text(str(int(fraction * 100)) + ' %, Step time ' + utils.strfdelta(runtime, '%H:%M:%S') + ' / ' + utils.strfdelta(estimate, '%H:%M:%S'))
@@ -3227,7 +3463,7 @@ class GUI_Main(Gtk.Window):
     def update_status(self):
         if not self.hardware_scan_results.empty():
             Chip_List = self.hardware_scan_results.get()
-            for n in range(0,9):
+            for n in range(0,3):
                 if n == 0 and Chip_List:
                     self.firmware_version = Chip_List.pop(0)
                     TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)
@@ -3239,21 +3475,23 @@ class GUI_Main(Gtk.Window):
                                                     '\nGit date: ' + str(utils.get_git_date()) +
                                                     '\n<small>GasDet Bonn 2019-2021</small>')
                     except:
-                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) + 
+                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
                                                     '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+                elif n == 1 and Chip_List:
+                    TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0))
                 elif Chip_List:
-                    name = 'Chip' + str(n - 1) + '_name'
+                    name = 'Chip' + str(n - 2) + '_name'
                     TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
                 else:
-                    name = 'Chip' + str(n - 1) + '_name'
+                    name = 'Chip' + str(n - 2) + '_name'
                     TPX3_datalogger.write_value(name = name, value = [None])
             statusstring = 'Connected to '
             for n, Chipname in enumerate(TPX3_datalogger.get_chipnames()):
                 number_of_links = TPX3_datalogger.get_links(chipname = Chipname)
                 if number_of_links == 1:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' link)'
+                    statusstring += Chipname + ' (' + str(number_of_links) + ' active link)'
                 else:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' links)'
+                    statusstring += Chipname + ' (' + str(number_of_links) + ' active links)'
                 if n == 0:
                     self.notebook.set_tab_label_text(self.page2, Chipname)
             self.statusbar.push(self.context_id, statusstring)
@@ -3374,6 +3612,15 @@ class GUI_Main(Gtk.Window):
         sim = ProducerSimManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', path = path, loglevel = 'INFO', delay = 0.1, kind = 'tpx3_sim', name = 'TPX3')
         self.simulator_process = Process(target = sim.start)
         self.simulator_process.start()
+
+    def make_run_name(self, scan_type):
+        if TPX3_datalogger.read_value(name = 'Run_name') == None:
+            run_name = str(scan_type) + '_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+        elif TPX3_datalogger.read_value(name = 'Run_name') in ['False', 'false', '', 'None', 'none']:
+            run_name = (scan_type) + '_' + time.strftime('%Y-%m-%d_%H-%M-%S')
+        else:
+            run_name = (scan_type) + '_' + TPX3_datalogger.read_value(name = 'Run_name')
+        return run_name
 
 def quit_procedure(gui):
     GUI.on_QuitCurrentFunctionbutton_clicked(widget = None)

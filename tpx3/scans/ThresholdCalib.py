@@ -22,6 +22,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+import tpx3.utils as utils
 from six.moves import range
 
 local_configuration = {
@@ -37,7 +38,7 @@ local_configuration = {
 
 class ThresholdCalib(ScanBase):
 
-    scan_id = "threshold_calib"
+    scan_id = "ThresholdCalib"
     wafer_number = 0
     y_position = 0
     x_position = 'A'
@@ -100,7 +101,7 @@ class ThresholdCalib(ScanBase):
             If there is a status queue information about the status of the scan are put into it
         '''
 
-        # Set general configuration registers of the Timepix3 
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Get the shutter sleep time
@@ -127,33 +128,34 @@ class ThresholdCalib(ScanBase):
             status.put("Starting scan")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
+        thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds) * len(thresholds))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         # Set testpulse DACs
         self.chip.set_dac("VTP_coarse", 100)
-        self.chip.set_dac("VTP_fine", 211 + (100 // n_pulse_heights) * iteration)
+        self.chip.set_dac("VTP_fine", 240 + (100 // n_pulse_heights) * iteration)
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
             with self.readout(scan_param_id=scan_param_id):
                 step = 0
                 for mask_step_cmd in mask_cmds:
                     # Only activate testpulses for columns with active pixels
                     self.chip.write_ctpr(list(range(step//(mask_step//int(math.sqrt(mask_step))), 256, mask_step//int(math.sqrt(mask_step)))))
-                    
+
                     # Write the pixel matrix for the current step plus the read_pixel_matrix_datadriven command
                     self.chip.write(mask_step_cmd)
-                    
+
                     # Open the shutter, take data and update the progress bar
                     with self.shutter():
                         time.sleep(sleep_time)
@@ -163,7 +165,7 @@ class ThresholdCalib(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -203,8 +205,7 @@ class ThresholdCalib(ScanBase):
             meta_data = eval(meta_data_call)
             run_config_call = ('h5_file.root.' + 'configuration.run_config_' + str(iteration) + '[:]')
             run_config = eval(run_config_call)
-            general_config_call = ('h5_file.root.' + 'configuration.generalConfig_' + str(iteration) + '[:]')
-            general_config = eval(general_config_call)
+            general_config = h5_file.root.configuration.generalConfig[:]
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
@@ -220,7 +221,7 @@ class ThresholdCalib(ScanBase):
             # Select only data which is hit data
             hit_data = hit_data[hit_data['data_header'] == 1]
             h5_file.create_table(eval(interpreted_call), 'hit_data', hit_data, filters=tb.Filters(complib='zlib', complevel=5))
-            pix_occ = np.bincount(hit_data['x'] * 256 + hit_data['y'], minlength=256 * 256).astype(np.uint32)
+            pix_occ = np.bincount(hit_data['x'].astype(np.uint32) * 256 + hit_data['y'].astype(np.uint32), minlength=256 * 256)
             hist_occ = np.reshape(pix_occ, (256, 256)).T
             h5_file.create_carray(eval(interpreted_call), name='HistOcc', obj=hist_occ)
             param_range = np.unique(meta_data['scan_param_id'])
@@ -236,10 +237,11 @@ class ThresholdCalib(ScanBase):
             n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
             Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
             Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            neg_polarity = [int(item[1]) for item in general_config if item[0] == b'Polarity'][0] == 1
 
-            # Fit S-Curves to the histogramms for all pixels
-            param_range = list(range(Vthreshold_start, Vthreshold_stop))
-            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=True, progress = progress)
+            # Fit S-Curves to the histograms for all pixels
+            param_range = list(range(Vthreshold_start, Vthreshold_stop + 1))
+            thr2D, sig2D, chi2ndf2D = analysis.fit_scurves_multithread(scurve, scan_param_range=param_range, n_injections=n_injections, invert_x=neg_polarity, progress = progress)
 
             h5_file.create_carray(eval(interpreted_call), name='HistSCurve', obj=scurve)
             h5_file.create_carray(eval(interpreted_call), name='Chi2Map', obj=chi2ndf2D.T)
@@ -270,17 +272,17 @@ class ThresholdCalib(ScanBase):
                 p.plot_parameter_page()
 
                 # Plot the equalisation bits histograms
-                thr_matrix = h5_file.root.configuration.thr_matrix_0[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution', plot_queue=plot_queue)
+                thr_matrix = h5_file.root.configuration.thr_matrix[:],
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
-                mask = h5_file.root.configuration.mask_matrix_0[:]
+                mask = h5_file.root.configuration.mask_matrix[:].T
 
                 # remove the calibration node if it already exists
                 try:
                     h5_file.remove_node(h5_file.root.calibration, recursive=True)
                 except:
                     pass
-                
+
                 # create a group for the calibration results
                 h5_file.create_group(h5_file.root, 'calibration', 'Threshold calibration results')
 
@@ -315,7 +317,7 @@ class ThresholdCalib(ScanBase):
                     it_parameters, it_errors = p.plot_distribution(hist, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution', suffix='threshold_distribution', plot_queue=plot_queue)
 
                     # Fill the iteration results in the calibration parameter arrays
-                    pulse_heights[iteration] = ((211 + (100 // iterations) * iteration) - 200) * 46.75
+                    pulse_heights[iteration] = ((240 + (100 // iterations) * iteration) - 200) * 46.75
                     thresholds[iteration] = it_parameters[1]
                     errors[iteration] = it_parameters[2]
 
@@ -328,8 +330,9 @@ class ThresholdCalib(ScanBase):
                 h5_file.create_table(h5_file.root.calibration, 'calibration_results', calib_results)
 
                 # Create the calibration plot
-                p.plot_datapoints(pulse_heights, thresholds, x_plot_range=np.arange(0, 5500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration', suffix='threshold_calibration', plot_queue=plot_queue)
+                p.plot_datapoints(pulse_heights, thresholds, x_plot_range=np.arange(0, 7500, 1), y_plot_range=np.arange(0, 3000, 1), y_err = errors, x_axis_title = 'Charge in electrons', y_axis_title = 'Threshold', title='Threshold calibration', suffix='threshold_calibration', plot_queue=plot_queue)
 
 if __name__ == "__main__":
     scan = ThresholdCalib()
     scan.start(iteration = 0, **local_configuration)
+    scan.plot()

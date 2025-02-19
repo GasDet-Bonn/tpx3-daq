@@ -22,6 +22,11 @@ module tpx3_fec6 (
         
         input  wire       SFP_CLK_P,
         input  wire       SFP_CLK_N,
+		  
+		  output wire       CH1,
+		  output wire       CH2,
+		  output wire       CH3,
+		  output wire       CH4,
 
         //input wire TPX3_1_PLLOut_N,
         //input wire TPX3_1_PLLOut_P,
@@ -73,7 +78,8 @@ module tpx3_fec6 (
     assign SFP0_SDA = 1'b1;
     assign SFP0_SCL = 1'b1;
     
-    wire RX_READY, ETH_STATUS_OK;
+    wire [7:0] RX_READY;
+    wire ETH_STATUS_OK;
     
     tpx3_sfp tpx3_sfp (
         .CLK200_P               (CLK200_P               ),
@@ -86,6 +92,11 @@ module tpx3_fec6 (
         
         .SFP_CLK_P              (SFP_CLK_P              ),
         .SFP_CLK_N              (SFP_CLK_N              ),
+		  
+		  .CH1                    (CH1                    ),
+		  .CH2                    (CH2                    ),
+		  .CH3                    (CH3                    ),
+		  .CH4                    (CH4                    ),
 
         .TPX3_1_ClkInRefPLL_N   (TPX3_1_ClkInRefPLL_N   ),
         .TPX3_1_ClkInRefPLL_P   (TPX3_1_ClkInRefPLL_P   ),
@@ -116,6 +127,6 @@ module tpx3_fec6 (
         );
 
     assign LED[0] = ETH_STATUS_OK;
-    assign LED[1] = RX_READY;
+    assign LED[1] = RX_READY[0] | RX_READY[1] | RX_READY[2] | RX_READY[3] | RX_READY[4] | RX_READY[5] | RX_READY[6] | RX_READY[7];
     
 endmodule

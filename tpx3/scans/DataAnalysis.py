@@ -69,7 +69,7 @@ class DataAnalysis(ScanBase):
             pbar = tqdm(total = len(start_times))
         else:
             step_counter = 0
-    
+
         for i in range(len(start_times)):
             # as long as there are still hits in frame:
             current_hit = 0
@@ -174,7 +174,7 @@ class DataAnalysis(ScanBase):
                             break
                     # change current pixel to next one
                     current+=1
-                
+
                 # save cluster data
                 cluster_data['x'][cluster_nr] = x_list
                 cluster_data['y'][cluster_nr] = y_list
@@ -205,9 +205,9 @@ class DataAnalysis(ScanBase):
 
     """
         analyze the raw data, cluster ist with the given cluster parameters and store the results in
-        the same h5 file the raw data was in. 
+        the same h5 file the raw data was in.
         big specifies, whether the raw data is analyzed as a whole (False) or split into parts which
-        are then analyzed seperately (True)
+        are then analyzed separately (True)
     """
     def analyze(self, file_name, args, cluster_radius = 1.1, cluster_dt = 5, progress = None):
 
@@ -234,8 +234,7 @@ class DataAnalysis(ScanBase):
         #vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
         vco = False
 
-        with tb.open_file(self.h5_filename_out, 'r+') as h5_file:            
-    
+        with tb.open_file(self.h5_filename_out, 'r+') as h5_file:
             # create structures to write the hit_data and cluster data in
             try:
                 h5_file.remove_node(h5_file.root.interpreted, recursive=True)
@@ -291,7 +290,7 @@ class DataAnalysis(ScanBase):
                 meta_data_tmp['index_stop'] = meta_data_tmp['index_stop']-start
                 # analyze data
                 hit_data_tmp = analysis.interpret_raw_data(raw_data_tmp, op_mode, vco, meta_data_tmp, split_fine=True)
-                
+
                 print(hit_data_tmp.shape[0])
                 if hit_data_tmp.shape[0] != 0:
                     hit_data_tmp = hit_data_tmp[hit_data_tmp['data_header'] == 1]
@@ -340,7 +339,7 @@ class DataAnalysis(ScanBase):
                         vlarray.append(cluster_data['hit_index'][i])
 
                     vlarray = h5_file.create_array(group, 'cluster_nr', cluster_data['cluster_nr'], "cluster_nr-values")
-                    
+
                     h5_file.create_array(group, 'chunk_start_time', cluster_data['chunk_start_time'], "chunk_start_time-values")
 
                     h5_file.create_array(group, 'hits', cluster_data['hits'], "size of cluster")
@@ -361,7 +360,7 @@ class DataAnalysis(ScanBase):
                     cluster_sum_g1 += len(cluster_data['hits'][cluster_data['hits']>1])
                     hit_sum += np.sum(cluster_data['hits'])
                     hit_sum_b += hit_data_tmp.shape[0]
-            
+
             # print out final information on clustering
             print("# cluster in total: "+str(cluster_sum))
             print("# cluster with more than one hit: "+str(cluster_sum_g1))
@@ -402,7 +401,7 @@ class DataAnalysis(ScanBase):
                 # Plot general hit properties
 
                 # Plot the occupancy matrix
-                pix_occ = np.bincount(hit_data_x * 256 + hit_data_y, minlength=256 * 256).astype(np.uint32)
+                pix_occ = np.bincount(hit_data_x.astype(np.uint32) * 256 + hit_data_y.astype(np.uint32), minlength=256 * 256)
                 hist_occ = np.reshape(pix_occ, (256, 256)).T
                 p.plot_occupancy(hist_occ, title='Integrated Occupancy', z_max='maximum', suffix='occupancy')
 
@@ -518,7 +517,7 @@ class DataAnalysis(ScanBase):
                             ind += 1
                 p.plot_distribution(hist_spread, plot_range = np.arange(-10.125, 10.125, 0.25), x_axis_title='Deviation from mean ToA of cluster', y_axis_title='# of pixels', title='Deviation from mean ToA of cluster', suffix='Deviation from mean ToA of cluster', fit=True)
 
-            
+
     def create_output_file(self, input_file):
 
         output_file_name = input_file.replace("data_take", "analysis")
@@ -527,21 +526,21 @@ class DataAnalysis(ScanBase):
             with tb.open_file(input_file, mode='r+') as h5_file:
                 h5_file_out.create_group(h5_file_out.root, 'configuration', 'Configuration')
                 h5_file.copy_children(h5_file.root.configuration, h5_file_out.root.configuration)
-        
+
         return output_file_name
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Script to analyse Timepix3 data')
-    parser.add_argument('filename', 
-                        metavar='datafile', 
+    parser.add_argument('filename',
+                        metavar='datafile',
                         help='Name of the file to be analysed')
     parser.add_argument('--big',
                         action='store_true',
                         help="Use this if your data is to big to analyse efficiently in one chunk")
     parser.add_argument('--new_file',
                         action='store_true',
-                        help="Use this if you want the analysed data stored in a seperate file")
+                        help="Use this if you want the analysed data stored in a separate file")
     args_dict = vars(parser.parse_args())
     datafile = args_dict['filename']
     # convert file name to path

@@ -31,7 +31,7 @@ local_configuration = {
 
 class DataTake(ScanBase):
 
-    scan_id = "data_take"
+    scan_id = "DataTake"
 
     def handle_exit(sig, frame):
         raise(SystemExit)
@@ -84,8 +84,8 @@ class DataTake(ScanBase):
                     try:
                         time.sleep(1)
                         how_long = int(time.time() - start_time)
-                        
-                        # If there is a defined runtime update the progress bar continiously until the time is over
+
+                        # If there is a defined runtime update the progress bar continuously until the time is over
                         if scan_timeout != 0:
                             if progress == None:
                                 # Update the progress bar

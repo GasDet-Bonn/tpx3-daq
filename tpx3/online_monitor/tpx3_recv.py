@@ -7,10 +7,8 @@ import copy
 
 from matplotlib import cm
 
-from PyQt5 import Qt
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
-import pyqtgraph.ptime as ptime
+from pyqtgraph.Qt import QtCore, QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 
@@ -49,20 +47,20 @@ class Tpx3(Receiver):
         dock_area.addDock(dock_status, 'top')
 
         # Status dock on top
-        cw = QtGui.QWidget()
+        cw = QtWidgets.QWidget()
         cw.setStyleSheet("QWidget {background-color:white}")
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
         cw.setLayout(layout)
-        self.rate_label = QtGui.QLabel("Readout Rate\n0 Hz")
-        self.hit_rate_label = QtGui.QLabel("Hit Rate\n0 Hz")
-        self.event_rate_label = QtGui.QLabel("Event Rate\n0 Hz")
-        self.timestamp_label = QtGui.QLabel("Data Timestamp\n")
-        self.plot_delay_label = QtGui.QLabel("Plot Delay\n")
-        self.scan_parameter_label = QtGui.QLabel("Parameter ID\n")
-        self.spin_box = Qt.QSpinBox(value=0)
+        self.rate_label = QtWidgets.QLabel("Readout Rate\n0 Hz")
+        self.hit_rate_label = QtWidgets.QLabel("Hit Rate\n0 Hz")
+        self.event_rate_label = QtWidgets.QLabel("Event Rate\n0 Hz")
+        self.timestamp_label = QtWidgets.QLabel("Data Timestamp\n")
+        self.plot_delay_label = QtWidgets.QLabel("Plot Delay\n")
+        self.scan_parameter_label = QtWidgets.QLabel("Parameter ID\n")
+        self.spin_box = QtWidgets.QSpinBox(value=0)
         self.spin_box.setMaximum(1000000)
         self.spin_box.setSuffix(" Readouts")
-        self.reset_button = QtGui.QPushButton('Reset')
+        self.reset_button = QtWidgets.QPushButton('Reset')
         layout.addWidget(self.timestamp_label, 0, 0, 0, 1)
         layout.addWidget(self.plot_delay_label, 0, 1, 0, 1)
         layout.addWidget(self.rate_label, 0, 2, 0, 1)
@@ -81,7 +79,6 @@ class Tpx3(Receiver):
         occupancy_graphics = pg.GraphicsLayoutWidget()
         occupancy_graphics.show()
         view = occupancy_graphics.addViewBox()
-        view.invertY(True)
         self.occupancy_img = pg.ImageItem(border='w')
         # Set colormap from matplotlib
         lut = generateColorMapLut("viridis")
@@ -100,8 +97,8 @@ class Tpx3(Receiver):
         dock_tot.addWidget(tot_plot_widget)
 
         hit_timing_widget = pg.PlotWidget()
-        self.hist_hit_count = hit_timing_widget.plot(np.linspace(-0.5, 100.5, 101),
-                                                      np.zeros((100)), stepMode=True)
+        self.hist_hit_count = hit_timing_widget.plot(np.linspace(-0.5, 1000.5, 1001),
+                                                      np.zeros((1000)), stepMode=True)
         hit_timing_widget.showGrid(y=True)
         dock_hit_timing.addWidget(hit_timing_widget)
 
@@ -131,7 +128,7 @@ class Tpx3(Receiver):
             self.tot_plot.setData(x=np.linspace(-0.5, 1024.5, 1025),
                                   y=data['tot_hist'], fillLevel=0,
                                   brush=(0, 0, 255, 150))
-            self.hist_hit_count.setData(x=np.linspace(-0.5, 100.5, 101),
+            self.hist_hit_count.setData(x=np.linspace(-0.5, 1000.5, 101),
                                          y=data['hist_hit_count'][:100],
                                          stepMode=True,
                                          fillLevel=0, brush=(0, 0, 255, 150))
@@ -143,7 +140,7 @@ class Tpx3(Receiver):
                               data['meta_data']['total_events'])
             self.timestamp_label.setText("Data Timestamp\n%s" % time.asctime(time.localtime(data['meta_data']['timestamp_stop'])))
             self.scan_parameter_label.setText("Parameter ID\n%d" % data['meta_data']['scan_par_id'])
-            now = ptime.time()
+            now = time.time()
             self.plot_delay = self.plot_delay * 0.9 + (now - data['meta_data']['timestamp_stop']) * 0.1
             self.plot_delay_label.setText("Plot Delay\n%s" % 'not realtime' if abs(self.plot_delay) > 5 else "Plot Delay\n%1.2f ms" % (self.plot_delay * 1.e3))
 

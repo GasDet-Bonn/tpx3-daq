@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
         chip.write(data)
         data = chip.write_outputBlock_config(write=False)
         chip.write(data)
-        
+
         data = chip.reset_sequential(False)
         chip.write(data, True)
         fdata = chip['FIFO'].get_data()
@@ -107,7 +107,7 @@ class Test(unittest.TestCase):
                     self.assertEqual(value, dout[len(dout) - 2][13:5].tovalue())
                     self.assertEqual(chip.dacs[dac_list[dac]], dout[len(dout) - 2][13:5].tovalue())
                 pbar.update(1)
-           
+
         pbar.close()
 
 
@@ -123,15 +123,15 @@ class Test(unittest.TestCase):
             chip.pixel_address_to_x(BitLogic.from_value(0b10000000000000000))
         with self.assertRaises(ValueError):
             chip.pixel_address_to_y(BitLogic.from_value(0b10000000000000000))
-        
+
         print("Test pixel address functions")
         # Test for valid addresses
         pbar = tqdm(total=256*256)
         for x in range(256):
             for y in range(256):
                 address = chip.xy_to_pixel_address(x, y)
-                self.assertEquals(x, chip.pixel_address_to_x(address))
-                self.assertEquals(y, chip.pixel_address_to_y(address))
+                self.assertEqual(x, chip.pixel_address_to_x(address))
+                self.assertEqual(y, chip.pixel_address_to_y(address))
                 pbar.update(1)
         pbar.close()
 
@@ -175,9 +175,9 @@ class Test(unittest.TestCase):
             for x in range(256):
                 for y in range(256):
                     pcr = chip.matrices_to_pcr(x, y)
-                    self.assertEquals(test[x, y], int(pcr[5]))
-                    self.assertEquals(thr[x, y], pcr[4:1].tovalue())
-                    self.assertEquals(mask[x, y], int(pcr[0]))
+                    self.assertEqual(test[x, y], int(pcr[5]))
+                    self.assertEqual(thr[x, y], pcr[4:1].tovalue())
+                    self.assertEqual(mask[x, y], int(pcr[0]))
                     pbar.update(1)
             for i in range(256):
                 data = chip.write_pcr([i], write=False)
@@ -209,9 +209,9 @@ class Test(unittest.TestCase):
                                 broken_pixels.append(dout[j][43:28])
                             continue
 
-                        self.assertEquals(test[x, y], int(pcr_read[5]))
-                        self.assertEquals(thr[x, y], pcr_read[4] + pcr_read[3] * 2 + pcr_read[2] * 4 + pcr_read[1] * 8)
-                        self.assertEquals(mask[x, y], int(pcr_read[0]))
+                        self.assertEqual(test[x, y], int(pcr_read[5]))
+                        self.assertEqual(thr[x, y], pcr_read[4] + pcr_read[3] * 2 + pcr_read[2] * 4 + pcr_read[1] * 8)
+                        self.assertEqual(mask[x, y], int(pcr_read[0]))
         pbar.close()
 
         for i in range(len(broken_pixels)):
@@ -226,7 +226,7 @@ class Test(unittest.TestCase):
             chip.write_ctpr(list(range(257)), False)
         with self.assertRaises(ValueError):
             chip.write_ctpr(list(range(257, 256, -1)), False)
-        
+
         # Test values
         print("Test reading and writing CTPR")
         pbar = tqdm(total = 256)
@@ -243,10 +243,10 @@ class Test(unittest.TestCase):
             for j in range(len(dout)):
                 if(dout[j][47:44].tovalue() == 0xD):
                     if dout[j][1:0].tovalue() != 0:
-                        self.assertEquals(column, dout[j][43:37].tovalue() * 2 + int(dout[j][1]))
+                        self.assertEqual(column, dout[j][43:37].tovalue() * 2 + int(dout[j][1]))
         pbar.close()
 
-    
+
     def test_general_config(self):
         self.startUp()
 
@@ -275,11 +275,11 @@ class Test(unittest.TestCase):
             dout = chip.decode_fpga(fdata, True)
             for config in range(10):
                 if value < config_size_list[config]:
-                    self.assertEquals(value, chip.configs[config_list[config]])
+                    self.assertEqual(value, chip.configs[config_list[config]])
                 if config == 1:
-                    self.assertEquals(chip.configs[config_list[config]], dout[len(dout) - 2][2:1].tovalue())
+                    self.assertEqual(chip.configs[config_list[config]], dout[len(dout) - 2][2:1].tovalue())
                 else:
-                    self.assertEquals(chip.configs[config_list[config]], int(dout[len(dout) - 2][config_bit_list[config]]))
+                    self.assertEqual(chip.configs[config_list[config]], int(dout[len(dout) - 2][config_bit_list[config]]))
                 pbar.update(1)
         pbar.close()
 
@@ -294,13 +294,13 @@ class Test(unittest.TestCase):
         pbar = tqdm(total=10)
         for config in range(10):
             if config == 1:
-                self.assertEquals(chip.configs[config_list[config]], dout[len(dout) - 2][2:1].tovalue())
+                self.assertEqual(chip.configs[config_list[config]], dout[len(dout) - 2][2:1].tovalue())
             else:
-                self.assertEquals(chip.configs[config_list[config]], int(dout[len(dout) - 2][config_bit_list[config]]))
+                self.assertEqual(chip.configs[config_list[config]], int(dout[len(dout) - 2][config_bit_list[config]]))
             pbar.update(1)
         pbar.close()
 
-    
+
     def test_testpulse(self):
         self.startUp()
 
@@ -318,7 +318,7 @@ class Test(unittest.TestCase):
         chip.write(data)
         fdata = chip['FIFO'].get_data()
         dout = chip.decode_fpga(fdata, True)
-        self.assertEquals(0, dout[len(dout) - 2][27:0].tovalue())
+        self.assertEqual(0, dout[len(dout) - 2][27:0].tovalue())
 
         # Test values
         pbar = tqdm(total = 65536 + 256 + 16)
@@ -329,7 +329,7 @@ class Test(unittest.TestCase):
             chip.write(data)
             fdata = chip['FIFO'].get_data()
             dout = chip.decode_fpga(fdata, True)
-            self.assertEquals(i, dout[len(dout) - 2][15:0].tovalue())
+            self.assertEqual(i, dout[len(dout) - 2][15:0].tovalue())
             pbar.update(1)
         for i in range(256):
             data = chip.write_tp_period(i, 0, False)
@@ -338,7 +338,7 @@ class Test(unittest.TestCase):
             chip.write(data)
             fdata = chip['FIFO'].get_data()
             dout = chip.decode_fpga(fdata, True)
-            self.assertEquals(i, dout[len(dout) - 2][23:16].tovalue())
+            self.assertEqual(i, dout[len(dout) - 2][23:16].tovalue())
             pbar.update(1)
         for i in range(16):
             data = chip.write_tp_period(0, i, False)
@@ -347,7 +347,7 @@ class Test(unittest.TestCase):
             chip.write(data)
             fdata = chip['FIFO'].get_data()
             dout = chip.decode_fpga(fdata, True)
-            self.assertEquals(i, dout[len(dout) - 2][27:24].tovalue())
+            self.assertEqual(i, dout[len(dout) - 2][27:24].tovalue())
             pbar.update(1)
         pbar.close()
 

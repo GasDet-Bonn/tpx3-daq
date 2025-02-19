@@ -1,4 +1,4 @@
-''' 
+'''
     This is a producer faking data coming from tpx3
     Real data is send in chunks with correct timing.
     This producer is needed for debugging and testing.
@@ -28,7 +28,7 @@ class Tpx3Sim(ProducerSim):
                                 scan_par_id=scan_par_id)
 
     def _get_data(self):
-        ''' 
+        '''
             Yield data of one readout
             Delay return if replay is too fast
         '''

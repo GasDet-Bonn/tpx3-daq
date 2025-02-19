@@ -17,7 +17,7 @@ hw_drivers:
     interface : intf
     base_addr : 0x1000
     size      : 16
-    
+
   - name      : SPI
     type      : spi
     interface : intf
@@ -32,7 +32,12 @@ hw_drivers:
     type      : pulse_gen
     interface : intf
     base_addr : 0x4000
-    
+
+  - name      : timestamp2
+    type      : timestamp
+    interface : intf
+    base_addr : 0x5000
+
   - name      : FIFO
     type      : sitcp_fifo
     interface : intf
@@ -78,7 +83,6 @@ hw_drivers:
     type      : tpx3.tpx3_rx
     interface : intf
     base_addr : 0x6700
-
 registers:
   - name        : CONTROL
     type        : StdRegister
@@ -87,19 +91,19 @@ registers:
     fields:
       - name    : LED
         size    : 8
-        offset  : 15  
+        offset  : 15
       - name    : CNT_FIFO_EN
         size    : 1
-        offset  : 7     
+        offset  : 7
       - name    : DATA_MUX_SEL
         size    : 1
-        offset  : 6    
+        offset  : 6
       - name    : EN_POWER_PULSING
         size    : 1
         offset  : 5
       - name    : TO_SYNC
         size    : 1
-        offset  : 4  
+        offset  : 4
       - name    : EXT_TPULSE
         size    : 1
         offset  : 3

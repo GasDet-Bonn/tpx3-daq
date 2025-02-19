@@ -22,6 +22,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+import tpx3.utils as utils
 
 from tables.exceptions import NoSuchNodeError
 from six.moves import range
@@ -34,9 +35,9 @@ local_configuration = {
 }
 
 
-class Equalisation(ScanBase):
+class EqualisationNoise(ScanBase):
 
-    scan_id = "Equalisation"
+    scan_id = "EqualisationNoise"
     wafer_number = 0
     y_position = 0
     x_position = 'A'
@@ -58,7 +59,7 @@ class Equalisation(ScanBase):
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
 
-        # Set general configuration registers of the Timepix3 
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Write to the test pulse registers of the Timepix3
@@ -80,19 +81,20 @@ class Equalisation(ScanBase):
             status.put("Starting scan for THR = 0")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
+        thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds) * len(thresholds))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
             with self.readout(scan_param_id=scan_param_id):
                 for mask_step_cmd in mask_cmds:
@@ -108,7 +110,7 @@ class Equalisation(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -129,17 +131,18 @@ class Equalisation(ScanBase):
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds2) * len(threshold))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
-            with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
+            with self.readout(scan_param_id=scan_param_id + len(thresholds)):
                 for mask_step_cmd in mask_cmds2:
                     # Only activate testpulses for columns with active pixels
                     self.chip.write(mask_step_cmd)
@@ -153,7 +156,7 @@ class Equalisation(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds2) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds2) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -198,7 +201,7 @@ class Equalisation(ScanBase):
             param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
             meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
             param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
-            
+
             # THR = 15
             meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
             param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
@@ -236,7 +239,7 @@ class Equalisation(ScanBase):
         meta_data = None
         param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
         param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
-        
+
         # Create histograms for number of detected hits for individual thresholds
         self.logger.info('Get the global threshold distributions for all pixels...')
         scurve_th0 = analysis.scurve_hist(hit_data_thr0, param_range_th0)
@@ -257,12 +260,12 @@ class Equalisation(ScanBase):
         hist_th15 = analysis.vth_hist(vths_th15, Vthreshold_stop)
         vths_th15 = None
 
-        # Use the threshold histogramms and one threshold distribution to calculate the equalisation
+        # Use the threshold histograms and one threshold distribution to calculate the equalisation
         self.logger.info('Calculate the equalisation matrix...')
         eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop)
 
         # Don't mask any pixels in the mask file
-        mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        mask_matrix = np.zeros((256, 256), dtype=bool)
         mask_matrix[:, :] = 0
 
         # Write the equalisation matrix to a new HDF5 file
@@ -273,6 +276,6 @@ class Equalisation(ScanBase):
 
 
 if __name__ == "__main__":
-    scan = Equalisation()
+    scan = EqualisationNoise()
     scan.start(**local_configuration)
     scan.analyze()

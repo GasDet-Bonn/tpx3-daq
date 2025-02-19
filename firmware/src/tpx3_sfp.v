@@ -73,6 +73,11 @@ module tpx3_sfp (
         input  wire       SFP_CLK_N,
 
         output wire       PHY_RESET_N,
+		  
+		output wire       CH1,
+		output wire       CH2,
+		output wire       CH3,
+		output wire       CH4,
 
         //input wire TPX3_1_PLLOut_N,
         //input wire TPX3_1_PLLOut_P,
@@ -102,7 +107,7 @@ module tpx3_sfp (
         input wire [7:0] TPX3_1_DataOut_N, TPX3_1_DataOut_P,
 
         output wire       ETH_STATUS_OK,
-        output wire       RX_READY,
+        output wire [7:0] RX_READY,
 
         output wire Data_MUX_select
     
@@ -129,6 +134,7 @@ module tpx3_sfp (
     wire CLK40_MMCM;
     wire CLK320_MMCM;
     wire CLK32_MMCM;
+	wire CLK640_MMCM;
     wire CLKBUS_MMCM;
 
     // MMCM instance
@@ -139,16 +145,16 @@ module tpx3_sfp (
     // Divide by 8 to get output frequency of 125 MHz
     MMCM_BASE #(
         .BANDWIDTH         ("OPTIMIZED"),
-        .CLKOUT0_DIVIDE_F  (3          ),
+        .CLKOUT0_DIVIDE_F  (2          ),
         .CLKOUT0_DUTY_CYCLE(0.5        ),
         .CLKOUT0_PHASE     (0          ),
-        .CLKOUT1_DIVIDE    (24         ),
+        .CLKOUT1_DIVIDE    (16         ),
         .CLKOUT1_DUTY_CYCLE(0.5        ),
         .CLKOUT1_PHASE     (0          ),
-        .CLKOUT2_DIVIDE    (30         ),
+        .CLKOUT2_DIVIDE    (20         ),
         .CLKOUT2_DUTY_CYCLE(0.5        ),
         .CLKOUT2_PHASE     (0          ),
-        .CLKOUT3_DIVIDE    (7          ),
+        .CLKOUT3_DIVIDE    (4          ),
         .CLKOUT3_DUTY_CYCLE(0.5        ),
         .CLKOUT3_PHASE     (0          ),
         .CLKOUT4_DIVIDE    (1          ),
@@ -160,7 +166,7 @@ module tpx3_sfp (
         .CLKOUT6_DIVIDE    (1          ),
         .CLKOUT6_DUTY_CYCLE(0.5        ),
         .CLKOUT6_PHASE     (0          ),
-        .CLKFBOUT_MULT_F   (24         ),
+        .CLKFBOUT_MULT_F   (16         ),
         .CLKFBOUT_PHASE    (0          ),
         .DIVCLK_DIVIDE     (5          ),
         .REF_JITTER1       (0.100      ),
@@ -181,7 +187,7 @@ module tpx3_sfp (
         .CLKOUT2B (            ),
         .CLKOUT3  ( CLKBUS_MMCM),
         .CLKOUT3B (            ),
-        .CLKOUT4  (            ),
+        .CLKOUT4  ( CLK640_MMCM),
         .CLKOUT5  (            ),
         .CLKOUT6  (            ),
         .CLKFBOUT ( mmcm_clkfb ),
@@ -189,7 +195,7 @@ module tpx3_sfp (
         .LOCKED   ( mmcm_locked)
     );
 
-    wire CLK40, CLK320, CLK32;
+    wire CLK40, CLK320, CLK32, CLK640;
     BUFG clk_40mhz_bufg_inst (
         .I(CLK40_MMCM),
         .O(CLK40     )
@@ -203,6 +209,11 @@ module tpx3_sfp (
     BUFG clk_64mhz_bufg_inst (
         .I(CLK32_MMCM),
         .O(CLK32     )
+    );
+	 
+	 BUFG clk_640mhz_bufg_inst (
+        .I(CLK640_MMCM),
+        .O(CLK640     )
     );
 
     wire BUS_CLK;
@@ -471,7 +482,10 @@ module tpx3_sfp (
     `ifdef ML605 
         ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkInRefPLL ( .Q(TPX3_1_ClkInRefPLL_reg), .C(CLK320), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
     `elsif FECv6
-        ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkInRefPLL ( .Q(TPX3_1_ClkInRefPLL_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
+        // New Adapter
+	     ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkInRefPLL ( .Q(TPX3_1_ClkInRefPLL_reg), .C(CLK40), .CE(1'b1), .D1(1'b1), .D2(1'b0), .R(1'b0), .S(1'b0));
+        // Old Adapter
+        //ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkInRefPLL ( .Q(TPX3_1_ClkInRefPLL_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
     `endif
 
     OBUFDS #(.IOSTANDARD("DEFAULT")) OBUFDS_inst_TPX3_1_ClkInRefPLL ( .O(TPX3_1_ClkInRefPLL_P), .OB(TPX3_1_ClkInRefPLL_N), .I(TPX3_1_ClkInRefPLL_reg) );
@@ -479,7 +493,10 @@ module tpx3_sfp (
     `ifdef ML605
         ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
     `elsif FECv6
-        ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b1), .D2(1'b0), .R(1'b0), .S(1'b0));
+        // New Adapter
+        ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b0), .D2(1'b1), .R(1'b0), .S(1'b0));
+        // Old Adapter
+        //ODDR #(.DDR_CLK_EDGE("OPPOSITE_EDGE"), .INIT(1'b0), .SRTYPE("SYNC") ) ODDR_inst_TPX3_1_ClkIn40 ( .Q(TPX3_1_ClkIn40_reg), .C(CLK40), .CE(1'b1), .D1(1'b1), .D2(1'b0), .R(1'b0), .S(1'b0));
     `endif
 
     OBUFDS #(.IOSTANDARD("DEFAULT")) OBUFDS_inst_TPX3_1_ClkIn40 ( .O(TPX3_1_ClkIn40_P), .OB(TPX3_1_ClkIn40_N), .I(TPX3_1_ClkIn40_reg) );
@@ -491,7 +508,10 @@ module tpx3_sfp (
     `ifdef ML605
         assign to_out_buf = {TPX3_1_ExtTPulse, TPX3_1_T0_Sync, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, TPX3_1_Reset, TPX3_1_ENPowerPulsing};
     `elsif FECv6
-        assign to_out_buf = {!TPX3_1_ExtTPulse, TPX3_1_T0_Sync, !TPX3_1_EnableIn, !TPX3_1_DataIn, !TPX3_1_Shutter, !TPX3_1_Reset, TPX3_1_ENPowerPulsing};
+        // New Adapter
+        assign to_out_buf = {!TPX3_1_ExtTPulse, !TPX3_1_T0_Sync, TPX3_1_EnableIn, TPX3_1_DataIn, TPX3_1_Shutter, !TPX3_1_Reset, !TPX3_1_ENPowerPulsing};
+        // Old Adapter
+        //assign to_out_buf = {!TPX3_1_ExtTPulse, TPX3_1_T0_Sync, !TPX3_1_EnableIn, !TPX3_1_DataIn, !TPX3_1_Shutter, !TPX3_1_Reset, TPX3_1_ENPowerPulsing};
     `endif
     
 	assign {TPX3_1_ExtTPulse_N, TPX3_1_T0_Sync_N, TPX3_1_EnableIn_N, TPX3_1_DataIn_N, TPX3_1_Shutter_N, TPX3_1_Reset_N, TPX3_1_ENPowerPulsing_N} = to_out_buf_n;
@@ -535,6 +555,12 @@ module tpx3_sfp (
         .CLK40          (CLK40                ),
         .CLK320         (CLK320               ),
         .CLK32          (CLK32                ),
+		.CLK640         (CLK640               ),
+		  
+		.CH1            (CH1                  ),
+		.CH2            (CH2                  ),
+		.CH3            (CH3                  ),
+		.CH4            (CH4                  ),
 
         .RX_DATA        (RX_DATA              ),
         .ExtTPulse      (TPX3_1_ExtTPulse     ),

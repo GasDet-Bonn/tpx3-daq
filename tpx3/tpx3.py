@@ -21,7 +21,7 @@ import basil
 
 from basil.dut import Dut
 from basil.utils.BitLogic import BitLogic
-from .utils import toByteList, bitword_to_byte_list
+from .utils import toByteList, bitword_to_byte_list, threshold_decompose
 from io import open
 import six
 from six.moves import range
@@ -112,7 +112,7 @@ class CustomDict(dict):
     """
     def __init__(self, valsize_map, dict_type):
         """
-        as initialization we need the alowed sizes of each DAC / value for each config
+        as initialization we need the allowed sizes of each DAC / value for each config
         """
         self.valsize_map = valsize_map
         self.dictErrors = customDictErrors[dict_type]
@@ -146,11 +146,12 @@ class TPX3(Dut):
         1: 'SIMULATION',
         2: 'FECv6',
         3: 'ML605',
+        4: 'MIMAS_A7'
     }
 
     ''' Compatible firware version '''
-    fw_version_required = 3
-    
+    fw_version_required = 4
+
     ################################################################################
     ### Some maps defining mappings of string names to binary / hex values #########
     ################################################################################
@@ -243,9 +244,9 @@ class TPX3(Dut):
         self.board_version = self.hw_map[self['intf'].read(0x0001, 1)[0]]
 
         logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
-        
+
         if self.fw_version != self.fw_version_required:
-            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
+            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, self.fw_version_required))
 
         # self['CONF_SR'].set_size(3924)
 
@@ -288,6 +289,15 @@ class TPX3(Dut):
             # read all 3 YAML files for config registers, DACS and the output block configuration
             self.read_yaml(getattr(self, var_name), dict_type)
 
+        # The ML605 runs with a 320 MHz PLL input and thus the PLL is bypassed. Other boards get
+        # a 40 MHz input as reference for the PLL and thus the PLL is not bypassed.
+        if self.board_version == 'ML605':
+            self._PLLConfigs["bypass"] = 1
+            logger.info("Set PLL bypass on")
+        else:
+            self._PLLConfigs["bypass"] = 0
+            logger.info("Set PLL bypass off")
+
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
         """
@@ -298,10 +308,10 @@ class TPX3(Dut):
             self.test_matrix = np.zeros((256, 256), dtype=int)
         # set the thr matrix with zeros for all pixels
         if thr:
-            self.thr_matrix = np.zeros((256, 256), dtype=np.uint8)
+            self.thr_matrix = np.full((256, 256), dtype=np.uint8, fill_value=8)
         # set the mask matrix with zeros for all pixels
         if mask:
-            self.mask_matrix = np.zeros((256, 256), dtype=np.bool)
+            self.mask_matrix = np.zeros((256, 256), dtype=bool)
         # matrix storing ToT (= Time over Threshold) values of this Tpx3
         # 8 bit values
         if tot:
@@ -316,7 +326,7 @@ class TPX3(Dut):
         if ftoa:
             self.ftoa = np.zeros((256, 256), dtype=np.int8)
         # matrix storing hit counts of each pixel, if a hit happened without ToA and
-        # ToT being registered, i.e. two hits happenening too close to one another
+        # ToT being registered, i.e. two hits happening too close to one another
         # 4 bit values
         if hits:
             self.hits = np.zeros((256, 256), dtype=np.int8)
@@ -382,7 +392,7 @@ class TPX3(Dut):
             for key in elements:
                 tmp_dict[key] = register[key]
             outdict[register['name']]  = tmp_dict
-            valsize_map[register['name']] = int(tmp_dict['size'])        
+            valsize_map[register['name']] = int(tmp_dict['size'])
         # now create the correct custom dict
         c_dict = CustomDict(valsize_map, dict_type)
 
@@ -456,7 +466,7 @@ class TPX3(Dut):
         """
         Getter function for the `PLLConfig` dictionary of the Tpx3 class.
         With this a `self.PLLConfig[<PLLConfig name>]` statement will
-        return the value of the PLLConfig register stored in the `PLLConfigkDict`
+        return the value of the PLLConfig register stored in the `PLLConfigDict`
         dictionary _PLLConfigs
         """
         return self._PLLConfigs
@@ -717,7 +727,7 @@ class TPX3(Dut):
             # create a 48 bit bitarrray for the current 48 bit word
             dataout = BitLogic(48)
 
-            # tranform the header and data of the 32 bit words lists of bytes
+            # transform the header and data of the 32 bit words lists of bytes
             d1 = bitword_to_byte_list(int(data[2 * i]), string)
             d2 = bitword_to_byte_list(int(data[2 * i + 1]), string)
 
@@ -836,7 +846,7 @@ class TPX3(Dut):
             # value for the y position, check whether in allowed range
             raise ValueError("Value {} for y position exceeds the maximum size of a {} bit value!".format(y_pos, 8))
 
-        # create the variables for EoC, Superpixel and Pixel with their defined lenghts
+        # create the variables for EoC, Superpixel and Pixel with their defined lengths
         EoC = BitLogic(7)
         Superpixel = BitLogic(6)
         Pixel = BitLogic(3)
@@ -1362,7 +1372,7 @@ class TPX3(Dut):
         if fuse > 31:
             #  check if the fuse is allowed
             raise ValueError("The selected fuse must not be bigger than 31!")
-        
+
         data = self.read_periphery_template("EFuse_Burn", True)
         # create a 11 bit variable for the program width (bits [5:0]) and the fuse selection (bits [10:6])
         bits = BitLogic(11)
@@ -1593,13 +1603,7 @@ class TPX3(Dut):
         """
         Calculates the fine and the coarse threshold and writes it to the chip
         """
-        if(threshold <= 511):
-                coarse_threshold = 0
-                fine_threshold = threshold
-        else:
-            relative_fine_threshold = (threshold - 512) % 160
-            coarse_threshold = (((threshold - 512) - relative_fine_threshold) // 160) + 1
-            fine_threshold = relative_fine_threshold + 352
+        fine_threshold, coarse_threshold = threshold_decompose(threshold)
 
         # Set the threshold DACs
         self.set_dac("Vthreshold_coarse", coarse_threshold)

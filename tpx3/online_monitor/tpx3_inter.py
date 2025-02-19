@@ -61,8 +61,13 @@ def raw_data_to_dut(raw_data):
         k_i = k[h == i] # gives a list of all data for the specific link number
         # initialize list with the needed length for temporal storage
         data_words_i = np.empty((k_i.shape[0] // 2), dtype=np.uint64)
+        data_words_i2 = np.empty((k_i.shape[0] // 2), dtype=np.uint64)
         data_words_i[:] = k_i[1::2].view('>u4')
-        data_words_i = (data_words_i << 16) + (k_i[0::2].view('>u4') >> 8)
+        try:
+            data_words_i2[:] = k_i[0::2].view('>u4')
+        except:
+            data_words_i2[:] = k_i[0::2].view('>u4')[0:-1]
+        data_words_i = (data_words_i << 16) + (data_words_i2 >> 8)
         # append all data from this link to the list of all data
         data_words = np.append(data_words,data_words_i)
 
@@ -130,7 +135,7 @@ class Tpx3(Transceiver):
                 return None
 
     def _interpret_meta_data(self, data):
-        ''' Meta data interpratation is deducing timings '''
+        ''' Meta data interpretation is deducing timings '''
 
         meta_data = data[0][1]['meta_data']
         ts_now = float(meta_data['timestamp_stop'])
@@ -139,11 +144,11 @@ class Tpx3(Transceiver):
         recent_fps = 1.0 / (ts_now - self.ts_last_readout)
         self.fps = self.fps * 0.95 + recent_fps * 0.05
 
-        # Calulate hits per second with smoothing
+        # Calculate hits per second with smoothing
         recent_hps = self.hits_last_readout * recent_fps
         self.hps = self.hps * 0.95 + recent_hps * 0.05
 
-        # Calulate hits per second with smoothing
+        # Calculate hits per second with smoothing
         recent_eps = self.events_last_readout * recent_fps
         self.eps = self.eps * 0.95 + recent_eps * 0.05
 
@@ -166,7 +171,7 @@ class Tpx3(Transceiver):
 
         header, x, y, tot = interpret_raw_data(data[0][1])
 
-        pix_occ = np.bincount(x[header == 1] * 256 + y[header == 1], minlength=256*256).astype(np.uint32)
+        pix_occ = np.bincount(x[header == 1].astype(np.uint32) * 256 + y[header == 1].astype(np.uint32), minlength=256*256)
         hist_occ = np.reshape(pix_occ, (256, 256))
 
         hit_count = np.count_nonzero(hist_occ.flat)
@@ -174,7 +179,7 @@ class Tpx3(Transceiver):
         self.readout += 1
         self.total_events = self.readout  # ???
 
-        if hit_count > 1: #cut noise
+        if hit_count > 0: #cut noise
             self.hist_hit_count[hit_count] += 1
             self.hist_occ += hist_occ
             self.hist_tot += np.resize(np.bincount(tot[header == 1], minlength=1024), 1024)
@@ -216,6 +221,6 @@ class Tpx3(Transceiver):
         # Readout number
         self.readout = 0
 
-        self.hist_occ = np.zeros((256,256), dtype=np.float64)
-        self.hist_tot = np.zeros((1024), dtype=np.float64)
-        self.hist_hit_count = np.zeros((256*256), dtype=np.float64)
+        self.hist_occ = np.zeros((256,256), dtype=float)
+        self.hist_tot = np.zeros((1024), dtype=float)
+        self.hist_hit_count = np.zeros((256*256), dtype=float)

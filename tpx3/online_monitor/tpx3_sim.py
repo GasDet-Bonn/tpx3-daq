@@ -44,7 +44,7 @@ class Tpx3Sim(ProducerSim):
             self.last_readout_time = time.time()
 
             for i in range(n_readouts):
-                # Raw data indeces of readout
+                # Raw data indices of readout
                 i_start = meta_data['index_start'][i]
                 i_stop = meta_data['index_stop'][i]
 

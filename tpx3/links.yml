@@ -6,6 +6,7 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0
 - name: RX1
   fpga-link: 1
   chip-link: 0
@@ -13,6 +14,7 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0
 - name: RX2
   fpga-link: 2
   chip-link: 0
@@ -20,6 +22,7 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0
 - name: RX3
   fpga-link: 3
   chip-link: 0
@@ -27,6 +30,7 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0
 - name: RX4
   fpga-link: 4
   chip-link: 0
@@ -34,6 +38,7 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0
 - name: RX5
   fpga-link: 5
   chip-link: 0
@@ -41,6 +46,7 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0
 - name: RX6
   fpga-link: 6
   chip-link: 0
@@ -48,6 +54,7 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0
 - name: RX7
   fpga-link: 7
   chip-link: 0
@@ -55,3 +62,4 @@ registers:
   data-delay: 0
   data-invert: 0
   data-edge: 0
+  link-status: 0

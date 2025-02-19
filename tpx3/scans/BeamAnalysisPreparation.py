@@ -37,10 +37,10 @@ import argparse
 
 
 
-class Preparation():    
+class BeamAnalysisPreparation():    
 
     scan_id = "BeamAnalysisPreparation"
-    
+
     """
         Convert existing hdf5 file which is allready analysed into the format necessary for reading it
         in the beam telescope analysis (@SiLab). It requires:
@@ -104,7 +104,7 @@ class Preparation():
 
         assigned = np.full(hit_data.shape[0], False)
         hits_add = np.recarray((hit_data.shape[0]), dtype=data_type)
-        
+
         # assign triggers
         hits_index = 0
         first_hit_data_index = 0
@@ -113,7 +113,7 @@ class Preparation():
         for i in range(trigger_data.shape[0]):
             curr_hit_data = first_hit_data_index
             while curr_hit_data < len(hit_data) and (hit_data["TOA_Combined"][curr_hit_data] < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+                if np.abs(hit_data["TOA_Combined"][curr_hit_data].astype('int64') - trigger_data["trigger_timestamp"][i].astype('float')) < trigger_width:
                     if assigned[curr_hit_data] == False:
                         hits["event_number"][curr_hit_data] = trigger_data["trigger_number"][i]
                         assigned[curr_hit_data] = True
@@ -138,11 +138,11 @@ class Preparation():
         print("%d Hits could not be assigned to a trigger. Throw them away."%(n))
         print("There were %d additional assignments."%(curr_add))
         hits = hits[assigned]
-        
+
         hits = np.hstack((hits, hits_add[:curr_add]))
         hits.sort(order="frame")
 
-        
+
         with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
             h5_file.create_table(h5_file.root, 'Hits', hits, filters=tb.Filters(complib='zlib', complevel=5))
 
@@ -230,7 +230,7 @@ class Preparation():
         first = True
 
         hits_trigger = np.recarray((hit_data.shape[0]), dtype=data_type)
-        
+
         # assign triggers
         hits_index = 0
         first_cluster_index = 0
@@ -240,7 +240,7 @@ class Preparation():
         for i in range(trigger_data.shape[0]):
             curr_cluster = first_cluster_index
             while curr_cluster < len(histtoa_mean) and (histtoa_mean[curr_cluster] < (trigger_data["trigger_timestamp"][i]+trigger_width)):
-                if np.abs(histtoa_mean[curr_cluster] - trigger_data["trigger_timestamp"][i].astype('float64')) < trigger_width:
+                if np.abs(histtoa_mean[curr_cluster] - trigger_data["trigger_timestamp"][i].astype('float')) < trigger_width:
                     if assigned[curr_cluster] == False:
                         assigned[curr_cluster] = True
                     hits_add = hits[hitindex[curr_cluster]]
@@ -264,7 +264,7 @@ class Preparation():
         print("%d Clusters could not be assigned to a trigger. Throw them away."%(n))
         #hits = hits[assigned]
 
-        
+
         with tb.open_file(output_file_name, mode='w', title=self.scan_id) as h5_file:
             h5_file.create_table(h5_file.root, 'Hits', hits_trigger, filters=tb.Filters(complib='zlib', complevel=5))
 
@@ -329,9 +329,9 @@ class Preparation():
         select = (hist_size >= min_size) & (histch >= min_charge)
 
         data_type = {'names': ['trigger_number', 'trigger_timestamp'],
-            'formats': ['int64', 'float64']}
+            'formats': ['int64', 'float']}
         trigger = np.recarray((np.sum(select)), dtype=data_type)
-        trigger['trigger_timestamp'] = np.array(hist_toa_m,dtype=np.float64)[select]
+        trigger['trigger_timestamp'] = np.array(hist_toa_m,dtype=float)[select]
         trigger.sort(order="trigger_timestamp")
         trigger['trigger_number'] = range(np.sum(select))
 
@@ -488,13 +488,13 @@ class Preparation():
 if __name__ == "__main__":
     # get command line arguments
     parser = argparse.ArgumentParser(description='Script to analyse Timepix3 data')
-    parser.add_argument('inputfolder', 
-                        metavar='inputfolder', 
+    parser.add_argument('inputfolder',
+                        metavar='inputfolder',
                         help='Input folder')
-    parser.add_argument('filenames_string', 
-                        metavar='datafiles', 
+    parser.add_argument('filenames_string',
+                        metavar='datafiles',
                         help='Name of the files to be analysed')
-    parser.add_argument('--toa', 
+    parser.add_argument('--toa',
                         action='store_true',
                         help='Use this to generate events as equally long toa frames')
     args_dict = vars(parser.parse_args())
@@ -504,7 +504,7 @@ if __name__ == "__main__":
     toa_split = args_dict["toa"]
 
     # analyze and plot
-    prep = Preparation()
+    prep = BeamAnalysisPreparation()
     if toa_split==False:
         trigger_list = prep.generate_trigger_from_DUT1(datafiles[0], output_file_name=datafiles[0][:-3]+"_DUT0.h5")
         for i in range(1, len(datafiles)):

@@ -22,6 +22,7 @@ import math
 from tpx3.scan_base import ScanBase
 import tpx3.analysis as analysis
 import tpx3.plotting as plotting
+import tpx3.utils as utils
 
 from tables.exceptions import NoSuchNodeError
 from six.moves import range
@@ -35,9 +36,9 @@ local_configuration = {
 }
 
 
-class Equalisation_charge(ScanBase):
+class EqualisationCharge(ScanBase):
 
-    scan_id = "Equalisation_charge"
+    scan_id = "EqualisationCharge"
     wafer_number = 0
     y_position = 0
     x_position = 'A'
@@ -61,7 +62,7 @@ class Equalisation_charge(ScanBase):
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
 
-        # Set general configuration registers of the Timepix3 
+        # Set general configuration registers of the Timepix3
         self.chip.write_general_config()
 
         # Write to the test pulse registers of the Timepix3
@@ -88,19 +89,20 @@ class Equalisation_charge(ScanBase):
             status.put("Starting scan for THR = 0")
         if status != None:
             status.put("iteration_symbol")
-        cal_high_range = list(range(Vthreshold_start, Vthreshold_stop, 1))
+        thresholds = utils.create_threshold_list(utils.get_coarse_jumps(Vthreshold_start, Vthreshold_stop))
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds) * len(thresholds))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
             with self.readout(scan_param_id=scan_param_id):
                 step = 0
@@ -120,7 +122,7 @@ class Equalisation_charge(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -142,17 +144,18 @@ class Equalisation_charge(ScanBase):
 
         if progress == None:
             # Initialize progress bar
-            pbar = tqdm(total=len(mask_cmds2) * len(cal_high_range))
+            pbar = tqdm(total=len(mask_cmds2) * len(thresholds))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
-        for vcal in cal_high_range:
+        for threshold in thresholds:
             # Set the threshold
-            self.chip.set_threshold(vcal)
+            self.chip.set_dac("Vthreshold_coarse", int(threshold[0]))
+            self.chip.set_dac("Vthreshold_fine", int(threshold[1]))
 
-            with self.readout(scan_param_id=scan_param_id + len(cal_high_range)):
+            with self.readout(scan_param_id=scan_param_id + len(thresholds)):
                 step = 0
                 for mask_step_cmd in mask_cmds2:
                     # Only activate testpulses for columns with active pixels
@@ -170,7 +173,7 @@ class Equalisation_charge(ScanBase):
                         else:
                             # Update the progress fraction and put it in the queue
                             step_counter += 1
-                            fraction = step_counter / (len(mask_cmds2) * len(cal_high_range))
+                            fraction = step_counter / (len(mask_cmds2) * len(thresholds))
                             progress.put(fraction)
                     self.chip.stop_readout()
                     time.sleep(0.001)
@@ -210,13 +213,16 @@ class Equalisation_charge(ScanBase):
             op_mode = [row[1] for row in general_config if row[0]==b'Op_mode'][0]
             vco = [row[1] for row in general_config if row[0]==b'Fast_Io_en'][0]
 
+            # Create group to save all data and histograms to the HDF file
+            h5_file.create_group(h5_file.root, 'interpreted', 'Interpreted Data')
+
             self.logger.info('Interpret raw data...')
 
             # THR = 0
             param_range, index = np.unique(meta_data['scan_param_id'], return_index=True)
             meta_data_th0 = meta_data[meta_data['scan_param_id'] < len(param_range) // 2]
             param_range_th0 = np.unique(meta_data_th0['scan_param_id'])
-            
+
             # THR = 15
             meta_data_th15 = meta_data[meta_data['scan_param_id'] >= len(param_range) // 2]
             param_range_th15 = np.unique(meta_data_th15['scan_param_id'])
@@ -230,57 +236,67 @@ class Equalisation_charge(ScanBase):
             #THR = 0
             raw_data_thr0 = h5_file.root.raw_data[:meta_data_th0['index_stop'][-1]]
             hit_data_thr0 = analysis.interpret_raw_data(raw_data_thr0, op_mode, vco, meta_data_th0, progress = progress)
+            h5_file.create_table(h5_file.root.interpreted, 'hit_data_th0', hit_data_thr0, filters=tb.Filters(complib='zlib', complevel=5))
             raw_data_thr0 = None
 
             self.logger.info('THR = 15')
             #THR = 15
             raw_data_thr15 = h5_file.root.raw_data[meta_data_th0['index_stop'][-1]:]
             hit_data_thr15 = analysis.interpret_raw_data(raw_data_thr15, op_mode, vco, meta_data_th15, progress = progress)
+            h5_file.create_table(h5_file.root.interpreted, 'hit_data_th15', hit_data_thr15, filters=tb.Filters(complib='zlib', complevel=5))
             raw_data_thr15 = None
 
-        # Read needed configuration parameters
-        Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
-        Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
-        n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
-        chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
-        chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
-        chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
+            # Read needed configuration parameters
+            Vthreshold_start = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_start'][0]
+            Vthreshold_stop = [int(item[1]) for item in run_config if item[0] == b'Vthreshold_stop'][0]
+            n_injections = [int(item[1]) for item in run_config if item[0] == b'n_injections'][0]
+            chip_wafer = [int(item[1]) for item in run_config if item[0] == b'chip_wafer'][0]
+            chip_x = [item[1].decode() for item in run_config if item[0] == b'chip_x'][0]
+            chip_y = [int(item[1]) for item in run_config if item[0] == b'chip_y'][0]
 
-        # Select only data which is hit data
-        hit_data_thr0 = hit_data_thr0[hit_data_thr0['data_header'] == 1]
-        hit_data_thr15 = hit_data_thr15[hit_data_thr15['data_header'] == 1]
+            # Select only data which is hit data
+            hit_data_thr0 = hit_data_thr0[hit_data_thr0['data_header'] == 1]
+            hit_data_thr15 = hit_data_thr15[hit_data_thr15['data_header'] == 1]
 
-        # Divide the data into two parts - data for pixel threshold 0 and 15
-        param_range = np.unique(meta_data['scan_param_id'])
-        meta_data = None
-        param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
-        param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
-        
-        # Create histograms for number of detected hits for individual thresholds
-        self.logger.info('Get the global threshold distributions for all pixels...')
-        scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
-        hit_data_thr0 = None
-        scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
-        hit_data_thr15 = None
+            # Divide the data into two parts - data for pixel threshold 0 and 15
+            param_range = np.unique(meta_data['scan_param_id'])
+            meta_data = None
+            param_range_th0 = np.unique(hit_data_thr0['scan_param_id'])
+            param_range_th15 = np.unique(hit_data_thr15['scan_param_id'])
 
-        # Fit S-Curves to the histogramms for all pixels
-        self.logger.info('Fit the scurves for all pixels...')
-        thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
-        scurve_th0 = None
-        thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop)), n_injections=n_injections, invert_x=True, progress = progress)
-        scurve_th15 = None
+            # Create histograms for number of detected hits for individual thresholds
+            self.logger.info('Get the global threshold distributions for all pixels...')
+            scurve_th0 = analysis.scurve_hist(hit_data_thr0, np.arange(len(param_range) // 2))
+            hit_data_thr0 = None
+            scurve_th15 = analysis.scurve_hist(hit_data_thr15, np.arange(len(param_range) // 2, len(param_range)))
+            hit_data_thr15 = None
 
-        # Put the threshold distribution based on the fit results in two histogramms
-        self.logger.info('Get the cumulated global threshold distributions...')
-        hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
-        hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
+            # Get the polarity to spcify if s or z curve is fitted
+            neg_polarity = [int(item[1]) for item in general_config if item[0] == b'Polarity'][0] == 1
 
-        # Use the threshold histogramms and one threshold distribution to calculate the equalisation
-        self.logger.info('Calculate the equalisation matrix...')
-        eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
+            # Fit S-Curves to the histograms for all pixels
+            self.logger.info('Fit the scurves for all pixels...')
+            thr2D_th0, sig2D_th0, chi2ndf2D_th0 = analysis.fit_scurves_multithread(scurve_th0, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=neg_polarity, progress = progress)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th0', obj=scurve_th0)
+            h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th0', obj=thr2D_th0.T)
+            scurve_th0 = None
+            thr2D_th15, sig2D_th15, chi2ndf2D_th15 = analysis.fit_scurves_multithread(scurve_th15, scan_param_range=list(range(Vthreshold_start, Vthreshold_stop + 1)), n_injections=n_injections, invert_x=neg_polarity, progress = progress)
+            h5_file.create_carray(h5_file.root.interpreted, name='HistSCurve_th15', obj=scurve_th15)
+            h5_file.create_carray(h5_file.root.interpreted, name='ThresholdMap_th15', obj=thr2D_th15.T)
+            scurve_th15 = None
+
+            # Put the threshold distribution based on the fit results in two histograms
+            self.logger.info('Get the cumulated global threshold distributions...')
+            hist_th0 = analysis.vth_hist(thr2D_th0, Vthreshold_stop)
+            hist_th15 = analysis.vth_hist(thr2D_th15, Vthreshold_stop)
+
+            # Use the threshold histograms and one threshold distribution to calculate the equalisation
+            self.logger.info('Calculate the equalisation matrix...')
+            eq_matrix = analysis.eq_matrix(hist_th0, hist_th15, thr2D_th0, Vthreshold_start, Vthreshold_stop)
+            h5_file.create_carray(h5_file.root.interpreted, name='EqualisationMap', obj=eq_matrix)
 
         # Don't mask any pixels in the mask file
-        mask_matrix = np.zeros((256, 256), dtype=np.bool)
+        mask_matrix = np.zeros((256, 256), dtype=bool)
         mask_matrix[:, :] = 0
 
         # Write the equalisation matrix to a new HDF5 file
@@ -289,8 +305,58 @@ class Equalisation_charge(ScanBase):
         if result_path != None:
             result_path.put(self.thrfile)
 
+    def plot(self, status = None, plot_queue = None, **kwargs):
+        '''
+            Plot data and histograms of the scan
+            If there is a status queue information about the status of the scan are put into it
+        '''
+
+        h5_filename = self.output_filename + '.h5'
+
+        self.logger.info('Starting plotting...')
+        if status != None:
+            status.put("Create Plots")
+        with tb.open_file(h5_filename, 'r+') as h5_file:
+            with plotting.Plotting(h5_filename) as p:
+
+                # Read needed configuration parameters
+                Vthreshold_start = int(p.run_config[b'Vthreshold_start'])
+                Vthreshold_stop = int(p.run_config[b'Vthreshold_stop'])
+                n_injections = int(p.run_config[b'n_injections'])
+
+                # Plot a page with all parameters
+                p.plot_parameter_page()
+
+                mask = h5_file.root.configuration.mask_matrix[:].T
+
+                # Plot the S-Curve histogram
+                scurve_th0_hist = h5_file.root.interpreted.HistSCurve_th0[:].T
+                max_occ = n_injections * 5
+                p.plot_scurves(scurve_th0_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 0', max_occ=max_occ, plot_queue=plot_queue)
+
+                # Plot the threshold distribution based on the S-Curve fits
+                hist_th0 = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap_th0[:], mask)
+                p.plot_distribution(hist_th0, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 0', suffix='threshold_distribution_th0', plot_queue=plot_queue)
+
+                # Plot the S-Curve histogram
+                scurve_th15_hist = h5_file.root.interpreted.HistSCurve_th15[:].T
+                max_occ = n_injections * 5
+                p.plot_scurves(scurve_th15_hist, list(range(Vthreshold_start, Vthreshold_stop)), scan_parameter_name="Vthreshold", title='SCurves - PixelDAC 15', max_occ=max_occ, plot_queue=plot_queue)
+
+                # Plot the threshold distribution based on the S-Curve fits
+                hist_th15 = np.ma.masked_array(h5_file.root.interpreted.ThresholdMap_th15[:], mask)
+                p.plot_distribution(hist_th15, plot_range=np.arange(Vthreshold_start-0.5, Vthreshold_stop-0.5, 1), x_axis_title='Vthreshold', title='Threshold distribution - PixelDAC 15', suffix='threshold_distribution_th15', plot_queue=plot_queue)
+
+                # Plot the occupancy matrix
+                eq_masked = np.ma.masked_array(h5_file.root.interpreted.EqualisationMap[:].T, mask)
+                p.plot_occupancy(eq_masked, title='Equalisation Map', z_max='median', z_label='PixelDAC', suffix='equalisation', plot_queue=plot_queue)
+
+                # Plot the equalisation bits histograms
+                p.plot_distribution(eq_masked, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
+
 
 if __name__ == "__main__":
-    scan = Equalisation_charge()
+    scan = EqualisationCharge()
     scan.start(**local_configuration)
     scan.analyze()
+    scan.plot()

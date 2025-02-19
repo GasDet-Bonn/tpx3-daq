@@ -53,25 +53,61 @@ def totcurve_hist(hit_data):
         x = hit_data['x'][i]
         y = hit_data['y'][i]
         c = hit_data['TOT'][i]
-        totcurves_means[x*256+y] += c
+        if totcurves_hits[x*256+y] == 0:
+            totcurves_means[x*256+y] += c
+        # Ignore charge injections from post-pulse oscillations (lower amplitude)
+        elif c > 0.5 * (totcurves_means[x*256+y] / totcurves_hits[x*256+y]):
+            totcurves_means[x*256+y] += c
         totcurves_hits[x*256+y] += 1
 
     return totcurves_means, totcurves_hits
 
 @njit
 def noise_pixel_count(hit_data, param_range, Vthreshold_start):
-    noise_curve = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
+    noise_curve_pixel = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
+    noise_curve_hits = np.zeros(len(param_range) + Vthreshold_start, dtype=np.uint16)
     pixel_list = np.zeros((256*256, Vthreshold_start + len(param_range)), dtype=np.uint16)
 
     for i in range(hit_data.shape[0]):
         x = hit_data['x'][i]
         y = hit_data['y'][i]
+        c = hit_data['EventCounter'][i]
         p = hit_data['scan_param_id'][i]
         if pixel_list[x * 256 + y, p + Vthreshold_start] == 0:
-            noise_curve[p + Vthreshold_start] += 1
+            noise_curve_pixel[p + Vthreshold_start] += 1
+            noise_curve_hits[p + Vthreshold_start] += c
         pixel_list[x * 256 + y, p + Vthreshold_start] += 1
 
-    return noise_curve
+    return noise_curve_pixel, noise_curve_hits
+
+def Chi_square(x_values, y_values, sigma, function, function_parameters, chi_red = True):
+#This function calculates the chi² value for a given function and data input.
+#It either returns the reduced chi² (default) or the chi² and the degrees of freedom.
+
+	#check inputs
+	if len(x_values) != len(y_values) or len(x_values) != len(sigma):
+		raise ValueError("The length of the arrays for x, y and sigma have a length mismatch")	
+		
+	if type(chi_red) != bool:
+		raise TypeError("Input chi_red needs to be boolean")
+	
+	if function.__defaults__ is not None:
+		needed_args = function.__code__.co_argcount - len(myfunction.__defaults__)
+	else:
+		needed_args = function.__code__.co_argcount
+	if (needed_args-1) != len(function_parameters):
+		raise TypeError(len(function_parameters) ," function parameters where given, but the function needs ", needed_args-1, " parameters!")
+	
+	#calculate chi² and chi² reduced
+	chi2 = np.sum(((y_values - function(x_values, *function_parameters)) ** 2)/(sigma**2))
+	degrees_of_freedome = len(y_values)-len(function_parameters)
+	chi2_reduced = chi2/degrees_of_freedome
+	
+	if chi_red == True:
+		return chi2_reduced, degrees_of_freedome
+	else:
+		return chi2, degrees_of_freedome
+
 
 def vths(scurves, param_range, Vthreshold_start):
     vths = np.zeros((256, 256), dtype=np.uint16)
@@ -87,7 +123,7 @@ def vths(scurves, param_range, Vthreshold_start):
     return vths
 
 def vth_hist(vths, Vthreshold_stop):
-    hist = np.zeros(Vthreshold_stop, dtype=np.uint16)
+    hist = np.zeros(Vthreshold_stop + 1, dtype=np.uint16)
     for x in range(256):
         for y in range(256):
             if int(vths[x, y]) >= Vthreshold_stop:
@@ -97,6 +133,33 @@ def vth_hist(vths, Vthreshold_stop):
             else:
                 hist[int(vths[x, y])] += 1
     return hist
+
+def toas(data, mask):
+    ftoas = np.zeros((256, 256), dtype=np.uint8)
+    toas = np.zeros((256, 256), dtype=float)
+    full_toa = np.zeros((256, 256), dtype=float)
+    tots = np.zeros((256, 256), dtype=float)
+    for hit in data:
+        if ftoas[hit['x'], hit['y']] == 0:
+            ftoas[hit['x'], hit['y']] = hit['FTOA']
+        if toas[hit['x'], hit['y']] == 0:
+            toas[hit['x'], hit['y']] = (hit['TOA_Combined'] * 25) - (hit['Shutter_Timer'] * 1.5625)
+        if full_toa[hit['x'], hit['y']] == 0:
+            offset = (((hit['x'] - 2) // 2) % 16) * 1.5625
+            full_toa[hit['x'], hit['y']] = ((hit['TOA_Combined'] * 25) - (hit['FTOA'] * 1.5625) + offset) - (hit['Shutter_Timer'] * 1.5625)
+        if tots[hit['x'], hit['y']] == 0:
+            tots[hit['x'], hit['y']] = hit['TOT']
+    toas[np.where(full_toa > 10000)] -= 409600
+    full_toa[np.where(full_toa > 10000)] -= 409600
+    full_toa[np.where(full_toa < 5000)] = np.nan
+    full_toa[np.where(mask == 1)] = np.nan
+    mean_full_toa = np.nanmean(full_toa)
+    std_full_toa = np.nanstd(full_toa)
+    tots[np.where(full_toa < 5000)] = np.nan
+    tots[np.where(mask == 1)] = np.nan
+    mean_tot = np.nanmean(tots)
+    std_tot = np.nanstd(tots)
+    return ftoas, toas, full_toa, mean_full_toa, std_full_toa, tots, mean_tot, std_tot
 
 def eq_matrix(hist_th0, hist_th15, vths_th0, Vthreshold_start, Vthreshold_stop):
     matrix = np.zeros((256, 256), dtype=np.uint8)
@@ -135,7 +198,7 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
     entries_th15 = 0.
     active_pixels_th0 = 0.
     active_pixels_th15 = 0.
-    for i in range(Vthreshold_start, Vthreshold_stop):
+    for i in range(Vthreshold_start, Vthreshold_stop + 1):
         sum_th0 += hist_th0[i]
         entries_th0 += hist_th0[i] / 100. * i
         sum_th15 += hist_th15[i]
@@ -144,7 +207,7 @@ def th_means(hist_th0, hist_th15, Vthreshold_start, Vthreshold_stop):
     mean_th15 = entries_th15 / (sum_th15 / 100.)
     sum_mean_difference_th0 = 0.
     sum_mean_difference_th15 = 0.
-    for i in range(Vthreshold_start, Vthreshold_stop):
+    for i in range(Vthreshold_start, Vthreshold_stop + 1):
         sum_mean_difference_th0 += math.pow(i - mean_th0, 2) * hist_th0[i] / 100.
         sum_mean_difference_th15 += math.pow(i - mean_th15, 2) * hist_th15[i] / 100.
         active_pixels_th0 += hist_th0[i] / 100.
@@ -327,7 +390,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             raw_data = np.insert(raw_data,0,leftoverpackage[m],axis= 0)
         leftoverpackage = []
 
-    # make arrays for results and debugging values    
+    # make arrays for results and debugging values
     data_combined = np.zeros(raw_data.shape[0], dtype=np.uint64)
     index_combined = np.zeros(raw_data.shape[0], dtype=np.uint64)
     data0 = np.zeros(raw_data.shape[0], dtype=np.uint64)
@@ -342,7 +405,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
 
         if len(timestamps_raw)%2!=0:
             logger.error("Missing one 32bit subword of the 2 timer packages! Chunk nr. "+str(chunk_nr)+", chunk length = "+str(len(timestamps_raw)))
-            
+
             try:
                 timestamps_raw, timestamps_indices, num = save_and_correct_timer(timestamps_raw, timestamps_indices)
                 if num != 0:
@@ -389,7 +452,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
             if leftoverpackage_pot!=None:
                 leftoverpackage.append(leftoverpackage_pot)
-            #if len(link_filter) % 2 != 0: 
+            #if len(link_filter) % 2 != 0:
                 #logger.info("len after correction: ",len(link_combined)*2)
             if len(link_indices) % 2 != 0:
                 logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+" after correction.")
@@ -438,7 +501,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             data0_splits[0] = np.insert(data0_splits[0],0,0,axis=0)
             data1_splits[0] = np.insert(data1_splits[0],0,0,axis=0)
             minus = 1
-        
+
         # Check for packages that are shifted by more than 1 wrt the extension. Keep for future debugging
         num = 0
         wrong_hits = 0
@@ -477,7 +540,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             old_toas_indices = np.where(old_toa_filter)[0]
             timestamp_splits[i-1] = np.append(timestamp_splits[i-1], old_toas)
             timestamp_splits[i] = np.delete(timestamp_splits[i], old_toas_indices+1)
-            
+
         try:
             last = timestamp_splits[-1][0]
         except IndexError:
@@ -497,9 +560,9 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
         data_words = np.concatenate([el[1:] for el in output])
 
         """if wrong_hits/len(data_words) > 0.2:
-            logger.error("Removed Chunk nr. "+str(chunk_nr)+" from data due to too many iregularities.")
+            logger.error("Removed Chunk nr. "+str(chunk_nr)+" from data due to too many irregularities.")
             return np.empty(0,dtype=np.uint64),np.empty(0,dtype=np.uint64),last,nlast"""
-    
+
     else:
         links = 8
         chunk_len = 0
@@ -518,7 +581,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             link_combined,link_indices,package0,package1,leftoverpackage_pot = raw_data_to_dut_old(link_raw_data,link_indices)
             if leftoverpackage_pot!=None:
                 leftoverpackage.append(leftoverpackage_pot)
-            #if len(link_filter) % 2 != 0: 
+            #if len(link_filter) % 2 != 0:
                 #logger.info("len after correction: ",len(link_combined)*2)
             if len(link_indices) % 2 != 0:
                 logger.error("Missing one 32bit subword of the 2 link packages in link {}!".format(link)+" Chunk nr. "+str(chunk_nr)+" after correction.")
@@ -552,15 +615,15 @@ def interpret_raw_data(raw_data, op_mode, vco, meta_data=[], chunk_start_time=No
     if len(meta_data):
         # standard case: only split into bunches which have the same param_id
         if split_fine == False:
-            # param = list of all occuring scan_param_ids
-            # index = positions of first occurence of each scan_param_ids
+            # param = list of all occurring scan_param_ids
+            # index = positions of first occurrence of each scan_param_ids
             param, index = np.unique(meta_data['scan_param_id'], return_index=True)
             # remove first entry
             index = index[1:]
             # append entry with total number of rows in meta_data
             index = np.append(index, meta_data.shape[0])
             # substract one from each element; the indices are now marking the last element with a
-            # specific scan_param_id (if they are not recuring).
+            # specific scan_param_id (if they are not recurring).
             index = index - 1
             # make list of the entries in 'index_stop' at the positions stored in index
             stops = meta_data['index_stop'][index]
@@ -740,8 +803,8 @@ def get_threshold(x, y, n_injections, invert_x=False):
     if not np.all(np.diff(x) == d):
         raise NotImplementedError('Threshold can only be calculated for equidistant x values!')
     if invert_x:
-        return x.min() + (d * M).astype(np.float) / n_injections
-    return x.max() - (d * M).astype(np.float) / n_injections
+        return x.min() + (d * M).astype(float) / n_injections
+    return x.max() - (d * M).astype(float) / n_injections
 
 
 def get_noise(x, y, n_injections, invert_x=False):
@@ -767,7 +830,7 @@ def get_noise(x, y, n_injections, invert_x=False):
         mu1 = y[x < mu].sum()
         mu2 = (n_injections - y[x > mu]).sum()
 
-    return d * (mu1 + mu2).astype(np.float) / n_injections * np.sqrt(np.pi / 2.)
+    return d * (mu1 + mu2).astype(float) / n_injections * np.sqrt(np.pi / 2.)
 
 
 def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
@@ -779,7 +842,7 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
             (mu, sigma, chi2/ndf)
     '''
 
-    scurve_data = np.array(scurve_data, dtype=np.float)
+    scurve_data = np.array(scurve_data, dtype=float)
 
     # Deselect masked values (== nan)
     x = scan_param_range[~np.isnan(scurve_data)]
@@ -792,9 +855,9 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
         return (0., 0., 0.)
 
     # Calculate data errors, Binomial errors
-    yerr = np.sqrt(y * (1. - y.astype(np.float) / n_injections))
+    yerr = np.sqrt(y * (1. - y.astype(float) / n_injections))
     # Set minimum error != 0, needed for fit minimizers
-    # Set arbitrarly to error of 0.5 injections
+    # Set arbitrarily to error of 0.5 injections
     min_err = np.sqrt(0.5 - 0.5 / n_injections)
     yerr[yerr < min_err] = min_err
     # Additional hits not following fit model set high error
@@ -814,13 +877,13 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
             popt = curve_fit(f=zcurve, xdata=x,
                              ydata=y, p0=p0, sigma=yerr,
                              absolute_sigma=True if np.any(yerr) else False)[0]
-            chi2 = np.sum((y - zcurve(x, *popt)) ** 2)
+            chi2 , ndof= Chi_square(x_values = x, y_values = y, sigma = yerr, function = zcurve, function_parameters = popt, chi_red = True)
         else:
             popt = curve_fit(f=scurve, xdata=x,
                              ydata=y, p0=p0, sigma=yerr,
                              absolute_sigma=True if np.any(yerr) else False,
                              method='lm')[0]
-            chi2 = np.sum((y - scurve(x, *popt)) ** 2)
+            chi2, ndof = Chi_square(x_values = x, y_values = y, sigma = yerr, function = scurve, function_parameters = popt, chi_red = True)
     except RuntimeError:  # fit failed
         return (0., 0., 0.)
 
@@ -830,7 +893,7 @@ def fit_scurve(scurve_data, scan_param_range, n_injections, sigma_0, invert_x):
     if popt[2] <= 0 or not min_threshold < popt[1] < max_threshold:
         return (0., 0., 0.)
 
-    return (popt[1], popt[2], chi2 / (y.shape[0] - 3 - 1))
+    return (popt[1], popt[2], chi2)
 
 
 def imap_bar(func, args, n_processes=None, progress = None):
@@ -857,7 +920,7 @@ def imap_bar(func, args, n_processes=None, progress = None):
 
     if progress == None:
         pbar.close()
-    
+
     p.close()
     p.join()
     return res_list
@@ -866,14 +929,14 @@ def imap_bar(func, args, n_processes=None, progress = None):
 def fit_scurves_multithread(scurves, scan_param_range,
                             n_injections, invert_x=False, progress = None):
     _scurves = np.zeros((256*256, len(scan_param_range)), dtype=np.uint16)
-    
+
     # Set all values above n_injections to n_injections. This is necessary, as the noise peak can lead to problems in the scurve fits.
     # As we are only interested in the position of the scurve (which lays below n_injections) this should not cause a problem.
     logger.info("Cut S-curves to %i hits for S-curve fit", n_injections)
     pulse_check = scurves > n_injections
     _scurves[pulse_check] = n_injections
     _scurves[np.invert(pulse_check)] = scurves[np.invert(pulse_check)]
-    
+
     _scurves = np.ma.masked_array(_scurves)
     scan_param_range = np.array(scan_param_range)
 
@@ -946,7 +1009,7 @@ def fit_ToT(tot_data, scan_param_range, t_est):
             (a, b, c, t, chi2/ndf)
     '''
 
-    tot_data = np.array(tot_data, dtype=np.float)
+    tot_data = np.array(tot_data, dtype=float)
 
     # Deselect masked values (== nan)
     x = np.where(np.all([tot_data != 0, ~np.isnan(tot_data)], axis = 0))[0]
@@ -967,13 +1030,13 @@ def fit_ToT(tot_data, scan_param_range, t_est):
 
     try:
         popt = curve_fit(f=totcurve, xdata=x, ydata=y, p0=p0)[0]
-        chi2 = np.sum((y - totcurve(x, *popt)) ** 2)
+        chi2, ndof = Chi_square(x_values = x, y_values = y, sigma = np.sqrt(y), function = totcurve, function_parameters = popt, chi_red = True)
     except RuntimeError:  # fit failed
         return (0., 0., 0., 0., 0.)
     except ValueError:  # fit failed
         return (0., 0., 0., 0., 0.)
 
-    return (popt[0], popt[1], popt[2], popt[3], chi2 / (y.shape[0] - 3 - 1))
+    return (popt[0], popt[1], popt[2], popt[3], chi2)
 
 
 def fit_totcurves_multithread(totcurves, scan_param_range, progress = None):
@@ -1023,7 +1086,8 @@ def fit_totcurves_mean(totcurves, scan_param_range, progress = None):
     totcurve_std[active_pixels < 0.4 * 256 * 256] = 0
 
     # use only data which contains tot data
-    x = np.where(totcurve_mean>0)[0]
+    # factor of 2.5 to have the x-axis in mV instead of DAC values
+    x = np.where(totcurve_mean>0)[0] * 2.5
     y = totcurve_mean[totcurve_mean > 0]
     y_err = totcurve_std[totcurve_mean > 0]
 

@@ -34,7 +34,7 @@ local_configuration = {
 
 class ToTCalib(ScanBase):
 
-    scan_id = "ToT_calib"
+    scan_id = "ToTCalib"
     wafer_number = 0
     y_position = 0
     x_position = 'A'
@@ -90,7 +90,7 @@ class ToTCalib(ScanBase):
             # Initialize progress bar
             pbar = tqdm(total=len(mask_cmds) * len(cal_high_range))
         else:
-            # Initailize counter for progress
+            # Initialize counter for progress
             step_counter = 0
 
         scan_param_id = 0
@@ -178,7 +178,7 @@ class ToTCalib(ScanBase):
             else:
                 step_counter = 0
 
-            # Interpret data seperately per scan parameter id to save RAM
+            # Interpret data separately per scan parameter id to save RAM
             for param_id in param_range:
                 start_index = meta_data[meta_data['scan_param_id'] == param_id]
                 stop_index = meta_data[meta_data['scan_param_id'] == param_id]
@@ -212,19 +212,20 @@ class ToTCalib(ScanBase):
 
             meta_data = None
 
-            # Calculate the mean ToT per pixel per pulse
-            totcurve = np.divide(totcurves_means, totcurves_hits, where = totcurves_hits > 0)
+            # Calculate the mean ToT per pixel per 110 injections
+            totcurve = np.divide(totcurves_means, 10, where = totcurves_hits > 0)
             totcurve = np.nan_to_num(totcurve)
 
-            # Only use pixel which saw exactly all pulses
-            totcurve[totcurves_hits != 10] = 0
+            # Only use pixel which saw at least all pulses
+            # Additional pulses are not part of the ToT sum (see analysis.totcurve_hist())
+            totcurve[totcurves_hits < 10] = 0
             hit_data = None
 
             # Read needed configuration parameters
             VTP_fine_start = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_start'][0]
             VTP_fine_stop = [int(item[1]) for item in run_config if item[0] == b'VTP_fine_stop'][0]
 
-            # Fit ToT-Curves to the histogramms for all pixels
+            # Fit ToT-Curves to the histograms for all pixels
             param_range = list(range(VTP_fine_start, VTP_fine_stop))
 
             h5_file.create_carray(h5_file.root.interpreted, name='HistToTCurve', obj=totcurve)
@@ -268,15 +269,19 @@ class ToTCalib(ScanBase):
                 # Plot a page with all parameters
                 p.plot_parameter_page()
 
-                mask = h5_file.root.configuration.mask_matrix[:]
+                mask = h5_file.root.configuration.mask_matrix[:].T
 
                 # Plot the equalisation bits histograms
                 thr_matrix = h5_file.root.configuration.thr_matrix[:],
-                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='TDAC distribution', x_axis_title='TDAC', y_axis_title='# of hits', suffix='tdac_distribution', plot_queue=plot_queue)
+                p.plot_distribution(thr_matrix, plot_range=np.arange(-0.5, 16.5, 1), title='Pixel threshold distribution', x_axis_title='Pixel threshold', y_axis_title='# of hits', suffix='pixel_threshold_distribution', plot_queue=plot_queue)
 
+                # Plot the Hit-Curve histogram
+                ToT_hit_hist = h5_file.root.interpreted.HistToTCurve_Count[:].T
+                p.plot_scurves(ToT_hit_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop - 1)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=50, ylabel='Hits per pixel', title='Hit curves', plot_queue=plot_queue)
+                
                 # Plot the ToT-Curve histogram
                 ToT_hist = h5_file.root.interpreted.HistToTCurve[:].T
-                p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
+                p.plot_scurves(ToT_hist.astype(int), list(range(VTP_fine_start, VTP_fine_stop - 1)), electron_axis=False, scan_parameter_name="VTP_fine", max_occ=250, ylabel='ToT Clock Cycles', title='ToT curves', plot_queue=plot_queue)
 
                 # Plot the mean ToT-Curve with fit
                 mean = h5_file.root.interpreted.mean_curve[:]
@@ -293,10 +298,12 @@ class ToTCalib(ScanBase):
 
                 mean['tot']
                 mean['tot_error']
-                points = np.linspace(t*1.001, len(mean['tot']), 500)
+
+                # factor of 2.5 to have the x-axis in mV instead of DAC values
+                points = np.linspace(t*1.001, len(mean['tot'])*2.5, 500)
                 fit = analysis.totcurve(points, a, b, c, t)
 
-                p.plot_two_functions(range(len(mean['tot'])), mean['tot'], range(len(mean['tot'])), mean['tot_error'], points, fit, y_plot_range = [0, np.amax(fit[1])], label_1 = 'mean ToT', label_2='fit with \na=(%.2f+/-%.2f), \nb=(%.2f+/-%.2f), \nc=(%.2f+/-%.2f), \nt=(%.2f+/-%.2f)'%(a, ac, b, bc, c, cc, t ,tc), x_axis_title='VTP [2.5 mV]', y_axis_title='ToT Clock Cycles [25 ns]', title='ToT fit', suffix='ToT fit', plot_queue=plot_queue )
+                p.plot_two_functions(np.arange(0, len(mean['tot'])*2.5, 2.5), mean['tot'], 0, mean['tot_error'], points, fit, y_plot_range = [0, np.amax(fit[1])], label_1 = 'mean ToT', label_2='fit with \na=(%.2f+/-%.2f) CC/mV, \nb=(%.2f+/-%.2f) CC, \nc=(%.2f+/-%.2f) CC*mV, \nt=(%.2f+/-%.2f) mV'%(a, ac, b, bc, c, cc, t ,tc), x_axis_title='VTP [mV]', y_axis_title='ToT Clock Cycles [25 ns]', title='ToT fit', suffix='ToT fit', plot_queue=plot_queue )
 
 
 if __name__ == "__main__":

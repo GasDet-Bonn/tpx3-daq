@@ -18,14 +18,14 @@ registers:
   default: 1
   value: 1
 - name: dualedge
-  description: Selects if the clock generator logic is single egde (0) or dual egde
+  description: Selects if the clock generator logic is single edge (0) or dual edge
     (1)
   address: 3
   size: 1
   default: 1
   value: 1
 - name: clkphasediv
-  description: Devides the clok phase frequency by 16 (00), 8 (01), 4 (10) or 2 (11)
+  description: Divides the clock phase frequency by 16 (00), 8 (01), 4 (10) or 2 (11)
   address: 4
   size: 2
   default: 1
