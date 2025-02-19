@@ -261,19 +261,23 @@ class file_logger(object):
         user_path = os.path.expanduser('~')
         user_path = os.path.join(user_path, 'Timepix3')
         user_path = os.path.join(user_path, 'backups')
-        if file == None:
-            #Get most recent file
-            file = file_logger.get_newest_backup_file()
-            data = json.load(open(file, 'r'))
-            return data
-        else:
-            file = file
-            if os.path.isfile(user_path + os.sep + file) == True:
-                data = json.load(open(user_path + os.sep + file, 'r'))
+        try:
+            if file == None:
+                #Get most recent file
+                file = file_logger.get_newest_backup_file()
+                data = json.load(open(file, 'r'))
                 return data
             else:
-                print('Error: File does not exist')
-                return False
+                file = file
+                if os.path.isfile(user_path + os.sep + file) == True:
+                    data = json.load(open(user_path + os.sep + file, 'r'))
+                    return data
+                else:
+                    print('Error: File does not exist')
+                    return False
+        except:
+            print('Error: Reading the backup failed - maybe the file is corrupted')
+            return False
 
     def get_newest_backup_file():
         '''
