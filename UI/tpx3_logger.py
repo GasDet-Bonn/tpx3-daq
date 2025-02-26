@@ -288,8 +288,8 @@ class file_logger(object):
         user_path = os.path.join(user_path, 'backups')
 
         user_path_tmp = os.path.expanduser('~')
-        user_path_tmp = os.path.join(user_path, 'Timepix3')
-        user_path_tmp = os.path.join(user_path, 'tmp')
+        user_path_tmp = os.path.join(user_path_tmp, 'Timepix3')
+        user_path_tmp = os.path.join(user_path_tmp, 'tmp')
         #Look for newest backup in backup folder
         if os.path.isdir(user_path) == True:
             list_of_files = glob.glob(user_path + os.sep + '*.TPX3')
@@ -312,7 +312,7 @@ class file_logger(object):
 
         if file_tmp != None and file != None:
             if os.path.getctime(file) < os.path.getctime(file_tmp):
-                return filetmp
+                return file_tmp
             elif os.path.getctime(file) >= os.path.getctime(file_tmp):
                 return file
         elif not file == None:
