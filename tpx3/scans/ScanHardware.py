@@ -108,7 +108,7 @@ class ScanHardware(object):
         for fpga_link_number, fpga_link in enumerate(rx_list_objects):
             # Do this check only on links which are connected and show no errors sofar
             if status_map[fpga_link_number] == 1:
-                self.chip._outputBlocks["chan_mask"] = 0b1 << int(np.where(rx_map == 1)[0][fpga_link_number - not_connected_counter])
+                self.chip._outputBlocks["chan_mask"] = 0b1 << int(np.where(rx_map[:][fpga_link_number] == 1)[0])
                 data = self.chip.write_outputBlock_config()
 
                 for delay in range(32):
@@ -161,10 +161,12 @@ class ScanHardware(object):
             fpga_link.SAMPLING_EDGE = 0
 
             # Enable the corrresponding chip link
+            current_chip_link = None
             for chip_link in range(number_of_links):
                 if rx_map[chip_link][fpga_link_number]:
                     # Create the chip output channel mask and write the output block
                     self.chip._outputBlocks["chan_mask"] = 0b1 << chip_link
+                    current_chip_link = chip_link
             data = self.chip.write_outputBlock_config()
 
             # Create the EFuse_Read to receive the ChipID
@@ -183,7 +185,7 @@ class ScanHardware(object):
                 fdata = self.chip['FIFO'].get_data()
                 if len(fdata) < 4:
                     raise ChipIDError("ChipIDError: Unexpected amount of response packages")
-                elif (fdata[2] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 1) or (fdata[3] & 0xff000000) >> 24 != ((fpga_link_number << 1) + 0):
+                elif (fdata[2] & 0xff000000) >> 24 != ((current_chip_link << 1) + 1) or (fdata[3] & 0xff000000) >> 24 != ((current_chip_link << 1) + 0):
                     raise ChipIDError("ChipIDError: Unexpected headers in response packages")
                 dout = self.chip.decode_fpga(fdata, True)
                 Chip_IDs[fpga_link_number] = dout[1][19:0].tovalue()
