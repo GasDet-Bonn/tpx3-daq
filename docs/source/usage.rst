@@ -15,7 +15,7 @@ the script to `miniforge.sh`. Continue in the shell with these commands:
 
    sudo apt update
    sudo apt upgrade
-   sudo apt install curl libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0
+   sudo apt install curl libgirepository2.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0
    mkdir miniforge
    bash miniforge.sh -u -b -p miniforge
    export PATH=<PATH_TO_MINIFORGE>/miniforge/bin:$PATH
@@ -28,6 +28,11 @@ the script to `miniforge.sh`. Continue in the shell with these commands:
    git clone https://github.com/GasDet-Bonn/tpx3-daq.git tpx3-daq/
    cd tpx3-daq
    pip install -e .
+
+.. note::
+   If the installation of ``libgirepository2.0-dev`` fails (this will happen for example on Ubuntu 22 and Debian 12) you can install
+   ``libgirepository1.0-dev`` instead. But this requires the installation of an older ``PyGObject`` version with ``pip install PyGObject==3.50.0``
+   towards the end of the installation. This is necessary because ``PyGObject`` with version 3.51 or later requires ``libgirepository2.0-dev``.
 
 If there are problems with the online monitor try:
 
