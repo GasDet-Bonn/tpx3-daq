@@ -113,9 +113,9 @@ module tpx3_core (
     localparam TIMESTAMP2_HIGHADDR = 16'h6000-1; 
 
     localparam RX_BASEADDR = 16'h6000;
-    localparam RX_HIGHADDR = 16'h7000-1;
+    localparam RX_HIGHADDR = 16'h8500-1;
 
-    parameter RX_CH_NO = 8;
+    parameter RX_CH_NO = 24;
     parameter ABUSWIDTH = 16;
 
     wire [7:0] GPIO_DATA_OUT, SPI_DATA_OUT, PG_DATA_OUT, TS_DATA_OUT, TS2_DATA_OUT;

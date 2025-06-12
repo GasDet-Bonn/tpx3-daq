@@ -83,6 +83,87 @@ hw_drivers:
     type      : tpx3.tpx3_rx
     interface : intf
     base_addr : 0x6700
+
+  - name      : RX8
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6800
+
+  - name      : RX9
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x6900
+
+  - name      : RX10
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7000
+
+  - name      : RX11
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7100
+
+  - name      : RX12
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7200
+
+  - name      : RX13
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7300
+
+  - name      : RX14
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7400
+
+  - name      : RX15
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7500
+
+  - name      : RX16
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7600
+
+  - name      : RX17
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7700
+
+  - name      : RX18
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7800
+
+  - name      : RX19
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x7900
+
+  - name      : RX20
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x8000
+
+  - name      : RX21
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x8100
+
+  - name      : RX22
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x8200
+
+  - name      : RX23
+    type      : tpx3.tpx3_rx
+    interface : intf
+    base_addr : 0x8300
+
 registers:
   - name        : CONTROL
     type        : StdRegister
