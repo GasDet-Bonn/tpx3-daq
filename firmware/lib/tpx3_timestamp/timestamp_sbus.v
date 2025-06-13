@@ -11,7 +11,7 @@ module timestamp_sbus #(
     parameter BASEADDR = 16'h0000,
     parameter HIGHADDR = 16'h0000,
     parameter ABUSWIDTH = 16,
-    parameter IDENTIFIER = 4'b0001
+    parameter IDENTIFIER = 7'b0000001
 ) (
     input wire BUS_CLK,
     input wire [ABUSWIDTH-1:0] BUS_ADD,

@@ -10,7 +10,7 @@
 module timestamp_core
 #(
     parameter ABUSWIDTH = 16,
-    parameter IDENTIFIER = 4'b0001
+    parameter IDENTIFIER = 7'b0000001
 )(
     input wire CLK,
     input wire DI,
@@ -184,8 +184,8 @@ always@(posedge BUS_CLK)
         data_buf <= cdc_data_out;
 
 wire [31:0] fifo_write_data_byte [2:0];
-assign fifo_write_data_byte[0] = {IDENTIFIER,4'b0001,data_buf[23:0]};
-assign fifo_write_data_byte[1] = {IDENTIFIER,4'b0010,data_buf[47:24]};
+assign fifo_write_data_byte[0] = {IDENTIFIER,1'b0,data_buf[23:0]};
+assign fifo_write_data_byte[1] = {IDENTIFIER,1'b1,data_buf[47:24]};
 // assign fifo_write_data_byte[2] = {IDENTIFIER,4'b0011,8'b0,cdc_data_out[63:48]}; Not used
 
 wire [31:0] fifo_data_in;

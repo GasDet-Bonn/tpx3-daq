@@ -285,7 +285,7 @@ module tpx3_core (
         .BASEADDR(TIMESTAMP_BASEADDR),
         .HIGHADDR(TIMESTAMP_HIGHADDR),
         .ABUSWIDTH(ABUSWIDTH),
-        .IDENTIFIER(4'b0101)
+        .IDENTIFIER(7'b0100000)
     ) timestamp
     (
         .BUS_CLK(BUS_CLK),
@@ -340,7 +340,7 @@ module tpx3_core (
         .BASEADDR(TIMESTAMP2_BASEADDR),
         .HIGHADDR(TIMESTAMP2_HIGHADDR),
         .ABUSWIDTH(ABUSWIDTH),
-        .IDENTIFIER(4'b0111)
+        .IDENTIFIER(7'b0100001)
     ) timestamp2
     (
         .BUS_CLK(BUS_CLK),
