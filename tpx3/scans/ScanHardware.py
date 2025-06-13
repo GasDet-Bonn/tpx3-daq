@@ -150,7 +150,8 @@ class ScanHardware(object):
         # Check for each receiver the ChipID of the connected chip
         Chip_IDs = np.zeros(number_of_links, dtype=np.int32)
         for fpga_link_number, fpga_link in enumerate(rx_list_objects):
-            if status_map[fpga_link_number] == 0:
+            # Skip ChipID check for broken and not connected links
+            if status_map[fpga_link_number] != 1:
                 Chip_IDs[fpga_link_number] = 0
                 continue
 
@@ -219,6 +220,10 @@ class ScanHardware(object):
         # Create a list if unique Chip-ID strings and corresponding Chip-ID bits
         ID_List = []
         for register in dict_list['registers']:
+            # Do not put links without a ChipID into the ID_List
+            if register['link-status'] != 1:
+                continue
+
             bit_id = BitLogic.from_value(register['chip-id'])
 
             # Decode the Chip-ID
