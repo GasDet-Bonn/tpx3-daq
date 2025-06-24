@@ -1,0 +1,70 @@
+chips:
+- chip_ID: 4714
+  chip_ID_decoded: W18-J6
+  registers:
+  - name: Polarity
+    description: Selects the polarity of collection (0 = positive, 1 = negative)
+    address: 0
+    size: 1
+    default: 1
+    value: 0
+  - name: Op_mode
+    description: Sets pixel operation mode (0b00 = ToA and ToT, 0b01 = ToA, 0b10 =
+      Event and iToT)
+    address: 1
+    size: 2
+    default: 0
+    value: 0
+  - name: Gray_count_en
+    description: Enables/Disables EoC Gray counter (0 = disabled, 1 = enabled)
+    address: 3
+    size: 1
+    default: 0
+    value: 1
+  - name: AckCommand_en
+    description: Enables/Disables the AckCommand data packet (0 = disabled, 1 = enabled)
+    address: 4
+    size: 1
+    default: 0
+    value: 0
+  - name: TP_en
+    description: Enables/Disables Test Pulses (0 = disabled, 1 = enabled)
+    address: 5
+    size: 1
+    default: 0
+    value: 1
+  - name: Fast_Io_en
+    description: Enables/Disables Super-Pixel-Oscillator (Fast_Io_en; 0 = disabled,
+      1 = enabled)
+    address: 6
+    size: 1
+    default: 0
+    value: 1
+  - name: TimerOverflowControl
+    description: Selects the overflow control mode for the 48bit timer (0 = will cycle
+      through, 1 = stops at 0hFFFF_FFFF_FFFF)
+    address: 7
+    size: 1
+    default: 0
+    value: 0
+  - name: SelectTP_Dig_Analog
+    description: Selects if test pulses are sent to the input of the Front-End or
+      the discriminator input (0 = Front-End, 1 = Discr. input)
+    address: 9
+    size: 1
+    default: 0
+    value: 0
+  - name: SelectTP_Ext_Int
+    description: Selects if test pulses are generated internally or externally (0
+      = internal, 1 = external)
+    address: 10
+    size: 1
+    default: 0
+    value: 0
+  - name: SelectTP_ToA_Clk
+    description: Selects if the clock is phase shifted in EOC Gray counters (0 = phase
+      shifted, 1 = not shifted)
+    address: 11
+    size: 1
+    default: 0
+    value: 0

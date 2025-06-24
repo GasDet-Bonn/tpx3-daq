@@ -81,7 +81,7 @@ def threshold_compose(fine, coarse):
     coarse *= 80
     threshold = (fine + coarse) / 0.5
 
-    return threshold
+    return int(threshold)
 
 def threshold_decompose(threshold):
     """
@@ -95,7 +95,7 @@ def threshold_decompose(threshold):
         coarse_threshold = (((threshold - 512) - relative_fine_threshold) // 160) + 1
         fine_threshold = relative_fine_threshold + 352
     
-    return fine_threshold, coarse_threshold
+    return int(fine_threshold), int(coarse_threshold)
 
 def number_of_possible_thresholds(threshold):
     '''
@@ -355,10 +355,13 @@ def check_user_folders():
     if not os.path.exists(data_log_path):
         os.makedirs(data_log_path)
 
-def get_equal_path():
+def get_equal_path(file_type='equalisations'):
     user_path = os.path.expanduser('~')
     user_path = os.path.join(user_path, 'Timepix3')
-    equal_path = os.path.join(user_path, 'equalisations')
+    if file_type == 'equalisations':
+        equal_path = os.path.join(user_path, 'equalisations')
+    elif file_type == 'masks':
+        equal_path = os.path.join(user_path, 'masks')
     return equal_path
 
 class DeltaTemplate(Template):

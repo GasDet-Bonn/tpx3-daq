@@ -116,7 +116,7 @@ class FifoReadout(object):
         if reset_errors:
             self.rx_error_reset()
         else:
-            fifo_size = self.chip['FIFO']['FIFO_SIZE']
+            fifo_size = self.chip.Dut_layer['FIFO']['FIFO_SIZE']
             if fifo_size != 0:
                 self.logger.warning('FIFO not empty when starting FIFO readout: size = %i', fifo_size)
         self._words_per_read.clear()
@@ -171,17 +171,17 @@ class FifoReadout(object):
         en_status = self.get_rx_en_status()
         discard_count = self.get_rx_fifo_discard_count()
         decode_error_count = self.get_rx_decode_error_count()
-        invert = [channel.INVERT for channel in self.chip.get_modules('tpx3_rx')]
-        sampling_edge = [channel.SAMPLING_EDGE for channel in self.chip.get_modules('tpx3_rx')]
-        data_delay = [channel.DATA_DELAY for channel in self.chip.get_modules('tpx3_rx')]
+        invert = [channel.INVERT for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
+        sampling_edge = [channel.SAMPLING_EDGE for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
+        data_delay = [channel.DATA_DELAY for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
 
         if not any(self.get_rx_sync_status()) or any(discard_count)  or any(decode_error_count) :
             self.logger.warning('RX errors detected')
 
         self.logger.info('Received words:              %d', self._record_count)
         self.logger.info('Data queue size:             %d', len(self._data_deque))
-        self.logger.info('FIFO size:                   %d', self.chip['FIFO']['FIFO_SIZE'])
-        self.logger.info('Channel:                     %s', " | ".join([channel.name.rjust(3) for channel in self.chip.get_modules('tpx3_rx')]))
+        self.logger.info('FIFO size:                   %d', self.chip.Dut_layer['FIFO']['FIFO_SIZE'])
+        self.logger.info('Channel:                     %s', " | ".join([channel.name.rjust(3) for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]))
         self.logger.info('RX sync:                     %s', " | ".join(["YES".rjust(3) if status is True else "NO".rjust(3) for status in sync_status]))
         self.logger.info('RX enable:                   %s', " | ".join(["YES".rjust(3) if status is True else "NO".rjust(3) for status in en_status]))
         self.logger.info('RX INVERT:                   %s', " | ".join(["YES".rjust(3) if status is True else "NO".rjust(3) for status in invert]))
@@ -289,7 +289,7 @@ class FifoReadout(object):
             data : list
                     A list of FIFO data words.
         '''
-        return self.chip['FIFO'].get_data()
+        return self.chip.Dut_layer['FIFO'].get_data()
 
     def update_timestamp(self):
         curr_time = self.get_float_time()
@@ -301,62 +301,62 @@ class FifoReadout(object):
         raise NotImplementedError()
 
     def reset_sram_fifo(self):
-        fifo_size = self.chip['FIFO']['FIFO_SIZE']
+        fifo_size = self.chip.Dut_layer['FIFO']['FIFO_SIZE']
         self.logger.debug('Resetting FIFO: size = %i', fifo_size)
         self.update_timestamp()
-        self.chip['FIFO']['RESET']
+        self.chip.Dut_layer['FIFO']['RESET']
         sleep(0.01)  # sleep here for a while
-        fifo_size = self.chip['FIFO']['FIFO_SIZE']
+        fifo_size = self.chip.Dut_layer['FIFO']['FIFO_SIZE']
         if fifo_size != 0:
             self.logger.warning('FIFO not empty after reset: size = %i', fifo_size)
 
     def enable_rx(self, enable=True, channels=None):
         self.logger.debug('Enable RX')
         if channels is None:
-            for ch in self.chip.get_modules('tpx3_rx'):
+            for ch in self.chip.Dut_layer.get_modules('tpx3_rx'):
                 ch.ENABLE = enable
         else:
             for ch in channels:
-                self.chip[ch].ENABLE = enable
+                self.chip.Dut_layer[ch].ENABLE = enable
 
     def reset_rx(self, channels=None):
         self.logger.debug('Resetting RX')
         if channels:
-            [channel for channel in channels if self.chip[channel].RESET]
+            [channel for channel in channels if self.chip.Dut_layer[channel].RESET]
         else:
-            [channel for channel in self.chip.get_modules('tpx3_rx') if channel.RESET]
+            [channel for channel in self.chip.Dut_layer.get_modules('tpx3_rx') if channel.RESET]
         sleep(0.1)  # sleep here for a while
 
     def rx_error_reset(self, channels=None):
         self.logger.debug('Resetting RX errors')
         if channels:
-            [channel for channel in channels if self.chip[channel].rx_error_reset()]
+            [channel for channel in channels if self.chip.Dut_layer[channel].rx_error_reset()]
         else:
-            [channel for channel in self.chip.get_modules('tpx3_rx') if channel.rx_error_reset()]
+            [channel for channel in self.chip.Dut_layer.get_modules('tpx3_rx') if channel.rx_error_reset()]
 
     def get_rx_sync_status(self, channels=None):
         if channels:
-            return [True if self.chip[channel].READY else False for channel in channels]
+            return [True if self.chip.Dut_layer[channel].READY else False for channel in channels]
         else:
-            return [True if channel.READY else False for channel in self.chip.get_modules('tpx3_rx')]
+            return [True if channel.READY else False for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
 
     def get_rx_en_status(self, channels=None):
         if channels:
-            return [True if self.chip[channel].ENABLE else False for channel in channels]
+            return [True if self.chip.Dut_layer[channel].ENABLE else False for channel in channels]
         else:
-            return [True if channel.ENABLE else False for channel in self.chip.get_modules('tpx3_rx')]
+            return [True if channel.ENABLE else False for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
 
     def get_rx_fifo_discard_count(self, channels=None):
         if channels:
-            return [self.chip[channel].LOST_DATA_COUNTER for channel in channels]
+            return [self.chip.Dut_layer[channel].LOST_DATA_COUNTER for channel in channels]
         else:
-            return [channel.LOST_DATA_COUNTER for channel in self.chip.get_modules('tpx3_rx')]
+            return [channel.LOST_DATA_COUNTER for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
 
     def get_rx_decode_error_count(self, channels=None):
         if channels:
-            return [self.chip[channel].DECODER_ERROR_COUNTER for channel in channels]
+            return [self.chip.Dut_layer[channel].DECODER_ERROR_COUNTER for channel in channels]
         else:
-            return [channel.DECODER_ERROR_COUNTER for channel in self.chip.get_modules('tpx3_rx')]
+            return [channel.DECODER_ERROR_COUNTER for channel in self.chip.Dut_layer.get_modules('tpx3_rx')]
 
     def get_float_time(self):
         '''

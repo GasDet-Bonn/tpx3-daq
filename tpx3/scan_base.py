@@ -21,6 +21,7 @@ from basil.utils.BitLogic import BitLogic
 from contextlib import contextmanager
 from .tpx3 import TPX3
 from .fifo_readout import FifoReadout
+from basil.dut import Dut
 from tpx3.utils import check_user_folders, get_equal_path, get_software_version
 from tables.exceptions import NoSuchNodeError
 import six
@@ -44,6 +45,98 @@ class MetaTable(tb.IsDescription):
     trigger = tb.Float64Col(pos=8)
 
 
+class RunConfig_General(tb.IsDescription):
+    scan_id          = tb.StringCol(128)
+    run_name         = tb.StringCol(128) 
+    software_version = tb.StringCol(128)
+    board_name       = tb.StringCol(128)
+    firmware_version = tb.StringCol(128)
+    wafer_number     = tb.StringCol(128)
+    x_position       = tb.StringCol(128)
+    y_position       = tb.StringCol(128)
+
+class RunConfig_PixelDACopt(RunConfig_General):
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    offset           = tb.UInt16Col()
+    tp_period        = tb.UInt16Col()
+    maskfile         = tb.StringCol(128)
+    pixeldac         = tb.UInt16Col()
+    last_pixeldac    = tb.UInt16Col()
+    last_delta       = tb.Float64Col()
+
+class RunConfig_EqualisationCharge(RunConfig_General):
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    mask_step        = tb.UInt16Col()
+    maskfile         = tb.StringCol(128)
+    tp_period        = tb.UInt16Col()
+
+
+class RunConfig_ThresholdCalib(RunConfig_General):
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    mask_step        = tb.UInt16Col()
+    tp_period        = tb.UInt16Col()
+    n_pulse_heights  = tb.UInt16Col()
+    thrfile          = tb.StringCol(128)
+    maskfile         = tb.StringCol(128)
+    
+class RunConfig_ThresholdScan(RunConfig_General):
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    n_injections     = tb.UInt16Col()
+    mask_step        = tb.UInt16Col()
+    tp_period        = tb.UInt16Col()
+    thrfile          = tb.StringCol(128)
+    maskfile         = tb.StringCol(128)
+
+class RunConfig_TestpulseScan(RunConfig_General):
+    VTP_fine_start = tb.UInt16Col()
+    VTP_fine_stop  = tb.UInt16Col()
+    n_injections   = tb.UInt16Col()
+    mask_step      = tb.UInt16Col()
+    tp_period      = tb.UInt16Col()
+    thrfile        = tb.StringCol(128)
+    maskfile       = tb.StringCol(128)
+
+class RunConfig_ToTCalib(RunConfig_General):
+    VTP_fine_start = tb.UInt16Col()
+    VTP_fine_stop  = tb.UInt16Col()
+    mask_step      = tb.UInt16Col()
+    tp_period      = tb.UInt16Col()
+    thrfile        = tb.StringCol(128)
+    maskfile       = tb.StringCol(128)
+
+
+class RunConfig_NoiseScan(RunConfig_General):
+    Vthreshold_start = tb.UInt16Col()
+    Vthreshold_stop  = tb.UInt16Col()
+    shutter          = tb.Float64Col()
+    thrfile          = tb.StringCol(128)
+    maskfile         = tb.StringCol(128)
+
+class RunConfig_DataTake(RunConfig_General):
+    thrfile  = tb.StringCol(128)
+    maskfile = tb.StringCol(128)
+
+
+RunConfigTables = {
+    'EqualisationCharge': RunConfig_EqualisationCharge,
+    'EqualisationNoise' : RunConfig_EqualisationCharge,
+    'PixelDACopt'       : RunConfig_PixelDACopt,
+    'TestpulseScan'     : RunConfig_TestpulseScan,
+    'ThresholdScan'     : RunConfig_ThresholdScan,
+    'ThresholdCalib'    : RunConfig_ThresholdCalib,
+    'NoiseScan'         : RunConfig_NoiseScan,
+    'ToTCalib'          : RunConfig_ToTCalib,
+    'DataTake'          : RunConfig_DataTake
+}
+
+
 class RunConfigTable(tb.IsDescription):
     attribute = tb.StringCol(64)
     value = tb.StringCol(128)
@@ -53,10 +146,50 @@ class DacTable(tb.IsDescription):
     DAC = tb.StringCol(64)
     value = tb.UInt16Col()
 
+class DacTable_alt(tb.IsDescription):
+    wafer_number      = tb.StringCol(128)
+    x_position        = tb.StringCol(128)
+    y_position        = tb.StringCol(128)
+    Ibias_Preamp_ON   = tb.UInt16Col()
+    Ibias_Preamp_OFF  = tb.UInt16Col()
+    VPreamp_NCAS      = tb.UInt16Col()
+    Ibias_Ikrum       = tb.UInt16Col()
+    Vfbk              = tb.UInt16Col()
+    Vthreshold_fine   = tb.UInt16Col()
+    Vthreshold_coarse = tb.UInt16Col()
+    Ibias_DiscS1_ON   = tb.UInt16Col()
+    Ibias_DiscS1_OFF  = tb.UInt16Col()
+    Ibias_DiscS2_ON   = tb.UInt16Col()
+    Ibias_DiscS2_OFF  = tb.UInt16Col()
+    Ibias_PixelDAC    = tb.UInt16Col()
+    Ibias_TPbufferIn  = tb.UInt16Col()
+    Ibias_TPbufferOut = tb.UInt16Col()
+    VTP_coarse        = tb.UInt16Col()
+    VTP_fine          = tb.UInt16Col()
+    Ibias_CP_PLL      = tb.UInt16Col()
+    PLL_Vcntrl        = tb.UInt16Col()
+    Sense_DAC         = tb.UInt16Col()
+
 
 class ConfTable(tb.IsDescription):
     configuration = tb.StringCol(64)
     value = tb.UInt16Col()
+
+
+class ConfTable_alt(tb.IsDescription):
+    wafer_number         = tb.StringCol(128)
+    x_position           = tb.StringCol(128)
+    y_position           = tb.StringCol(128)
+    Polarity             = tb.UInt16Col()
+    Op_mode              = tb.UInt16Col()
+    Gray_count_en        = tb.UInt16Col()
+    AckCommand_en        = tb.UInt16Col()
+    TP_en                = tb.UInt16Col()
+    Fast_Io_en           = tb.UInt16Col()
+    TimerOverflowControl = tb.UInt16Col()
+    SelectTP_Dig_Analog  = tb.UInt16Col()
+    SelectTP_Ext_Int     = tb.UInt16Col()
+    SelectTP_ToA_Clk     = tb.UInt16Col()
 
 
 class Links(tb.IsDescription):
@@ -77,13 +210,13 @@ def send_data(socket, data, scan_par_id, name='ReadoutData'):
     '''
 
     data_meta_data = dict(
-        name=name,
-        dtype=str(data[0].dtype),
-        shape=data[0].shape,
-        timestamp_start=data[1],  # float
-        timestamp_stop=data[2],  # float
-        error=data[3],  # int
-        scan_par_id=scan_par_id
+        name = name,
+        dtype = str(data[0].dtype),
+        shape = data[0].shape,
+        timestamp_start = data[1],  # float
+        timestamp_stop = data[2],  # float
+        error = data[3],  # int
+        scan_par_id = scan_par_id
     )
     try:
         socket.send_json(data_meta_data, flags=zmq.SNDMORE | zmq.NOBLOCK)
@@ -100,10 +233,28 @@ class ScanBase(object):
     '''
 
     def __init__(self, dut_conf=None, no_chip=False, run_name = None):
-        # Initialize the chip
+
+        # Create list for chipIds and chip objects
+        self.chipIds = []
+        self.chips   = []
+
+        self.proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.data_dir = os.path.expanduser('~')
+        self.data_dir = os.path.join(self.data_dir, 'Timepix3')
+
+        # Create Intermediate layer
+        if not dut_conf:
+            dut_conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
+
+        #logger.info("Loading configuration file from %s" % conf)
+        Dut_layer = Dut(dut_conf)
+        Dut_layer.init()
+
+        # Initialize the chip communication
         if no_chip == False:
-            self.chip = TPX3(dut_conf)
-            self.chip.init()
+            chip = TPX3()
+            chip.init(inter_layer=Dut_layer)
+            self.chips.append(chip)
 
         # Initialize the files
         check_user_folders()
@@ -116,10 +267,30 @@ class ScanBase(object):
 
             # Test if the link configuration is valid
             if self.test_links() == True:
-               self.logger.info("Validity check of link configuration successful")
+                self.logger.info("Validity check of link configuration successful")
+                # If link config is valid, initialize more chips via chipId from links.yml
+                # create list of chipIds, no duplicates
+                # from this list create list of chip objects 
+                for chipId in self.chipIds:
+                    # Convert chipId to 4 byte representation: [0x--, 0x--, 0x--, 0x--]
+                    Id_binary = '{:032b}'.format(chipId)
+                    Id_bytes  = [int(Id_binary[:8],2),int(Id_binary[8:16],2) ,int(Id_binary[16:24],2) ,int(Id_binary[24:],2)]
+                    bit_id    = BitLogic.from_value(chipId)
+
+                    # Decode the Chip-ID
+                    wafer_number = bit_id[19:8].tovalue()
+                    x_position   = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
+                    y_position   = bit_id[7:4].tovalue()
+                    ID           = 'W' + str(wafer_number) + '-' + x_position + str(y_position)
+                    # Write information about the chip into chip object
+                    chip         = TPX3()
+                    chip.init(ChipId = [Id_bytes, chipId, ID, wafer_number, x_position, y_position])
+                    self.chips.append(chip)
             else:
-               self.logger.info("Validity check of link configuration failed")
-               raise ConfigError("Link configuration is not valid for current setup")
+                self.logger.info("Validity check of link configuration failed")
+                raise ConfigError("Link configuration is not valid for current setup")
+
+        self.num_of_chips = len(self.chipIds)
 
     def set_directory(self,sub_dir=None):
         # Get the user directory
@@ -171,7 +342,7 @@ class ScanBase(object):
         '''
             Returns the chip object
         '''
-        return self.chip
+        return self.chips
 
     def test_links(self):
         '''
@@ -191,50 +362,52 @@ class ScanBase(object):
 
         # Iterate over all links
         for register in yaml_data['registers']:
-
             # Reset the chip
-            self.chip.toggle_pin("RESET")
+            self.chips[0].toggle_pin("RESET")
 
             # Write the PLL
-            data = self.chip.write_pll_config()
+            data = self.chips[0].write_pll_config()
 
             # Create the chip output channel mask and write the output block
-            self.chip._outputBlocks["chan_mask"] = 0b1 << register['chip-link']
-            data = self.chip.write_outputBlock_config()
+            self.chips[0]._outputBlocks["chan_mask"] = 0b1 << register['chip-link']
+            self.chips[0].write_outputBlock_config()
 
             # Deactivate all fpga links
             for register2 in yaml_data['registers']:
-                self.chip[register2['name']].ENABLE = 0
-                self.chip[register2['name']].reset()
+                self.chips[0].Dut_layer[register2['name']].ENABLE = 0
+                self.chips[0].Dut_layer[register2['name']].reset()
 
             if register['link-status'] in [1, 3, 5]:
                 # Activate the current fpga link and set all its settings
-                self.chip[register['name']].ENABLE = 1
-                self.chip[register['name']].DATA_DELAY = register['data-delay']
-                self.chip[register['name']].INVERT = register['data-invert']
-                self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+                self.chips[0].Dut_layer[register['name']].ENABLE = 1
+                self.chips[0].Dut_layer[register['name']].DATA_DELAY = register['data-delay']
+                self.chips[0].Dut_layer[register['name']].INVERT = register['data-invert']
+                self.chips[0].Dut_layer[register['name']].SAMPLING_EDGE = register['data-edge']
 
                 # Reset and clean the FIFO
-                self.chip['FIFO'].RESET
+                self.chips[0].Dut_layer['FIFO'].RESET
                 time.sleep(0.01)
-                self.chip['FIFO'].get_data()
+                self.chips[0].Dut_layer['FIFO'].get_data()
 
                 # Send the EFuse_Read command to get the Chip ID and test the communication
-                data = self.chip.read_periphery_template("EFuse_Read")
+                data = self.chips[0].read_periphery_template("EFuse_Read")
                 data += [0x00]*4
-                self.chip.write(data)
+                self.chips[0].write(data)
 
                 # Wait some time to collect the response of the chip
                 time.sleep(0.01)
 
                 # Get the data from the chip
-                fdata = self.chip['FIFO'].get_data()
-                dout = self.chip.decode_fpga(fdata, True)
+                fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+                dout = self.chips[0].decode_fpga(fdata, True)
 
                 # Check if the received Chip ID is identical with the expected
                 if dout[1][19:0].tovalue() != register['chip-id']:
                     valid = False
                     break
+                else:
+                    if register['chip-id'] not in self.chipIds:
+                        self.chipIds.append(register['chip-id'])
 
         return valid
 
@@ -251,13 +424,11 @@ class ScanBase(object):
                 yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
         # Deactivate all fpga links
-        for channel_dissable in self.chip.get_modules('tpx3_rx'):
+        for channel_dissable in self.chips[0].Dut_layer.get_modules('tpx3_rx'):
             channel_dissable.ENABLE = 0
             channel_dissable.reset()
 
-
-
-        self.chip._outputBlocks["chan_mask"] = 0
+        self.chips[0]._outputBlocks["chan_mask"] = 0
 
         ID_List = []
 
@@ -267,20 +438,20 @@ class ScanBase(object):
         for register in yaml_data['registers']:
             if register['link-status'] in [1, 3, 5]:
                 # Create the chip output channel mask and write the output block
-                self.chip._outputBlocks["chan_mask"] = self.chip._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
+                self.chips[0]._outputBlocks["chan_mask"] = self.chips[0]._outputBlocks["chan_mask"] | (0b1 << register['chip-link'])
 
                 # Activate the current fpga link and set all its settings
-                self.chip[register['name']].ENABLE = 1
-                self.chip[register['name']].DATA_DELAY = register['data-delay']
-                self.chip[register['name']].INVERT = register['data-invert']
-                self.chip[register['name']].SAMPLING_EDGE = register['data-edge']
+                self.chips[0].Dut_layer[register['name']].ENABLE = 1
+                self.chips[0].Dut_layer[register['name']].DATA_DELAY = register['data-delay']
+                self.chips[0].Dut_layer[register['name']].INVERT = register['data-invert']
+                self.chips[0].Dut_layer[register['name']].SAMPLING_EDGE = register['data-edge']
 
                 bit_id = BitLogic.from_value(register['chip-id'])
 
                 # Decode the Chip-ID
                 self.wafer_number = bit_id[19:8].tovalue()
                 self.x_position = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
-                self.y_position =bit_id[7:4].tovalue()
+                self.y_position = bit_id[7:4].tovalue()
                 ID = 'W' + str(self.wafer_number) + '-' + self.x_position + str(self.y_position)
 
                 # Write new Chip-ID to the list
@@ -293,7 +464,7 @@ class ScanBase(object):
         if self.number_of_chips > 1:
             raise NotImplementedError('Handling of multiple chips is not implemented yet')
 
-    def create_scan_masks(self, mask_step, pixel_threhsold = None, number = None, offset = 0, append_datadriven = True, progress = None):
+    def create_scan_masks(self, mask_step, pixel_threshold = None, number = None, offset = 0, append_datadriven = True, progress = None):
         '''
             Creates the pixel configuration register masks for scans based on the number of mask_step.
             If a value is set for pixel threshold it is used for all pixels. Else the value which is
@@ -309,8 +480,8 @@ class ScanBase(object):
         # Check if parameters are valid
         if mask_step not in {4, 16, 64, 256}:
             raise ValueError("Value {} for mask_step is not in the allowed range (4, 16, 64, 256)".format(mask_step))
-        if pixel_threhsold not in range(16) and pixel_threhsold != None:
-            raise ValueError("Value {} for pixel_threhsold is not in the allowed range (0 to 15 or None)".format(pixel_threhsold))
+        if pixel_threshold not in range(16) and pixel_threshold != None:
+            raise ValueError("Value {} for pixel_threshold is not in the allowed range (0 to 15 or None)".format(pixel_threshold))
 
         # Empty array for the masks command for the scan
         mask_cmds = []
@@ -325,59 +496,67 @@ class ScanBase(object):
             # Initailize counter for progress
             step_counter = 0
 
-        temp_mask_matrix = np.zeros((256, 256), dtype=bool)
-        if self.maskfile:
-            with tb.open_file(self.maskfile, 'r') as infile:
-                temp_mask_matrix = infile.root.mask_matrix[:]
+        #temp_mask_matrix = np.zeros((256, 256), dtype=bool)
+        #if self.maskfile:
+        #    with tb.open_file(self.maskfile, 'r') as infile:
+        #        temp_mask_matrix = infile.root.mask_matrix[:]
 
         # Create the masks for all steps
         for i in range(offset, number + offset):
             mask_step_cmd = []
 
-            # Start with deactivated testpulses on all pixels and all pixels masked
-            self.chip.test_matrix[:, :] = self.chip.TP_OFF
-            self.chip.mask_matrix[:, :] = self.chip.MASK_OFF
+            for chip in self.chips[1:]:
+                temp_mask_matrix = np.zeros((256, 256), dtype=bool)
+                # Start with deactivated testpulses on all pixels and all pixels masked
+                chip.test_matrix[:, :] = chip.TP_OFF
+                chip.mask_matrix[:, :] = chip.MASK_OFF
 
-            # Switch on pixels and test pulses for pixels based on mask_step
-            # e.g. for mask_step=16 every 4th pixel in x and y is active
-            column_start = i//(mask_step//int(math.sqrt(mask_step)))
-            row_start = i%(mask_step//int(math.sqrt(mask_step)))
-            step = mask_step//int(math.sqrt(mask_step))
-            self.chip.test_matrix[column_start::step, row_start::step] = self.chip.TP_ON
-            self.chip.mask_matrix[column_start::step, row_start::step] = self.chip.MASK_ON
+                # Switch on pixels and test pulses for pixels based on mask_step
+                # e.g. for mask_step=16 every 4th pixel in x and y is active
+                column_start = i//(mask_step//int(math.sqrt(mask_step)))
+                row_start = i%(mask_step//int(math.sqrt(mask_step)))
+                step = mask_step//int(math.sqrt(mask_step))
+                chip.test_matrix[column_start::step, row_start::step] = chip.TP_ON
+                chip.mask_matrix[column_start::step, row_start::step] = chip.MASK_ON
 
-            if self.maskfile:
-                self.chip.test_matrix[temp_mask_matrix == True] = self.chip.TP_OFF
-                self.chip.mask_matrix[temp_mask_matrix == True] = self.chip.MASK_OFF
+                chip_mask_file = self.maskfile[chip.chipId_decoded]['active']
+                if chip_mask_file:
+                    try:
+                        with tb.open_file(chip_mask_file, 'r') as infile:
+                            temp_mask_matrix = infile.root.mask_matrix[:]
+                        chip.test_matrix[temp_mask_matrix == True] = chip.TP_OFF
+                        chip.mask_matrix[temp_mask_matrix == True] = chip.MASK_OFF
+                    except:
+                        pass
 
-            # If a pixel threshold is defined set it to all pixels
-            if pixel_threhsold != None:
-                self.chip.thr_matrix[:, :] = pixel_threhsold
+                # If a pixel threshold is defined set it to all pixels
+                if pixel_threshold != None:
+                    chip.thr_matrix[:, :] = pixel_threshold
 
-            # Create the list of mask commands - only for columns that changed the pcr
-            column_list = list(range(column_start, 256, step))
-            if i == offset:
-                for j in range(256 // 4):
-                    mask_step_cmd.append(self.chip.write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
-            else:
-                if column_start == (i-1)//(mask_step//int(math.sqrt(mask_step))):
-                    for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                        mask_step_cmd.append(self.chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                # Create the list of mask commands - only for columns that changed the pcr
+                column_list = list(range(column_start, 256, step))
+                if i == offset:
+                    for i in range(256 // 4):
+                        mask_step_cmd.append(chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
                 else:
-                    previous_column_list = list([x - 1 for x in column_list])
-                    if previous_column_list[0] < 0:
-                        previous_column_list = previous_column_list[1:]
-                        previous_column_list.append(255)
-                    for j in range((256 // int(math.sqrt(mask_step))) // 4):
-                        mask_step_cmd.append(self.chip.write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
-                        mask_step_cmd.append(self.chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                    if column_start == (i-1)//(mask_step//int(math.sqrt(mask_step))):
+                        for j in range((256 // int(math.sqrt(mask_step))) // 4):
+                            mask_step_cmd.append(chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
+                    else:
+                        previous_column_list = list([x - 1 for x in column_list])
+                        if previous_column_list[0] < 0:
+                            previous_column_list = previous_column_list[1:]
+                            previous_column_list.append(255)
+                        for j in range((256 // int(math.sqrt(mask_step))) // 4):
+                            mask_step_cmd.append(chip.write_pcr(previous_column_list[4 * j : 4 * j + 4], write=False))
+                            mask_step_cmd.append(chip.write_pcr(column_list[4 * j : 4 * j + 4], write=False))
 
-            if append_datadriven == True:
-                # Append the command for initializing a data driven readout
-                mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
+                if append_datadriven == True:
+                    # Append the command for initializing a data driven readout
+                    mask_step_cmd.append(chip.read_pixel_matrix_datadriven(write=False))
 
-            # Append the list of command for the current mask_step to the full command list
-            mask_cmds.append(mask_step_cmd)
+                # Append the list of command for the current mask_step to the full command list
+                mask_cmds.append(mask_step_cmd)
 
             if progress == None:
                 # Update the progress bar
@@ -403,25 +582,34 @@ class ScanBase(object):
         '''
         mask_cmds = []
 
-        temp_mask_matrix = np.zeros((256, 256), dtype=bool)
-        if self.maskfile:
-            with tb.open_file(self.maskfile, 'r') as infile:
-                temp_mask_matrix = infile.root.mask_matrix[:]
+        #temp_mask_matrix = np.zeros((256, 256), dtype=bool)
+        #if self.maskfile:
+        #    with tb.open_file(self.maskfile, 'r') as infile:
+        #        temp_mask_matrix = infile.root.mask_matrix[:]
 
         for i in range(mask_step):
             mask_step_cmd = []
-            self.chip.mask_matrix[:, :] = self.chip.MASK_ON
-            self.chip.mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = self.chip.MASK_ON
 
-            if self.maskfile:
-                self.chip.mask_matrix[temp_mask_matrix == True] = self.chip.MASK_OFF
+            for chip in self.chips[1:]:
+                temp_mask_matrix = np.zeros((256, 256), dtype=bool)
+                chip.mask_matrix[:, :]                                             = chip.MASK_ON
+                chip.mask_matrix[i*(256//mask_step):((i+1)*(256//mask_step))-1, :] = chip.MASK_ON
 
-            for j in range(256 // 4):
-                mask_step_cmd.append(self.chip.write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
+                chip_mask_file = self.maskfile[chip.chipId_decoded]['active']
+                if chip_mask_file:
+                    try:
+                        with tb.open_file(chip_mask_file, 'r') as infile:
+                            temp_mask_matrix = infile.root.mask_matrix[:]
+                        chip.mask_matrix[temp_mask_matrix == True] = chip.MASK_OFF
+                    except:
+                        pass
 
-            if append_datadriven == True:
-                # Append the command for initializing a data driven readout
-                mask_step_cmd.append(self.chip.read_pixel_matrix_datadriven())
+                for j in range(256 // 4):
+                    mask_step_cmd.append(chip.write_pcr(list(range(4 * j, 4 * j + 4)), write=False))
+
+                if append_datadriven == True:
+                    # Append the command for initializing a data driven readout
+                    mask_step_cmd.append(chip.read_pixel_matrix_datadriven(write=False))
 
             mask_cmds.append(mask_step_cmd)
 
@@ -456,70 +644,52 @@ class ScanBase(object):
             Dumps the current configuration in tables of the configuration group in the HDF5 file.
             For scans with multiple iterations separate tables for each iteration will be created.
         '''
+        # Get table description for this run
+        config_table = RunConfigTables[self.scan_id]
 
         # Save the scan/run configuration
         # Scans without multiple iterations
         if iteration == None:
-            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config', title='Run config', description=RunConfigTable)
+            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config', title='Run config', description=config_table)
         # Scans with multiple iterations
         else:
-            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config ' + str(iteration), description=RunConfigTable)
+            run_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='run_config_' + str(iteration), title='Run config' + str(iteration), description=config_table)
 
-        # Common scan/run configuration parameters
-        row = run_config_table.row
-        row['attribute'] = 'scan_id'
-        row['value'] = self.scan_id
-        row.append()
-        row = run_config_table.row
-        row['attribute'] = 'run_name'
-        row['value'] = self.run_name
-        row.append()
-        row = run_config_table.row
-        row['attribute'] = 'software_version'
-        row['value'] = get_software_version()
-        row.append()
-        row = run_config_table.row
-        row['attribute'] = 'board_name'
-        row['value'] = self.board_name
-        row.append()
-        row = run_config_table.row
-        row['attribute'] = 'firmware_version'
-        row['value'] = self.firmware_version
-        row.append()
-        row = run_config_table.row
-        row['attribute'] = 'chip_wafer'
-        row['value'] = self.wafer_number
-        row.append()
-        row = run_config_table.row
-        row['attribute'] = 'chip_x'
-        row['value'] = self.x_position
-        row.append()
-        row = run_config_table.row
-        row['attribute'] = 'chip_y'
-        row['value'] = self.y_position
-        row.append()
+        if self.scan_id != 'PixelDACopt': # or (self.scan_id == 'PixelDACopt' and iteration == 0):
+            chip_list = self.chips[1:]
+        else:
+            chip_list = self.chips_not_optimized
 
-        # scan/run specific configuration parameters
-        run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'tp_period', 'n_pulse_heights', 'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta', 'mask_step', 'thrfile', 'maskfile', 'offset', 'shutter']
-        for kw, value in six.iteritems(kwargs):
-            if kw in run_config_attributes:
-                row = run_config_table.row
-                row['attribute'] = kw
-                row['value'] = value if isinstance(value, str) else str(value)
-                row.append()
+        for chip in chip_list:
+            # Common scan/run configuration parameters
+            row = run_config_table.row
+            row['scan_id'] = self.scan_id
+            row['run_name'] = self.run_name
+            row['software_version'] = get_software_version()
+            row['board_name'] = self.board_name
+            row['firmware_version'] = self.firmware_version
+            row['wafer_number'] = chip.wafer_number
+            row['x_position'] = chip.x_position
+            row['y_position'] = chip.y_position
 
-        if self.scan_id == 'PixelDACopt' and iteration == 0:
-            row = run_config_table.row
-            row['attribute'] = 'pixeldac'
-            row['value'] = str(127)
-            row.append()
-            row = run_config_table.row
-            row['attribute'] = 'last_pixeldac'
-            row['value'] = str(127)
-            row.append()
-            row = run_config_table.row
-            row['attribute'] = 'last_delta'
-            row['value'] = str(1)
+            # scan/run specific configuration parameters
+            run_config_attributes = ['VTP_fine_start', 'VTP_fine_stop', 'n_injections', 'tp_period', 'n_pulse_heights',
+                                     'Vthreshold_start', 'Vthreshold_stop', 'pixeldac', 'last_pixeldac', 'last_delta',
+                                     'mask_step', 'thrfile', 'maskfile', 'offset', 'shutter']
+            for kw, value in six.iteritems(kwargs):
+                if kw in run_config_attributes:
+                    if kw not in ['pixeldac', 'last_pixeldac', 'last_delta', 'thrfile', 'maskfile']:
+                        row[kw] = value
+                    elif kw in ['thrfile', 'maskfile']:
+                        row[kw] = value[chip.chipId_decoded]['active']
+                    else: # use this for PixelDACopt
+                        if iteration == 0: 
+                            # here the start values set in GUI.py - class GUI_PixelDAC_opt 
+                            # -> process_call are used 
+                            # (pixeldac = 127, last_pixeldac = 127, last_delta = 1.0)
+                            row[kw] = value
+                        else: # here for value the optimization_params dict is used in PixelDACopt
+                            row[kw] = value[chip.chipId_decoded][kw]
             row.append()
 
         run_config_table.flush()
@@ -527,33 +697,43 @@ class ScanBase(object):
         # save the general configuration
         # In scans with multiple iterations only for the first iteration
         if iteration == None or iteration == 0:
-            general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig', title='GeneralConfig', description=ConfTable)
-            for conf, value in six.iteritems(self.chip.configs):
+            general_config_table = self.h5_file.create_table(self.h5_file.root.configuration, name='generalConfig',
+                                                                 title='GeneralConfig', description=ConfTable_alt)
+            for chip in chip_list:
                 row = general_config_table.row
-                row['configuration'] = conf
-                row['value'] = value
+                row['wafer_number'] = chip.wafer_number
+                row['x_position']   = chip.x_position
+                row['y_position']   = chip.y_position
+                for conf, value in six.iteritems(chip.configs):
+                    row[conf] = value
                 row.append()
             general_config_table.flush()
 
         # Save the dac settings
         # In scans with multiple iterations only for the first iteration
         if iteration == None:
-            dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable)
+            dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs', title='DACs', description=DacTable_alt)
         # Scans with multiple iterations
         else:
-            dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs_' + str(iteration), title='DACs ' + str(iteration), description=DacTable)
-        for dac, value in six.iteritems(self.chip.dacs):
-            row = dac_table.row
-            row['DAC'] = dac
-            row['value'] = value
+            dac_table = self.h5_file.create_table(self.h5_file.root.configuration, name='dacs_' + str(iteration), title='DACs ' + str(iteration), description=DacTable_alt)
+        for chip in chip_list:
+            row                 = dac_table.row
+            row['wafer_number'] = chip.wafer_number
+            row['x_position']   = chip.x_position
+            row['y_position']   = chip.y_position
+
+            for dac, value in six.iteritems(chip.dacs):
+                row[dac] = value
+
             row.append()
         dac_table.flush()
 
         # Save the mask and the pixel threshold matrices
         # In scans with multiple iterations only for the first iteration
         if iteration == None or iteration == 0:
-            self.h5_file.create_carray(self.h5_file.root.configuration, name='mask_matrix', title='Mask Matrix', obj=self.chip.mask_matrix)
-            self.h5_file.create_carray(self.h5_file.root.configuration, name='thr_matrix', title='Threshold Matrix', obj=self.chip.thr_matrix)
+            for chip in chip_list:
+                self.h5_file.create_carray(self.h5_file.root.configuration, name=f'mask_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}', title='Mask Matrix', obj=chip.mask_matrix)
+                self.h5_file.create_carray(self.h5_file.root.configuration, name=f'thr_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}', title='Threshold Matrix', obj=chip.thr_matrix)
 
         # save the link configuration
         # In scans with multiple iterations only for the first iteration
@@ -578,10 +758,9 @@ class ScanBase(object):
                 bit_id = BitLogic.from_value(register['chip-id'])
                 wafer = bit_id[19:8].tovalue()
                 x = chr(ord('a') + bit_id[3:0].tovalue() - 1).upper()
-                y =bit_id[7:4].tovalue()
+                y = bit_id[7:4].tovalue()
                 ID = 'W' + str(wafer) + '-' + x + str(y)
                 row['chip_id'] = ID
-
                 row['data_delay'] = register['data-delay']
                 row['data_invert'] = register['data-invert']
                 row['data_edge'] = register['data-edge']
@@ -634,77 +813,79 @@ class ScanBase(object):
         self.scan_param_id = 0
 
         # Initialize the communication with the chip and read the board name and firmware version
-        self.fifo_readout = FifoReadout(chip = self.chip, readout_interval = readout_interval, moving_average_time_period = moving_average_time_period)
-        self.board_name = self.chip.board_version
-        self.firmware_version = self.chip.fw_version
+        self.fifo_readout = FifoReadout(chip = self.chips[0], readout_interval = readout_interval, moving_average_time_period = moving_average_time_period)
+        self.board_name = self.chips[0].board_version
+        self.firmware_version = self.chips[0].fw_version
 
         # Chip start-up sequence
         # Reset the chip
-        self.chip.toggle_pin("RESET")
+        self.chips[0].toggle_pin("RESET")
 
         self.init_links()
 
         # Set the output settings of the chip
-        data = self.chip.write_outputBlock_config()
+        self.chips[0].write_outputBlock_config(write=True)
         self.fifo_readout.print_readout_status()
 
+        # To use local headers, we need to execute EFuse_Read globally
+        # once after resetting the chip, so that the ChipID of the
+        # chip is known to itself.
+        data = self.chips[0].read_periphery_template('EFuse_Read')
+        data += [0x00]*4
+        self.chips[0].Dut_layer['FIFO'].RESET
+        time.sleep(0.1)
+        self.chips[0].write(data)
+        time.sleep(0.1)
+        fdata = self.chips[0].Dut_layer['FIFO'].get_data()
+
         # Enable power pulsing
-        self.chip['CONTROL']['EN_POWER_PULSING'] = 1
-        self.chip['CONTROL'].write()
+        self.chips[0].Dut_layer['CONTROL']['EN_POWER_PULSING'] = 1
+        self.chips[0].Dut_layer['CONTROL'].write()
 
         # Set PLL Config
-        data = self.chip.write_pll_config(write=False)
-        self.chip.write(data)
+        for chip in self.chips:
+            self.chips[0].write(chip.write_pll_config(write=False))
 
         # Reset the fpga timestamp pulser
-        self.chip['PULSE_GEN'].reset()
+        self.chips[0].Dut_layer['PULSE_GEN'].reset()
 
         # Only activate the timestamp pulse if TOA is of interest
         if self.scan_id in {"DataTake"}:
-            self.chip['PULSE_GEN'].set_delay(40)
-            self.chip['PULSE_GEN'].set_width(4056)
-            self.chip['PULSE_GEN'].set_repeat(0)
-            self.chip['PULSE_GEN'].set_en(True)
+            self.chips[0].Dut_layer['PULSE_GEN'].set_delay(40)
+            self.chips[0].Dut_layer['PULSE_GEN'].set_width(4056)
+            self.chips[0].Dut_layer['PULSE_GEN'].set_repeat(0)
+            self.chips[0].Dut_layer['PULSE_GEN'].set_en(True)
         else:
-            self.chip['PULSE_GEN'].set_en(False)
+            self.chips[0].Dut_layer['PULSE_GEN'].set_en(False)
 
-        # Reset DACs and set them to the values defined in dacs.yaml
-        self.chip.reset_dac_attributes(to_default = False)
-        self.chip.write_dacs()
+        # Reset DACs and set them to the values defined in dacs.yaml / chip_dacs.yml
+        for chip in self.chips[1:]:
+            chip.reset_dac_attributes(to_default = False)
+            data = chip.write_dacs()
+            for chunk in data:
+                self.chips[0].write(chunk)
 
-        # Sequential reset of the pixel matrix
-        data = self.chip.reset_sequential(False)
-        self.chip.write(data, True)
-        fdata = self.chip['FIFO'].get_data()
+            # Sequential reset of the pixel matrix
+            self.chips[0].write(chip.reset_sequential(write=False), True)
 
         self.maskfile = kwargs.get('maskfile', None)
         self.thrfile = kwargs.get('thrfile', None)
         self.configure(**kwargs)
 
         # Produce needed PCR (Pixel configuration register)
-        for i in range(256 // 4):
-            self.chip.write_pcr(list(range(4 * i, 4 * i + 4)))
+        for chip in self.chips[1:]:
+            for i in range(256 // 4):
+                self.chips[0].write(chip.write_pcr(list(range(4 * i, 4 * i + 4)), write=False))
 
         # Set Op_mode for the scans, based on the scan id
-        if self.scan_id == 'EqualisationCharge':
-            self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'EqualisationNoise':
-            self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'PixelDACopt':
-            self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'TestpulseScan':
-            self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'ThresholdScan':
-            self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'ThresholdCalib':
-            self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'NoiseScan':
-            self.chip._configs["Op_mode"] = 2
-        elif self.scan_id == 'ToTCalib':
-            self.chip._configs["Op_mode"] = 0
-        elif self.scan_id == 'TimewalkCalib':
-            self.chip._configs["Op_mode"] = 0
-            self.chip._configs["Fast_Io_en"] = 1
+        for chip in self.chips:
+            if self.scan_id in ['EqualisationCharge', 'EqualisationNoise', 'PixelDACopt', 'TestpulseScan',
+                                'ThresholdScan', 'ThresholdCalib', 'NoiseScan']:
+                chip._configs["Op_mode"] = 2
+            elif self.scan_id in ['ToTCalib', 'TimewalkCalib']:
+                chip._configs["Op_mode"] = 0
+            if self.scan_id in ['TimewalkCalib']:
+                chip._configs["Fast_Io_en"] = 1
 
         # Setup HDF5 file
         filename = self.output_filename + '.h5'
@@ -772,11 +953,11 @@ class ScanBase(object):
         '''
             Open the external Timepix3 shutter and keep it open in context of a readout
         '''
-        self.chip['CONTROL']['SHUTTER'] = 1
-        self.chip['CONTROL'].write()
+        self.chips[0].Dut_layer['CONTROL']['SHUTTER'] = 1
+        self.chips[0].Dut_layer['CONTROL'].write()
         yield
-        self.chip['CONTROL']['SHUTTER'] = 0
-        self.chip['CONTROL'].write()
+        self.chips[0].Dut_layer['CONTROL']['SHUTTER'] = 0
+        self.chips[0].Dut_layer['CONTROL'].write()
 
     def start_readout(self, scan_param_id=0, *args, **kwargs):
         # Pop parameters for fifo_readout.start
@@ -855,76 +1036,109 @@ class ScanBase(object):
             if isinstance(lg, logging.Logger):
                 lg.removeHandler(self.fh)
 
-    def save_mask_matrix(self):
+    def save_mask_matrix(self, chip):
         '''
             Write the mask matrix to file
         '''
         self.logger.info('Writing mask_matrix to file...')
-        if not self.maskfile:
-            self.maskfile = os.path.join(self.working_dir, self.timestamp + '_mask.h5')
+        #if not self.maskfile:
+        user_path = os.path.expanduser('~')
+        mask_path = os.path.join(user_path, 'Timepix3')
+        mask_path = os.path.join(mask_path, 'masks')
+        mask_path = os.path.join(mask_path, chip.chipId_decoded)
+        maskfile  = os.path.join(mask_path, f'{chip.chipId_decoded}_{self.timestamp}_mask.h5')
 
-        with tb.open_file(self.maskfile, 'a') as out_file:
+        with tb.open_file(maskfile, 'a') as out_file:
             try:
                 out_file.remove_node(out_file.root.mask_matrix)
             except NoSuchNodeError:
                 self.logger.debug('Specified maskfile does not include a mask_matrix yet!')
 
             out_file.create_carray(out_file.root,
-                                   name='mask_matrix',
-                                   title='Matrix mask',
-                                   obj=self.chip.mask_matrix)
+                                    name = f'mask_matrix_W{chip.wafer_number}_{chip.x_postition}{chip.y_position}',
+                                    title = 'Matrix mask',
+                                    obj = chip.mask_matrix)
             self.logger.info('Closing mask file: %s' % (self.maskfile))
 
-    def save_thr_mask(self, eq_matrix, chip_wafer, chip_x ,chip_y):
+    def save_thr_mask(self, eq_matrix, chip):
         '''
             Write the pixel threshold matrix to file
         '''
-        self.logger.info('Writing equalisation matrix to file...')
-        if not self.thrfile:
-            self.thrfile = os.path.join(get_equal_path(), 'W' + str(chip_wafer) + '-' + chip_x + str(chip_y) + '_equal_' + self.timestamp + '.h5')
+        self.logger.info(f'Writing equalisation matrix for chip {chip.chipId_decoded} to file...')
 
-        with tb.open_file(self.thrfile, 'a') as out_file:
+        thrfile = os.path.join(get_equal_path(), chip.chipId_decoded)
+        thrfile = os.path.join(thrfile, f'{chip.chipId_decoded}_equal_{self.timestamp}.h5')
+
+        with tb.open_file(thrfile, 'a') as out_file:
             try:
                 out_file.remove_node(out_file.root.thr_matrix)
             except NoSuchNodeError:
                 self.logger.debug('Specified thrfile does not include a thr_mask yet!')
 
             out_file.create_carray(out_file.root,
-                                       name='thr_matrix',
-                                       title='Matrix Threshold',
-                                       obj=eq_matrix)
-            self.logger.info('Closing thr_matrix file: %s' % (self.thrfile))
+                                   name = f'thr_matrix',
+                                   title = 'Matrix Threshold',
+                                   obj = eq_matrix)
+            self.logger.info('Closing thr_matrix file: %s' % (thrfile))
+
+        return thrfile
 
 
     def load_mask_matrix(self, **kwargs):
         '''
-            Load the mask matrix
+            Load the mask matrix for each active chip
         '''
-        if self.maskfile:
-            self.logger.info('Loading mask_matrix file: %s' % (self.maskfile))
+        try:
+            maskfiles = kwargs['maskfile']
+        except:
+            maskfiles = None
+
+        for chip in self.chips[1:]:
             try:
-                with tb.open_file(self.maskfile, 'r') as infile:
-                    self.chip.mask_matrix = infile.root.mask_matrix[:]
-            except NoSuchNodeError:
-                self.logger.debug('Specified maskfile does not include a mask_matrix!')
-                pass
+                maskfile = maskfiles[chip.chipId_decoded]['active']
+            except:
+                maskfile = None
+            
+            if not maskfile in [None, 'None']:
+                self.logger.info(f'Loading mask_matrix file: {maskfile} for chip {chip.chipId_decoded}')
+                try:
+                    with tb.open_file(maskfile, 'r') as infile:
+                        table_name       = f'infile.root.mask_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}[:]'
+                        chip.mask_matrix = eval(table_name)
+                except NoSuchNodeError:
+                    self.logger.debug('Specified maskfile does not include a mask_matrix!')
+                    pass
 
     def load_thr_matrix(self, **kwargs):
         '''
-            Load the pixel threshold matrix
+            Load the pixel threshold matrix for each active chip
         '''
-        if self.thrfile:
-            self.logger.info('Loading thr_matrix file: %s' % (self.thrfile))
+        try:
+            thrfiles = kwargs['thrfile']
+        except:
+            thrfiles = None
+
+        for chip in self.chips[1:]:
             try:
-                with tb.open_file(self.thrfile, 'r') as infile:
-                    self.chip.thr_matrix = infile.root.thr_matrix[:]
-            except NoSuchNodeError:
-                self.logger.debug('Specified thrfile does not include a thr_matrix!')
-                pass
+                thrfile = thrfiles[chip.chipId_decoded]['active']
+                print(f'Used threshold file: {thrfile}')
+            except:
+                thrfile = None
+
+            if not thrfile in [None, 'None']:
+                self.logger.info(f'Loading thr_matrix file: {thrfile} for chip {chip.chipId_decoded}')
+                try:
+                    with tb.open_file(thrfile, 'r') as infile:
+                        table_name      = f'infile.root.thr_matrix[:]'
+                        chip.thr_matrix = eval(table_name)
+                except NoSuchNodeError:
+                    self.logger.debug('Specified thrfile does not include a thr_matrix!')
+                    pass
 
     def close(self):
         '''
             Close the chip and the logfile
         '''
-        self.chip.close()
+        for chip in self.chips:
+            chip.close()
         self.close_logfile()

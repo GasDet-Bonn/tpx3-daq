@@ -239,8 +239,8 @@ def main(args_dict):
 
             print('\t FIFO data: ')
             for i, r in enumerate(ret):
-                if (r & 0xf0000000) >> 28 == 0b0101:
-                    if (r & 0x0f000000) >> 24 == 0b0001:
+                if (r & 0xf0000000) >> 28 == 0b0100:
+                    if (r & 0x0f000000) >> 24 == 0b0000:
                         print('FPGA', bin(r & 0x00ffffff), r & 0x00ffffff, (r & 0x00ffffff) * 25 / 1000000)
                 else:
                     if (r & 0x0f000000) >> 24 != 0b0001:
@@ -350,20 +350,26 @@ def main(args_dict):
 
                 print('\t FIFO data: ')
                 for i, r in enumerate(ret):
-                    if (r & 0xf0000000) >> 28 == 0b0101:
-                        if (r & 0x0f000000) >> 24 == 0b0001:
-                            print('FPGA', bin(0x400000 | (r & 0x00ffffff)), r & 0x00ffffff, (r & 0x00ffffff) * 25 / 1000000)
-                    else:
-                        link = (r & 0x0e000000) >> 25
+                    if (r & 0xf0000000) >> 28 == 0b0100:
+                        if (r & 0x0f000000) >> 24 == 0b0000:
+                            print('FPGA0', bin(0x400000 | (r & 0x00ffffff)), r & 0x00ffffff, (r & 0x00ffffff) * 25 / 1000000)
 
-                        if ((r & 0x0f000000) >> 24 == 0b0001 or
-                            (r & 0x0f000000) >> 24 == 0b0011 or
-                            (r & 0x0f000000) >> 24 == 0b0101 or
-                            (r & 0x0f000000) >> 24 == 0b0111 or
-                            (r & 0x0f000000) >> 24 == 0b1001 or
-                            (r & 0x0f000000) >> 24 == 0b1011 or
-                            (r & 0x0f000000) >> 24 == 0b1101 or
-                            (r & 0x0f000000) >> 24 == 0b1111):
+                    if (r & 0xf0000000) >> 28 == 0b0100:
+                        if (r & 0x0f000000) >> 24 == 0b0001:
+                            print('FPGA1', bin(0x400000 | (r & 0x00ffffff)), r & 0x00ffffff)
+
+                    if (r & 0xf0000000) >> 28 == 0b0100:
+                        if (r & 0x0f000000) >> 24 == 0b0010:
+                            print('SHUTTER0', bin(0x400000 | (r & 0x00ffffff)), r & 0x00ffffff)
+
+                    if (r & 0xf0000000) >> 28 == 0b0100:
+                        if (r & 0x0f000000) >> 24 == 0b0011:
+                            print('SHUTTER1', bin(0x400000 | (r & 0x00ffffff)), r & 0x00ffffff)
+
+                    else:
+                        link = (r & 0x3e000000) >> 25
+
+                        if ((r & 0x01000000) >> 24 == 0b1):
 
                             d1 = bitword_to_byte_list(r)
                             for j in range(i, len(ret)):

@@ -34,13 +34,13 @@ registers:
   description: Fine control of Pixel Threshold
   name: Vthreshold_fine
   size: 9
-  value: 270
+  value: 255
 - address: 7
   default: 8
   description: Coarse Control of Pixel Threshold
   name: Vthreshold_coarse
   size: 4
-  value: 8
+  value: 7
 - address: 8
   default: 128
   description: Ibias_DiscS1 switched on
@@ -70,7 +70,7 @@ registers:
   description: Ibias Pixel DAC value
   name: Ibias_PixelDAC
   size: 8
-  value: 128
+  value: 120
 - address: 13
   default: 128
   description: Test Pulse Buffer input

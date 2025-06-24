@@ -3,7 +3,7 @@ registers:
   description: With 0 the PLL is on while with 1 it is bypassed with ClkInRefPLL
   address: 0
   size: 1
-  default: 1
+  default: 0
   value: 0
 - name: reset
   description: With 0 the PLL is Reset while with 1 it is running

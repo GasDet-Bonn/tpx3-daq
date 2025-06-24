@@ -104,6 +104,34 @@ dictNames = {
     }
 }
 
+chip_dictNames = {
+    "ConfigDict" : {
+        "CustomDict" : "_configs",
+        "YamlContent": "config",
+        "Filename"   : "chip_GeneralConfiguration.yml",
+        "FnameVar"   : "config_file"
+    },
+    "DacsDict" : {
+        "CustomDict" : "_dacs",
+        "YamlContent": "dac",
+        "Filename"   : "chip_dacs.yml",
+        "FnameVar"   : "dac_file"
+    },
+    "OutputBlockDict" : {
+        "CustomDict" : "_outputBlocks",
+        "YamlContent": "outputBlock",
+        "Filename"   : "chip_outputBlock.yml",
+        "FnameVar"   : "outputBlock_file"
+    },
+    "PLLConfigDict" : {
+        "CustomDict" : "_PLLConfigs",
+        "YamlContent": "PLLConfigDict",
+        "Filename"   : "chip_PLLConfig.yml",
+        "FnameVar"   : "PLLConfig_file"
+    }
+}
+
+
 class CustomDict(dict):
     """
     A custom dictionary class, used for the DACs, the general and the output
@@ -139,7 +167,7 @@ class CustomDict(dict):
             else:
                 raise ValueError(self.dictErrors['negativeVal'].format(key))
 
-class TPX3(Dut):
+class TPX3():
 
     ''' Map hardware IDs for board identification '''
     hw_map = {
@@ -230,33 +258,49 @@ class TPX3(Dut):
         self.lfsr_14 = {}
         self.lfsr_4 = {}
 
+    def init(self, ChipId=None, inter_layer=None, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
 
-        if not conf:
-            conf = os.path.join(self.proj_dir, 'tpx3' + os.sep + 'tpx3.yml')
+        if inter_layer != None:
+            self.Dut_layer = inter_layer
+            self.fw_version = self.Dut_layer['intf'].read(0x0000, 1)[0]
+            self.board_version = self.hw_map[self.Dut_layer['intf'].read(0x0001, 1)[0]]
 
-        logger.info("Loading configuration file from %s" % conf)
-        super(TPX3, self).__init__(conf)
+            logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
 
-    def init(self, config_file=None, dac_file=None, outputBlock_file=None, PLLConfig_file=None):
-        super(TPX3, self).init()
+            if self.fw_version != self.fw_version_required:
+                raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, VERSION))
 
-        self.fw_version = self['intf'].read(0x0000, 1)[0]
-        self.board_version = self.hw_map[self['intf'].read(0x0001, 1)[0]]
+            # self['CONF_SR'].set_size(3924)
 
-        logger.info('Found board %s running firmware version %d.' % (self.board_version, self.fw_version))
-
-        if self.fw_version != self.fw_version_required:
-            raise Exception("Firmware version %s does not satisfy version requirements %s!)" % ( self.fw_version, self.fw_version_required))
-
-        # self['CONF_SR'].set_size(3924)
-
-        self['CONTROL']['DATA_MUX_SEL'] = 1
-        self['CONTROL'].write()
+            self.Dut_layer['CONTROL']['DATA_MUX_SEL'] = 1
+            self.Dut_layer['CONTROL'].write()
 
         # dummy Chip ID, which will be replaced by some value read from a YAML file
         # for a specific Timepix3
         # Our current chip seems to think its chip ID is all 0s. ?!
-        self.chipId = [0x00 for _ in range(3)] + [0x01]
+        #self.chipId = [0x00 for _ in range(3)] + [0x01]
+
+        # When creating TPX3 object without a chipId (ChipId=None),
+        # every function uses global sync header.
+        # If we create TPX3 object with a chipId (or if we set chipId after init),
+        # every function uses local sync header.
+
+        if ChipId != None:
+            # Information about the chip comes here
+            # 4 Byte representation
+            self.chipId         = ChipId[0]
+            # Integer representation
+            self.chipId_int     = ChipId[1]
+            # Decoded representation
+            self.chipId_decoded = ChipId[2]
+            # Wafer number
+            self.wafer_number   = ChipId[3]
+            # X coordinate on wafer
+            self.x_position     = ChipId[4]
+            # Y coordinate on wafer
+            self.y_position     = ChipId[5]
+        else:
+            self.chipId = None
 
         # reset all matrices to empty defaults
         self.reset_matrices()
@@ -273,7 +317,7 @@ class TPX3(Dut):
         self.outputBlock_file = outputBlock_file
         self.PLLConfig_file = PLLConfig_file
 
-        for dict_type, type_dict in six.iteritems(dictNames):
+        for dict_type, type_dict in six.iteritems(chip_dictNames if self.chipId != None else dictNames):
             setattr(self, type_dict["YamlContent"], {})
             # get the name of the variable, which stores the filename, e.g. `config_file`
             var_name = type_dict["FnameVar"]
@@ -291,12 +335,8 @@ class TPX3(Dut):
 
         # The ML605 runs with a 320 MHz PLL input and thus the PLL is bypassed. Other boards get
         # a 40 MHz input as reference for the PLL and thus the PLL is not bypassed.
-        if self.board_version == 'ML605':
-            self._PLLConfigs["bypass"] = 1
-            logger.info("Set PLL bypass on")
-        else:
-            self._PLLConfigs["bypass"] = 0
-            logger.info("Set PLL bypass off")
+        self._PLLConfigs["bypass"] = 0
+        logger.info("Set PLL bypass off")
 
     def reset_matrices(self, test=True, thr=True, mask=True, tot=True,
                        toa=True, ftoa=True, hits=True):
@@ -379,6 +419,12 @@ class TPX3(Dut):
         """
         data = yaml.load(open(filename, 'r'), Loader=yaml.FullLoader)
 
+        # If chipId is available, select register config for this Id
+        if self.chipId != None:
+            registers = [chip['registers'] for chip in data['chips'] if chip['chip_ID'] == self.chipId_int][0]
+        else: # If not, get from default file
+            registers = data['registers']
+
         # map storing the allowed sizes of each value
         valsize_map = {}
         # define a list of the different keys we have in each YAML file
@@ -387,7 +433,7 @@ class TPX3(Dut):
         outdict = {}
         # iterate over all registers, build small dictionary for
         # each register and assign to full dictionary
-        for register in data['registers']:
+        for register in registers:
             tmp_dict = {}
             for key in elements:
                 tmp_dict[key] = register[key]
@@ -478,13 +524,17 @@ class TPX3(Dut):
         """
         # Note: here we can now iterate over self.dacs instead of self._dacs
         # due to the `dacs` property!
+        data = []
+
         for dac, val in six.iteritems(self.dacs):
             if dac != 'Sense_DAC':
-                data = self.set_dac(dac, val, write = False)
-                self.write(data, True)
+                data.append(self.set_dac(dac, val, write = False))
+                #self.write(data, True)
             else:
-                data = self.sense_dac_sel(dac = val, write = False)
-                self.write(data, True)
+                data.append(self.sense_dac_sel(dac = val, write = False))
+                #self.write(data, True)
+
+        return data
 
     def read_dacs(self):
         """
@@ -507,7 +557,7 @@ class TPX3(Dut):
             self.write(data, True)
             print("Wrote {} to dac {}".format(data, dac))
             print("\tGet DAC value, DAC code and EoC:")
-            dout = self.decode_fpga(self['FIFO'].get_data(), True)
+            dout = self.decode_fpga(self.Dut_layer['FIFO'].get_data(), True)
             b = BitLogic(9)
             b[:] = val
             ddout = self.decode(dout[0], 0x03)
@@ -517,7 +567,7 @@ class TPX3(Dut):
             assert(ddout[0][13:5].tovalue() == b.tovalue())
 
     # TODO: add the given values to the _dacs dictionary, if this function is used!
-    def set_dac(self, dac, value, chip=None, write=True):
+    def set_dac(self, dac, value, write=True):
         """
         Sets the DAC given by the name `dac` to value `value`.
         If `write` is `True`, we perform the write of the data immediately,
@@ -540,10 +590,10 @@ class TPX3(Dut):
         """
         data = []
         # first header, first 40 bits [63:24]
-        if chip is None:
-            data = self.getGlobalSyncHeader()
-        else:
+        if self.chipId != None:
             data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         # bit logic for final 24 bits
         bits = BitLogic(24)
@@ -565,6 +615,9 @@ class TPX3(Dut):
         data += bits.toByteList()
 
         data += [0x00]
+
+        # Write new value of the dac in dacs dictionary
+        self.dacs[dac] = value
 
         if write is True:
             self.write(data)
@@ -589,7 +642,10 @@ class TPX3(Dut):
             Else: command to perform read
         """
         # TODO: change to local sync header later
-        data = self.getGlobalSyncHeader()
+        if self.chipId != None:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         data += [self.periphery_header_map["ReadDAC"]]
 
@@ -645,7 +701,10 @@ class TPX3(Dut):
         (see manual v1.9 p.34)
         """
         # TODO: change to local sync header later
-        data = self.getGlobalSyncHeader()
+        if self.chipId != None:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         data += [self.periphery_header_map["SenseDACsel"]]
 
@@ -678,15 +737,15 @@ class TPX3(Dut):
             return
 
         if clear_fifo:
-            self['FIFO'].RESET
+            self.Dut_layer['FIFO'].RESET
             time.sleep(TPX3_SLEEP)
 
         # total size in bits
-        self['SPI'].set_size(len(data) * 8)
-        self['SPI'].set_data(data)
-        self['SPI'].start()
+        self.Dut_layer['SPI'].set_size(len(data) * 8)
+        self.Dut_layer['SPI'].set_data(data)
+        self.Dut_layer['SPI'].start()
 
-        while(not self['SPI'].is_ready):
+        while(not self.Dut_layer['SPI'].is_ready):
             # wait until SPI is done
             pass
 
@@ -1006,7 +1065,10 @@ class TPX3(Dut):
         pixeldata = np.zeros((1536), dtype=np.uint8)
 
         # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
+        if self.chipId != None:
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         # append the code for the LoadConfigMatrix command header: 8 bits
         data += [self.matrix_header_map["LoadConfigMatrix"]]
@@ -1047,21 +1109,21 @@ class TPX3(Dut):
 
         # create a 12 bit variable for the values of the GlobalConfig registers based
         # on the read YAML file storing the chip configuration
-        configuration_bits[0]=self._configs["Polarity"]
-        configuration_bits[2:1]=self._configs["Op_mode"]
-        configuration_bits[3]=self._configs["Gray_count_en"]
-        configuration_bits[4]=self._configs["AckCommand_en"]
-        configuration_bits[5]=self._configs["TP_en"]
-        configuration_bits[6]=self._configs["Fast_Io_en"]
-        configuration_bits[7]=self._configs["TimerOverflowControl"]
-        configuration_bits[8]=0
-        configuration_bits[9]=self._configs["SelectTP_Dig_Analog"]
-        configuration_bits[10]=self._configs["SelectTP_Ext_Int"]
-        configuration_bits[11]=self._configs["SelectTP_ToA_Clk"]
+        configuration_bits[0] = self._configs["Polarity"]
+        configuration_bits[2:1] = self._configs["Op_mode"]
+        configuration_bits[3] = self._configs["Gray_count_en"]
+        configuration_bits[4] = self._configs["AckCommand_en"]
+        configuration_bits[5] = self._configs["TP_en"]
+        configuration_bits[6] = self._configs["Fast_Io_en"]
+        configuration_bits[7] = self._configs["TimerOverflowControl"]
+        configuration_bits[8] = 0
+        configuration_bits[9] = self._configs["SelectTP_Dig_Analog"]
+        configuration_bits[10] = self._configs["SelectTP_Ext_Int"]
+        configuration_bits[11] = self._configs["SelectTP_ToA_Clk"]
 
         # append the the GeneralConfiguration register with 4 additional bits to get the 16 bit DataIn
         data += (configuration_bits + BitLogic(4)).toByteList()
-
+        # append dummy byte
         data += [0x00]
 
         if write is True:
@@ -1095,9 +1157,9 @@ class TPX3(Dut):
             self.write(data)
         return data
 
-    def read_periphery_template(self, name, header_only = False, local_header = False):
+    def read_periphery_template(self, name, header_only = False):
         # presync header: 40 bits
-        if local_header:
+        if self.chipId != None:
             data = self.getLocalSyncHeader()
         else:
             data = self.getGlobalSyncHeader()
@@ -1113,8 +1175,8 @@ class TPX3(Dut):
 
         return data
 
-    def read_matrix_template(self, name, header_only = False, local_header = False):
-        if local_header:
+    def read_matrix_template(self, name, header_only = False):
+        if self.chipId != None:
             data = self.getLocalSyncHeader()
         else:
             data = self.getGlobalSyncHeader()
@@ -1242,9 +1304,9 @@ class TPX3(Dut):
         data = self.read_periphery_template("SetTimer_15_0", True)
 
         # fill with two dummy bytes for DataIN
-        time=BitLogic(16)
-        time[15:0]=setTime
-        data +=BitLogic.toByteList(time)
+        time = BitLogic(16)
+        time[15:0] = setTime
+        data += BitLogic.toByteList(time)
 
         data += [0x00]
 
@@ -1260,9 +1322,9 @@ class TPX3(Dut):
         data = self.read_periphery_template("SetTimer_31_16", True)
 
         # fill with two dummy bytes for DataIN
-        time=BitLogic(16)
-        time[15:0]=setTime
-        data +=BitLogic.toByteList(time)
+        time = BitLogic(16)
+        time[15:0] = setTime
+        data += BitLogic.toByteList(time)
 
         data += [0x00]
 
@@ -1278,14 +1340,15 @@ class TPX3(Dut):
         data = self.read_periphery_template("SetTimer_47_32", True)
 
         # fill with two dummy bytes for DataIN
-        time=BitLogic(16)
-        time[15:0]=setTime
-        data +=BitLogic.toByteList(time)
+        time = BitLogic(16)
+        time[15:0] = setTime
+        data += BitLogic.toByteList(time)
 
         data += [0x00]
 
         if write is True:
             self.write(data)
+        return data
 
 
     def startTimer(self, write=True):
@@ -1315,7 +1378,10 @@ class TPX3(Dut):
         number_bits = BitLogic(16)
 
         # presync header: 40 bits; TODO: header selection
-        data = self.getGlobalSyncHeader()
+        if self.chipId != None:    
+            data = self.getLocalSyncHeader()
+        else:
+            data = self.getGlobalSyncHeader()
 
         # append the code for the GeneralConfig_Read command header: 8 bits
         data += [self.periphery_header_map["TP_PulseNumber"]]
@@ -1344,7 +1410,7 @@ class TPX3(Dut):
             #  check if the phase is allowed
             raise ValueError("The phase must not be bigger than 15!")
 
-        data = self.read_periphery_template("TP_Period", True)
+        data = self.read_periphery_template("TP_Period", header_only = True)
         # create a 12 bit variable for the period (bits [7:0]) and the phase (bits [11:8])
         bits = BitLogic(12)
 
@@ -1616,11 +1682,11 @@ class TPX3(Dut):
         if pin not in {"TO_SYNC", "RESET", "SHUTTER"}:
             raise ValueError("You can only toggle TO_SYNC, RESET and SHUTTER pins!")
 
-        self['CONTROL'][pin] = 1
-        self['CONTROL'].write()
+        self.Dut_layer['CONTROL'][pin] = 1
+        self.Dut_layer['CONTROL'].write()
         time.sleep(sleep_time)
-        self['CONTROL'][pin] = 0
-        self['CONTROL'].write()
+        self.Dut_layer['CONTROL'][pin] = 0
+        self.Dut_layer['CONTROL'].write()
 
     def lfsr_10_bit(self):
         """
@@ -1693,11 +1759,11 @@ class TPX3(Dut):
         Decrypts a gray encoded 48 bit value according to Manual v1.9 page 19
         """
         encoded_value = BitLogic(48)
-        encoded_value[47:0]=value
+        encoded_value[47:0] = value
         gray_decrypt = BitLogic(48)
-        gray_decrypt[47]=encoded_value[47]
+        gray_decrypt[47] = encoded_value[47]
         for i in range (46, -1, -1):
-            gray_decrypt[i]=gray_decrypt[i+1]^encoded_value[i]
+            gray_decrypt[i] = gray_decrypt[i+1]^encoded_value[i]
 
         return gray_decrypt
 

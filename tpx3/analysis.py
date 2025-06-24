@@ -397,7 +397,7 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
     data1 = np.zeros(raw_data.shape[0], dtype=np.uint64)
 
     # Get FPGA Timestamps and combine them to the full 48 bit timestamp
-    timestamp_filter = (raw_data & 0xF0000000) >> 28 == 0b0101
+    timestamp_filter = (raw_data & 0xFF000000) >> 28 == 0b0100000
 
     if np.sum(timestamp_filter):
         timestamps_raw = raw_data[timestamp_filter]
@@ -421,14 +421,14 @@ def raw_data_to_dut(raw_data, last_timestamp, next_to_last_timestamp, chunk_nr=0
             k = (timestamps_raw & 0xFFFFFF)
             timestamps_combined[:] = k[0::2]
             timestamps_combined = (timestamps_combined << 24) + (k[1::2])
-            timestamps_combined = timestamps_combined | 0b0101 << 48
+            timestamps_combined = timestamps_combined | 0b0100000 << 48
             timestamps_combined_indices = timestamps_indices[0::2]
         else:
             timestamps_combined = np.empty((timestamps_raw.shape[0] // 2), dtype=np.uint64)
             k = (timestamps_raw & 0xFFFFFF)
             timestamps_combined[:] = k[0::2]
             timestamps_combined = (timestamps_combined << 24) + (k[1::2])
-            timestamps_combined = timestamps_combined | 0b0101 << 48
+            timestamps_combined = timestamps_combined | 0b0100000 << 48
             timestamps_combined_indices = timestamps_indices[0::2]
 
         # Put the FPGA timestamps in a new array on their initial positions

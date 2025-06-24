@@ -52,7 +52,7 @@ def raw_data_to_dut(raw_data):
         return np.empty(0, dtype=np.uint64)
 
     # make a list of the header elements giving the link from where the data was received (h)
-    h = (raw_data & 0x1E000000) >> 25
+    h = (raw_data & 0x3E000000) >> 25
     # and a list of the data (k)
     k = (raw_data & 0xffffff)
     data_words = np.empty(0, dtype=np.uint64) # empty list element to store the final data_words

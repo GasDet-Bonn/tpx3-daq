@@ -4,13 +4,16 @@ import os
 import time
 import cairo
 from shutil import copy
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject, GLib
 import matplotlib.cm as cm
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 import numpy as np
 from multiprocessing import Process, Queue, Pipe
+import yaml
+import tables as tb
+from copy import deepcopy
 
 from UI.GUI.PlotWidget import plotwidget
 from UI.tpx3_logger import file_logger, TPX3_datalogger, mask_logger, equal_logger
@@ -22,7 +25,7 @@ from UI.GUI.sim_producer.producer_sim_manager import ProducerSimManager
 
 
 class GUI_Plot1(Gtk.Window):
-    def __init__(self, data_queue, startet_from = 'GUI', plottype = None, integration_length = None, color_depth = None, colorsteps = None):
+    def __init__(self, data_queue, chip_links = None, startet_from = 'GUI', plottype = None, integration_length = None, color_depth = None, colorsteps = None):
         self.active = 'False'
         Gtk.Window.__init__(self, title = 'Plot')
         self.connect('delete-event', self.window_destroy)
@@ -35,6 +38,7 @@ class GUI_Plot1(Gtk.Window):
         self.add(self.box)
 
         self.plotwidget = plotwidget(data_queue = data_queue)
+        self.plotwidget.init_figure(chip_links)
         self.plotbox = Gtk.EventBox()
         self.plotbox.add(self.plotwidget.canvas)
         self.plotbox.connect('button_press_event', self.plot_right_clicked)
@@ -332,6 +336,7 @@ class GUI_ToT_Calib(Gtk.Window):
                                                             tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
@@ -465,6 +470,7 @@ class GUI_Timewalk_Calib(Gtk.Window):
                                                             mask_step = self.Number_of_Iterations,
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
@@ -613,6 +619,7 @@ class GUI_Threshold_Scan(Gtk.Window):
                                                             tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
@@ -779,6 +786,7 @@ class GUI_Threshold_Calib(Gtk.Window):
                                                             n_pulse_heights = self.n_pulse_heights_value,
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
@@ -926,6 +934,7 @@ class GUI_Testpulse_Scan(Gtk.Window):
                                                             tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
@@ -1055,6 +1064,7 @@ class GUI_Noise_Scan(Gtk.Window):
                                                             shutter = self.shutter_time,
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue)
@@ -1194,6 +1204,7 @@ class GUI_PixelDAC_opt(Gtk.Window):
                                                             offset = self.col_offset_value,
                                                             tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             result = GUI.pixeldac_result,
@@ -1324,6 +1335,7 @@ class GUI_Run_Datataking(Gtk.Window):
                                                             scan_timeout = self.Datataking_Time_value,
                                                             thrfile = TPX3_datalogger.read_value(name = 'Equalisation_path'),
                                                             maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                            chip_link = TPX3_datalogger.data['chip_links'],
                                                             progress = GUI.get_progress_value_queue(),
                                                             status = GUI.get_status_queue(),
                                                             plot_queue = GUI.plot_queue,
@@ -1341,15 +1353,20 @@ class GUI_SetDAC(Gtk.Window):
         Gtk.Window.__init__(self, title = 'DAC settings')
         self.connect('delete-event', self.window_destroy)
 
-        grid = Gtk.Grid()
-        grid.set_row_spacing(2)
-        grid.set_column_spacing(10)
-        grid.set_border_width(10)
-        self.add(grid)
+        self.grid = Gtk.Grid()
+        self.grid.set_row_spacing(2)
+        self.grid.set_column_spacing(10)
+        self.grid.set_border_width(10)
+        self.add(self.grid)
 
-        Space = Gtk.Label()
-        Space.set_text("")
+        self.default_label = Gtk.Label()
+        self.default_label.set_text("default")
+        self.grid.attach(self.default_label, 1, 0, 1, 1)
 
+        # We should now be able to pull everything from the data logger
+        chips_list = list(TPX3_datalogger.data['chip_dacs'].keys())
+               
+        # Use this as template
         self.dac_dict = {'Ibias_Preamp_ON':     {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
                          'Ibias_Preamp_OFF':    {"value" : 0, "default": 7,   "size" : 15,  "adjust": None, "spinButton": None, "label": None, "show": False},
                          'VPreamp_NCAS':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
@@ -1370,58 +1387,158 @@ class GUI_SetDAC(Gtk.Window):
                          'Ibias_CP_PLL':        {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True },
                          'PLL_Vcntrl':          {"value" : 0, "default": 127, "size" : 255, "adjust": None, "spinButton": None, "label": None, "show": True }}
 
-        for dac in self.dac_dict:
-            if self.dac_dict[dac]['show']:
-                if dac != 'Vthreshold_combined':
-                    self.dac_dict[dac]['value'] = TPX3_datalogger.read_value(name = dac)
+        self.full_dac_dict = {}
+
+        for chip in chips_list:
+            self.full_dac_dict[chip] = deepcopy(self.dac_dict)        
+
+        # Set values from chip_dacs.yml
+        for chip in chips_list:
+            for dac in self.dac_dict:
+                if self.dac_dict[dac]['show'] == True:
+                    # Get value from datalogger
+                    if dac != 'Vthreshold_combined':
+                        value = TPX3_datalogger.data['chip_dacs'][chip][dac]
+                        self.full_dac_dict[chip][dac]['value'] = value
+                    else:
+                        value_fine   = TPX3_datalogger.data['chip_dacs'][chip]['Vthreshold_fine']
+                        value_coarse = TPX3_datalogger.data['chip_dacs'][chip]['Vthreshold_coarse']
+                        self.full_dac_dict[chip][dac]['value'] = utils.threshold_compose(value_fine, value_coarse)
                 else:
-                    self.dac_dict[dac]['value'] = utils.threshold_compose(TPX3_datalogger.read_value(name = 'Vthreshold_fine'), TPX3_datalogger.read_value(name = 'Vthreshold_coarse'))
-            else:
-                self.dac_dict[dac]['value'] = 7
-            self.dac_dict[dac]['adjust'] = Gtk.Adjustment()
-            self.dac_dict[dac]['adjust'].configure(self.dac_dict[dac]['default'], 0, self.dac_dict[dac]['size'], 1, 0, 0)
-            self.dac_dict[dac]['spinButton'] = Gtk.SpinButton(adjustment = self.dac_dict[dac]['adjust'], climb_rate = 1, digits=0)
-            self.dac_dict[dac]['spinButton'].set_value(self.dac_dict[dac]['value'])
-            self.dac_dict[dac]['spinButton'].connect('value-changed', self.DAC_set, dac)
-            self.dac_dict[dac]['label'] = Gtk.Label()
-            self.dac_dict[dac]['label'].set_text(dac + " ")
+                    self.full_dac_dict[chip][dac]['value'] = 7
+                
+                self.full_dac_dict[chip][dac]['adjust'] = Gtk.Adjustment()
+                self.full_dac_dict[chip][dac]['adjust'].configure(self.full_dac_dict[chip][dac]['default'], 0, self.full_dac_dict[chip][dac]['size'], 1, 0, 0)
+                self.full_dac_dict[chip][dac]['spinButton'] = Gtk.SpinButton(adjustment = self.full_dac_dict[chip][dac]['adjust'], climb_rate = 1, digits=0)
+                self.full_dac_dict[chip][dac]['spinButton'].set_value(self.full_dac_dict[chip][dac]['value'])
+                self.full_dac_dict[chip][dac]['spinButton'].connect('value-changed', self.DAC_set, dac, chip)
 
-        #Save Button
-        self.Savebutton = Gtk.Button(label = 'Save')
-        self.Savebutton.connect('clicked', self.on_Savebutton_clicked)
 
+        # Create labels and spinbuttons for default values
         for i, dac in enumerate(self.dac_dict):
             if self.dac_dict[dac]['show']:
-                grid.attach(self.dac_dict[dac]['label'], 0, i, 1, 1)
-                grid.attach(self.dac_dict[dac]['spinButton'], 1, i, 1, 1)
+                self.full_dac_dict['default'][dac]['label'] = Gtk.Label()
+                self.full_dac_dict['default'][dac]['label'].set_text(dac + " ")
+                self.grid.attach(self.full_dac_dict['default'][dac]['label'], 0, i+1, 1, 1)
+                self.grid.attach(self.full_dac_dict['default'][dac]['spinButton'], 1, i+1, 1, 1)
+        
 
-        grid.attach(Space, 0, 18, 1, 1)
-        grid.attach(self.Savebutton, 1, 19, 1, 1)
+        # Create dropdown menu, where we select a chip, the dac values
+        # are loaded and displayed to be edited
+        self.chip_dac_edit = Gtk.ComboBoxText()
+        self.chip_dac_edit.connect('changed', self.on_chip_dac_edit_changed)
+        
+        for id in chips_list[1:]:
+            self.chip_dac_edit.append_text(id)
+        
+        self.chip_dac_edit.set_active(0)
+        
+        # attach is triggered in on_chip_dac_edit_changed by self.chip_dac_edit.set_active(0)
+        self.Savebutton_Chip = Gtk.Button(label = 'Save to chip')
+
+        Space = Gtk.Label()
+        Space.set_text("")
+        self.grid.attach(Space, 0, 19+1, 1, 1)
+
+        self.Savebutton = Gtk.Button(label = 'Save default')
+        self.Savebutton.connect('clicked', self.on_Savebutton_clicked, 'default')
+        self.grid.attach(self.Savebutton, 1, 21+1, 1, 1)
+
+        self.Savebutton_default_to_all = Gtk.Button(label = 'Save default to all')
+        self.Savebutton_default_to_all.connect('clicked', self.on_Savebutton_to_all_clicked)
+        self.grid.attach(self.Savebutton_default_to_all, 0, 21+1, 1, 1)
+
+        self.Savebutton_default_to_chip = Gtk.Button(label = 'Save default to chip')
+        self.Savebutton_default_to_chip.connect('clicked', self.on_Savebutton_default_to_chip)
+        self.grid.attach(self.Savebutton_default_to_chip, 0, 20+1, 1, 1)
 
         self.show_all()
 
-    def DAC_set(self, event, dac):
-        if dac not in{'Vthreshold_fine', 'Vthreshold_coarse', 'Vthreshold_combined'}:
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-        elif dac == 'Vthreshold_combined':
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-            fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
-            self.dac_dict['Vthreshold_fine']['value'] = fine
-            self.dac_dict['Vthreshold_fine']['spinButton'].set_value(fine)
-            self.dac_dict['Vthreshold_coarse']['value'] = coarse
-            self.dac_dict['Vthreshold_coarse']['spinButton'].set_value(coarse)
-        elif dac == 'Vthreshold_fine':
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-            threshold = utils.threshold_compose(self.dac_dict[dac]['value'], self.dac_dict['Vthreshold_coarse']['value'])
-            self.dac_dict['Vthreshold_combined']['value'] = threshold
-            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
-        elif dac == 'Vthreshold_coarse':
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
-            threshold = utils.threshold_compose(self.dac_dict['Vthreshold_fine']['value'], self.dac_dict[dac]['value'])
-            self.dac_dict['Vthreshold_combined']['value'] = threshold
-            self.dac_dict['Vthreshold_combined']['spinButton'].set_value(threshold)
+    def on_Savebutton_to_all_clicked(self, event):
+        #check if process is running
+        if GUI.get_process_alive():
+            subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
+            return
 
-    def on_Savebutton_clicked(self, widget):
+        #write values
+        for chipID in self.full_dac_dict:
+            if chipID != 'default':
+                for dac in self.dac_dict:
+                    self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict['default'][dac]['spinButton'].get_value_as_int()
+                    self.full_dac_dict[chipID][dac]['spinButton'].set_value(self.full_dac_dict[chipID][dac]['value'])
+                    if self.dac_dict[dac]['show']:
+                        if dac != 'Vthreshold_combined':
+                            TPX3_datalogger.write_value(name = dac, value = self.full_dac_dict[chipID][dac]['value'], chip = chipID)
+                            TPX3_datalogger.write_to_yaml(name = dac, chip = chipID)
+                        else:
+                            fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+                            TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chipID)
+                            TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chipID)
+                            TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chipID)
+                            TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chipID)
+
+    def on_Savebutton_default_to_chip(self, event):
+        #check if process is running
+        if GUI.get_process_alive():
+            subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
+            return
+
+        chipID = self.chip_dac_edit.get_active_text()
+        #write values
+        for dac in self.dac_dict:
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict['default'][dac]['spinButton'].get_value_as_int()
+            self.full_dac_dict[chipID][dac]['spinButton'].set_value(self.full_dac_dict[chipID][dac]['value'])
+            if self.dac_dict[dac]['show']:
+                if dac != 'Vthreshold_combined':
+                    TPX3_datalogger.write_value(name = dac, value = self.full_dac_dict[chipID][dac]['value'], chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = dac, chip = chipID)
+                else:
+                    fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chipID)
+                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chipID)
+        
+    def on_chip_dac_edit_changed(self, chip_dac_edit):
+        self.grid.remove_column(2)
+        current_ID = chip_dac_edit.get_active_text()
+        
+        for chip in self.full_dac_dict:
+            if current_ID == chip:
+                for i, dac in enumerate(self.dac_dict):
+                    if self.dac_dict[dac]['show']:
+                        self.grid.attach(self.full_dac_dict[current_ID][dac]['spinButton'], 2, i+1, 1, 1)
+        self.Savebutton_Chip = Gtk.Button(label = 'Save to chip')
+        self.Savebutton_Chip.connect('clicked', self.on_Savebutton_clicked, current_ID)
+        
+        self.grid.attach(self.chip_dac_edit, 2, 0, 1, 1)
+        self.grid.attach(self.Savebutton_Chip, 2, 21+1, 1, 1)
+
+        self.show_all()
+
+
+    def DAC_set(self, event, dac, chipID):
+        if dac not in{'Vthreshold_fine', 'Vthreshold_coarse', 'Vthreshold_combined'}:
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+        elif dac == 'Vthreshold_combined':
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+            fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+            self.full_dac_dict[chipID]['Vthreshold_fine']['value'] = fine
+            self.full_dac_dict[chipID]['Vthreshold_fine']['spinButton'].set_value(fine)
+            self.full_dac_dict[chipID]['Vthreshold_coarse']['value'] = coarse
+            self.full_dac_dict[chipID]['Vthreshold_coarse']['spinButton'].set_value(coarse)
+        elif dac == 'Vthreshold_fine':
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.full_dac_dict[chipID][dac]['value'], self.full_dac_dict[chipID]['Vthreshold_coarse']['value'])
+            self.full_dac_dict[chipID]['Vthreshold_combined']['value'] = threshold
+            self.full_dac_dict[chipID]['Vthreshold_combined']['spinButton'].set_value(threshold)
+        elif dac == 'Vthreshold_coarse':
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
+            threshold = utils.threshold_compose(self.full_dac_dict[chipID]['Vthreshold_fine']['value'], self.full_dac_dict[chipID][dac]['value'])
+            self.full_dac_dict[chipID]['Vthreshold_combined']['value'] = threshold
+            self.full_dac_dict[chipID]['Vthreshold_combined']['spinButton'].set_value(threshold)
+
+    def on_Savebutton_clicked(self, widget, chipID):
         #check if process is running
         if GUI.get_process_alive():
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
@@ -1429,17 +1546,17 @@ class GUI_SetDAC(Gtk.Window):
 
         #write values
         for dac in self.dac_dict:
-            self.dac_dict[dac]['value'] = self.dac_dict[dac]['spinButton'].get_value_as_int()
+            self.full_dac_dict[chipID][dac]['value'] = self.full_dac_dict[chipID][dac]['spinButton'].get_value_as_int()
             if self.dac_dict[dac]['show']:
                 if dac != 'Vthreshold_combined':
-                    TPX3_datalogger.write_value(name = dac, value = self.dac_dict[dac]['value'])
-                    TPX3_datalogger.write_to_yaml(name = dac)
+                    TPX3_datalogger.write_value(name = dac, value = self.full_dac_dict[chipID][dac]['value'], chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = dac, chip = chipID)
                 else:
-                    fine, coarse = utils.threshold_decompose(self.dac_dict[dac]['value'])
-                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine)
-                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine')
-                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse)
-                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse')
+                    fine, coarse = utils.threshold_decompose(self.full_dac_dict[chipID][dac]['value'])
+                    TPX3_datalogger.write_value(name = 'Vthreshold_fine', value = fine, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_fine', chip = chipID)
+                    TPX3_datalogger.write_value(name = 'Vthreshold_coarse', value = coarse, chip = chipID)
+                    TPX3_datalogger.write_to_yaml(name = 'Vthreshold_coarse', chip = chipID)
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -1467,6 +1584,31 @@ class GUI_Additional_Settings(Gtk.Window):
         self.Space2.set_text("")
         self.Space3 = Gtk.Label()
         self.Space3.set_text("")
+
+        # Import settings from yaml
+        # Open the link yaml file
+        proj_dir         = os.path.dirname(os.path.dirname((os.path.dirname(os.path.abspath(__file__)))))
+        yaml_file        = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_GeneralConfiguration.yml')
+        yaml_default     = os.path.join(proj_dir, 'tpx3' + os.sep + 'GeneralConfiguration.yml')
+        yaml_PLL         = os.path.join(proj_dir, 'tpx3' + os.sep + 'chip_outputBlock.yml')
+        yaml_PLL_default = os.path.join(proj_dir, 'tpx3' + os.sep + 'outputBlock.yml')
+
+        with open(yaml_file, 'r') as file:
+            dict_yaml    = yaml.load(file, Loader=yaml.FullLoader)
+        with open(yaml_default, 'r') as file:
+            self.dict_default = yaml.load(file, Loader=yaml.FullLoader)
+
+        self.chips_dict  = dict_yaml['chips']
+
+        with open(yaml_PLL, 'r') as file:
+            dict_PLL = yaml.load(file, Loader=yaml.FullLoader)
+        with open(yaml_PLL_default, 'r') as file:
+            self.PLL_default = yaml.load(file, Loader=yaml.FullLoader)
+        
+        self.chips_PLL = dict_PLL['chips']
+
+        # Make list of available chipIDs
+        chip_ID_list = list(TPX3_datalogger.data['chip_dacs'].keys())
 
         #Button for polarity select
         self.polarity_value = TPX3_datalogger.read_value('Polarity')
@@ -1497,20 +1639,20 @@ class GUI_Additional_Settings(Gtk.Window):
 
         #Buttons for number of operation mode
         self.op_mode_value = TPX3_datalogger.read_value('Op_mode')
-        Op_mode_button1 = Gtk.RadioButton.new_with_label_from_widget(None, 'ToT and ToA')
-        Op_mode_button2 = Gtk.RadioButton.new_with_label_from_widget( Op_mode_button1, 'Only ToA')
-        Op_mode_button3 = Gtk.RadioButton.new_with_label_from_widget( Op_mode_button1, 'Event Count & Integral ToT')
+        self.Op_mode_button1 = Gtk.RadioButton.new_with_label_from_widget(None, 'ToT and ToA')
+        self.Op_mode_button2 = Gtk.RadioButton.new_with_label_from_widget( self.Op_mode_button1, 'Only ToA')
+        self.Op_mode_button3 = Gtk.RadioButton.new_with_label_from_widget( self.Op_mode_button1, 'Event Count & Integral ToT')
         if self.op_mode_value == 0:
-            Op_mode_button1.set_active(True)
+            self.Op_mode_button1.set_active(True)
         elif self.op_mode_value == 1:
-            Op_mode_button2.set_active(True)
+            self.Op_mode_button2.set_active(True)
         else:
-            Op_mode_button3.set_active(True)
-        Op_mode_button1.connect('toggled', self.Op_mode_button_toggled, '0')
-        Op_mode_button2.connect('toggled', self.Op_mode_button_toggled, '1')
-        Op_mode_button3.connect('toggled', self.Op_mode_button_toggled, '2')
-        Op_mode_label = Gtk.Label()
-        Op_mode_label.set_text('     Operation mode     ')
+            self.Op_mode_button3.set_active(True)
+        self.Op_mode_button1.connect('toggled', self.Op_mode_button_toggled, '0')
+        self.Op_mode_button2.connect('toggled', self.Op_mode_button_toggled, '1')
+        self.Op_mode_button3.connect('toggled', self.Op_mode_button_toggled, '2')
+        self.Op_mode_label = Gtk.Label()
+        self.Op_mode_label.set_text('     Operation mode     ')
 
         #TP_Period setting
         self.TP_Period_value = TPX3_datalogger.read_value(name = 'TP_Period')
@@ -1591,17 +1733,32 @@ class GUI_Additional_Settings(Gtk.Window):
         self.dropdown_label = Gtk.Label()
         self.dropdown_label.set_text('Sense DAC')
 
+        # Create dropdown menu, where we select a chip, the dac values
+        # are loaded and displayed to be edited
+        self.chip_settings_edit = Gtk.ComboBoxText()
+        self.chip_settings_edit.connect('changed', self.on_chip_settings_edit_changed)
+        
+        for id in chip_ID_list:
+            self.chip_settings_edit.append_text(id)
+        
+        self.chip_settings_edit.set_active(0)
+        grid.attach(self.chip_settings_edit, 5, 1, 1, 1)
+
         #Link_Toggle
         self.Link_label = Gtk.Label()
         self.Link_label.set_text('Chip links')
         self.hardware_links = TPX3_datalogger.read_value('hardware_links')
         self.link_label = []
+        self.chip_label = []
         self.link_enable = []
         self.link_enable_button = []
         for link_number in range(self.hardware_links):
             temp_link_label = Gtk.Label()
+            temp_chip_label = Gtk.Label()
             temp_link_label.set_text(str(link_number))
+            temp_chip_label.set_text(str(TPX3_datalogger.data['links'][f'Link_{link_number}']['chip-id-decoded']))
             self.link_label.append(temp_link_label)
+            self.chip_label.append(temp_chip_label)
             if TPX3_datalogger.get_link_status(link_number) in [1, 3, 5, 7]:
                 self.link_enable.append(1)
             else:
@@ -1625,10 +1782,10 @@ class GUI_Additional_Settings(Gtk.Window):
         grid.attach(self.expert_checkbox, 5, 0, 1, 1)
         grid.attach(Fast_IO_button_label, 0, 1, 2, 1)
         grid.attach(self.Fast_IO_button, 2, 1, 2, 1)
-        grid.attach(Op_mode_label, 0, 2, 2, 1)
-        grid.attach(Op_mode_button1, 2, 2, 4, 1)
-        grid.attach(Op_mode_button2, 2, 3, 4, 1)
-        grid.attach(Op_mode_button3, 2, 4, 4, 1)
+        grid.attach(self.Op_mode_label, 0, 2, 2, 1)
+        grid.attach(self.Op_mode_button1, 2, 2, 4, 1)
+        grid.attach(self.Op_mode_button2, 2, 3, 4, 1)
+        grid.attach(self.Op_mode_button3, 2, 4, 4, 1)
         grid.attach(TP_Period_label, 0, 5, 2, 1)
         grid.attach(self.TP_Period, 2, 5, 2, 1)
         grid.attach(Readout_Speed_entry_label, 0, 6, 2, 1)
@@ -1647,6 +1804,7 @@ class GUI_Additional_Settings(Gtk.Window):
         for link_number in range(self.hardware_links):
             grid.attach(self.link_label[link_number], link_number % 8, 14 + (2 * (link_number // 8)), 1, 1)
             grid.attach(self.link_enable_button[link_number], link_number % 8, 15 + (2 * (link_number // 8)), 1, 1)
+            grid.attach(self.chip_label[link_number], link_number % 8, 16 + (2 * (link_number // 8)), 1, 1)
         grid.attach(self.Space3, 0, 16 + 2 * ((self.hardware_links - 1) // 8), 3, 1)
         grid.attach(self.Savebutton, 8, 17 + 2 * ((self.hardware_links - 1) // 8), 1, 1)
 
@@ -1664,6 +1822,7 @@ class GUI_Additional_Settings(Gtk.Window):
         for link_number in range(self.hardware_links):
             self.link_label[link_number].hide()
             self.link_enable_button[link_number].hide()
+            self.chip_label[link_number].hide()
         self.resize(1,1)
 
     def TP_Period_set(self, event):
@@ -1685,6 +1844,7 @@ class GUI_Additional_Settings(Gtk.Window):
             for link_number in range(self.hardware_links):
                 self.link_label[link_number].show()
                 self.link_enable_button[link_number].show()
+                self.chip_label[link_number].show()
             self.resize(1,1)
         else:
             self.TP_Ext_Int_button_label.hide()
@@ -1700,6 +1860,7 @@ class GUI_Additional_Settings(Gtk.Window):
             for link_number in range(self.hardware_links):
                 self.link_label[link_number].hide()
                 self.link_enable_button[link_number].hide()
+                self.chip_label[link_number].hide()
             self.resize(1,1)
 
     def readout_speed_entered(self, widget):
@@ -1778,6 +1939,8 @@ class GUI_Additional_Settings(Gtk.Window):
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
             return
 
+        current_ID = self.chip_settings_edit.get_active_text()
+
         # get values
         self.TP_Period_value = self.TP_Period.get_value_as_int()
         try:
@@ -1787,24 +1950,88 @@ class GUI_Additional_Settings(Gtk.Window):
             return
 
         # write values
-        TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value)
-        TPX3_datalogger.write_to_yaml(name = 'Polarity')
-        TPX3_datalogger.write_value(name = 'Fast_Io_en', value = self.Fast_IO_en_value)
-        TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en')
-        TPX3_datalogger.write_value(name = 'Op_mode', value = self.op_mode_value)
-        TPX3_datalogger.write_to_yaml(name = 'Op_mode')
-        TPX3_datalogger.write_value(name = 'AckCommand_en', value = self.AckCommand_en_value)
-        TPX3_datalogger.write_to_yaml(name = 'AckCommand_en')
-        TPX3_datalogger.write_value(name = 'SelectTP_Ext_Int', value = self.TP_Ext_Int_en_value)
-        TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int')
-        TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = self.ClkOut_frequency_src_value)
-        TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src')
-        TPX3_datalogger.write_value(name = 'Sense_DAC', value = self.sense_DAC_value)
-        TPX3_datalogger.write_to_yaml(name = 'Sense_DAC')
-        TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value)
-        TPX3_datalogger.write_value(name = 'TP_Period', value = self.TP_Period_value)
+        TPX3_datalogger.write_value(name = 'Polarity', value = self.polarity_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Polarity', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Fast_Io_en', value = self.Fast_IO_en_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Fast_Io_en', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Op_mode', value = self.op_mode_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Op_mode', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'AckCommand_en', value = self.AckCommand_en_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'AckCommand_en', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'SelectTP_Ext_Int', value = self.TP_Ext_Int_en_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'SelectTP_Ext_Int', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'ClkOut_frequency_src', value = self.ClkOut_frequency_src_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'ClkOut_frequency_src', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Sense_DAC', value = self.sense_DAC_value, chip = current_ID)
+        TPX3_datalogger.write_to_yaml(name = 'Sense_DAC', chip = current_ID)
+        TPX3_datalogger.write_value(name = 'Readout_Speed', value = self.Readout_Speed_value, chip = current_ID)
+        TPX3_datalogger.write_value(name = 'TP_Period', value = self.TP_Period_value, chip = current_ID)
         for link_number in range(self.hardware_links):
             TPX3_datalogger.change_link_status(link_number, self.link_enable[link_number])
+
+    def on_chip_settings_edit_changed(self, chip_settings_edit):
+        current_ID = chip_settings_edit.get_active_text()
+        key_words  = ['Fast_Io_en', 'Polarity', 'Op_mode', 'AckCommand_en', 'SelectTP_Ext_Int', 'Sense_DAC', 'ClkOut_frequency_src'] 
+
+        for key in key_words:
+            if key == 'Polarity':
+                self.polarity_value = TPX3_datalogger.data['chip_dacs'][current_ID][key]
+                if self.polarity_value == 1:
+                    self.set_polarity_button.set_active(True)
+                    self.set_polarity_button.set_label('  NEG  ')
+                else:
+                    self.set_polarity_button.set_active(False)
+                    self.set_polarity_button.set_label('  POS  ')
+
+            elif key == 'Fast_Io_en':
+                self.Fast_IO_en_value = TPX3_datalogger.data['chip_dacs'][current_ID][key]
+                if self.Fast_IO_en_value == 1:
+                    self.Fast_IO_button.set_active(True)
+                    self.Fast_IO_button.set_label('  ON  ')
+                else:
+                    self.Fast_IO_button.set_active(False)
+                    self.Fast_IO_button.set_label('  OFF  ')
+            
+            elif key == 'Op_mode':
+                self.op_mode_value = TPX3_datalogger.data['chip_dacs'][current_ID][key]
+                if self.op_mode_value == 0:
+                    self.Op_mode_button1.set_active(True)
+                elif self.op_mode_value == 1:
+                    self.Op_mode_button2.set_active(True)
+                else:
+                    self.Op_mode_button3.set_active(True)
+                
+            elif key == 'AckCommand_en':
+                self.AckCommand_en_value = TPX3_datalogger.data['chip_dacs'][current_ID][key]
+                if self.AckCommand_en_value == 1:
+                    self.AckCommand_en_button.set_active(True)
+                    self.AckCommand_en_button.set_label('  ON  ')
+                else:
+                    self.AckCommand_en_button.set_active(False)
+                    self.AckCommand_en_button.set_label('  OFF  ')
+
+            elif key == 'SelectTP_Ext_Int':
+                self.TP_Ext_Int_en_value = TPX3_datalogger.data['chip_dacs'][current_ID][key]
+                if self.TP_Ext_Int_en_value == 1:
+                    self.TP_Ext_Int_button.set_active(True)
+                    self.TP_Ext_Int_button.set_label('  ON  ')
+                else:
+                    self.TP_Ext_Int_button.set_active(False)
+                    self.TP_Ext_Int_button.set_label('  OFF  ')
+
+            elif key == 'Sense_DAC':
+                self.sense_DAC_value = TPX3_datalogger.data['chip_dacs'][current_ID][key]
+                if self.sense_DAC_value in range(19):
+                    self.dropdown.set_active(self.sense_DAC_value)
+                elif self.sense_DAC_value in range(28, 32):
+                    self.dropdown.set_active(self.sense_DAC_value - 9)
+                else:
+                    print('Error at set sense Dac')
+        
+            elif key == 'ClkOut_frequency_src':
+                self.ClkOut_frequency_src_value = TPX3_datalogger.data['chip_dacs'][current_ID][key]
+                self.ClkOut_frequency_combo.set_active(self.ClkOut_frequency_src_value-1)
+                self.ClkOut_frequency_combo_label.set_text('ClkOut_frequency_src')
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -1938,6 +2165,7 @@ class GUI_Equalisation(Gtk.Window):
                                                                 Vthreshold_stop = self.Threshold_stop_value,
                                                                 mask_step = self.Number_of_Iterations,
                                                                 maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
+                                                                chip_link = TPX3_datalogger.data['chip_links'],
                                                                 progress = GUI.get_progress_value_queue(),
                                                                 status = GUI.get_status_queue(),
                                                                 result_path = GUI.eq_result_path,
@@ -1950,6 +2178,7 @@ class GUI_Equalisation(Gtk.Window):
                                                                 mask_step = self.Number_of_Iterations,
                                                                 maskfile = TPX3_datalogger.read_value(name = 'Mask_path'),
                                                                 tp_period = TPX3_datalogger.read_value(name = 'TP_Period'),
+                                                                chip_link = TPX3_datalogger.data['chip_links'],
                                                                 progress = GUI.get_progress_value_queue(),
                                                                 status = GUI.get_status_queue(),
                                                                 result_path = GUI.eq_result_path,
@@ -2080,11 +2309,25 @@ class GUI_Set_Mask(Gtk.Window):
         self.connect("key-press-event", self.on_key_pressed)
         self.coord_window = None
 
-        if  isinstance(mask_logger.get_mask(), bool):
+        self.mask_folder = os.path.join(os.path.join(os.path.expanduser('~'), 'Timepix3'), 'masks')
+
+        if isinstance(mask_logger.get_mask(), bool):
             self.np_mask_list = np.zeros((256 * 256, ), dtype = bool)
         else:
             current_mask = mask_logger.get_mask()
             self.np_mask_list = current_mask.reshape((256 * 256))
+
+        chip_list = list(TPX3_datalogger.data['chip_dacs'])
+        
+        self.chip_select = Gtk.ComboBoxText()
+        self.mask_select = Gtk.ComboBoxText()
+        self.chip_select.set_size_request(300,30)
+        self.mask_select.set_size_request(300,30)
+        for name in chip_list:
+            self.chip_select.append_text(name)
+        self.chip_select.connect('changed', self.on_chip_select_changed)
+        self.chip_select.set_active(0) # Here the mask_select is initialised
+        self.mask_select.connect('changed', self.on_mask_select_changed)
 
         grid = Gtk.Grid()
         grid.set_row_spacing(0)
@@ -2219,12 +2462,40 @@ class GUI_Set_Mask(Gtk.Window):
         grid.attach(self.mapview, 0, 0, 20, 20)
         grid.attach(self.columnview, 0, 20, 20, 2)
         grid.attach(self.rowview, 20, 0, 2, 20)
-        grid.attach(self.Savebutton, 23, 21, 2, 1)
+        grid.attach(self.Savebutton, 23, 2, 3, 1)
+        grid.attach(self.chip_select, 23, 0, 3, 1)
+        grid.attach(self.mask_select, 23, 1, 3, 1)
 
         self.rowview.set_vadjustment(self.mapview.get_vadjustment())
         self.columnview.set_hadjustment(self.mapview.get_hadjustment())
 
         self.show_all()
+
+    def on_chip_select_changed(self, widget):
+        chip_ID = self.chip_select.get_active_text()
+        chip_mask_dir = os.path.join(self.mask_folder, chip_ID)
+        mask_files = os.listdir(chip_mask_dir)
+        
+        self.mask_select.remove_all()
+        for file in mask_files:
+            self.mask_select.append_text(file)
+        self.mask_select.append_text('New')
+        self.mask_select.set_active(0)
+
+    def on_mask_select_changed(self, widget):
+        chip_ID = self.chip_select.get_active_text()
+        mask_file = self.mask_select.get_active_text()
+
+        # Get mask from file
+        if mask_file not in ['New', 'None', None]:
+            mask_file_path = os.path.join(self.mask_folder, f'{chip_ID}{os.sep}{mask_file}')
+            current_mask = mask_logger.get_mask(path = mask_file_path)
+            self.np_mask_list = current_mask.reshape((256 * 256))
+        else:
+            self.np_mask_list = np.zeros((256 * 256, ), dtype = bool)
+
+        # Draw self.np_mask_list to the screen
+        self.draw_clicked()
 
     def draw_clicked(self):
         user_path = os.path.expanduser('~')
@@ -2325,10 +2596,12 @@ class GUI_Set_Mask(Gtk.Window):
         self.draw_clicked()
 
     def on_Savebutton_clicked(self, widget):
+        chip_ID = self.chip_select.get_active_text()
+        mask_file = self.mask_select.get_active_text()
         mask_array = self.np_mask_list.reshape((256,256))
-        mask_logger.write_full_mask(full_mask = mask_array)
-
+        mask_logger.write_full_mask(full_mask = mask_array, file_name=mask_file, chipID=chip_ID)
         self.destroy()
+
     def window_destroy(self, widget, event):
         self.destroy()
 
@@ -2363,31 +2636,40 @@ class GUI_Set_Run_Name(Gtk.Window):
     def window_destroy(self, widget, event = True):
         self.destroy()
 
-class GUI_Additional_Information(Gtk.Window):
+#class GUI_Additional_Information(Gtk.Window):
+class GUI_Set_MaskEqual_Files(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, title = 'Info')
+
+        # Check folders for equalisation and mask files
+        TPX3_datalogger.check_mask_equal()
+
+        self.equal_chips = list(TPX3_datalogger.data['Equalisation_path'])
+        self.mask_chips  = list(TPX3_datalogger.data['Mask_path'])
+        self.chips_list  = self.equal_chips
+        for id in self.mask_chips:
+            if id not in self.chips_list:
+                self.chips_list.append(id)
+
+        self.chip_settings       = Gtk.ComboBoxText()
+        self.chip_equal_settings = Gtk.ComboBoxText()
+        self.chip_mask_settings  = Gtk.ComboBoxText()
+        self.chip_settings.set_size_request(330, 30)
+        
+        for id in self.chips_list:
+            self.chip_settings.append_text(id)
+
+        self.chip_settings.connect('changed', self.on_chip_settings_changed)
+        self.chip_settings.set_active(0)
+        
+        #Gtk.Window.__init__(self, title = 'Info')
+        Gtk.Window.__init__(self, title = 'Set Mask/Equal. Files')
+        
         self.connect('delete-event', self.window_destroy)
-
-        try:
-            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.equalisation_file = 'None'
-            else:
-                self.equalisation_file = 'Corrupt Data'
-
-        try:
-            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.mask_file = 'None'
-            else:
-                self.mask_file = 'Corrupt Data'
 
         self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
 
         grid = Gtk.Grid()
-        grid.set_row_spacing(2)
+        grid.set_row_spacing(10)
         grid.set_column_spacing(10)
         grid.set_border_width(20)
         self.add(grid)
@@ -2395,38 +2677,95 @@ class GUI_Additional_Information(Gtk.Window):
         Space = Gtk.Label()
         Space.set_text("")
 
-        self.Backup_File_label = Gtk.Label()
-        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
+        chip_label = Gtk.Label()
+        equal_label = Gtk.Label()
+        mask_label = Gtk.Label()
+        #run_label = Gtk.Label()
+        #run_name_label = Gtk.Label()
 
-        self.refresh_button = Gtk.Button(label = "Refresh")
+        chip_label.set_text('Chip')
+        equal_label.set_text('Current equalisation file')
+        mask_label.set_text('Current mask file')
+        #run_label.set_text('Proposed run name')
+        #run_name_label.set_text(str(self.run_name))
+
+        self.refresh_button = Gtk.Button(label = 'Save')
         self.refresh_button.connect("clicked", self.on_refresh_button_clicked)
 
-        grid.attach(self.Backup_File_label, 0, 0, 2, 3)
-        grid.attach(Space, 0, 4, 2, 1)
-        grid.attach(self.refresh_button, 2, 5, 1, 1)
+        grid.attach(self.refresh_button, 1, 8, 1, 1)
+        grid.attach(chip_label, 0, 0, 1, 1)
+        grid.attach(equal_label, 0, 2, 1, 1)
+        grid.attach(mask_label, 0, 4, 1, 1)
+        #grid.attach(run_label, 0, 6, 1, 1)
+        grid.attach(self.chip_settings, 0, 1, 1, 1)
+        grid.attach(self.chip_equal_settings, 0, 3, 1, 1)
+        grid.attach(self.chip_mask_settings, 0, 5, 1, 1)
+        #grid.attach(run_name_label, 0, 7, 1, 1)
 
         self.show_all()
 
+    def on_chip_settings_changed(self, widget):
+        
+        chipID = self.chip_settings.get_active_text()
+        self.chip_equal_settings.remove_all()
+        self.chip_mask_settings.remove_all()
+        
+        try:
+            if TPX3_datalogger.data['Equalisation_path'][chipID]['active'] == 'None':
+                self.chip_equal_settings.append_text('None')
+            else:
+                # Insert active file as first item
+                self.chip_equal_settings.insert(0, None,  os.path.split(TPX3_datalogger.data['Equalisation_path'][chipID]['active'])[1])
+
+            for file in TPX3_datalogger.data['Equalisation_path'][chipID]['available']:
+                if file != TPX3_datalogger.data['Equalisation_path'][chipID]['active']:
+                    if file != 'None':
+                        self.chip_equal_settings.append_text(os.path.split(file)[1])
+                    else:
+                        self.chip_equal_settings.append_text('None')
+            self.chip_equal_settings.set_active(0)
+        except:
+            self.chip_equal_settings.append_text('None')
+            self.chip_equal_settings.set_active(0)
+
+        try:
+            if TPX3_datalogger.data['Mask_path'][chipID]['active'] == 'None':
+                self.chip_mask_settings.append_text('None')
+            else:
+                # Insert active file as first item
+                self.chip_mask_settings.insert(0, None, os.path.split(TPX3_datalogger.data['Mask_path'][chipID]['active'])[1])
+
+            for file in TPX3_datalogger.data['Mask_path'][chipID]['available']:
+                if file != TPX3_datalogger.data['Mask_path'][chipID]['active']:
+                    if file != 'None':
+                        self.chip_mask_settings.append_text(os.path.split(file)[1])
+                    else:
+                        self.chip_mask_settings.append_text('None')
+            self.chip_mask_settings.set_active(0)
+        except:
+            self.chip_mask_settings.append_text('None')
+            self.chip_mask_settings.set_active(0)
+                
+
     def on_refresh_button_clicked(self, clicked):
-        try:
-            self.equalisation_file = os.path.split(TPX3_datalogger.read_value(name = 'Equalisation_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.equalisation_file = 'None'
-            else:
-                self.equalisation_file = 'Corrupt Data'
+        
+        chipID      = self.chip_settings.get_active_text()
+        home_dir    = os.path.expanduser('~')
+        timepix_dir = os.path.join(home_dir, 'Timepix3')
 
-        try:
-            self.mask_file = os.path.split(TPX3_datalogger.read_value(name = 'Mask_path'))[1]
-        except:
-            if TPX3_datalogger.read_value(name = 'Equalisation_path') == None:
-                self.mask_file = 'None'
-            else:
-                self.mask_file = 'Corrupt Data'
-
-        self.run_name = TPX3_datalogger.read_value(name = 'Run_name')
-
-        self.Backup_File_label.set_text('\nCurrent equalisation file:\t\t' + str(self.equalisation_file) + '\nCurrent mask file:\t\t\t' + str(self.mask_file) + '\nProposed run name:\t\t\t' + str(self.run_name))
+        if self.chip_equal_settings.get_active_text() == 'None':
+            TPX3_datalogger.data['Equalisation_path'][chipID]['active'] = 'None'
+        else:
+            equal_path = os.path.join(timepix_dir, 'equalisations')
+            chip_dir   = os.path.join(equal_path, chipID)
+            TPX3_datalogger.data['Equalisation_path'][chipID]['active'] = os.path.join(chip_dir, self.chip_equal_settings.get_active_text())
+        
+        if self.chip_mask_settings.get_active_text() == 'None':
+            TPX3_datalogger.data['Mask_path'][chipID]['active'] = 'None'
+        else:
+            mask_path = os.path.join(timepix_dir, 'masks')
+            chip_dir  = os.path.join(mask_path, chipID)
+            TPX3_datalogger.data['Mask_path'][chipID]['active'] = os.path.join(chip_dir, self.chip_mask_settings.get_active_text())
 
     def window_destroy(self, widget, event):
         self.destroy()
@@ -2602,6 +2941,110 @@ class GUI_Main_Settings(Gtk.Window):
         GUI.set_destroyed()
         if self.input_window is not None:
             self.input_window.window_destroy(widget)
+        self.destroy()
+
+class GUI_General_Information(Gtk.Window):
+
+    def __init__(self):
+        Gtk.Window.__init__(self, title = 'General information')
+        self.connect('delete-event', self.window_destroy)
+
+        #self.resize(900, 600)
+        self.set_default_size(900, 250)
+
+        grid = Gtk.Grid()
+        grid.set_row_spacing(20)
+        grid.set_column_spacing(20)
+        grid.set_border_width(35)
+        self.add(grid)
+
+        ##### Chip Information #####
+
+        chip_labels = []
+        equalisation_labels = []
+        mask_labels = []
+        link_labels = []
+        
+        #chip_list = list(TPX3_datalogger.data['chip_dacs'])
+        #chip_list.remove('default')
+        chip_list  = list(TPX3_datalogger.data['chip_links'])
+        chip_list_length = len(chip_list)
+        
+        chip_title_label = Gtk.Label()
+        equalisation_label = Gtk.Label()
+        mask_title_label = Gtk.Label()
+        link_title_label = Gtk.Label()
+
+        chip_title_label.set_size_request(80, 30)
+        equalisation_label.set_size_request(320, 30)
+        mask_title_label.set_size_request(320, 30)
+        link_title_label.set_size_request(100, 30)
+        
+        chip_title_label.set_markup('<b>Chip</b>')
+        equalisation_label.set_markup('<b>Current equalisation file</b>')
+        mask_title_label.set_markup('<b>Current mask file</b>')
+        link_title_label.set_markup('<b>Links</b>')
+        
+        for chip in chip_list:
+            if chip == None:
+                continue
+            chip_label  = Gtk.Label()
+            equal_label = Gtk.Label()
+            mask_label  = Gtk.Label()
+            link_label  = Gtk.Label()
+
+            chip_label.set_text(chip)
+            equal_file = os.path.split(TPX3_datalogger.data['Equalisation_path'][chip]['active'])[1]
+            mask_file  = os.path.split(TPX3_datalogger.data['Mask_path'][chip]['active'])[1]
+
+            if equal_file in ['None', None]:
+                equal_label.set_text('-')
+            else:
+                equal_label.set_text(equal_file)
+
+            if mask_file in ['None', None]:
+                mask_label.set_text('-')
+            else:
+                mask_label.set_text(mask_file)
+
+            try:
+                chip_links = str(TPX3_datalogger.data['chip_links'][chip])
+                link_label.set_text(chip_links[1:-1])
+            except:
+                link_label.set_text('-')                    
+                
+            chip_labels.append(chip_label)
+            equalisation_labels.append(equal_label)
+            mask_labels.append(mask_label)
+            link_labels.append(link_label)
+
+        for number, chip in enumerate(chip_list):
+            if chip == None:
+                continue
+            grid.attach(chip_labels[number], 0, number + 1, 1, 1)
+            grid.attach(equalisation_labels[number], 1, number + 1, 1, 1)
+            grid.attach(mask_labels[number], 2, number + 1, 1, 1)
+            grid.attach(link_labels[number], 3, number + 1, 1, 1)
+         
+        grid.attach(chip_title_label, 0, 0, 1, 1)
+        grid.attach(equalisation_label, 1, 0, 1, 1)
+        grid.attach(mask_title_label, 2, 0, 1, 1)
+        grid.attach(link_title_label, 3, 0, 1, 1)
+
+        ##### General Information #####
+
+        run_label      = Gtk.Label()
+        run_name_label = Gtk.Label()
+        
+        run_label.set_markup('<b>Run name</b>')
+        run_name_label.set_text(str(TPX3_datalogger.data['Run_name']))
+
+        grid.attach(run_label, 1, chip_list_length + 1, 1, 1)
+        grid.attach(run_name_label, 1, chip_list_length + 2, 1, 1)
+
+        self.show_all()
+
+    def window_destroy(self, widget, event = True):
         self.destroy()
 
 class GUI_Main_Save_Backup_Input(Gtk.Window):
@@ -2888,13 +3331,13 @@ class GUI_Main(Gtk.Window):
         self.plot1_window_open = False
         self.converter_process = None
         self.plot1_window = None
-        self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
         self.simulation_running = False
         self.simulator_process = None
         self.step_starttime = datetime.now()
         self.software_version = utils.get_software_version(git = False)
         self.firmware_version = 'x.x'
         self.plot_window_list = []
+        self.pipe_dest_conn, self.pipe_source_conn = Pipe(False)
 
         self.grid = Gtk.Grid()
         self.add(self.grid)
@@ -2916,9 +3359,12 @@ class GUI_Main(Gtk.Window):
 
         #get last backup
         data = file_logger.read_backup()
-        TPX3_datalogger.set_data(data)
+        if data != None:
+            TPX3_datalogger.set_data(data)
+        else:
+            TPX3_datalogger.get_dacs_from_yaml()
         TPX3_datalogger.write_backup_to_yaml()
-        TPX3_datalogger.write_value(name = 'software_version', value = self.software_version)
+        TPX3_datalogger.write_value(name = 'software_version', value = self.software_version, chip=None)
         conv_utils.setup_logging('INFO')
 
 
@@ -2972,6 +3418,9 @@ class GUI_Main(Gtk.Window):
         self.Resetbutton = Gtk.Button(label = 'Default')
         self.Resetbutton.connect('clicked', self.on_Resetbutton_clicked)
 
+        self.GeneralInfobutton = Gtk.Button(label = 'General Information')
+        self.GeneralInfobutton.connect('clicked', self.on_GeneralInfobutton_clicked)
+
         self.SetDACbutton = Gtk.Button(label = 'Set DACs')
         self.SetDACbutton.connect('clicked', self.on_SetDACbutton_clicked)
 
@@ -2981,8 +3430,12 @@ class GUI_Main(Gtk.Window):
         self.SetMaskbutton = Gtk.Button(label = 'Set Mask')
         self.SetMaskbutton.connect('clicked', self.on_SetMaskbutton_clicked)
 
-        self.Infobutton = Gtk.Button(label = 'Info')
-        self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
+        #self.Infobutton = Gtk.Button(label = 'Info')
+        #self.Infobutton.connect('clicked', self.on_Infobutton_clicked)
+
+        self.Infobutton = Gtk.Button(label = 'Set Mask/Equal. Files')
+        self.Infobutton.connect('clicked', self.on_Set_MaskEqual_Files_clicked)
+
 
         self.Run_Name_button = Gtk.Button(label = 'Run Name')
         self.Run_Name_button.connect('clicked', self.on_Run_Name_button_clicked)
@@ -3040,12 +3493,11 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.PixelDACbutton, 0, 1, 2, 1)
         page1.grid.attach(self.Equalbutton, 0, 2, 2, 1)
         page1.grid.attach(self.TOTCalibbutton, 0, 3, 2, 1)
-        page1.grid.attach(self.Timewalkbutton, 0, 4, 2, 1)
-        page1.grid.attach(self.THLCalibbutton, 0, 5, 2, 1)
-        page1.grid.attach(self.THLScanbutton, 0, 6, 2, 1)
-        page1.grid.attach(self.TestpulsScanbutton, 0, 7, 2, 1)
-        page1.grid.attach(self.NoiseScanbutton, 0, 8, 2, 1)
-        page1.grid.attach(self.Runbutton, 0, 9, 2, 2)
+        page1.grid.attach(self.THLCalibbutton, 0, 4, 2, 1)
+        page1.grid.attach(self.THLScanbutton, 0, 5, 2, 1)
+        page1.grid.attach(self.TestpulsScanbutton, 0, 6, 2, 1)
+        page1.grid.attach(self.NoiseScanbutton, 0, 7, 2, 1)
+        page1.grid.attach(self.Runbutton, 0, 8, 2, 2)
         page1.grid.attach(Status, 2, 8, 12, 6)
         page1.grid.attach(Space, 0, 10, 2, 2)
         page1.grid.attach(self.Resetbutton, 0, 13, 2, 1)
@@ -3055,6 +3507,7 @@ class GUI_Main(Gtk.Window):
         page1.grid.attach(self.Infobutton, 14, 5, 3, 1)
         page1.grid.attach(self.Run_Name_button, 14, 6, 3, 1)
         page1.grid.attach(self.SetMaskbutton, 14, 7, 3, 1)
+        page1.grid.attach(self.GeneralInfobutton, 14, 8, 3, 1)
         page1.grid.attach(self.QuitCurrentFunctionbutton, 14, 13, 3, 1)
 
 
@@ -3154,6 +3607,11 @@ class GUI_Main(Gtk.Window):
         self.set_running_process(running_process = new_process)
         self.set_quit_scan_label()
         self.hardware_scan_idle = GLib.timeout_add(250, self.update_status)
+        self.page2.pack_end(self.plotwidget.canvas, True, False, 0)
+        
+        # Initialization of event display in update_status
+        
+        self.Tag2 = GLib.timeout_add(250, self.plotwidget.update_plot)
 
     def on_Resetbutton_clicked(self, widget):
         if not self.get_process_alive():
@@ -3177,6 +3635,9 @@ class GUI_Main(Gtk.Window):
         else:
             subw = GUI_Main_Error(title = 'Error', text = 'Process is running on the chip!')
 
+    def on_GeneralInfobutton_clicked(self, widget):
+        subw = GUI_General_Information()
+
     def on_SetDACbutton_clicked(self, widget):
         subw = GUI_SetDAC()
 
@@ -3187,8 +3648,12 @@ class GUI_Main(Gtk.Window):
         global mask_window
         mask_window = GUI_Set_Mask()
 
-    def on_Infobutton_clicked(self, widget):
-        Info_subw = GUI_Additional_Information()
+    #def on_Infobutton_clicked(self, widget):
+    #    Info_subw = GUI_Additional_Information()
+
+    def on_Set_MaskEqual_Files_clicked(self, widget):
+        Info_subw = GUI_Set_MaskEqual_Files()
+
 
     def on_Run_Name_button_clicked(self, widget):
         Info_subw = GUI_Set_Run_Name()
@@ -3461,49 +3926,61 @@ class GUI_Main(Gtk.Window):
         return True
 
     def update_status(self):
+        Chip_Id = []
         if not self.hardware_scan_results.empty():
             Chip_List = self.hardware_scan_results.get()
-            for n in range(0,3):
-                if n == 0 and Chip_List:
-                    self.firmware_version = Chip_List.pop(0)
-                    TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version)
-                    try:
-                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
-                                                    '\nFirmware version: ' + str(self.firmware_version) +
-                                                    '\nGit branch: ' + str(utils.get_git_branch()) +
-                                                    '\nGit commit: ' + str(utils.get_git_commit()) +
-                                                    '\nGit date: ' + str(utils.get_git_date()) +
-                                                    '\n<small>GasDet Bonn 2019-2021</small>')
-                    except:
-                        self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
-                                                    '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
-                elif n == 1 and Chip_List:
-                    TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0))
-                elif Chip_List:
-                    name = 'Chip' + str(n - 2) + '_name'
-                    TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0))
+            self.firmware_version = Chip_List.pop(0)
+            TPX3_datalogger.write_value(name = 'firmware_version', value = self.firmware_version, chip=None)
+            try:
+                self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
+                                            '\nFirmware version: ' + str(self.firmware_version) +
+                                            '\nGit branch: ' + str(utils.get_git_branch()) +
+                                            '\nGit commit: ' + str(utils.get_git_commit()) +
+                                            '\nGit date: ' + str(utils.get_git_date()) +
+                                            '\n<small>GasDet Bonn 2019-2021</small>')
+            except:
+                self.about_label.set_markup('<big>TPX3 GUI</big> \nSoftware version: ' + str(self.software_version) +
+                                            '\nFirmware version: ' + str(self.firmware_version) + '\n<small>GasDet Bonn 2019-2021</small>')
+            TPX3_datalogger.write_value(name = 'hardware_links', value = Chip_List.pop(0), chip=None)
+            for n in range(24): # Go now over all recognised list elements
+                name = 'Chip' + str(n) + '_name'
+                if len(Chip_List) > 0:
+                    Chip_Id.append(Chip_List[0][0])
+                    TPX3_datalogger.write_value(name = name, value = Chip_List.pop(0), chip=None)
                 else:
-                    name = 'Chip' + str(n - 2) + '_name'
-                    TPX3_datalogger.write_value(name = name, value = [None])
+                    TPX3_datalogger.write_value(name=name, value = [None], chip=None)
+
             statusstring = 'Connected to '
             for n, Chipname in enumerate(TPX3_datalogger.get_chipnames()):
-                number_of_links = TPX3_datalogger.get_links(chipname = Chipname)
+                number_of_links = TPX3_datalogger.get_links(chipname = Chipname[1])
                 if number_of_links == 1:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' active link)'
+                    statusstring += f'{Chipname[1]} ({number_of_links} active link), '
                 else:
-                    statusstring += Chipname + ' (' + str(number_of_links) + ' active links)'
+                    statusstring += f'{Chipname[1]} ({number_of_links} active links), '
                 if n == 0:
-                    self.notebook.set_tab_label_text(self.page2, Chipname)
+                    self.notebook.set_tab_label_text(self.page2, Chipname[1])
             self.statusbar.push(self.context_id, statusstring)
         if self.hardware_scan_results.empty() and not self.get_process_alive():
             GLib.source_remove(self.hardware_scan_idle)
             self.hardware_scan_idle = None
+
+        # Initialize event display
+        self.plotwidget.init_figure(TPX3_datalogger.data['chip_links'])
+        
+        if Chip_Id != []:
+            TPX3_datalogger.get_dacs_from_yaml()
+        
+        # Check for folders for pixel mask and equalisation files
+        TPX3_datalogger.check_mask_equal()
+
         return True
 
     def update_scan(self):
         if not self.pixeldac_result.empty():
-            TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = self.pixeldac_result.get())
-            TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC')
+            results = self.pixeldac_result.get()
+            for chipID in results:
+                TPX3_datalogger.write_value(name = 'Ibias_PixelDAC', value = results[chipID]['pixeldac'], chip=chipID)
+                TPX3_datalogger.write_to_yaml(name = 'Ibias_PixelDAC', chip=chipID)
         if not self.eq_result_path.empty():
             TPX3_datalogger.write_value(name = 'Equalisation_path', value = self.eq_result_path.get())
         while not self.plot_queue.empty():
@@ -3521,7 +3998,7 @@ class GUI_Main(Gtk.Window):
         if not self.plot1_window_open:
             self.plot1_window_open = True
             GLib.source_remove(self.Tag2)
-            self.plot1_window = GUI_Plot1(data_queue = self.data_queue)
+            self.plot1_window = GUI_Plot1(data_queue = self.data_queue, chip_links=TPX3_datalogger.data['chip_links'])
 
     def on_simulationbutton_clicked(self, widget):
         if self.simulation_running == False:
@@ -3588,7 +4065,9 @@ class GUI_Main(Gtk.Window):
 
     def start_converter(self):
         current_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        cm = ConverterManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml', data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn)
+        cm = ConverterManager(configuration = current_path + os.sep + 'tpx3_monitor.yaml',
+                              data_queue = self.data_queue, symbol_pipe = self.pipe_dest_conn,
+                              chip_links = TPX3_datalogger.data['chip_links'])
         self.converter_process = Process(target = cm.start)
         self.pipe_source_conn.send(True)
         self.converter_process.start()
