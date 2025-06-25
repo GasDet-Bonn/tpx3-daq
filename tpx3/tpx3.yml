@@ -97,72 +97,72 @@ hw_drivers:
   - name      : RX10
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7000
+    base_addr : 0x6A00
 
   - name      : RX11
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7100
+    base_addr : 0x6B00
 
   - name      : RX12
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7200
+    base_addr : 0x6C00
 
   - name      : RX13
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7300
+    base_addr : 0x6D00
 
   - name      : RX14
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7400
+    base_addr : 0x6E00
 
   - name      : RX15
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7500
+    base_addr : 0x6F00
 
   - name      : RX16
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7600
+    base_addr : 0x7000
 
   - name      : RX17
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7700
+    base_addr : 0x7100
 
   - name      : RX18
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7800
+    base_addr : 0x7200
 
   - name      : RX19
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x7900
+    base_addr : 0x7300
 
   - name      : RX20
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x8000
+    base_addr : 0x7400
 
   - name      : RX21
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x8100
+    base_addr : 0x7500
 
   - name      : RX22
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x8200
+    base_addr : 0x7600
 
   - name      : RX23
     type      : tpx3.tpx3_rx
     interface : intf
-    base_addr : 0x8300
+    base_addr : 0x7700
 
 registers:
   - name        : CONTROL

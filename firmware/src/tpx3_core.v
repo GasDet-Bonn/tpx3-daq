@@ -113,7 +113,7 @@ module tpx3_core (
     localparam TIMESTAMP2_HIGHADDR = 16'h6000-1; 
 
     localparam RX_BASEADDR = 16'h6000;
-    localparam RX_HIGHADDR = 16'h8500-1;
+    localparam RX_HIGHADDR = 16'h8000-1;
 
     parameter RX_CH_NO = 24;
     parameter ABUSWIDTH = 16;
