@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 from __future__ import division
+from re import X
 import numpy as np
 import logging
 import math
+import os
+import yaml
 from six.moves import range
 
 from UI.GUI.converter.transceiver import Transceiver
@@ -44,7 +47,7 @@ def _interpret_raw_data(data):
 
     return header, x, y, tot
 
-def raw_data_to_dut(raw_data):
+def raw_data_to_dut(raw_data, chip_links, chips):
     '''
     Transform to 48 bit format -> fast decode_fpga
     '''
@@ -52,12 +55,21 @@ def raw_data_to_dut(raw_data):
         return np.empty(0, dtype=np.uint64)
 
     # make a list of the header elements giving the link from where the data was received (h)
-    h = (raw_data & 0x1E000000) >> 25
+    h = (raw_data & 0xFE000000) >> 25
     # and a list of the data (k)
     k = (raw_data & 0xffffff)
-    data_words = np.empty(0, dtype=np.uint64) # empty list element to store the final data_words
+    data_words = [np.empty(0, dtype=np.uint64)]*chips # empty list element to store the final data_words
     # make a single list containing the data from each link
+    # write data to array which belongs to a chip via chip_links dictionary
     for i in range(8):
+        
+        for link, chip in enumerate(chip_links):
+            if chip == None:
+                continue
+            if i in chip_links[chip]:
+                current_chip = link
+                break
+        
         k_i = k[h == i] # gives a list of all data for the specific link number
         # initialize list with the needed length for temporal storage
         data_words_i = np.empty((k_i.shape[0] // 2), dtype=np.uint64)
@@ -69,16 +81,24 @@ def raw_data_to_dut(raw_data):
             data_words_i2[:] = k_i[0::2].view('>u4')[0:-1]
         data_words_i = (data_words_i << 16) + (data_words_i2 >> 8)
         # append all data from this link to the list of all data
-        data_words = np.append(data_words,data_words_i)
+        data_words[current_chip] = np.append(data_words[current_chip],data_words_i)
 
     return data_words
 
-def interpret_raw_data(raw_data):
+def interpret_raw_data(raw_data, chip_links, chips):
     '''
     Chunk the data based on scan_param and interpret
     '''
-    data_words = raw_data_to_dut(raw_data)
-    header, x, y, tot = _interpret_raw_data(data_words)
+    header = [[]]*chips
+    x      = [[]]*chips
+    y      = [[]]*chips
+    tot    = [[]]*chips
+
+    data_words = raw_data_to_dut(raw_data, chip_links, chips)
+    if len(data_words) == 0:
+        return header, x, y, tot
+    for chip in range(chips):
+        header[chip], x[chip], y[chip], tot[chip] = _interpret_raw_data(data_words[chip])
 
     return header, x, y, tot
 
@@ -160,14 +180,27 @@ class Tpx3(Transceiver):
         if isinstance(data[0][1], dict):  # Meta data
             return self._interpret_meta_data(data)
 
-        header, x, y, tot = interpret_raw_data(data[0][1])
+        chips = sum(1 for key in self.chip_links if key is not None)
+        header, x, y, tot = interpret_raw_data(data[0][1], self.chip_links, chips)
+        hits = [[]]*chips
+        
+        if len(x) > 0:
+            for chip in range(chips):
+                if len(x[chip]) == 0:
+                    continue
+                x[chip]    = x[chip][header[chip] == 1]
+                y[chip]    = y[chip][header[chip] == 1]
+                tot[chip]  = tot[chip][header[chip] == 1]
+                hits[chip] = x[chip], y[chip], tot[chip]
 
-        x = x[header == 1]
-        y = y[header == 1]
-        tot = tot[header == 1]
-        hits = x, y, tot
+        total_temp = 0 
 
-        self.total_hits += len(header == 1)
+        for header_list in range(chips):
+            if len(header[header_list]) == 0:
+                continue
+            total_temp = len(header[header_list]==1) 
+
+        self.total_hits += total_temp
         self.readout += 1
         self.total_events = self.readout  # ???
 

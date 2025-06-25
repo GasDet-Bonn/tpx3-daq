@@ -27,7 +27,7 @@ class plotwidget(object):
             for scatter in self.scatter:
                 scatter.remove()
 
-        self.num_plots = len(chip_links)
+        self.num_plots = sum(1 for key in chip_links if key is not None)
         self.chip_list = [chip for chip in chip_links]
         self.plots     = []
         self.scatter   = []
@@ -108,6 +108,8 @@ class plotwidget(object):
         if not self.data_queue.empty():
             pixeldata = self.data_queue.get()
             for chip, chip_data in enumerate(pixeldata):
+                if len(chip_data) == 0:
+                    continue
                 x_new[chip] = chip_data[0]
                 y_new[chip] = chip_data[1]
                 t_new[chip] = chip_data[2]

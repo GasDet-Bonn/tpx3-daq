@@ -44,7 +44,7 @@ class Transceiver(multiprocessing.Process):
         The verbosity level for the logging (e.g. INFO, WARNING)
     '''
 
-    def __init__(self, frontend, kind, data_queue, symbol_pipe, name='Undefined',
+    def __init__(self, frontend, kind, data_queue, symbol_pipe, chip_links, name='Undefined',
                  max_buffer=None, loglevel='INFO', **kwarg):
         multiprocessing.Process.__init__(self)
 
@@ -59,6 +59,8 @@ class Transceiver(multiprocessing.Process):
         self.data_queue = data_queue
         self.symbol_pipe = symbol_pipe
         self.run_data_queue_symbol = True
+
+        self.chip_links = chip_links
 
         if 'max_cpu_load' in kwarg:
             logging.warning('The parameter max_cpu_load is deprecated! Use max_buffer!')

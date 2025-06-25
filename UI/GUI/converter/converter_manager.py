@@ -10,18 +10,22 @@ import logging
 import time
 import psutil
 import sys
+import os
+import yaml
 
 from UI.GUI.converter.transceiver import Transceiver
 from UI.GUI.converter import utils
 from UI.GUI.converter.tpx3_inter import Tpx3
 
 class ConverterManager(object):
-    def __init__(self, configuration, data_queue, symbol_pipe, loglevel='INFO'):
+    def __init__(self, configuration, data_queue, symbol_pipe, chip_links, loglevel='INFO'):
         self.data_queue = data_queue
         self.symbol_pipe = symbol_pipe
         utils.setup_logging(loglevel)
         logging.info("Initialize converter mananager with configuration in %s", configuration)
         self.configuration = utils.parse_config_file(configuration)
+
+        self.chip_links = chip_links
 
     def start(self):
         try:
@@ -35,7 +39,7 @@ class ConverterManager(object):
 
         for (converter_name, converter_settings) in self.configuration['converter'].items():
             converter_settings['name'] = converter_name
-            converter = Tpx3(data_queue = self.data_queue, symbol_pipe = self.symbol_pipe, *(), **converter_settings)
+            converter = Tpx3(data_queue = self.data_queue, symbol_pipe = self.symbol_pipe, chip_links = self.chip_links, *(), **converter_settings)
             converter.start()
             process_infos.append((converter_name, psutil.Process(converter.ident)))
             converters.append(converter)
