@@ -1103,10 +1103,10 @@ class ScanBase(object):
                 self.logger.info(f'Loading mask_matrix file: {maskfile} for chip {chip.chipId_decoded}')
                 try:
                     with tb.open_file(maskfile, 'r') as infile:
-                        table_name       = f'infile.root.mask_matrix_W{chip.wafer_number}_{chip.x_position}{chip.y_position}[:]'
+                        table_name       = f'infile.root.mask_matrix[:]'
                         chip.mask_matrix = eval(table_name)
                 except NoSuchNodeError:
-                    self.logger.debug('Specified maskfile does not include a mask_matrix!')
+                    self.logger.error('Specified maskfile does not include a mask_matrix!')
                     pass
 
     def load_thr_matrix(self, **kwargs):
