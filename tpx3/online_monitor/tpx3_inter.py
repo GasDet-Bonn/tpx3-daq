@@ -57,7 +57,7 @@ def raw_data_to_dut(raw_data):
     k = (raw_data & 0xffffff)
     data_words = np.empty(0, dtype=np.uint64) # empty list element to store the final data_words
     # make a single list containing the data from each link
-    for i in range(8):
+    for i in range(24):
         k_i = k[h == i] # gives a list of all data for the specific link number
         # initialize list with the needed length for temporal storage
         data_words_i = np.empty((k_i.shape[0] // 2), dtype=np.uint64)

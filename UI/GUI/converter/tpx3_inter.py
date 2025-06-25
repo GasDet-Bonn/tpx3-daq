@@ -61,7 +61,7 @@ def raw_data_to_dut(raw_data, chip_links, chips):
     data_words = [np.empty(0, dtype=np.uint64)]*chips # empty list element to store the final data_words
     # make a single list containing the data from each link
     # write data to array which belongs to a chip via chip_links dictionary
-    for i in range(8):
+    for i in range(24):
         
         for link, chip in enumerate(chip_links):
             if chip == None:
