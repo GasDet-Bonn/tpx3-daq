@@ -4,12 +4,14 @@ from __future__ import absolute_import
 from setuptools import setup
 from setuptools import find_packages
 
-import tpx3
-from tpx3.utils import check_user_folders
-
 import os
+import yaml
 
-version = tpx3.__version__
+def read_version():
+    with open("tpx3/tpx3.yml", "r") as f:
+        data = yaml.safe_load(f)
+        return data.get("version", "0.0.0")
+version = read_version()
 
 author = ''
 author_email = ''
@@ -33,7 +35,6 @@ setup(
     install_requires=install_requires,
     python_requires=">=3.0",
     packages=find_packages(),
-    setup_requires=['online_monitor>=0.6'],
     include_package_data=True,
     platforms='any',
     entry_points={
@@ -43,13 +44,12 @@ setup(
             'tpx3_gui = UI.GUI.GUI:main'
         ]
     },
-
 )
 
 try:
     from online_monitor.utils import settings
     # Get the absolute path of this package
-    package_path = os.path.dirname(tpx3.__file__)
+    package_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "tpx3"))
     # Add online_monitor plugin folder to entity search paths
     settings.add_producer_sim_path(os.path.join(package_path,
                                                 'online_monitor'))
@@ -59,6 +59,3 @@ try:
                                             'online_monitor'))
 except ImportError:
     pass
-
-# Setup folder structure in user home folder
-check_user_folders()
