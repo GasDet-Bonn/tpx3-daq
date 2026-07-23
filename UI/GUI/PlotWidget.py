@@ -2,7 +2,7 @@
 
 import numpy as np
 from matplotlib.figure import Figure
-import matplotlib.colormaps as cm
+import matplotlib
 from matplotlib.backends.backend_gtk3agg import (FigureCanvasGTK3Agg as FigureCanvas)
 from matplotlib.colors import ListedColormap
 
@@ -49,7 +49,7 @@ class plotwidget(object):
             self.colorsteps = steps
 
         i = 1
-        viridis = cm['viridis'].resampled(256)
+        viridis = matplotlib.colormaps['viridis'].resampled(256)
         newcmap = viridis(np.linspace(0, 1, 256))
         newmap1 = np.tile(newcmap, (self.colorsteps, 1))
         while(i<self.colorsteps):
