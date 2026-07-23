@@ -6,7 +6,7 @@ from six.moves import range
 import os
 from string import Template
 import subprocess
-import pkg_resources
+from importlib import metadata
 from datetime import datetime
 import numpy as np
 
@@ -22,9 +22,9 @@ def get_software_version(git = True):
             branch = get_git_branch()
             return branch + '@' + rev
         except:
-            return pkg_resources.get_distribution("tpx3-daq").version
+            return metadata.version("tpx3-daq")
     else:
-        return pkg_resources.get_distribution("tpx3-daq").version
+        return metadata.version("tpx3-daq")
 
 def get_git_branch():
     return subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()

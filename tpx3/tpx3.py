@@ -33,8 +33,8 @@ BitLogic.toByteList = toByteList
 TPX3_SLEEP = 0.001
 
 
-import pkg_resources
-VERSION = pkg_resources.get_distribution("tpx3-daq").version
+from importlib import metadata
+VERSION = metadata.version("tpx3-daq")
 
 loglevel = logging.DEBUG
 
